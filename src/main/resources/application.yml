@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: kotlin-21-service
+  profiles:
+    active: ${ENVIRONMENT:dev}
+server:
+  port: ${SERVER_PORT:8080}
+  use-forward-headers: true
+  main.allow-bean-definition-overriding: true
+
+app:
+  info:
+    application_name: @project.name@
+    version: @project.version@
+    description: @project.description@
+    artifact_Id: @project.artifactId@
+    group_Id: @project.groupId@
+    app_profile: ${ENVIRONMENT:dev}
+    java-version: @java.version@
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${HOSTNAME:localhost}
+
+
+logging:
+  level:
+    ru:
+      sogaz:
+        esb:
+          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
