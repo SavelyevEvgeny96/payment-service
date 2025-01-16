@@ -1,0 +1,17 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Включение SQL-миграций -->
+    <include file="db/changelog/tables/create_order_status.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_payments.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_payment_status.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_payment_operation_history.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_action_type.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_banks.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_client_systems.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_config_data.sql" relativeToChangelogFile="true"/>
+    <include file="db/changelog/tables/create_orders.sql" relativeToChangelogFile="true"/>
+</databaseChangeLog>
