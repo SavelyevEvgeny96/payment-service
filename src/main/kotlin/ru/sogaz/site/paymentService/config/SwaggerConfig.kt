@@ -1,4 +1,4 @@
-package ru.sogaz.site.payment_service.config
+package ru.sogaz.site.paymentService.config
 
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
@@ -7,7 +7,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.payment_service.service.AppInfoService
+import ru.sogaz.site.paymentService.service.AppInfoService
 
 private const val SCHEMA = "bearer"
 private const val SECURITY_SCHEME_NAME = "bearerAuth"
@@ -43,9 +43,9 @@ open class SwaggerConfig(
                 Info().apply {
                     title = appInfo.applicationName
                     description = "${appInfo.description} <br>Среда:" +
-                            " ${appInfo.appProfile} <br> GroupId: " +
-                            "${appInfo.groupId} ArtefactId: " +
-                            appInfo.artifactId
+                        " ${appInfo.appProfile} <br> GroupId: " +
+                        "${appInfo.groupId} ArtefactId: " +
+                        appInfo.artifactId
                     version = appInfo.version
                 }
         }

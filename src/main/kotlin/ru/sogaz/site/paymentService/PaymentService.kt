@@ -1,4 +1,4 @@
-package ru.sogaz.site.payment_service
+package ru.sogaz.site.paymentService
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 open class PaymentService
 
 fun main(args: Array<String>) {
-	runApplication<PaymentService>(*args)
+    runApplication<PaymentService>(*args)
 }

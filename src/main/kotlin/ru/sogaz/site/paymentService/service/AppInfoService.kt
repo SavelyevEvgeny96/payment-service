@@ -1,4 +1,4 @@
-package ru.sogaz.site.payment_service.service
+package ru.sogaz.site.paymentService.service
 import jakarta.annotation.PostConstruct
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
@@ -30,4 +30,3 @@ class AppInfoService {
         logger.info("appProfile = $appProfile")
     }
 }
-
