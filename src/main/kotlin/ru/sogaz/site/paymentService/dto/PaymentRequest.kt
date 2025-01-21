@@ -47,5 +47,5 @@ data class PaymentRequest(
     val urlToDecline: String,
     val customURL: String?,
     val hash: String,
-    val bank: String? = null
+    val bank: String? = null,
 )

@@ -10,7 +10,6 @@ import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
  */
 @Component
 class TokenUtil {
-
     /**
      * Проверка валидности токена.
      * Токен должен быть передан в формате "Bearer <token>".

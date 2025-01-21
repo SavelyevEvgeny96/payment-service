@@ -4,7 +4,6 @@ import ru.sogaz.site.paymentService.constants.ErrorMessages
 import ru.sogaz.site.paymentService.exception.ValidationException
 
 class PaymentValidator {
-
     fun validateEmail(email: String) {
         val emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}\$"
         if (!email.matches(Regex(emailRegex))) {

@@ -1,16 +1,17 @@
 package ru.sogaz.site.paymentService.service
 
+import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dto.PaymentRequest
 import ru.sogaz.site.paymentService.validation.PaymentValidator
-import org.springframework.stereotype.Service
 
 /**
  * Сервис для обработки платежей.
  * Включает в себя валидацию данных и создание записи о платеже.
  */
 @Service
-class PaymentService(private val paymentValidator: PaymentValidator) {
-
+class PaymentService(
+    private val paymentValidator: PaymentValidator,
+) {
     /**
      * Метод для создания платежа.
      * Проверяет данные о платеже, валидирует их и создает запись о платеже.
@@ -19,7 +20,6 @@ class PaymentService(private val paymentValidator: PaymentValidator) {
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
     fun createPayment(paymentRequest: PaymentRequest) {
-
         validatePaymentData(paymentRequest)
     }
 
