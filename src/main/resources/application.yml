@@ -1,12 +1,27 @@
 spring:
   application:
-    name: kotlin-21-service
+    name: payment-service
   profiles:
     active: ${ENVIRONMENT:dev}
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
   main.allow-bean-definition-overriding: true
+datasource:
+  url: jdbc:postgresql://localhost:5432/PostgreSQL_17
+  username: postgres
+  password: 123456
+  driver-class-name: org.postgresql.Driver
+jpa:
+  hibernate:
+    ddl-auto: update
+  properties:
+    hibernate:
+      format_sql: true
+      show_sql: true
+liquibase:
+  enabled: true
+  change-log: classpath:/db/changelog/master-changelog.xml
 
 app:
   info:
