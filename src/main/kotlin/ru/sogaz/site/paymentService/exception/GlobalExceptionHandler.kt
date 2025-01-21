@@ -2,8 +2,8 @@ package ru.sogaz.site.paymentService.exception
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ControllerAdvice
 
 /**
  * Глобальный обработчик ошибок для всего приложения.
@@ -32,5 +32,14 @@ class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedAccessException::class)
     fun handleUnauthorizedAccessException(ex: UnauthorizedAccessException): ResponseEntity<String> {
         return ResponseEntity(ex.message, HttpStatus.UNAUTHORIZED)
+    }
+
+    /**
+     * Обработчик других ошибок.
+     * Возвращает ошибку с кодом 500 в случае внутренних ошибок сервера.
+     */
+    @ExceptionHandler(Exception::class)
+    fun handleGeneralException(ex: Exception): ResponseEntity<String> {
+        return ResponseEntity("An error occurred: ${ex.message}", HttpStatus.INTERNAL_SERVER_ERROR)
     }
 }
