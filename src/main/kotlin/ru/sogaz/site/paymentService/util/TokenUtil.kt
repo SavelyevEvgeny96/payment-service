@@ -10,6 +10,10 @@ import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
  */
 @Component
 class TokenUtil {
+
+    companion object{
+        const val BEARER_PREFIX = "Bearer"
+    }
     /**
      * Проверка валидности токена.
      * Токен должен быть передан в формате "Bearer <token>".
@@ -20,7 +24,7 @@ class TokenUtil {
      * @throws Exception Если токен не начинается с "Bearer " или пуст
      */
     fun validateToken(token: String): Boolean {
-        if (!token.startsWith("Bearer ")) {
+        if (!token.startsWith(BEARER_PREFIX)) {
             throw UnauthorizedAccessException(INVALID_TOKEN)
         }
         val jwtToken = token.substring(7)

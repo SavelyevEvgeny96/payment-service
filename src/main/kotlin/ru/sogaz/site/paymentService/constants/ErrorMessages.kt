@@ -2,7 +2,6 @@ package ru.sogaz.site.paymentService.constants
 
 /**
  * Константы для сообщений об ошибках.
- * Это помогает централизованно управлять всеми сообщениями об ошибках.
  */
 object ErrorMessages {
     const val INVALID_EMAIL_FORMAT = "Неверный формат email получателя"
@@ -13,5 +12,5 @@ object ErrorMessages {
     const val INVALID_DATE_FORMAT = "Дата окончания действия ссылки на оплату не соответствует требуемому формату"
     const val INVALID_BANK = "Неверное значение банка, должно быть 'gpb'"
     const val INVALID_TOKEN = "Токен должен начинаться с 'Bearer '"
-    const val UNAUTHORIZED = "Неавторизованный доступ"
+
 }

@@ -1,7 +1,11 @@
 package ru.sogaz.site.paymentService.service
 
 import org.springframework.stereotype.Service
+import ru.sogaz.site.paymentService.config.ApiConfig
 import ru.sogaz.site.paymentService.dto.PaymentRequest
+import ru.sogaz.site.paymentService.dto.PaymentResponse
+import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.validation.PaymentValidator
 
 /**
@@ -11,6 +15,8 @@ import ru.sogaz.site.paymentService.validation.PaymentValidator
 @Service
 class PaymentService(
     private val paymentValidator: PaymentValidator,
+    private val paymentRepository: PaymentRepository,
+    private val apiConfig: ApiConfig
 ) {
     /**
      * Метод для создания платежа.
@@ -19,8 +25,21 @@ class PaymentService(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    fun createPayment(paymentRequest: PaymentRequest) {
+    fun createPayment(paymentRequest: PaymentRequest) : PaymentResponse {
         validatePaymentData(paymentRequest)
+
+
+        val savedPayment = paymentRepository.save(payment)
+
+        // Генерация ссылки на оплату
+        val paymentUrl = "${apiConfig.paymentUrl}${savedPayment.id}"
+
+        // Возвращаем DTO с ответом
+        return PaymentResponse(
+            status = "success",
+            code = savedPayment.id.toString(),
+            url = paymentUrl
+        )
     }
 
     /**

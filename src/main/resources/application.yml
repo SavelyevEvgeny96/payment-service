@@ -32,6 +32,8 @@ app:
     group_Id: @project.groupId@
     app_profile: ${ENVIRONMENT:dev}
     java-version: @java.version@
+api:
+  payment-url: ${PAYMENT_URL:url}
 
 management:
   endpoints:
