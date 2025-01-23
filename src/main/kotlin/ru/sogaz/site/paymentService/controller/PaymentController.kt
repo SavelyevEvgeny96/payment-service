@@ -1,13 +1,8 @@
 package ru.sogaz.site.paymentService.controller
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ru.sogaz.site.paymentService.constants.ErrorMessages
 import ru.sogaz.site.paymentService.dto.PaymentRequest
 import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
@@ -20,12 +15,11 @@ import ru.sogaz.site.paymentService.util.TokenUtil
  */
 @RestController
 @RequestMapping("/payment")
-class PaymentController
-    @Autowired
-    constructor(
-        private val paymentService: PaymentService,
-        private val tokenUtil: TokenUtil, // Используем TokenUtil для проверки токена
-    ) {
+class PaymentController(
+    private val paymentService: PaymentService,
+    private val tokenUtil: TokenUtil
+) {
+
         /**
          * Метод для создания платежа.
          * Принимает авторизационный токен, TraceId и данные о платеже.
@@ -52,4 +46,7 @@ class PaymentController
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.message)
             }
         }
-    }
+}
+
+
+
