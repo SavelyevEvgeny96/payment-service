@@ -7,7 +7,7 @@ import ru.sogaz.site.paymentService.constants.ErrorMessages
 import ru.sogaz.site.paymentService.dto.PaymentRequest
 import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.util.TokenUtil
+import ru.sogaz.site.paymentService.service.TokenServiceImpl
 
 /**
  * Контроллер для обработки запросов на создание платежа.
@@ -17,7 +17,7 @@ import ru.sogaz.site.paymentService.util.TokenUtil
 @RequestMapping("/payment")
 class PaymentController(
     private val paymentService: PaymentService,
-    private val tokenUtil: TokenUtil
+    private val tokenUtil: TokenServiceImpl
 ) {
 
         /**
