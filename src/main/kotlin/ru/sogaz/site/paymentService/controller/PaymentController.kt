@@ -1,10 +1,13 @@
 package ru.sogaz.site.paymentService.controller
 
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
 import ru.sogaz.site.paymentService.constants.ErrorMessages
 import ru.sogaz.site.paymentService.dto.PaymentRequest
+import ru.sogaz.site.paymentService.dto.PaymentResponse
 import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.TokenServiceImpl
@@ -30,21 +33,15 @@ class PaymentController(
          * @return Ответ с кодом состояния и данными о платеже или ошибкой
          */
         @PostMapping("/create")
-        fun createPayment(
-            @RequestHeader("Authorization") authorization: String,
-            @RequestHeader("TraceId") traceId: String,
-            @RequestBody paymentRequest: PaymentRequest,
-        ): ResponseEntity<Any> {
-            try {
-                val isValidToken = tokenUtil.validateToken(authorization)
-                if (!isValidToken) {
-                    throw UnauthorizedAccessException(ErrorMessages.INVALID_TOKEN)
-                }
-                val response = paymentService.createPayment(paymentRequest)
-                return ResponseEntity.status(HttpStatus.OK).body(response)
-            } catch (e: UnauthorizedAccessException) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.message)
+        fun createPayment(@RequestBody @Valid paymentRequest: PaymentRequest, result: BindingResult): PaymentResponse {
+            // Если есть ошибки валидации
+            if (result.hasErrors()) {
+                val errors = result.allErrors.map { it.defaultMessage }
+                return ResponseEntity.badRequest().body(errors)
             }
+
+
+            return paymentService.createPayment(paymentRequest)
         }
 }
 

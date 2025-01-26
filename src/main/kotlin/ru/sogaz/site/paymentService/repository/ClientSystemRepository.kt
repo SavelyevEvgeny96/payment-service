@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.ClientSystem
 
 @Repository
-interface ClientSystemRepository : JpaRepository<ClientSystem, Long>
+interface ClientSystemRepository : JpaRepository<ClientSystem, Long> {
+    fun findByCode(code: String): ClientSystem?
+}

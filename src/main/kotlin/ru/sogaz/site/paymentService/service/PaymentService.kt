@@ -4,9 +4,13 @@ import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.config.ApiConfig
 import ru.sogaz.site.paymentService.dto.PaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentResponse
-import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.repository.BankRepository
+import ru.sogaz.site.paymentService.repository.ClientSystemRepository
+import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.validation.PaymentValidator
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Сервис для обработки платежей.
@@ -14,9 +18,12 @@ import ru.sogaz.site.paymentService.validation.PaymentValidator
  */
 @Service
 class PaymentService(
-    private val paymentValidator: PaymentValidator,
+
     private val paymentRepository: PaymentRepository,
-    private val apiConfig: ApiConfig
+    private val apiConfig: ApiConfig,
+    private val bankRepository: BankRepository,
+    private val clientSystemRepository: ClientSystemRepository,
+    private val orderRepository: OrderRepository
 ) {
     /**
      * Метод для создания платежа.
@@ -25,36 +32,63 @@ class PaymentService(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    fun createPayment(paymentRequest: PaymentRequest) : PaymentResponse {
-        validatePaymentData(paymentRequest)
-
-
-        val savedPayment = paymentRepository.save(payment)
-
-        // Генерация ссылки на оплату
-        val paymentUrl = "${apiConfig.paymentUrl}${savedPayment.id}"
-
-        // Возвращаем DTO с ответом
+    fun createPayment(paymentRequest: PaymentRequest): PaymentResponse {
+        val paymentId = generateUniquePaymentId()
+        val paymentCode = generateUniquePaymentCode()
+        val clientSystem = clientSystemRepository.findByCode(paymentRequest.externalSystemCode)
+        val bank = if (paymentRequest.bank != null) {
+            bankRepository.findById(paymentRequest.bank.toLong()).orElseThrow()
+        } else {
+            bankRepository.findFirstByOrderById()
+        }
+        val paymentPageUrl = "${apiConfig.paymentUrl}$paymentId}"
+        val order = Order(
+            paymentId = paymentId,
+            code = paymentCode,
+            bank = bank,
+            premiumAmount = paymentRequest.premiumAmount,
+            recipientEmail = paymentRequest.recipientEmail,
+            recipientPhone = paymentRequest.recipientPhone,
+            operationId = paymentRequest.operationId,
+            paymentEndDate = paymentRequest.paymentEndDate,
+            clientSystem = clientSystem,
+            docType = paymentRequest.docType,
+            policyId = paymentRequest.policyId,
+            policyNumber = paymentRequest.policyNumber,
+            contractId = paymentRequest.contractId,
+            needReceipt = paymentRequest.needReceipt ?: false,
+            policyholder = paymentRequest.policyholder,
+            policyholderDoc = paymentRequest.policyholderDoc,
+            managerEmail = paymentRequest.managerEmail,
+            urlToReturn = paymentRequest.urlToReturn,
+            urlToDecline = paymentRequest.urlToDecline,
+            customURL = paymentRequest.customURL,
+            paymentPageUrl = paymentPageUrl,
+            hash = paymentRequest.hash,
+            createDate = getCurrentDateMoscow(),
+            updateDate = getCurrentDateMoscow(),
+            orderStatus = null
+        )
+        orderRepository.save(order)
         return PaymentResponse(
-            status = "success",
-            code = savedPayment.id.toString(),
-            url = paymentUrl
+            code = paymentCode,
+            status = "",
+            url = paymentPageUrl
         )
     }
-
-    /**
-     * Метод для валидации данных платежа.
-     * Проверяет все обязательные поля на корректность.
-     * @param paymentRequest Данные о платеже
-     * @throws Exception Если какие-либо поля невалидны
-     */
-    private fun validatePaymentData(paymentRequest: PaymentRequest) {
-        paymentValidator.validateEmail(paymentRequest.recipientEmail)
-        paymentValidator.validatePhone(paymentRequest.recipientPhone)
-        paymentValidator.validatePolicyholder(paymentRequest.policyholder)
-        paymentValidator.validateExternalSystemCode(paymentRequest.externalSystemCode)
-        paymentValidator.validatePaymentEndDate(paymentRequest.paymentEndDate)
-        paymentValidator.validateDateFormat(paymentRequest.paymentEndDate)
-        paymentValidator.validateBank(paymentRequest.bank)
-    }
 }
+
+private fun generateUniquePaymentCode(): String {
+    return UUID.randomUUID().toString().replace("-", "").take(12).uppercase(Locale.getDefault())
+}
+
+fun getCurrentDateMoscow(): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+0000")
+    sdf.timeZone = TimeZone.getTimeZone("Europe/Moscow") // Устанавливаем московский часовой пояс
+    return sdf.format(Date())
+}
+
+private fun generateUniquePaymentId(): String {
+    return UUID.randomUUID().toString()
+}
+

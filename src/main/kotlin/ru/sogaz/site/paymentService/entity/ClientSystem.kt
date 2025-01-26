@@ -11,7 +11,7 @@ import jakarta.persistence.Table
 class ClientSystem(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    var id: String? = null,
     @Column(name = "external_system_code", nullable = false)
     var externalSystemCode: String,
     @Column(name = "external_system_name", nullable = false)

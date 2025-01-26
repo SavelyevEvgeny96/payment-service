@@ -14,12 +14,12 @@ import jakarta.persistence.Table
 class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var paymentId: Long? = null,
+    var paymentId: String? = null,
     @Column(name = "code", nullable = false)
     var code: String,
     @ManyToOne
     @JoinColumn(name = "state_id", nullable = false)
-    var orderStatus: OrderStatus,
+    var orderStatus: OrderStatus?,
     @Column(name = "date_delete")
     var dateDelete: String? = null,
     @ManyToOne
@@ -31,7 +31,7 @@ class Order(
     var paymentEndDate: String? = null,
     @ManyToOne
     @JoinColumn(name = "external_system_code", nullable = false)
-    var clientSystem: ClientSystem,
+    var clientSystem: ClientSystem?,
     @Column(name = "doc_type", nullable = false)
     var docType: String,
     @Column(name = "policy_id", nullable = false)
@@ -39,13 +39,13 @@ class Order(
     @Column(name = "policy_number", nullable = false)
     var policyNumber: String,
     @Column(name = "contract_id", nullable = false)
-    var contractId: String,
+    var contractId: String?,
     @Column(name = "premium_amount", nullable = false)
-    var premiumAmount: String,
+    var premiumAmount: String?,
     @Column(name = "recipient_email", nullable = false)
     var recipientEmail: String,
     @Column(name = "need_receipt", nullable = false)
-    var needReceipt: Boolean,
+    var needReceipt: Boolean?,
     @Column(name = "recipient_phone", nullable = false)
     var recipientPhone: String,
     @Column(name = "policyholder", nullable = false)

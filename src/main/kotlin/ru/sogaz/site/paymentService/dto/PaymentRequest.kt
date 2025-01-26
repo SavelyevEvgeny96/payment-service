@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dto
 
+import ru.sogaz.site.paymentService.validation.anatationsConstraints.*
 import java.math.BigDecimal
 
 /**
@@ -29,23 +30,31 @@ import java.math.BigDecimal
  */
 data class PaymentRequest(
     val operationId: String,
-    val paymentEndDate: String,
-    val externalSystemCode: String,
     val docType: String,
     val policyId: String,
     val policyNumber: String,
     val contractNumber: String?,
     val contractId: String?,
-    val premiumAmount: BigDecimal?,
-    val recipientEmail: String,
+    val premiumAmount:  String?,
     val needReceipt: Boolean? = null,
-    val recipientPhone: String,
-    val policyholder: String,
-    val policyholderDoc: String,
-    val managerEmail: String,
     val urlToReturn: String,
     val urlToDecline: String,
-    val customURL: String?,
+    val customURL: String,
     val hash: String,
-    val bank: String? = null,
+    @field:ExternalSystemCodeConstraint
+    val externalSystemCode: String,
+    @field:EmailConstraint
+    val recipientEmail: String,
+    @field:PhoneConstraint
+    val recipientPhone: String,
+    @field:PolicyholderConstraint
+    val policyholder: String,
+    @field:PolicyholderDocConstraint
+    val policyholderDoc: String,
+    @field:EmailConstraint
+    val managerEmail: String,
+    @field:PaymentEndDateConstraint
+    val paymentEndDate: String,
+    @field:BankConstraint
+    val bank: String
 )
