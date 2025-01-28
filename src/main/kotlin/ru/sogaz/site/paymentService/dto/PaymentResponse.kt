@@ -8,7 +8,17 @@ package ru.sogaz.site.paymentService.dto
  * @property url Ссылка на оплату
  */
 data class PaymentResponse(
-    val status: String,
-    val code: String,
-    val url: String
-)
+    val traceId: String,
+) {
+    var status: String = ""
+    var code: Int? = null
+    val innerError: String = ""
+    val messageError: String=""
+    val errorsValidate: List<String>? = null
+    var data: Data = Data()
+}
+
+class Data {
+    var code: String = ""
+    var url: String = ""
+}

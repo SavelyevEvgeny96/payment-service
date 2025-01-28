@@ -25,6 +25,11 @@ class PaymentService(
     private val clientSystemRepository: ClientSystemRepository,
     private val orderRepository: OrderRepository
 ) {
+    companion object {
+        const val STATUS_CODE_SUCCESS = 1101500200
+        const val SUCCESS = "success"
+    }
+
     /**
      * Метод для создания платежа.
      * Проверяет данные о платеже, валидирует их и создает запись о платеже.
@@ -32,7 +37,8 @@ class PaymentService(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    fun createPayment(paymentRequest: PaymentRequest): PaymentResponse {
+    fun createPayment(paymentRequest: PaymentRequest, traceId: String): PaymentResponse {
+        val result = PaymentResponse(traceId)
         val paymentId = generateUniquePaymentId()
         val paymentCode = generateUniquePaymentCode()
         val clientSystem = clientSystemRepository.findByCode(paymentRequest.externalSystemCode)
@@ -70,11 +76,12 @@ class PaymentService(
             orderStatus = null
         )
         orderRepository.save(order)
-        return PaymentResponse(
-            code = paymentCode,
-            status = "",
-            url = paymentPageUrl
-        )
+        result.data.code = paymentCode
+        result.data.url = paymentPageUrl
+        result.code = STATUS_CODE_SUCCESS
+        result.status = SUCCESS
+        return result
+
     }
 }
 

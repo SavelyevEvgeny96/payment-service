@@ -1,14 +1,11 @@
 package ru.sogaz.site.paymentService.controller
 
 import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
-import ru.sogaz.site.paymentService.constants.ErrorMessages
 import ru.sogaz.site.paymentService.dto.PaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentResponse
-import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.TokenServiceImpl
 
@@ -32,16 +29,20 @@ class PaymentController(
          * @param paymentRequest Объект данных о платеже
          * @return Ответ с кодом состояния и данными о платеже или ошибкой
          */
+
         @PostMapping("/create")
-        fun createPayment(@RequestBody @Valid paymentRequest: PaymentRequest, result: BindingResult): PaymentResponse {
+        fun createPayment(
+            @RequestHeader("Authorization") authorization: String,
+            @RequestHeader("TraceId") traceId: String,
+            @RequestBody @Valid paymentRequest: PaymentRequest, result: BindingResult): PaymentResponse {
             // Если есть ошибки валидации
             if (result.hasErrors()) {
                 val errors = result.allErrors.map { it.defaultMessage }
-                return ResponseEntity.badRequest().body(errors)
+                return ResponseEntity<PaymentResponse>()
             }
 
 
-            return paymentService.createPayment(paymentRequest)
+            return paymentService.createPayment(paymentRequest,traceId)
         }
 }
 

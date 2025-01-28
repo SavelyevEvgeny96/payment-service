@@ -1,18 +1,11 @@
 package ru.sogaz.site.paymentService.validation
 
-import jakarta.validation.ConstraintValidator
-import jakarta.validation.ConstraintValidatorContext
-import ru.sogaz.site.paymentService.validation.anatationsConstraints.PhoneConstraint
-
 /**
- * Валидатор для аннотации `PhoneConstraint`.
+ * Валидатор для аннотации `PhoneValidator`.
  * Проверяет, что значение поля соответствует формату телефонного номера.
  */
-class PhoneValidator : ConstraintValidator<PhoneConstraint, String> {
-
-    override fun initialize(constraintAnnotation: PhoneConstraint?) {}
-
-    override fun isValid(value: String?, context: ConstraintValidatorContext?): Boolean {
+class PhoneValidator {
+    fun isValid(value: String?): Boolean {
         return value?.matches(Regex("^(\\+\\d{1,3}[- ]?)?\\d{10}\$")) ?: true
     }
 }
