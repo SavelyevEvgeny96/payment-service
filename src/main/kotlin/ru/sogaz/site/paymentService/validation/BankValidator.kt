@@ -1,7 +1,5 @@
 package ru.sogaz.site.paymentService.validation
 
-import jakarta.validation.ConstraintValidatorContext
-
 
 /**
  * Валидатор для аннотации `BankConstraint`.
@@ -9,6 +7,10 @@ import jakarta.validation.ConstraintValidatorContext
  */
 class BankValidator  {
     fun isValid(value: String?): Boolean {
-        return value == "gpb"
+        return value == GPB
+    }
+    companion object {
+        const val GPB = "gpb"
+
     }
 }

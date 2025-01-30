@@ -69,7 +69,7 @@ class PaymentService(
             urlToReturn = paymentRequest.urlToReturn,
             urlToDecline = paymentRequest.urlToDecline,
             customURL = paymentRequest.customURL,
-            paymentPageUrl = paymentPageUrl,
+            paymentPageUrl = null,
             hash = paymentRequest.hash,
             createDate = getCurrentDateMoscow(),
             updateDate = getCurrentDateMoscow(),

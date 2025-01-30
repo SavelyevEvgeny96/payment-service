@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.dto
 
-import ru.sogaz.site.paymentService.validation.anatationsConstraints.*
-import java.math.BigDecimal
+import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePaymentRequest
 
 /**
  * DTO для запроса на создание платежа.
@@ -28,6 +27,7 @@ import java.math.BigDecimal
  * @property hash Подпись целостности запроса (обязательное поле)
  * @property bank Банк для совершения операции (необязательное поле, если не указан — используется дефолтный банк из конфигурации)
  */
+@ValidatePaymentRequest
 data class PaymentRequest(
     val operationId: String,
     val docType: String,
@@ -41,20 +41,12 @@ data class PaymentRequest(
     val urlToDecline: String,
     val customURL: String,
     val hash: String,
-    @field:ExternalSystemCodeConstraint
     val externalSystemCode: String,
-    @field:EmailConstraint
     val recipientEmail: String,
-    @field:PhoneConstraint
     val recipientPhone: String,
-    @field:PolicyholderConstraint
     val policyholder: String,
-    @field:PolicyholderDocConstraint
     val policyholderDoc: String,
-    @field:EmailConstraint
     val managerEmail: String,
-    @field:PaymentEndDateConstraint
     val paymentEndDate: String,
-    @field:BankConstraint
     val bank: String
 )
