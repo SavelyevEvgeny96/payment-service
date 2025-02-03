@@ -11,4 +11,4 @@ import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class ValidatePaymentRequest()
+annotation class ValidatePaymentRequest

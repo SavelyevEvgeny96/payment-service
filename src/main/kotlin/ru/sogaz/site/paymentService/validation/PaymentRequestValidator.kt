@@ -2,10 +2,10 @@ package ru.sogaz.site.paymentService.validation
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
+import ru.sogaz.site.exceptionStarter.starter.dto.ValidationErrorData
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.paymentService.dto.PaymentRequest
-import ru.sogaz.site.exceptionStarter.starter.dto.ValidationErrorData
 import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePaymentRequest
 
 /**
@@ -14,10 +14,12 @@ import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePay
  * и если есть ошибки, выбрасывается исключение.
  */
 class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, PaymentRequest> {
-
     override fun initialize(constraintAnnotation: ValidatePaymentRequest?) {}
 
-    override fun isValid(value: PaymentRequest?, context: ConstraintValidatorContext?): Boolean {
+    override fun isValid(
+        value: PaymentRequest?,
+        context: ConstraintValidatorContext?,
+    ): Boolean {
         if (value == null) {
             throw BusinessException(CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA)
         }
@@ -31,12 +33,16 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
 
         val emailValidator = EmailValidator()
         if (!emailValidator.isValid(value.recipientEmail)) {
-            validationErrors.add(ValidationErrorData("recipientEmail", "Значение должно содержать латинские буквы, цифры и специальные символы"))
+            validationErrors.add(
+                ValidationErrorData("recipientEmail", "Значение должно содержать латинские буквы, цифры и специальные символы"),
+            )
         }
 
         val emailValidatorManager = EmailValidator()
         if (!emailValidatorManager.isValid(value.managerEmail)) {
-            validationErrors.add(ValidationErrorData("managerEmail", "Значение должно содержать латинские буквы, цифры и специальные символы"))
+            validationErrors.add(
+                ValidationErrorData("managerEmail", "Значение должно содержать латинские буквы, цифры и специальные символы"),
+            )
         }
 
         val externalSystemCodeValidator = ExternalSystemCodeValidator()
@@ -46,7 +52,12 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
 
         val paymentEndDateValidator = PaymentEndDateValidator()
         if (!paymentEndDateValidator.isValid(value.paymentEndDate)) {
-            validationErrors.add(ValidationErrorData("paymentEndDate", "Значение должно содержать только цифры, -, :, + и соответствовать маске yyyy-mm-ddThh:mm:ss+0000"))
+            validationErrors.add(
+                ValidationErrorData(
+                    "paymentEndDate",
+                    "Значение должно содержать только цифры, -, :, + и соответствовать маске yyyy-mm-ddThh:mm:ss+0000",
+                ),
+            )
         }
 
         val paymentPastDateValidator = NotPastDateValidator()
@@ -77,7 +88,7 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
         if (validationErrors.isNotEmpty()) {
             throw BusinessException(
                 CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,
-                validationErrors.toList()
+                validationErrors.toList(),
             )
         }
 

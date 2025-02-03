@@ -7,6 +7,7 @@ import java.util.*
 
 @Repository
 interface BankRepository : JpaRepository<Bank, Long> {
-    override fun findById(bankId :Long): Optional<Bank>
- fun   findFirstByOrderById() : Bank
+    override fun findById(bankId: Long): Optional<Bank>
+
+    fun findFirstByOrderById(): Bank
 }

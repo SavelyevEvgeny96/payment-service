@@ -5,7 +5,5 @@ package ru.sogaz.site.paymentService.validation
  * Проверяет, что значение поля соответствует формату телефонного номера.
  */
 class PhoneValidator {
-    fun isValid(value: String?): Boolean {
-        return value?.matches(Regex("^(\\+\\d{1,3}[- ]?)?\\d{10}\$")) ?: true
-    }
+    fun isValid(value: String?): Boolean = value?.matches(Regex("^(\\+\\d{1,3}[- ]?)?\\d{10}\$")) ?: true
 }

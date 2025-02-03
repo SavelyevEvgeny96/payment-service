@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.dto
 
-class Data (
+class Data(
     var code: String?,
-    var url: String?
+    var url: String?,
 )

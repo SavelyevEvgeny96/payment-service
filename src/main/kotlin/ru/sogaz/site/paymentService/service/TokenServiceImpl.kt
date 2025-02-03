@@ -1,8 +1,7 @@
 package ru.sogaz.site.paymentService.service
 
 import org.springframework.stereotype.Component
-import ru.sogaz.site.paymentService.constants.ErrorMessages.INVALID_TOKEN
-import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
+
 
 /**
  * Утилита для работы с токенами.
@@ -10,10 +9,11 @@ import ru.sogaz.site.paymentService.exception.UnauthorizedAccessException
  */
 @Component
 class TokenServiceImpl : TokenService {
-
-    companion object{
+    companion object {
         const val BEARER_PREFIX = "Bearer"
+        const val INVALID_TOKEN  ="Неверный формат токена"
     }
+
     /**
      * Проверка валидности токена.
      * Токен должен быть передан в формате "Bearer <token>".
@@ -25,7 +25,6 @@ class TokenServiceImpl : TokenService {
      */
     override fun validateToken(token: String): Boolean {
         if (!token.startsWith(BEARER_PREFIX)) {
-            throw UnauthorizedAccessException(INVALID_TOKEN)
         }
         val jwtToken = token.substring(7)
         return jwtToken.isNotEmpty()

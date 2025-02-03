@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.validation
 
-
 /**
  * Валидатор для аннотации `PaymentEndDateConstraint`.
  * Проверяет, что значение поля соответствует формату даты окончания.

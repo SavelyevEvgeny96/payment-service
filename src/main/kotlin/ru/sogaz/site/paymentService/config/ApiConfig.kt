@@ -5,9 +5,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 open class ApiConfig {
-
     @Value("\${api.payment-url}")
     lateinit var paymentUrl: String
-
-
 }
