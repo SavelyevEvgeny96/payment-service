@@ -2,8 +2,9 @@ package ru.sogaz.site.paymentService.service
 
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.config.ApiConfig
+import ru.sogaz.site.paymentService.dto.Data
 import ru.sogaz.site.paymentService.dto.PaymentRequest
-import ru.sogaz.site.paymentService.dto.PaymentResponse
+import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
@@ -17,7 +18,7 @@ import java.util.*
  * Включает в себя валидацию данных и создание записи о платеже.
  */
 @Service
-class PaymentService(
+data class PaymentService(
 
     private val paymentRepository: PaymentRepository,
     private val apiConfig: ApiConfig,
@@ -37,8 +38,8 @@ class PaymentService(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    fun createPayment(paymentRequest: PaymentRequest, traceId: String): PaymentResponse {
-        val result = PaymentResponse(traceId)
+    fun createPayment(paymentRequest: PaymentRequest, traceId: String): Response<Data> {
+        val result:Response<Data>
         val paymentId = generateUniquePaymentId()
         val paymentCode = generateUniquePaymentCode()
         val clientSystem = clientSystemRepository.findByCode(paymentRequest.externalSystemCode)
@@ -73,13 +74,16 @@ class PaymentService(
             hash = paymentRequest.hash,
             createDate = getCurrentDateMoscow(),
             updateDate = getCurrentDateMoscow(),
-            orderStatus = null
+            orderStatus = null,
+            typeInsurance = paymentRequest.typeInsurance,
+            contractNumber = paymentRequest.contractNumber,
+            insuranceProgram = paymentRequest.insuranceProgram,
+            recipientUserId = paymentRequest.recipientUserId
         )
         orderRepository.save(order)
-        result.data.code = paymentCode
-        result.data.url = paymentPageUrl
-        result.code = STATUS_CODE_SUCCESS
-        result.status = SUCCESS
+        val data = Data(paymentCode,paymentPageUrl)
+        result = Response(status = SUCCESS, code = STATUS_CODE_SUCCESS, traceId = traceId,
+            null,null,null,data )
         return result
 
     }
@@ -91,7 +95,7 @@ private fun generateUniquePaymentCode(): String {
 
 fun getCurrentDateMoscow(): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+0000")
-    sdf.timeZone = TimeZone.getTimeZone("Europe/Moscow") // Устанавливаем московский часовой пояс
+    sdf.timeZone = TimeZone.getTimeZone("Europe/Moscow")
     return sdf.format(Date())
 }
 

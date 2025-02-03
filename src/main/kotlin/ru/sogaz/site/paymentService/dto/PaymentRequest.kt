@@ -48,5 +48,9 @@ data class PaymentRequest(
     val policyholderDoc: String,
     val managerEmail: String,
     val paymentEndDate: String,
-    val bank: String
+    val bank: String,
+    val typeInsurance: String,
+    val insuranceProgram: String,
+    val recipientUserId: String,
+
 )

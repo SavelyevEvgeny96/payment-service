@@ -1,13 +1,11 @@
 package ru.sogaz.site.paymentService.controller
 
 import jakarta.validation.Valid
-import org.springframework.http.ResponseEntity
-import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
+import ru.sogaz.site.paymentService.dto.Data
 import ru.sogaz.site.paymentService.dto.PaymentRequest
-import ru.sogaz.site.paymentService.dto.PaymentResponse
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.service.TokenServiceImpl
+import ru.sogaz.siter.models.resonses.Response
 
 /**
  * Контроллер для обработки запросов на создание платежа.
@@ -17,7 +15,6 @@ import ru.sogaz.site.paymentService.service.TokenServiceImpl
 @RequestMapping("/payment")
 class PaymentController(
     private val paymentService: PaymentService,
-    private val tokenUtil: TokenServiceImpl
 ) {
 
         /**
@@ -34,14 +31,7 @@ class PaymentController(
         fun createPayment(
             @RequestHeader("Authorization") authorization: String,
             @RequestHeader("TraceId") traceId: String,
-            @RequestBody @Valid paymentRequest: PaymentRequest, result: BindingResult): PaymentResponse {
-            // Если есть ошибки валидации
-            if (result.hasErrors()) {
-                val errors = result.allErrors.map { it.defaultMessage }
-                return ResponseEntity<PaymentResponse>()
-            }
-
-
+            @RequestBody @Valid paymentRequest: PaymentRequest): Response<Data> {
             return paymentService.createPayment(paymentRequest,traceId)
         }
 }

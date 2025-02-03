@@ -40,6 +40,14 @@ class Order(
     var policyNumber: String,
     @Column(name = "contract_id", nullable = false)
     var contractId: String?,
+    @Column(name = "insurance_program", nullable = false)
+    var insuranceProgram: String?,
+    @Column(name = "recipient_user_id", nullable = false)
+    var recipientUserId: String?,
+    @Column(name = "type_insurance", nullable = false)
+    var typeInsurance: String?,
+    @Column(name = "contract_number", nullable = false)
+    var contractNumber: String?,
     @Column(name = "premium_amount", nullable = false)
     var premiumAmount: String?,
     @Column(name = "recipient_email", nullable = false)
@@ -61,7 +69,7 @@ class Order(
     @Column(name = "custom_url", nullable = false)
     var customURL: String,
     @Column(name = "payment_page_url", nullable = false)
-    var paymentPageUrl: String,
+    var paymentPageUrl: String?,
     @Column(name = "hash", nullable = false)
     var hash: String,
     @Column(name = "create_date", nullable = false)
