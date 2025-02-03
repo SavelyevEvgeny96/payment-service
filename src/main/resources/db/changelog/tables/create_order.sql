@@ -10,11 +10,15 @@ CREATE TABLE orders (
     doc_type VARCHAR(255) NOT NULL,         -- Тип документа
     policy_id VARCHAR(255) NOT NULL,        -- Идентификатор полиса
     policy_number VARCHAR(255) NOT NULL,    -- Номер полиса
-    contract_id VARCHAR(255) NOT NULL,      -- Номер договора
+    contract_id VARCHAR(255) NOT NULL,      -- Идентификатор договора
+    contract_number VARCHAR(255) NOT NULL,  -- Номер договора
+    insurance_program VARCHAR(255) NOT NULL,-- Программа страхования
+    type_insurance VARCHAR(255) NOT NULL,   -- Вид страхования
     premium_amount VARCHAR(255) NOT NULL,   -- Размер премии
     recipient_email VARCHAR(255) NOT NULL,  -- Электронная почта страхователя
     need_receipt BOOLEAN NOT NULL,          -- Признак необходимости отправки чека
     recipient_phone VARCHAR(255) NOT NULL,  -- Мобильный телефон страхователя
+    recipient_user_id VARCHAR(255) NOT NULL,  -- Идентификатор личного кабинета страхователя
     policyholder VARCHAR(255) NOT NULL,     -- ФИО страхователя
     policyholder_doc VARCHAR(255) NOT NULL, -- Серия и номер паспорта
     manager_email VARCHAR(255) NOT NULL,    -- Электронная почта менеджера

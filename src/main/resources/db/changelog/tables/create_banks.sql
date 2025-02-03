@@ -5,3 +5,4 @@ CREATE TABLE banks (
     bank_id VARCHAR(50) NOT NULL,     -- Код банка
     bank_name VARCHAR(255) NOT NULL   -- Наименование банка
 );
+INSERT INTO banks(bank_idб,bank_name)VALUE("gpb","Газпромбанк")
