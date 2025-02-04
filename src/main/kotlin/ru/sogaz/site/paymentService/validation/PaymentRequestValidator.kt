@@ -57,8 +57,8 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
             listResultError.add(validationErrors[EXTERNAL_SYSTEM_CODE_VALIDATION])
         }
 
-        val paymentEndDateValidator = PaymentEndDateValidator()
-        if (!paymentEndDateValidator.isValid(value.paymentEndDate)) {
+        val paymentEndDateValidatorFormat = PaymentEndDateValidatorFormat()
+        if (!paymentEndDateValidatorFormat.isValid(value.paymentEndDate)) {
             listResultError.add(validationErrors[PAYMENT_END_DATE_MASK])
         }
 

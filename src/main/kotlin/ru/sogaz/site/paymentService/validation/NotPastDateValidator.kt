@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /**
- * Валидатор для аннотации `NotPastDateValidator`.
+ * Валидатор для аннотации `@ValidatePaymentRequest`.
  * Проверяет, что значение поля не является датой в прошлом.
  */
 class NotPastDateValidator {

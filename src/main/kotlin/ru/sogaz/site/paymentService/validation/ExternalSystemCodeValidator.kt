@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.validation
 
 /**
- * Валидатор для аннотации `ExternalSystemCodeValidator`.
+ * Валидатор для аннотации `@ValidatePaymentRequest`.
  * Проверяет, что значение поля соответствует одному из допустимых кодов внешней системы.
  */
 class ExternalSystemCodeValidator {

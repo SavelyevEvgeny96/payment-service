@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.validation
 
 /**
- * Валидатор для аннотации `EmailValidator`.
+ * Валидатор для аннотации `@ValidatePaymentRequest`.
  * Проверяет, что значение поля соответствует формату email.
  */
 class EmailValidator {
