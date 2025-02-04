@@ -2,11 +2,22 @@ package ru.sogaz.site.paymentService.validation
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
-import ru.sogaz.site.exceptionStarter.starter.dto.ValidationErrorData
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.BANK
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.EXTERNAL_SYSTEM_CODE_VALIDATION
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.MANAGER_EMAIL
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.PAYMENT_END_DATE
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.PAYMENT_END_DATE_MASK
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.POLICY_HOLDER
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.POLICY_HOLDER_DOC
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.POLICY_HOLDER_LENGTH
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.RECIPIENT_EMAIL
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.RECIPIENT_PHONE_VALIDATION
 import ru.sogaz.site.paymentService.dto.PaymentRequest
 import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePaymentRequest
+import ru.sogaz.siter.models.resonses.ValidationErrorData
 
 /**
  * Объединенный валидатор для проверки всех полей в PaymentRequest.
@@ -21,77 +32,67 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
         context: ConstraintValidatorContext?,
     ): Boolean {
         if (value == null) {
-            throw BusinessException(CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA)
+            throw ValidationException(CODE_ERROR_REQUIRED_DATA)
         }
 
-        val validationErrors = mutableListOf<ValidationErrorData>()
-
+        val validationErrors = CustomPaymentErrors.Companion.validationErrors
+        val listResultError = mutableListOf<ValidationErrorData?>()
         val bankValidator = BankValidator()
         if (!bankValidator.isValid(value.bank)) {
-            validationErrors.add(ValidationErrorData("bank", "Значение должно содержать gpb"))
+            listResultError.add(validationErrors[BANK])
         }
 
         val emailValidator = EmailValidator()
         if (!emailValidator.isValid(value.recipientEmail)) {
-            validationErrors.add(
-                ValidationErrorData("recipientEmail", "Значение должно содержать латинские буквы, цифры и специальные символы"),
-            )
+            listResultError.add(validationErrors[RECIPIENT_EMAIL])
         }
 
         val emailValidatorManager = EmailValidator()
         if (!emailValidatorManager.isValid(value.managerEmail)) {
-            validationErrors.add(
-                ValidationErrorData("managerEmail", "Значение должно содержать латинские буквы, цифры и специальные символы"),
-            )
+            listResultError.add(validationErrors[MANAGER_EMAIL])
         }
 
         val externalSystemCodeValidator = ExternalSystemCodeValidator()
         if (!externalSystemCodeValidator.isValid(value.externalSystemCode)) {
-            validationErrors.add(ValidationErrorData("externalSystemCode", "Значение должно содержать ADI, FOP, LK, 1C"))
+            listResultError.add(validationErrors[EXTERNAL_SYSTEM_CODE_VALIDATION])
         }
 
         val paymentEndDateValidator = PaymentEndDateValidator()
         if (!paymentEndDateValidator.isValid(value.paymentEndDate)) {
-            validationErrors.add(
-                ValidationErrorData(
-                    "paymentEndDate",
-                    "Значение должно содержать только цифры, -, :, + и соответствовать маске yyyy-mm-ddThh:mm:ss+0000",
-                ),
-            )
+            listResultError.add(validationErrors[PAYMENT_END_DATE_MASK])
         }
 
         val paymentPastDateValidator = NotPastDateValidator()
         if (!paymentPastDateValidator.isValid(value.paymentEndDate)) {
-            validationErrors.add(ValidationErrorData("paymentEndDate", "Не может содержать дату в прошлом"))
-        }
+            listResultError.add(validationErrors[PAYMENT_END_DATE])        }
 
         val phoneValidator = PhoneValidator()
         if (!phoneValidator.isValid(value.recipientPhone)) {
-            validationErrors.add(ValidationErrorData("recipientPhone", "Значение должно содержать только цифры, пробел, (, ), + и -"))
+            listResultError.add(validationErrors[RECIPIENT_PHONE_VALIDATION])
         }
 
         val policyholderValidator = PolicyholderValidator()
         if (!policyholderValidator.isValid(value.policyholder)) {
-            validationErrors.add(ValidationErrorData("policyholder", "Значение должно содержать не менее 2 и не более 30 символов"))
+            listResultError.add(validationErrors[POLICY_HOLDER_LENGTH])
         }
 
         val policyholderDocValidator = PolicyholderValidator()
         if (!policyholderDocValidator.isValidDoc(value.policyholderDoc)) {
-            validationErrors.add(ValidationErrorData("policyholderDoc", "Значение должно содержать только цифры, пробел"))
+            listResultError.add(validationErrors[POLICY_HOLDER_DOC])
         }
 
         val policyholderCorrectInput = PolicyholderValidator()
         if (!policyholderCorrectInput.isValidCorrectInput(value.policyholderDoc)) {
-            validationErrors.add(ValidationErrorData("policyholder", "Значение должно содержать только русские буквы, пробел и тире"))
+            listResultError.add(validationErrors[POLICY_HOLDER])
         }
 
         if (validationErrors.isNotEmpty()) {
-            throw BusinessException(
-                CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,
-                validationErrors.toList(),
+            throw ValidationException(
+                CODE_ERROR_REQUIRED_DATA,
+                null,
+                validationErrors.values.toList()
             )
         }
-
         return true
     }
 }
