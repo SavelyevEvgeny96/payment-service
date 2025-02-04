@@ -6,6 +6,7 @@ package ru.sogaz.site.paymentService.validation
  */
 class BankValidator {
     fun isValid(value: String?): Boolean = value == GPB
+
     companion object {
         const val GPB = "gpb"
     }

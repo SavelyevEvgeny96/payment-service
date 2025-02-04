@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.BankValidator
 
 class BankValidatorTest {
-
     private val bankValidator = BankValidator()
 
     @Test

@@ -2,11 +2,10 @@ package validationTests
 
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.PolicyholderValidator
-import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class PolicyholderValidatorTest {
-
     private val validator = PolicyholderValidator()
 
     // Тест для метода isValid

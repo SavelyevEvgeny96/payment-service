@@ -2,11 +2,10 @@ package validationTests
 
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.PhoneValidator
-import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class PhoneValidatorTest {
-
     private val validator = PhoneValidator()
 
     @Test

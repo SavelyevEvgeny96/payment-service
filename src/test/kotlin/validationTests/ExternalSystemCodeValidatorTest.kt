@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.ExternalSystemCodeValidator
 
 class ExternalSystemCodeValidatorTest {
-
     private val externalSystemCodeValidator = ExternalSystemCodeValidator()
 
     @Test

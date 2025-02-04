@@ -64,7 +64,8 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
 
         val paymentPastDateValidator = NotPastDateValidator()
         if (!paymentPastDateValidator.isValid(value.paymentEndDate)) {
-            listResultError.add(validationErrors[PAYMENT_END_DATE])        }
+            listResultError.add(validationErrors[PAYMENT_END_DATE])
+        }
 
         val phoneValidator = PhoneValidator()
         if (!phoneValidator.isValid(value.recipientPhone)) {
@@ -90,7 +91,7 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
             throw ValidationException(
                 CODE_ERROR_REQUIRED_DATA,
                 null,
-                validationErrors.values.toList()
+                validationErrors.values.toList(),
             )
         }
         return true
