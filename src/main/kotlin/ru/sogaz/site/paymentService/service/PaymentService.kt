@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService.service
 
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.config.ApiConfig
 import ru.sogaz.site.paymentService.dto.Data
@@ -11,10 +13,7 @@ import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.siter.models.resonses.Response
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
-import java.util.UUID
+import java.util.*
 
 /**
  * Сервис для обработки платежей.
@@ -43,7 +42,7 @@ data class PaymentService(
     fun createPayment(
         paymentRequest: PaymentRequest,
         traceId: String,
-    ): Response<Data> {
+    ): ResponseEntity<Response<Data>> {
         val result: Response<Data>
         val paymentId = generateUniquePaymentId()
         val paymentCode = generateUniquePaymentCode()
@@ -99,7 +98,7 @@ data class PaymentService(
                 null,
                 data,
             )
-        return result
+        return ResponseEntity(result,HttpStatus.OK)
     }
 }
 

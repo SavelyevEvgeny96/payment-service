@@ -90,7 +90,7 @@ class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, Paym
         if (validationErrors.isNotEmpty()) {
             throw ValidationException(
                 CODE_ERROR_REQUIRED_DATA,
-                null,
+                value.traceId,
                 validationErrors.values.toList(),
             )
         }

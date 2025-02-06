@@ -52,4 +52,5 @@ data class PaymentRequest(
     val typeInsurance: String,
     val insuranceProgram: String,
     val recipientUserId: String,
+    var traceId: String?
 )

@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.controller
 
 import jakarta.validation.Valid
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
@@ -34,5 +35,8 @@ class PaymentController(
     fun createPayment(
         @RequestHeader("TraceId") traceId: String,
         @RequestBody @Valid paymentRequest: PaymentRequest,
-    ): Response<Data> = paymentService.createPayment(paymentRequest, traceId)
+    ): ResponseEntity<Response<Data>> {
+        paymentRequest.traceId = traceId
+        return paymentService.createPayment(paymentRequest, traceId)
+    }
 }
