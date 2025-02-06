@@ -144,7 +144,7 @@ class PaymentServiceImpl(
 
         val data = Data(paymentCode, paymentPageUrl)
         result = Response(
-            status = "SUCCESS",
+            status = SUCCESS,
             code = STATUS_CODE_SUCCESS,
             traceId = traceId,
             data = data
