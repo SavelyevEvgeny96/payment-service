@@ -1,8 +1,9 @@
 package validationTests
 
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.ExternalSystemCodeValidator
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ExternalSystemCodeValidatorTest {
     private val externalSystemCodeValidator = ExternalSystemCodeValidator()

@@ -1,16 +1,14 @@
-package ru.sogaz.site.paymentService.service
+package ru.sogaz.site.paymentService.properties
 import jakarta.annotation.PostConstruct
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.stereotype.Component
-import ru.sogaz.core.logger.LoggerFactory
+import ru.sogaz.site.paymentService.loggerFor
 
 /**
  * Репозиторий информации о приложении.
  */
-@Component
 @ConfigurationProperties(prefix = "app.info")
-class AppInfoService {
-    private val logger = LoggerFactory.getApiLogger(AppInfoService::class.java)
+class AppInfoProperties {
+    private val logger = loggerFor(javaClass)
 
     lateinit var applicationName: String
     lateinit var artifactId: String
@@ -18,15 +16,16 @@ class AppInfoService {
     lateinit var description: String
     lateinit var version: String
     lateinit var appProfile: String
+    lateinit var javaVersion: String
 
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
-        logger.info("applicationName = $applicationName")
-        logger.info("description = $description")
-        logger.info("version = $version")
-        logger.info("artifactId = $artifactId")
-        logger.info("groupId = $groupId")
-        logger.info("appProfile = $appProfile")
+        logger.info("applicationName = " + applicationName)
+        logger.info("description = " + description)
+        logger.info("version = " + version)
+        logger.info("artifactId = " + artifactId)
+        logger.info("groupId = " + groupId)
+        logger.info("java.version = " + javaVersion)
     }
 }

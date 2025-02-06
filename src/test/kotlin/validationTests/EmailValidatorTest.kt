@@ -1,7 +1,8 @@
 package validationTests
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.EmailValidator
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class EmailValidatorTest {
     private val emailValidator = EmailValidator()

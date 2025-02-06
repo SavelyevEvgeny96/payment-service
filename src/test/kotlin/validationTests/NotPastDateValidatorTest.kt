@@ -1,10 +1,11 @@
 package validationTests
 
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.NotPastDateValidator
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class NotPastDateValidatorTest {
     private val notPastDateValidator = NotPastDateValidator()

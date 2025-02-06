@@ -14,66 +14,66 @@ import jakarta.persistence.Table
 class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var paymentId: String? = null,
-    @Column(name = "code", nullable = false)
+    var paymentId: String,
+    @Column(name = "code")
     var code: String,
     @ManyToOne
-    @JoinColumn(name = "state_id", nullable = false)
+    @JoinColumn(name = "state_id")
     var orderStatus: OrderStatus?,
     @Column(name = "date_delete")
-    var dateDelete: String? = null,
+    var dateDelete: String?,
     @ManyToOne
-    @JoinColumn(name = "bank_id", nullable = false)
+    @JoinColumn(name = "bank_id",)
     var bank: Bank,
-    @Column(name = "operation_id", nullable = false)
+    @Column(name = "operation_id", )
     var operationId: String,
     @Column(name = "payment_end_date")
-    var paymentEndDate: String? = null,
+    var paymentEndDate: String,
     @ManyToOne
-    @JoinColumn(name = "external_system_code", nullable = false)
-    var clientSystem: ClientSystem?,
-    @Column(name = "doc_type", nullable = false)
+    @JoinColumn(name = "external_system_code")
+    var clientSystem: ClientSystem,
+    @Column(name = "doc_type")
     var docType: String,
-    @Column(name = "policy_id", nullable = false)
+    @Column(name = "policy_id")
     var policyId: String,
-    @Column(name = "policy_number", nullable = false)
+    @Column(name = "policy_number")
     var policyNumber: String,
-    @Column(name = "contract_id", nullable = false)
-    var contractId: String?,
-    @Column(name = "insurance_program", nullable = false)
-    var insuranceProgram: String?,
-    @Column(name = "recipient_user_id", nullable = false)
-    var recipientUserId: String?,
-    @Column(name = "type_insurance", nullable = false)
-    var typeInsurance: String?,
-    @Column(name = "contract_number", nullable = false)
-    var contractNumber: String?,
-    @Column(name = "premium_amount", nullable = false)
-    var premiumAmount: String?,
-    @Column(name = "recipient_email", nullable = false)
+    @Column(name = "contract_id")
+    var contractId: String,
+    @Column(name = "insurance_program")
+    var insuranceProgram: String,
+    @Column(name = "recipient_user_id")
+    var recipientUserId: String,
+    @Column(name = "type_insurance")
+    var typeInsurance: String,
+    @Column(name = "contract_number")
+    var contractNumber: String,
+    @Column(name = "premium_amount")
+    var premiumAmount: String,
+    @Column(name = "recipient_email")
     var recipientEmail: String,
-    @Column(name = "need_receipt", nullable = false)
-    var needReceipt: Boolean?,
-    @Column(name = "recipient_phone", nullable = false)
+    @Column(name = "need_receipt")
+    var needReceipt: Boolean,
+    @Column(name = "recipient_phone")
     var recipientPhone: String,
-    @Column(name = "policyholder", nullable = false)
+    @Column(name = "policyholder")
     var policyholder: String,
-    @Column(name = "policyholder_doc", nullable = false)
+    @Column(name = "policyholder_doc")
     var policyholderDoc: String,
-    @Column(name = "manager_email", nullable = false)
+    @Column(name = "manager_email")
     var managerEmail: String,
-    @Column(name = "url_to_return", nullable = false)
+    @Column(name = "url_to_return")
     var urlToReturn: String,
-    @Column(name = "url_to_decline", nullable = false)
-    var urlToDecline: String,
-    @Column(name = "custom_url", nullable = false)
+    @Column(name = "url_to_decline")
+    var urlToDecline: String?,
+    @Column(name = "custom_url")
     var customURL: String,
-    @Column(name = "payment_page_url", nullable = false)
+    @Column(name = "payment_page_url")
     var paymentPageUrl: String?,
-    @Column(name = "hash", nullable = false)
+    @Column(name = "hash")
     var hash: String,
-    @Column(name = "create_date", nullable = false)
+    @Column(name = "create_date")
     var createDate: String,
-    @Column(name = "update_date", nullable = false)
+    @Column(name = "update_date")
     var updateDate: String,
 )

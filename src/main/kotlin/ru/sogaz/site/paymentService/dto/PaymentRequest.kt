@@ -33,10 +33,10 @@ data class PaymentRequest(
     val docType: String,
     val policyId: String,
     val policyNumber: String,
-    val contractNumber: String?,
-    val contractId: String?,
-    val premiumAmount: String?,
-    val needReceipt: Boolean? = null,
+    val contractNumber: String,
+    val contractId: String,
+    val premiumAmount: String,
+    val needReceipt: Boolean,
     val urlToReturn: String,
     val urlToDecline: String,
     val customURL: String,
@@ -52,5 +52,5 @@ data class PaymentRequest(
     val typeInsurance: String,
     val insuranceProgram: String,
     val recipientUserId: String,
-    var traceId: String?
+    var traceId: String?,
 )

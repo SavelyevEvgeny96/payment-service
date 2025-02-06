@@ -1,37 +1,35 @@
+app:
+  info:
+    application_name: ${PROJECT_NAME:app service}
+    version: ${PROJECT_VERSION:1.0.0}
+    description: ${PROJECT_DESCRIPTION:Payment Service}
+    artifact_Id: ${PROJECT_ARTIFACTID:payment-service}
+    group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
+    app_profile: ${ENVIRONMENT:dev}
+    java-version: ${JAVA_VERSION:21}
+
+server:
+  port: ${SERVER_PORT:8080}
+  use-forward-headers: true
+  main.allow-bean-definition-overriding: true
+
 spring:
   application:
     name: payment-service
   profiles:
     active: ${ENVIRONMENT:dev}
-server:
-  port: ${SERVER_PORT:8080}
-  use-forward-headers: true
-  main.allow-bean-definition-overriding: true
-datasource:
-  url: jdbc:postgresql://localhost:5432/PostgreSQL_17
-  username: postgres
-  password: 123456
-  driver-class-name: org.postgresql.Driver
-jpa:
-  hibernate:
-    ddl-auto: update
-  properties:
-    hibernate:
-      format_sql: true
-      show_sql: true
-liquibase:
-  enabled: true
-  change-log: classpath:/db/changelog/master-changelog.xml
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${ENVIRONMENT:jdbc:postgresql://localhost:5432/links}
+    username: ${ENVIRONMENT:postgres}
+    password: ${ENVIRONMENT:123456}
+  liquibase:
+    change-log: db.changelog/db.changelog-master.yaml
+  output:
+    ansi:
+      enabled: ALWAYS
 
-app:
-  info:
-    application_name: @project.name@
-    version: @project.version@
-    description: @project.description@
-    artifact_Id: @project.artifactId@
-    group_Id: @project.groupId@
-    app_profile: ${ENVIRONMENT:dev}
-    java-version: @java.version@
+
 api:
   payment-url: ${PAYMENT_URL:url}
 
@@ -44,10 +42,9 @@ management:
     tags:
       application: ${HOSTNAME:localhost}
 
-
 logging:
   level:
     ru:
       sogaz:
-        esb:
+        site:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
