@@ -2,7 +2,6 @@ package ru.sogaz.site.paymentService.service.impl
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.config.ApiConfig
 import ru.sogaz.site.paymentService.dto.Data
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper

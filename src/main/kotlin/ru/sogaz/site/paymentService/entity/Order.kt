@@ -28,7 +28,7 @@ class Order(
     @Column(name = "operation_id")
     var operationId: String,
     @Column(name = "payment_end_date")
-    var paymentEndDate: String,
+    var paymentEndDate: String?,
     @ManyToOne
     @JoinColumn(name = "external_system_code")
     var clientSystem: ClientSystem,

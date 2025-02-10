@@ -8,4 +8,3 @@ open class ApiConfig {
     @Value("\${api.payment-url}")
     lateinit var paymentUrl: String
 }
-

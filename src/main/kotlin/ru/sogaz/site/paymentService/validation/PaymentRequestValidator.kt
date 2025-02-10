@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.validation
 
-import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.paymentService.dto.PaymentRequest
@@ -12,7 +11,7 @@ import ru.sogaz.siter.models.resonses.ValidationErrorData
  * Сначала проверяются все поля, затем ошибки собираются в одном месте,
  * и если есть ошибки, выбрасывается исключение.
  */
-@Service
+
 class PaymentRequestValidator {
     private val logger = loggerFor(javaClass)
 
@@ -58,7 +57,7 @@ class PaymentRequestValidator {
         }
 
         val paymentPastDateValidator = NotPastDateValidator()
-        if (!paymentPastDateValidator.isValid(value.paymentEndDate)) {
+        if (!value.paymentEndDate?.let { paymentPastDateValidator.isValid(it) }!!) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE])
             logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${value.traceId}")
         }

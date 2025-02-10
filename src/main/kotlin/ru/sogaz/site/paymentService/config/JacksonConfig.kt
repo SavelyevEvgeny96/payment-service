@@ -9,12 +9,12 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 @Configuration
 open class JacksonConfig {
     @Bean
-    open fun  objectMapper(): ObjectMapper {
+    open fun objectMapper(): ObjectMapper {
         val objectMapper = ObjectMapper()
         objectMapper.registerModule(KotlinModule())
         return objectMapper
     }
 
     @Bean
-   open fun jsonMessageConverter(): MappingJackson2HttpMessageConverter = MappingJackson2HttpMessageConverter(objectMapper())
+    open fun jsonMessageConverter(): MappingJackson2HttpMessageConverter = MappingJackson2HttpMessageConverter(objectMapper())
 }

@@ -11,21 +11,19 @@ import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
 
 @Configuration
 open class PaymentServiceConfig {
-
     @Bean
     open fun paymentService(
         apiConfig: ApiConfig,
         bankRepository: BankRepository,
         clientSystemRepository: ClientSystemRepository,
         orderRepository: OrderRepository,
-        orderStatusRepository: OrderStatusRepository
-    ): PaymentService {
-        return PaymentServiceImpl(
+        orderStatusRepository: OrderStatusRepository,
+    ): PaymentService =
+        PaymentServiceImpl(
             apiConfig = apiConfig,
             bankRepository = bankRepository,
             clientSystemRepository = clientSystemRepository,
             orderRepository = orderRepository,
-            orderStatusRepository = orderStatusRepository
+            orderStatusRepository = orderStatusRepository,
         )
-    }
 }
