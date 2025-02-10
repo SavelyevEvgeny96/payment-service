@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.validation
 
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 /**
@@ -8,13 +9,17 @@ import java.time.format.DateTimeFormatter
  * Проверяет, что значение поля не является датой в прошлом.
  */
 class NotPastDateValidator {
-    fun isValid(value: String?): Boolean {
+
+    fun isValid(value: String): Boolean {
         if (value.isNullOrEmpty()) {
             return false
         }
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss+0000")
-        val dateTime = LocalDateTime.parse(value, formatter)
-        val now = LocalDateTime.now()
+
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+
+        val dateTime = ZonedDateTime.parse(value, formatter)
+        val now = ZonedDateTime.now()
         return !dateTime.isBefore(now)
     }
 }
+

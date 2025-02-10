@@ -24,7 +24,6 @@ import java.util.UUID
  * Сервис для обработки платежей.
  * Включает в себя валидацию данных и создание записи о платеже.
  */
-@Service
 class PaymentServiceImpl(
     private val apiConfig: ApiConfig,
     private val bankRepository: BankRepository,
