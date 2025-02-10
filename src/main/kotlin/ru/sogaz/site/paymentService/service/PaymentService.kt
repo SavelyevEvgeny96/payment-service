@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.service
 
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.paymentService.dto.Data
-import ru.sogaz.site.paymentService.dto.PaymentRequest
+import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.siter.models.resonses.Response
 
 /**
@@ -18,7 +18,7 @@ interface PaymentService {
      * @return Объект Response с информацией о платеже
      */
     fun createPayment(
-        paymentRequest: PaymentRequest,
+        requestWrapper: PaymentRequestWrapper,
         traceId: String,
     ): ResponseEntity<Response<Data>>
 }

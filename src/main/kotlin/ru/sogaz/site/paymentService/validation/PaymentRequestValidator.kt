@@ -1,22 +1,10 @@
 package ru.sogaz.site.paymentService.validation
 
-import jakarta.validation.ConstraintValidator
-import jakarta.validation.ConstraintValidatorContext
+import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.BANK
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.EXTERNAL_SYSTEM_CODE_VALIDATION
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.MANAGER_EMAIL
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.PAYMENT_END_DATE
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.PAYMENT_END_DATE_MASK
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.POLICY_HOLDER
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.POLICY_HOLDER_DOC
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.POLICY_HOLDER_LENGTH
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.RECIPIENT_EMAIL
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.RECIPIENT_PHONE_VALIDATION
 import ru.sogaz.site.paymentService.dto.PaymentRequest
-import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePaymentRequest
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.siter.models.resonses.ValidationErrorData
 
 /**
@@ -24,76 +12,93 @@ import ru.sogaz.siter.models.resonses.ValidationErrorData
  * Сначала проверяются все поля, затем ошибки собираются в одном месте,
  * и если есть ошибки, выбрасывается исключение.
  */
-class PaymentRequestValidator : ConstraintValidator<ValidatePaymentRequest, PaymentRequest> {
-    override fun initialize(constraintAnnotation: ValidatePaymentRequest?) {}
+@Service
+class PaymentRequestValidator {
+    private val logger = loggerFor(javaClass)
 
-    override fun isValid(
-        value: PaymentRequest?,
-        context: ConstraintValidatorContext?,
-    ): Boolean {
+    fun isValid(value: PaymentRequest?) {
+        logger.info("Начало валидации для traceId: ${value?.traceId}")
+
         if (value == null) {
-            throw ValidationException(CODE_ERROR_REQUIRED_DATA)
+            logger.error("Ошибка: PaymentRequest не был передан.")
+            throw ValidationException(CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA)
         }
 
         val validationErrors = CustomPaymentErrors.Companion.validationErrors
         val listResultError = mutableListOf<ValidationErrorData?>()
+
         val bankValidator = BankValidator()
         if (!bankValidator.isValid(value.bank)) {
-            listResultError.add(validationErrors[BANK])
+            listResultError.add(validationErrors[CustomPaymentErrors.BANK])
+            logger.warn("Ошибка валидации для поля банка: ${value.bank}")
         }
 
         val emailValidator = EmailValidator()
         if (!emailValidator.isValid(value.recipientEmail)) {
-            listResultError.add(validationErrors[RECIPIENT_EMAIL])
+            listResultError.add(validationErrors[CustomPaymentErrors.RECIPIENT_EMAIL])
+            logger.warn("Ошибка валидации для email получателя: ${value.recipientEmail}")
         }
 
         val emailValidatorManager = EmailValidator()
         if (!emailValidatorManager.isValid(value.managerEmail)) {
-            listResultError.add(validationErrors[MANAGER_EMAIL])
+            listResultError.add(validationErrors[CustomPaymentErrors.MANAGER_EMAIL])
+            logger.warn("Ошибка валидации для email менеджера: ${value.managerEmail}")
         }
 
         val externalSystemCodeValidator = ExternalSystemCodeValidator()
         if (!externalSystemCodeValidator.isValid(value.externalSystemCode)) {
-            listResultError.add(validationErrors[EXTERNAL_SYSTEM_CODE_VALIDATION])
+            listResultError.add(validationErrors[CustomPaymentErrors.EXTERNAL_SYSTEM_CODE_VALIDATION])
+            logger.warn("Ошибка валидации для внешнего кода системы: ${value.externalSystemCode}")
         }
 
         val paymentEndDateValidatorFormat = PaymentEndDateValidatorFormat()
         if (!paymentEndDateValidatorFormat.isValid(value.paymentEndDate)) {
-            listResultError.add(validationErrors[PAYMENT_END_DATE_MASK])
+            listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE_MASK])
+            logger.warn("Ошибка валидации для формата даты окончания платежа: ${value.paymentEndDate}")
         }
 
         val paymentPastDateValidator = NotPastDateValidator()
         if (!paymentPastDateValidator.isValid(value.paymentEndDate)) {
-            listResultError.add(validationErrors[PAYMENT_END_DATE])
+            listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE])
+            logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${value.traceId}")
         }
 
         val phoneValidator = PhoneValidator()
         if (!phoneValidator.isValid(value.recipientPhone)) {
-            listResultError.add(validationErrors[RECIPIENT_PHONE_VALIDATION])
+            listResultError.add(validationErrors[CustomPaymentErrors.RECIPIENT_PHONE_VALIDATION])
+            logger.warn("Ошибка валидации для телефона получателя: ${value.recipientPhone}")
         }
 
         val policyholderValidator = PolicyholderValidator()
-        if (!policyholderValidator.isValid(value.policyholder)) {
-            listResultError.add(validationErrors[POLICY_HOLDER_LENGTH])
+        if (!policyholderValidator.isValid(value.policyHolder)) {
+            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_LENGTH])
+            logger.warn("Ошибка валидации для держателя полиса: ${value.policyHolder}")
         }
 
         val policyholderDocValidator = PolicyholderValidator()
-        if (!policyholderDocValidator.isValidDoc(value.policyholderDoc)) {
-            listResultError.add(validationErrors[POLICY_HOLDER_DOC])
+        if (!policyholderDocValidator.isValidDoc(value.policyHolderDoc)) {
+            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_DOC])
+            logger.warn("Ошибка валидации для документа держателя полиса: ${value.policyHolderDoc}")
         }
 
         val policyholderCorrectInput = PolicyholderValidator()
-        if (!policyholderCorrectInput.isValidCorrectInput(value.policyholderDoc)) {
-            listResultError.add(validationErrors[POLICY_HOLDER])
+        if (!policyholderCorrectInput.isValidCorrectInput(value.policyHolderDoc)) {
+            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER])
+            logger.warn("Ошибка валидации для корректности ввода полиса: ${value.policyHolderDoc}")
         }
 
-        if (validationErrors.isNotEmpty()) {
+        if (listResultError.isNotEmpty()) {
+            logger.error(
+                "Валидация не прошла для traceId: ${value.traceId}." +
+                    " Ошибки: ${listResultError.map { it?.error }}",
+            )
             throw ValidationException(
-                CODE_ERROR_REQUIRED_DATA,
+                CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,
                 value.traceId,
-                validationErrors.values.toList(),
+                listResultError,
             )
         }
-        return true
+
+        logger.info("Валидация прошла успешно для traceId: ${value.traceId}")
     }
 }

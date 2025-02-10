@@ -1,7 +1,5 @@
 package ru.sogaz.site.paymentService.dto
 
-import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePaymentRequest
-
 /**
  * DTO для запроса на создание платежа.
  * Содержит все необходимые параметры для создания записи о платеже и отправки на оплату.
@@ -27,7 +25,6 @@ import ru.sogaz.site.paymentService.validation.anatationsConstraints.ValidatePay
  * @property hash Подпись целостности запроса (обязательное поле)
  * @property bank Банк для совершения операции (необязательное поле, если не указан — используется дефолтный банк из конфигурации)
  */
-@ValidatePaymentRequest
 data class PaymentRequest(
     val operationId: String,
     val docType: String,
@@ -44,8 +41,8 @@ data class PaymentRequest(
     val externalSystemCode: String,
     val recipientEmail: String,
     val recipientPhone: String,
-    val policyholder: String,
-    val policyholderDoc: String,
+    val policyHolder: String,
+    val policyHolderDoc: String,
     val managerEmail: String,
     val paymentEndDate: String,
     val bank: String,

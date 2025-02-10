@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.controller
 
-import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -8,8 +7,9 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.dto.Data
-import ru.sogaz.site.paymentService.dto.PaymentRequest
+import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.service.PaymentService
+import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 import ru.sogaz.siter.models.resonses.Response
 
 /**
@@ -20,6 +20,7 @@ import ru.sogaz.siter.models.resonses.Response
 @RequestMapping("/payment")
 class PaymentController(
     private val paymentService: PaymentService,
+    private val paymentRequestValidator: PaymentRequestValidator,
 ) {
     /**
      * Метод для создания платежа.
@@ -34,9 +35,10 @@ class PaymentController(
     @PostMapping("/create")
     fun createPayment(
         @RequestHeader("TraceId") traceId: String,
-        @RequestBody @Valid paymentRequest: PaymentRequest,
+        @RequestBody requestWrapper: PaymentRequestWrapper,
     ): ResponseEntity<Response<Data>> {
-        paymentRequest.traceId = traceId
-        return paymentService.createPayment(paymentRequest, traceId)
+        requestWrapper.payments.forEach { paymentRequest -> paymentRequestValidator.isValid(paymentRequest) }
+
+        return paymentService.createPayment(requestWrapper, traceId)
     }
 }

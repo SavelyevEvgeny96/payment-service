@@ -23,9 +23,9 @@ class Order(
     @Column(name = "date_delete")
     var dateDelete: String?,
     @ManyToOne
-    @JoinColumn(name = "bank_id",)
+    @JoinColumn(name = "bank_id")
     var bank: Bank,
-    @Column(name = "operation_id", )
+    @Column(name = "operation_id")
     var operationId: String,
     @Column(name = "payment_end_date")
     var paymentEndDate: String,
