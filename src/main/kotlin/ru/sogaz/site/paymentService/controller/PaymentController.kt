@@ -36,12 +36,15 @@ class PaymentController(
     fun createPayment(
         @RequestHeader("TraceId") traceId: String,
         @RequestBody requestWrapper: PaymentRequestWrapper,
-    ): ResponseEntity<Response<Data>> {
+    )
+    : ResponseEntity<Response<Data>> {
         requestWrapper.payments.forEach { paymentRequest ->
             paymentRequest.traceId = traceId
             paymentRequestValidator.isValid(paymentRequest)
         }
-
         return paymentService.createPayment(requestWrapper, traceId)
     }
+
+
+
 }

@@ -6,6 +6,7 @@ import ru.sogaz.site.paymentService.config.ApiConfig
 import ru.sogaz.site.paymentService.dto.Data
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
@@ -61,22 +62,46 @@ class PaymentServiceImpl(
         traceId: String,
     ): ResponseEntity<Response<Data>> {
         logger.info(LOG_START_PAYMENT_CREATION, traceId)
+        val orderId = generateUniquePaymentId()
+        val orderCode = generateUniquePaymentCode()
+        val bank =
+            try {
+                if (requestWrapper.bank != null) {
+                    bankRepository.findById(requestWrapper.bank.toLong()).orElseThrow()
+                } else {
+                    bankRepository.findFirstByOrderById()
+                }
+            } catch (e: Exception) {
+                logger.error(e, LOG_BANK_NOT_FOUND, traceId)
+                throw IllegalStateException(ERROR_BANK_NOT_FOUND)
+            }
+        val orderStatus =
+            try {
+                orderStatusRepository.findByStateId("0")
+            } catch (e: Exception) {
+                logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
+                throw IllegalStateException(ERROR_ORDER_STATUS_NOT_FOUND)
+            }
+        val order=Order(
+            orderId = orderId,
+            bankId = bank,
+            orderStatus = orderStatus,
+            code = orderCode,
+            createDate = getCurrentDateMoscow(),
+            dateDelete = null,
+            paymentEndDate = requestWrapper.paymentEndDate,
+            customURL = requestWrapper.customURL,
+            payId = null,
+            premiumAmount =
 
+        )
         for (paymentRequest in requestWrapper.payments) {
             val result: Response<Data>
 
-            val paymentId = generateUniquePaymentId()
-            val paymentCode = generateUniquePaymentCode()
             logger.info(LOG_PAYMENT_ID_GENERATED, paymentId, traceId)
             logger.info(LOG_PAYMENT_CODE_GENERATED, paymentCode, traceId)
 
-            val orderStatus =
-                try {
-                    orderStatusRepository.findByStateId("0")
-                } catch (e: Exception) {
-                    logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
-                    throw IllegalStateException(ERROR_ORDER_STATUS_NOT_FOUND)
-                }
+
 
             val clientSystem =
                 try {
@@ -86,30 +111,16 @@ class PaymentServiceImpl(
                     throw IllegalStateException(ERROR_CLIENT_SYSTEM_NOT_FOUND)
                 }
 
-            val bank =
-                try {
-                    if (paymentRequest.bank != null) {
-                        bankRepository.findById(paymentRequest.bank.toLong()).orElseThrow()
-                    } else {
-                        bankRepository.findFirstByOrderById()
-                    }
-                } catch (e: Exception) {
-                    logger.error(e, LOG_BANK_NOT_FOUND, traceId)
-                    throw IllegalStateException(ERROR_BANK_NOT_FOUND)
-                }
+
 
             val paymentPageUrl = "${apiConfig.paymentUrl}$paymentCode}"
 
-            val order =
-                Order(
-                    paymentId = paymentId,
-                    code = paymentCode,
-                    bank = bank,
-                    premiumAmount = paymentRequest.premiumAmount,
+            val subOrders =
+                SubOrder(
+                    subOrderId = paymentId,
                     recipientEmail = paymentRequest.recipientEmail,
                     recipientPhone = paymentRequest.recipientPhone,
                     operationId = paymentRequest.operationId,
-                    paymentEndDate = paymentRequest.paymentEndDate,
                     clientSystem = clientSystem,
                     docType = paymentRequest.docType,
                     policyId = paymentRequest.policyId,
@@ -119,19 +130,13 @@ class PaymentServiceImpl(
                     policyholder = paymentRequest.policyHolder,
                     policyholderDoc = paymentRequest.policyHolderDoc,
                     managerEmail = paymentRequest.managerEmail,
-                    urlToReturn = paymentRequest.urlToReturn,
-                    urlToDecline = paymentRequest.urlToDecline,
-                    customURL = paymentRequest.customURL,
                     paymentPageUrl = paymentPageUrl,
                     hash = paymentRequest.hash,
-                    createDate = getCurrentDateMoscow(),
-                    updateDate = getCurrentDateMoscow(),
-                    orderStatus = orderStatus,
                     typeInsurance = paymentRequest.typeInsurance,
                     contractNumber = paymentRequest.contractNumber,
                     insuranceProgram = paymentRequest.insuranceProgram,
                     recipientUserId = paymentRequest.recipientUserId,
-                    dateDelete = null,
+
                 )
 
             try {

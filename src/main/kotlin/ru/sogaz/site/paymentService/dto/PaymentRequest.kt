@@ -40,9 +40,6 @@ data class PaymentRequest(
     @NotNull
     val premiumAmount: Double,
     val needReceipt: Boolean?,
-    val urlToReturn: String?,
-    val urlToDecline: String?,
-    val customURL: String?,
     val hash: String?,
     @NotNull
     val externalSystemCode: String,
@@ -53,9 +50,8 @@ data class PaymentRequest(
     val policyHolder: String?,
     val policyHolderDoc: String?,
     val managerEmail: String?,
-    @NotNull
-    val paymentEndDate: String,
-    val bank: String?,
+
+
     val typeInsurance: String?,
     val insuranceProgram: String?,
     val recipientUserId: String?,
