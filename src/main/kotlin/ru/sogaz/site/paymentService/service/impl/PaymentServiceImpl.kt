@@ -98,7 +98,7 @@ class PaymentServiceImpl(
                     throw IllegalStateException(ERROR_BANK_NOT_FOUND)
                 }
 
-            val paymentPageUrl = "${apiConfig.paymentUrl}$paymentId}"
+            val paymentPageUrl = "${apiConfig.paymentUrl}$paymentCode}"
 
             val order =
                 Order(

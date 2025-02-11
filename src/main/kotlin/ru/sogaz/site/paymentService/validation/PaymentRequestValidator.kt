@@ -57,7 +57,7 @@ class PaymentRequestValidator {
         }
 
         val paymentPastDateValidator = NotPastDateValidator()
-        if (!value.paymentEndDate?.let { paymentPastDateValidator.isValid(it) }!!) {
+        if (!paymentPastDateValidator.isValid(value.paymentEndDate)) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE])
             logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${value.traceId}")
         }

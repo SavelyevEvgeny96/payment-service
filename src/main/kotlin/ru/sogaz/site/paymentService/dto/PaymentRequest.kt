@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService.dto
 
+import jakarta.validation.constraints.NotNull
+
 /**
  * DTO для запроса на создание платежа.
  * Содержит все необходимые параметры для создания записи о платеже и отправки на оплату.
@@ -26,28 +28,36 @@ package ru.sogaz.site.paymentService.dto
  * @property bank Банк для совершения операции (необязательное поле, если не указан — используется дефолтный банк из конфигурации)
  */
 data class PaymentRequest(
-    val operationId: String,
+    @NotNull
+    val operationId: String?,
     val docType: String,
+    @NotNull
     val policyId: String,
+    @NotNull
     val policyNumber: String,
     val contractNumber: String,
     val contractId: String,
-    val premiumAmount: String,
-    val needReceipt: Boolean,
-    val urlToReturn: String,
-    val urlToDecline: String,
-    val customURL: String,
-    val hash: String,
+    @NotNull
+    val premiumAmount: Double,
+    val needReceipt: Boolean?,
+    val urlToReturn: String?,
+    val urlToDecline: String?,
+    val customURL: String?,
+    val hash: String?,
+    @NotNull
     val externalSystemCode: String,
+    @NotNull
     val recipientEmail: String,
-    val recipientPhone: String,
-    val policyHolder: String,
-    val policyHolderDoc: String,
-    val managerEmail: String,
-    val paymentEndDate: String?,
-    val bank: String,
-    val typeInsurance: String,
-    val insuranceProgram: String,
-    val recipientUserId: String,
+    @NotNull
+    val recipientPhone: String?,
+    val policyHolder: String?,
+    val policyHolderDoc: String?,
+    val managerEmail: String?,
+    @NotNull
+    val paymentEndDate: String,
+    val bank: String?,
+    val typeInsurance: String?,
+    val insuranceProgram: String?,
+    val recipientUserId: String?,
     var traceId: String?,
 )
