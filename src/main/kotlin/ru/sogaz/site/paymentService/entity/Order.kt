@@ -24,7 +24,7 @@ class Order(
     @JoinColumn(name = "bank_id")
     var bankId: Bank,
     @Column(name = "premium_amount")
-    var premiumAmount: Double,
+    var premiumAmount: Double?,
     @Column(name = "payment_end_date")
     var paymentEndDate: String?,
     @Column(name = "url_to_return")
@@ -39,4 +39,16 @@ class Order(
     var createDate: String,
     @Column(name = "update_date")
     var updateDate: String,
+    @Column(name = "recipient_email")
+    var recipientEmail: String,
+    @Column(name = "need_receipt")
+    var needReceipt: Boolean?,
+    @Column(name = "recipient_phone")
+    var recipientPhone: String?,
+    @Column(name = "policyholder")
+    var policyholder: String?,
+    @Column(name = "policyholder_doc")
+    var policyholderDoc: String?,
+    @Column(name = "recipient_user_id")
+    var recipientUserId: String?,
 )

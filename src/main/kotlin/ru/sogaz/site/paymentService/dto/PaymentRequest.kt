@@ -39,21 +39,11 @@ data class PaymentRequest(
     val contractId: String,
     @NotNull
     val premiumAmount: Double,
-    val needReceipt: Boolean?,
     val hash: String?,
     @NotNull
     val externalSystemCode: String,
-    @NotNull
-    val recipientEmail: String,
-    @NotNull
-    val recipientPhone: String?,
-    val policyHolder: String?,
-    val policyHolderDoc: String?,
     val managerEmail: String?,
-
-
     val typeInsurance: String?,
     val insuranceProgram: String?,
-    val recipientUserId: String?,
     var traceId: String?,
 )

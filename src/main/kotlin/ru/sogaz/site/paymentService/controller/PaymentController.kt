@@ -40,7 +40,7 @@ class PaymentController(
     : ResponseEntity<Response<Data>> {
         requestWrapper.payments.forEach { paymentRequest ->
             paymentRequest.traceId = traceId
-            paymentRequestValidator.isValid(paymentRequest)
+            paymentRequestValidator.isValid(paymentRequest,requestWrapper)
         }
         return paymentService.createPayment(requestWrapper, traceId)
     }
