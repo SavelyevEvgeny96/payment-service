@@ -108,24 +108,7 @@ class PaymentServiceImpl(
                 policyholder = requestWrapper.policyHolder,
                 policyholderDoc = requestWrapper.policyHolderDoc,
             )
-        val result: Response<Data>
-        val paymentPageUrl = "${apiConfig.paymentUrl}$orderCode}"
-        try {
-            orderRepository.save(order)
-            logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
-            val data = Data(orderCode, paymentPageUrl)
-            result =
-                Response(
-                    status = SUCCESS,
-                    code = STATUS_CODE_SUCCESS,
-                    traceId = traceId,
-                    data = data,
-                )
-            return ResponseEntity(result, HttpStatus.OK)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
-            throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
-        }
+
         for (paymentRequest in requestWrapper.payments) {
             val subOrderId = generateUniquePaymentId()
             logger.info(LOG_PAYMENT_ID_GENERATED, subOrderId, traceId)
@@ -163,7 +146,24 @@ class PaymentServiceImpl(
                 throw IllegalStateException(ERROR_WHILE_SAVING_SUB_ORDER)
             }
         }
-        throw IllegalStateException("Ошибка при обработке платежей")
+        val result: Response<Data>
+        val paymentPageUrl = "${apiConfig.paymentUrl}$orderCode}"
+        try {
+            orderRepository.save(order)
+            logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
+            val data = Data(orderCode, paymentPageUrl)
+            result =
+                Response(
+                    status = SUCCESS,
+                    code = STATUS_CODE_SUCCESS,
+                    traceId = traceId,
+                    data = data,
+                )
+            return ResponseEntity(result, HttpStatus.OK)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
+            throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
+        }
 
     }
 }
