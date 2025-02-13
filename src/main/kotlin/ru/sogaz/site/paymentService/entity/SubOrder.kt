@@ -1,10 +1,15 @@
 package ru.sogaz.site.paymentService.entity
 
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
 
 @Entity
 @Table(name = "sub_orders")
-class SubOrder (
+class SubOrder(
     @Id
     @Column(name = "sub_order_id")
     var subOrderId: String,
@@ -36,4 +41,4 @@ class SubOrder (
     var hash: String?,
     @Column(name = "premium_amount")
     var premiumAmount: Double?,
-    )
+)

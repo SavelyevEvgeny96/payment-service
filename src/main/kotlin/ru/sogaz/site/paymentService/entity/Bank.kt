@@ -9,7 +9,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "banks")
-class Bank(
+data class Bank(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
@@ -18,3 +18,7 @@ class Bank(
     @Column(name = "bank_name", nullable = false)
     var bankName: String,
 )
+{
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(0, "", "")
+}

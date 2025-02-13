@@ -2,7 +2,11 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.repository.*
+import ru.sogaz.site.paymentService.repository.BankRepository
+import ru.sogaz.site.paymentService.repository.ClientSystemRepository
+import ru.sogaz.site.paymentService.repository.OrderRepository
+import ru.sogaz.site.paymentService.repository.OrderStatusRepository
+import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
 
@@ -15,7 +19,7 @@ open class PaymentServiceConfig {
         clientSystemRepository: ClientSystemRepository,
         orderRepository: OrderRepository,
         orderStatusRepository: OrderStatusRepository,
-        subOrderRepository: SubOrderRepository
+        subOrderRepository: SubOrderRepository,
     ): PaymentService =
         PaymentServiceImpl(
             apiConfig = apiConfig,
@@ -23,6 +27,6 @@ open class PaymentServiceConfig {
             clientSystemRepository = clientSystemRepository,
             orderRepository = orderRepository,
             orderStatusRepository = orderStatusRepository,
-            subOrderRepository = subOrderRepository
+            subOrderRepository = subOrderRepository,
         )
 }

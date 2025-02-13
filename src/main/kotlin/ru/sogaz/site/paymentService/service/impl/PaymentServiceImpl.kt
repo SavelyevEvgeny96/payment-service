@@ -8,7 +8,11 @@ import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.*
+import ru.sogaz.site.paymentService.repository.BankRepository
+import ru.sogaz.site.paymentService.repository.ClientSystemRepository
+import ru.sogaz.site.paymentService.repository.OrderRepository
+import ru.sogaz.site.paymentService.repository.OrderStatusRepository
+import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.siter.models.resonses.Response
 import java.text.SimpleDateFormat
@@ -27,7 +31,7 @@ class PaymentServiceImpl(
     private val clientSystemRepository: ClientSystemRepository,
     private val orderRepository: OrderRepository,
     private val orderStatusRepository: OrderStatusRepository,
-    private val subOrderRepository: SubOrderRepository
+    private val subOrderRepository: SubOrderRepository,
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
@@ -70,45 +74,58 @@ class PaymentServiceImpl(
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
         val bank =
             try {
-                if (requestWrapper.bank != null) {
-                    bankRepository.findById(requestWrapper.bank.toLong()).orElseThrow()
-                } else {
-                    bankRepository.findFirstByOrderById()
-                }
+                    bankRepository.findByBankId(requestWrapper.bank).orElseThrow()
             } catch (e: Exception) {
                 logger.error(e, LOG_BANK_NOT_FOUND, traceId)
                 throw IllegalStateException(ERROR_BANK_NOT_FOUND)
             }
         val orderStatus =
             try {
-                orderStatusRepository.findByStateId("0")
+                orderStatusRepository.findByStateId("NEW")
             } catch (e: Exception) {
                 logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
                 throw IllegalStateException(ERROR_ORDER_STATUS_NOT_FOUND)
             }
-        val order = Order(
-            orderId = orderId,
-            bankId = bank,
-            orderStatus = orderStatus,
-            code = orderCode,
-            createDate = getCurrentDateMoscow(),
-            dateDelete = null,
-            paymentEndDate = requestWrapper.paymentEndDate,
-            customURL = requestWrapper.customURL,
-            payId = null,
-            premiumAmount = null,
-            updateDate = getCurrentDateMoscow(),
-            urlToDecline = requestWrapper.urlToDecline,
-            urlToReturn = requestWrapper.urlToReturn,
-            recipientUserId = requestWrapper.recipientUserId,
-            recipientEmail = requestWrapper.recipientEmail,
-            recipientPhone = requestWrapper.recipientPhone,
-            needReceipt = requestWrapper.needReceipt,
-            policyholder = requestWrapper.policyHolder,
-            policyholderDoc = requestWrapper.policyHolderDoc,
-
-        )
-
+        val order =
+            Order(
+                orderId = orderId,
+                bankId = bank,
+                orderStatus = orderStatus,
+                code = orderCode,
+                createDate = getCurrentDateMoscow(),
+                dateDelete = null,
+                paymentEndDate = requestWrapper.paymentEndDate,
+                customURL = requestWrapper.customURL,
+                payId = null,
+                premiumAmount = null,
+                updateDate = getCurrentDateMoscow(),
+                urlToDecline = requestWrapper.urlToDecline,
+                urlToReturn = requestWrapper.urlToReturn,
+                recipientUserId = requestWrapper.recipientUserId,
+                recipientEmail = requestWrapper.recipientEmail,
+                recipientPhone = requestWrapper.recipientPhone,
+                needReceipt = requestWrapper.needReceipt,
+                policyholder = requestWrapper.policyHolder,
+                policyholderDoc = requestWrapper.policyHolderDoc,
+            )
+        val result: Response<Data>
+        val paymentPageUrl = "${apiConfig.paymentUrl}$orderCode}"
+        try {
+            orderRepository.save(order)
+            logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
+            val data = Data(orderCode, paymentPageUrl)
+            result =
+                Response(
+                    status = SUCCESS,
+                    code = STATUS_CODE_SUCCESS,
+                    traceId = traceId,
+                    data = data,
+                )
+            return ResponseEntity(result, HttpStatus.OK)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
+            throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
+        }
         for (paymentRequest in requestWrapper.payments) {
             val subOrderId = generateUniquePaymentId()
             logger.info(LOG_PAYMENT_ID_GENERATED, subOrderId, traceId)
@@ -136,7 +153,7 @@ class PaymentServiceImpl(
                     typeInsurance = paymentRequest.typeInsurance,
                     contractNumber = paymentRequest.contractNumber,
                     insuranceProgram = paymentRequest.insuranceProgram,
-                    premiumAmount = null
+                    premiumAmount = null,
                 )
             try {
                 subOrderRepository.save(subOrders)
@@ -145,29 +162,10 @@ class PaymentServiceImpl(
                 logger.error(e, LOG_ERROR_WHILE_CREATING_SUB_ORDER, traceId)
                 throw IllegalStateException(ERROR_WHILE_SAVING_SUB_ORDER)
             }
-
         }
         throw IllegalStateException("Ошибка при обработке платежей")
-        val result: Response<Data>
-        val paymentPageUrl = "${apiConfig.paymentUrl}$orderCode}"
-        try {
-            orderRepository.save(order)
-            logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
-            val data = Data(orderCode, paymentPageUrl)
-            result =
-                Response(
-                    status = SUCCESS,
-                    code = STATUS_CODE_SUCCESS,
-                    traceId = traceId,
-                    data = data,
-                )
-            return ResponseEntity(result, HttpStatus.OK)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
-            throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
-        }
-    }
 
+    }
 }
 
 private fun generateUniquePaymentCode(): String =

@@ -17,3 +17,7 @@ class ClientSystem(
     @Column(name = "external_system_name", nullable = false)
     var externalSystemName: String,
 )
+{
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this("", "", "")
+}

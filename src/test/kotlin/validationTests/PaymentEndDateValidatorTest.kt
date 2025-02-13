@@ -10,7 +10,7 @@ class PaymentEndDateValidatorTest {
 
     @Test
     fun `должен вернуть true для правильного формата даты`() {
-        val validDate = "2025-02-04T23:36:44+0000"
+        val validDate = "2025-02-04T23:36:44+03:00"
         val result = validator.isValid(validDate)
         assertTrue(result, "Дата должна быть в правильном формате")
     }

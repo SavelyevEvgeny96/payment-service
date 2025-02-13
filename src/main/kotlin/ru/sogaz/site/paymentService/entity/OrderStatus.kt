@@ -18,3 +18,7 @@ class OrderStatus(
     @Column(name = "state_name", nullable = false)
     var stateName: String,
 )
+{
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(0, "", "")
+}

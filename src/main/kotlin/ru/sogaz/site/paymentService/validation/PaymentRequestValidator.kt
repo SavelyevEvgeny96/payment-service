@@ -16,7 +16,10 @@ import ru.sogaz.siter.models.resonses.ValidationErrorData
 class PaymentRequestValidator {
     private val logger = loggerFor(javaClass)
 
-    fun isValid(paymentRequest:PaymentRequest?,paymentRequestWrapper: PaymentRequestWrapper) {
+    fun isValid(
+        paymentRequest: PaymentRequest?,
+        paymentRequestWrapper: PaymentRequestWrapper,
+    ) {
         logger.info("Начало валидации для traceId: ${paymentRequest?.traceId}")
 
         if (paymentRequest == null) {
@@ -82,9 +85,9 @@ class PaymentRequestValidator {
         }
 
         val policyholderCorrectInput = PolicyholderValidator()
-        if (!policyholderCorrectInput.isValidCorrectInput(paymentRequestWrapper.policyHolderDoc)) {
+        if (!policyholderCorrectInput.isValidCorrectInput(paymentRequestWrapper.policyHolder)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER])
-            logger.warn("Ошибка валидации для корректности ввода полиса: ${paymentRequestWrapper.policyHolderDoc}")
+            logger.warn("Ошибка валидации для корректности ввода полиса: ${paymentRequestWrapper.policyHolder}")
         }
 
         if (listResultError.isNotEmpty()) {

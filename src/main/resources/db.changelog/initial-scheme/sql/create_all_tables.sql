@@ -49,11 +49,11 @@ CREATE TABLE order_status (
     state_name VARCHAR(255) NOT NULL , -- Наименование статуса
     CONSTRAINT unique_state_id UNIQUE (state_id)
 );
-INSERT INTO order_status(state_id,state_name)VALUES('0','Заказ создан');
-INSERT INTO order_status(state_id,state_name)VALUES('1','Заказ актуализирован (ранее по данному полису уже была сгенерирована ссылка, в результате запроса данные по ней обновлены)');
-INSERT INTO order_status(state_id,state_name)VALUES('2','Заказ просрочен');
-INSERT INTO order_status(state_id,state_name)VALUES('3','Заказ помечен на удаление');
-INSERT INTO order_status(state_id,state_name)VALUES('4','Заказ оплачен');
+INSERT INTO order_status(state_id,state_name)VALUES('NEW','Заказ создан');
+INSERT INTO order_status(state_id,state_name)VALUES('UPDATE','Заказ актуализирован (ранее по данному полису уже была сгенерирована ссылка, в результате запроса данные по ней обновлены)');
+INSERT INTO order_status(state_id,state_name)VALUES('OVERDUE','Заказ просрочен');
+INSERT INTO order_status(state_id,state_name)VALUES('MARKEDDEL','Заказ помечен на удаление');
+INSERT INTO order_status(state_id,state_name)VALUES('SUCCESS','Заказ оплачен');
 
 CREATE TABLE orders (
     order_id VARCHAR(255) PRIMARY KEY,         -- GUID ID заказа
