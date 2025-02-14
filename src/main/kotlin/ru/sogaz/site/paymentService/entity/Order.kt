@@ -24,7 +24,7 @@ class Order(
     @JoinColumn(name = "bank_id")
     var bankId: Bank,
     @Column(name = "premium_amount")
-    var premiumAmount: Double?,
+    var premiumAmount: String?,
     @Column(name = "payment_end_date")
     var paymentEndDate: String?,
     @Column(name = "url_to_return")
@@ -33,8 +33,6 @@ class Order(
     var urlToDecline: String?,
     @Column(name = "custom_url")
     var customURL: String?,
-    @Column(name = "pay_id")
-    var payId: String?,
     @Column(name = "create_date")
     var createDate: String,
     @Column(name = "update_date")

@@ -38,7 +38,7 @@ data class PaymentRequest(
     val contractNumber: String,
     val contractId: String,
     @NotNull
-    val premiumAmount: Double,
+    val premiumAmount: String,
     val hash: String?,
     @NotNull
     val externalSystemCode: String,

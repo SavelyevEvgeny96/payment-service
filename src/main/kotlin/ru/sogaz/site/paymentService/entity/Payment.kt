@@ -14,22 +14,25 @@ import jakarta.persistence.Table
 data class Payment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
-    @Column(name = "state_id", nullable = false)
+    var id: Long?,
+    @Column(name = "state_id")
     var stateId: String,
     @ManyToOne
-    @JoinColumn(name = "bank_id", nullable = false)
+    @JoinColumn(name = "bank_id")
     var bank: Bank,
-    @Column(name = "payment_started", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    var orderId: Order,
+    @Column(name = "payment_started")
     var paymentStarted: String,
     @Column(name = "payment_finished")
-    var paymentFinished: String? = null,
-    @Column(name = "payment_page_url", nullable = false)
+    var paymentFinished: String?,
+    @Column(name = "payment_page_url")
     var paymentPageUrl: String,
-    @Column(name = "payment_id", nullable = false)
+    @Column(name = "payment_id")
     var paymentId: String,
-    @Column(name = "create_date", nullable = false)
+    @Column(name = "create_date")
     var createDate: String,
-    @Column(name = "update_date", nullable = false)
+    @Column(name = "update_date")
     var updateDate: String,
 )

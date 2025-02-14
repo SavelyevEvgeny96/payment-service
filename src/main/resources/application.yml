@@ -14,6 +14,11 @@ server:
   main.allow-bean-definition-overriding: true
 
 spring:
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   application:
     name: payment-service
   profiles:
@@ -42,9 +47,18 @@ management:
     tags:
       application: ${HOSTNAME:localhost}
 
+#logging:
+#  level:
+#    ru:
+#      sogaz:
+#        site:
+#          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
+
 logging:
   level:
-    ru:
-      sogaz:
-        site:
-          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
+    org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql: TRACE

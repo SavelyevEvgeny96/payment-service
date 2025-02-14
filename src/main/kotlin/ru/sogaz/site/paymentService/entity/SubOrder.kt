@@ -22,7 +22,7 @@ class SubOrder(
     var managerEmail: String?,
     @ManyToOne
     @JoinColumn(name = "external_system_code")
-    var clientSystem: ClientSystem,
+    var clientSystem: ClientSystem?,
     @Column(name = "doc_type")
     var docType: String,
     @Column(name = "policy_id")
@@ -40,5 +40,5 @@ class SubOrder(
     @Column(name = "hash")
     var hash: String?,
     @Column(name = "premium_amount")
-    var premiumAmount: Double?,
+    var premiumAmount: String?,
 )

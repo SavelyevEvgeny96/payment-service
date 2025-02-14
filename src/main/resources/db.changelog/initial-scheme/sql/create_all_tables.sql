@@ -24,7 +24,7 @@ INSERT INTO banks(bank_id,bank_name)VALUES('gpb','Газпромбанк');
 
 CREATE TABLE client_systems (
     id BIGSERIAL PRIMARY KEY,            -- Автоинкрементируемый ID
-    external_system_code VARCHAR(50) NOT NULL, -- Код системы
+    external_system_code VARCHAR(50) , -- Код системы
     external_system_name VARCHAR(255) NOT NULL, -- Наименование системы
     CONSTRAINT unique_external_system_code UNIQUE (external_system_code) -- Уникальность для использования в качестве внешнего ключа
 );
@@ -45,7 +45,7 @@ INSERT INTO config_data(param_name,param_value)VALUES('bankPriority','Приор
 
 CREATE TABLE order_status (
     id BIGSERIAL PRIMARY KEY,         -- Автоинкрементируемый ID
-    state_id VARCHAR(50) NOT NULL,    -- Код статуса
+    state_id VARCHAR(50) ,    -- Код статуса
     state_name VARCHAR(255) NOT NULL , -- Наименование статуса
     CONSTRAINT unique_state_id UNIQUE (state_id)
 );
@@ -58,11 +58,11 @@ INSERT INTO order_status(state_id,state_name)VALUES('SUCCESS','Заказ опл
 CREATE TABLE orders (
     order_id VARCHAR(255) PRIMARY KEY,         -- GUID ID заказа
     code VARCHAR(255) NOT NULL,             -- Сгенерированный код
-    state_id VARCHAR(255)  NOT NULL,               -- Статус
+    state_id VARCHAR(255) ,               -- Статус
     date_delete VARCHAR(255),               -- Дата установления статуса "Заказ помечен на удаление"
-    bank_id VARCHAR(255) NOT NULL,                       -- Связь с банком
+    bank_id VARCHAR(255) ,                       -- Связь с банком
     payment_end_date VARCHAR(255),          -- Дата окончания действия ссылки
-    premium_amount VARCHAR(255) NOT NULL,   -- Размер премии
+    premium_amount VARCHAR(255),   -- Размер премии
     recipient_email VARCHAR(255) NOT NULL,  -- Электронная почта страхователя
     need_receipt BOOLEAN,                   -- Признак необходимости отправки чека
     recipient_phone VARCHAR(255) NOT NULL,  -- Мобильный телефон страхователя
@@ -77,9 +77,9 @@ CREATE TABLE orders (
     );
 CREATE TABLE sub_orders (
    sub_order_id VARCHAR(255) PRIMARY KEY,     -- GUID ID подзаказа
-   order_id VARCHAR(255) NOT NULL,        -- GUID ID заказа
-   operation_id VARCHAR(255) NOT NULL,     -- Идентификатор операции
-   external_system_code VARCHAR(50) NOT NULL, -- Код внешней системы
+   order_id VARCHAR(255),        -- GUID ID заказа
+   operation_id VARCHAR(255) ,     -- Идентификатор операции
+   external_system_code VARCHAR(50) , -- Код внешней системы
    doc_type VARCHAR(255),                  -- Тип документа
    policy_id VARCHAR(255) NOT NULL,        -- Идентификатор полиса
    policy_number VARCHAR(255) NOT NULL,    -- Номер полиса
@@ -87,7 +87,7 @@ CREATE TABLE sub_orders (
    contract_number VARCHAR(255) NOT NULL,  -- Номер договора
    insurance_program VARCHAR(255),         -- Программа страхования
    type_insurance VARCHAR(255),            -- Вид страхования
-   premium_amount VARCHAR(255) NOT NULL,   -- Размер премии
+   premium_amount VARCHAR(255),   -- Размер премии
    manager_email VARCHAR(255),             -- Электронная почта менеджера
    hash VARCHAR(255),                      -- Подпись целостности запроса
    create_date VARCHAR(255) NOT NULL,      -- Дата создания
@@ -99,8 +99,8 @@ CREATE TABLE sub_orders (
 
 CREATE TABLE payments (
     id BIGSERIAL PRIMARY KEY,           -- Автоинкрементируемый ID
-    state_id VARCHAR(50) NOT NULL,      -- Статус
-    bank_id VARCHAR(255) NOT NULL,            -- Ссылка на банк
+    state_id VARCHAR(50) ,      -- Статус
+    bank_id VARCHAR(255) ,            -- Ссылка на банк
     payment_started VARCHAR(255) NOT NULL, -- Дата и время начала оплаты
     payment_finished VARCHAR(255),      -- Дата и время завершения оплаты
     payment_page_url VARCHAR(255) NOT NULL, -- URL страницы банка
@@ -115,17 +115,27 @@ CREATE TABLE payment_operation_history (
     action VARCHAR(255) NOT NULL,       -- Действие
     action_date VARCHAR(255) NOT NULL,  -- Дата выполнения операции
     action_author VARCHAR(255) NOT NULL, -- Исполнитель
-    payment_id BIGINT NOT NULL,         -- Идентификатор заказа
+    order_id VARCHAR(255),         -- Идентификатор заказа
     FOREIGN KEY (payment_id) REFERENCES payments(id) -- Связь с платежом
 );
+CREATE TABLE payment_type (
+id BIGSERIAL PRIMARY KEY,               -- Автоинкрементируемый ID
+type_id VARCHAR(50) ,                    -- ID Типа
+    type_name VARCHAR(255)              -- Наименование типа
+);
+INSERT INTO payment_type (type_id,type_name)VALUES('sbp','Оплата через СБП');
+INSERT INTO payment_type (type_id,type_name)VALUES('bankCard','Банковская карта');
 
 CREATE TABLE payment_status (
-    id BIGSERIAL PRIMARY KEY,         -- Автоинкрементируемый ID
-    state_id VARCHAR(50) NOT NULL,    -- Код статуса
-    state_name VARCHAR(255) NOT NULL  -- Наименование статуса
+    id BIGSERIAL PRIMARY KEY,            -- Автоинкрементируемый ID
+    state_id VARCHAR(50) ,              -- Код статуса
+    state_name VARCHAR(255)   -- Наименование статуса
 );
-INSERT INTO payment_status(state_id,state_name)VALUES('0','Платеж создан');
-INSERT INTO payment_status(state_id,state_name)VALUES('1','Платеж в обработке');
-INSERT INTO payment_status(state_id,state_name)VALUES('2','Успешная оплата');
-INSERT INTO payment_status(state_id,state_name)VALUES('3','Неуспешная оплата');
+INSERT INTO payment_status(state_id,state_name)VALUES('NEW','Создана запись о платеже');
+INSERT INTO payment_status(state_id,state_name)VALUES('REG','Платеж зарегистрирован');
+INSERT INTO payment_status(state_id,state_name)VALUES('WAIT','Платеж в обработке');
+INSERT INTO payment_status(state_id,state_name)VALUES('SUCCESS','Успешная оплата');
+INSERT INTO payment_status(state_id,state_name)VALUES('FAIL','Неуспешная оплата');
+INSERT INTO payment_status(state_id,state_name)VALUES('REFUND ','Оплата завершена успешно, а далее был выполнен возврат средств или отмена');
+INSERT INTO payment_status(state_id,state_name)VALUES('DECLINED ','Клиент отказался от оплаты');
 

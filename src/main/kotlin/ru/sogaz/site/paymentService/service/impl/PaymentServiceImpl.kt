@@ -43,7 +43,7 @@ class PaymentServiceImpl(
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с paymentCode: {} для TraceId: {}"
         const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: {}"
         const val LOG_BANK_NOT_FOUND = "Банк не найден, используется по умолчанию для TraceId: {}"
-        const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован paymentId: {} для TraceId: {}"
+        const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: {} для TraceId: {}"
         const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: {} для TraceId: {}"
         const val LOG_CLIENT_SYSTEM_NOT_FOUND =
             "Не удалось найти систему клиента для externalSystemCode: {} и TraceId: {}"
@@ -96,7 +96,6 @@ class PaymentServiceImpl(
                 dateDelete = null,
                 paymentEndDate = requestWrapper.paymentEndDate,
                 customURL = requestWrapper.customURL,
-                payId = null,
                 premiumAmount = null,
                 updateDate = getCurrentDateMoscow(),
                 urlToDecline = requestWrapper.urlToDecline,
@@ -125,18 +124,18 @@ class PaymentServiceImpl(
                 SubOrder(
                     subOrderId = subOrderId,
                     operationId = paymentRequest.operationId,
-                    clientSystem = clientSystem,
+                    clientSystem = null,
                     docType = paymentRequest.docType,
                     policyId = paymentRequest.policyId,
                     policyNumber = paymentRequest.policyNumber,
                     contractId = paymentRequest.contractId,
-                    orderId = order,
+                    orderId = null,
                     managerEmail = paymentRequest.managerEmail,
                     hash = paymentRequest.hash,
                     typeInsurance = paymentRequest.typeInsurance,
                     contractNumber = paymentRequest.contractNumber,
                     insuranceProgram = paymentRequest.insuranceProgram,
-                    premiumAmount = null,
+                    premiumAmount = "43434.99",
                 )
             try {
                 subOrderRepository.save(subOrders)
