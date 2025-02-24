@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 data class ActionType(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    var id: Long,
     @Column(name = "action_name", nullable = false)
     var actionName: String,
 )
