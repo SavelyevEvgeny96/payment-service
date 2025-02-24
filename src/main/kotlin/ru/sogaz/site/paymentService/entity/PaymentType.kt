@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "payment_type")
-class PaymentType  (
+data class PaymentType  (
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 var id: String,

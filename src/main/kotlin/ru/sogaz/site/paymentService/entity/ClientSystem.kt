@@ -8,7 +8,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "client_systems")
-class ClientSystem(
+data class ClientSystem(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long?,

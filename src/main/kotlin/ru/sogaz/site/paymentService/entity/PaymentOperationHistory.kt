@@ -15,13 +15,15 @@ class PaymentOperationHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @Column(name = "action", nullable = false)
-    var action: String,
-    @Column(name = "action_date", nullable = false)
-    var actionDate: String,
-    @Column(name = "action_author", nullable = false)
-    var actionAuthor: String,
     @ManyToOne
-    @JoinColumn(name = "payment_id", nullable = false)
-    var payment: Payment,
+    @JoinColumn(name = "id")
+    var action: ActionType?,
+    @Column(name = "action_date")
+    var actionDate: String,
+    @ManyToOne
+    @JoinColumn(name = "id")
+    var actionAuthor: ClientSystem?,
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    var order: Order,
 )

@@ -9,7 +9,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "payment_status")
-class PaymentStatus(
+data class PaymentStatus(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: String? = null,

@@ -9,7 +9,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "sub_orders")
-class SubOrder(
+data class SubOrder(
     @Id
     @Column(name = "sub_order_id")
     var subOrderId: String,
