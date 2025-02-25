@@ -12,9 +12,9 @@ data class ClientSystem(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long?,
-    @Column(name = "external_system_code", nullable = false)
+    @Column(name = "external_system_code")
     var externalSystemCode: String,
-    @Column(name = "external_system_name", nullable = false)
+    @Column(name = "external_system_name")
     var externalSystemName: String,
 )
 {

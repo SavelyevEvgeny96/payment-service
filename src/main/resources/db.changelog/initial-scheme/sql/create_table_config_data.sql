@@ -13,7 +13,7 @@ INSERT INTO config_data(param_name,param_description,param_value)VALUES('GpbBank
 INSERT INTO config_data(param_name,param_description,param_value)VALUES('GPBMerchantId','Идентификатор магазина от Газпром банка','');
 INSERT INTO config_data(param_name,param_description,param_value)VALUES('backURLS','Адрес для возврата на страницу успешной оплаты','');
 INSERT INTO config_data(param_name,param_description,param_value)VALUES('backURLF','Адрес для возврата на страницу ошибки в результате оплаты','');
-INSERT INTO config_data(param_name,param_description,param_value)VALUES('codeLenght ','Количество символов для генерации короткого кода','6');
+INSERT INTO config_data(param_name,param_description,param_value)VALUES('codeLength','Количество символов для генерации короткого кода','6');
 INSERT INTO config_data(param_name,param_description,param_value)VALUES('paymentCheckURL','Адрес сервиса генерации электронных чеков','');
 INSERT INTO config_data(param_name,param_description,param_value)VALUES('periodPay','Периодичность запуска фоновой задачи запроса статуса платежа (в минутах)','1');
 INSERT INTO config_data(param_name,param_description,param_value)VALUES('hostName','URL страницы оплаты сервиса','www.pay.sogaz.ru');

@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.ConfigData
 
 @Repository
-interface ConfigDataRepository : JpaRepository<ConfigData, Long>
+interface ConfigDataRepository : JpaRepository<ConfigData, Long> {
+    fun findByParamName(paramName: String): ConfigData
+}
