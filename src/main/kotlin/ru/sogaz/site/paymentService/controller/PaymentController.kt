@@ -41,6 +41,6 @@ class PaymentController(
             paymentRequest.traceId = traceId
             paymentRequestValidator.isValid(paymentRequest, requestWrapper)
         }
-        return paymentService.createPayment(requestWrapper, traceId)
+        return paymentService.createOrder(requestWrapper, traceId)
     }
 }

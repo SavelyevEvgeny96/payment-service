@@ -1,28 +1,26 @@
 package ru.sogaz.site.paymentService.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.Table
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "orders")
 data class Order(
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null,
+
     @Column(name = "order_id")
     var orderId: String,
     @Column(name = "code")
     var code: String,
     @ManyToOne
-    @JoinColumn(name = "state_id")
+    @JoinColumn(name = "state_id", referencedColumnName ="state_id")
     var orderStatus: OrderStatus?,
+    @ManyToOne
+    @JoinColumn(name = "bank_id", referencedColumnName = "bank_id")
+    var bankId: Bank,
     @Column(name = "date_delete")
     var dateDelete: String?,
-    @ManyToOne
-    @JoinColumn(name = "bank_id")
-    var bankId: Bank,
     @Column(name = "premium_amount")
     var premiumAmount: String?,
     @Column(name = "payment_end_date")

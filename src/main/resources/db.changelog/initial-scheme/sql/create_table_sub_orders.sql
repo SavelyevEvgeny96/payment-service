@@ -1,4 +1,5 @@
 CREATE TABLE sub_orders (
+   id BIGSERIAL ,
    sub_order_id VARCHAR(255) PRIMARY KEY,     -- GUID ID подзаказа
    order_id VARCHAR(255),        -- GUID ID заказа
    operation_id VARCHAR(255) ,     -- Идентификатор операции
@@ -13,8 +14,6 @@ CREATE TABLE sub_orders (
    premium_amount VARCHAR(255),   -- Размер премии
    manager_email VARCHAR(255),             -- Электронная почта менеджера
    hash VARCHAR(255),                      -- Подпись целостности запроса
-   create_date VARCHAR(255) NOT NULL,      -- Дата создания
-   update_date VARCHAR(255) NOT NULL,      -- Дата обновления
    FOREIGN KEY (external_system_code) REFERENCES client_systems(external_system_code),-- Связь с системой клиента
    FOREIGN KEY (order_id) REFERENCES orders(order_id) -- Связь с айди заказа
 );

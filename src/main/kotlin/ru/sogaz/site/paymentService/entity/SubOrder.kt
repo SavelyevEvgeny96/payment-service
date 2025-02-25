@@ -1,27 +1,25 @@
 package ru.sogaz.site.paymentService.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.Table
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "sub_orders")
 data class SubOrder(
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null,
     @Column(name = "sub_order_id")
     var subOrderId: String,
     @ManyToOne
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", referencedColumnName ="order_id")
     var orderId: Order?,
     @Column(name = "operation_id")
     var operationId: String?,
     @Column(name = "manager_email")
     var managerEmail: String?,
     @ManyToOne
-    @JoinColumn(name = "external_system_code")
+    @JoinColumn(name = "external_system_code", referencedColumnName = "external_system_code")
     var clientSystem: ClientSystem?,
     @Column(name = "doc_type")
     var docType: String,

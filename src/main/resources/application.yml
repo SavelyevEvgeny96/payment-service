@@ -34,7 +34,6 @@ spring:
     ansi:
       enabled: ALWAYS
 
-
 api:
   payment-url: ${PAYMENT_URL:url}
 
@@ -47,18 +46,9 @@ management:
     tags:
       application: ${HOSTNAME:localhost}
 
-#logging:
-#  level:
-#    ru:
-#      sogaz:
-#        site:
-#          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
-
 logging:
   level:
-    org:
-      hibernate:
-        SQL: DEBUG
-        type:
-          descriptor:
-            sql: TRACE
+    ru:
+      sogaz:
+        site:
+          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}

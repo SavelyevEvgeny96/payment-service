@@ -17,7 +17,7 @@ interface PaymentService {
      * @param traceId Идентификатор трассировки
      * @return Объект Response с информацией о платеже
      */
-    fun createPayment(
+    fun createOrder(
         requestWrapper: PaymentRequestWrapper,
         traceId: String,
     ): ResponseEntity<Response<Data>>

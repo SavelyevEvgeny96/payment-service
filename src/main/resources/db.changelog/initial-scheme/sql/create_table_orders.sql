@@ -1,5 +1,6 @@
 
 CREATE TABLE orders (
+    id BIGSERIAL ,
     order_id VARCHAR(255) PRIMARY KEY,         -- GUID ID заказа
     code VARCHAR(255) NOT NULL,             -- Сгенерированный код
     state_id VARCHAR(255) ,               -- Статус
@@ -16,6 +17,8 @@ CREATE TABLE orders (
     url_to_return VARCHAR(255) ,            -- URL для перехода после успешной оплаты
     url_to_decline VARCHAR(255),            -- URL для перехода после неуспешной оплаты
     custom_url VARCHAR(255),                -- URL для кастомной ссылки
+    create_date VARCHAR(255) ,      -- Дата создания
+    update_date VARCHAR(255) ,      -- Дата обновления
    FOREIGN KEY (state_id) REFERENCES order_status(state_id),  -- Связь со статусом заказа
    FOREIGN KEY (bank_id) REFERENCES banks(bank_id)         -- Связь с банком
     );
