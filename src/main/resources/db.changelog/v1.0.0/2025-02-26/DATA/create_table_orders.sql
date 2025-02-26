@@ -17,8 +17,8 @@ CREATE TABLE orders (
     url_to_return VARCHAR(255) ,            -- URL для перехода после успешной оплаты
     url_to_decline VARCHAR(255),            -- URL для перехода после неуспешной оплаты
     custom_url VARCHAR(255),                -- URL для кастомной ссылки
-    create_date VARCHAR(255) ,      -- Дата создания
-    update_date VARCHAR(255) ,      -- Дата обновления
+    create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Дата создания, автоматически заполняется
+    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Дата обновления, автоматически заполняется
    FOREIGN KEY (state_id) REFERENCES order_status(state_id),  -- Связь со статусом заказа
    FOREIGN KEY (bank_id) REFERENCES banks(bank_id)         -- Связь с банком
     );

@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.entity
 
 import jakarta.persistence.*
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "orders")
@@ -32,9 +33,9 @@ data class Order(
     @Column(name = "custom_url")
     var customURL: String?,
     @Column(name = "create_date")
-    var createDate: String,
+    val createDate: LocalDateTime? = null,
     @Column(name = "update_date")
-    var updateDate: String,
+    val updateDate: LocalDateTime? = null,
     @Column(name = "recipient_email")
     var recipientEmail: String,
     @Column(name = "need_receipt")
@@ -47,4 +48,6 @@ data class Order(
     var policyholderDoc: String?,
     @Column(name = "recipient_user_id")
     var recipientUserId: String?,
+
+
 )

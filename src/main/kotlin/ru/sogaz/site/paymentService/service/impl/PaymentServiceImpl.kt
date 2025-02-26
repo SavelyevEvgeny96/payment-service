@@ -94,12 +94,10 @@ class PaymentServiceImpl(
             bankId = bank,
             orderStatus = orderStatus,
             code = orderCode,
-            createDate = getCurrentDateMoscow(),
             dateDelete = null,
             paymentEndDate = requestWrapper.paymentEndDate,
             customURL = requestWrapper.customURL,
-            premiumAmount = null,  // На данный момент не установлено, мы это установим позже
-            updateDate = getCurrentDateMoscow(),
+            premiumAmount = null,
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
             recipientUserId = requestWrapper.recipientUserId,
@@ -212,12 +210,6 @@ class PaymentServiceImpl(
             .take(codeLength)
             .uppercase(Locale.getDefault())
     }
-}
-
-fun getCurrentDateMoscow(): String {
-    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+0000")
-    sdf.timeZone = TimeZone.getTimeZone("Europe/Moscow")
-    return sdf.format(Date())
 }
 
 private fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
