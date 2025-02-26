@@ -2,8 +2,13 @@ package ru.sogaz.site.paymentService.service.impl
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_MAKING_PAYMENT
 import ru.sogaz.site.paymentService.config.ApiConfig
-import ru.sogaz.site.paymentService.dto.Data
+import ru.sogaz.site.paymentService.dto.DataOrder
+import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
@@ -11,10 +16,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.*
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.siter.models.resonses.Response
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
 import java.util.UUID
 
 /**
@@ -36,7 +38,11 @@ class PaymentServiceImpl(
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
         const val SUCCESS = "success"
-        const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraceId: {}"
+        const val STATUS_SUCCESS = "SUCCESS"
+        const val STATUS_OVERDUE = "OVERDUE"
+        const val STATUS_MARKEDDEL = "MARKEDDEL"
+        const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: {}"
+        const val LOG_START_ORDER_CREATION = "Начало создания заявки для TraceId: {}"
         const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан с orderCode: {} для TraceId: {}"
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с paymentCode: {} для TraceId: {}"
         const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: {}"
@@ -47,8 +53,12 @@ class PaymentServiceImpl(
         const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: {} для TraceId: {}"
         const val LOG_CLIENT_SYSTEM_NOT_FOUND =
             "Не удалось найти систему клиента для externalSystemCode: {} и TraceId: {}"
+        const val LOG_NOT_FOUND_ORDER_TO_CODE =
+            "Ошибка совершения платежа. Указанный заказ (идентификатор/code заказа) не найден"
         const val LOG_ERROR_WHILE_CREATING_ORDER = "Ошибка при создании заказа для TraceId: {}"
         const val LOG_ERROR_WHILE_CREATING_SUB_ORDER = "Ошибка при создании подзаказа для TraceId: {}"
+        const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
+        const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL ="Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
         const val ERROR_ORDER_STATUS_NOT_FOUND = "Статус заказа не найден для stateId 0"
         const val ERROR_CLIENT_SYSTEM_NOT_FOUND = "Система клиента не найдена"
         const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
@@ -68,8 +78,8 @@ class PaymentServiceImpl(
     override fun createOrder(
         requestWrapper: PaymentRequestWrapper,
         traceId: String,
-    ): ResponseEntity<Response<Data>> {
-        logger.info(LOG_START_PAYMENT_CREATION, traceId)
+    ): ResponseEntity<Response<DataOrder>> {
+        logger.info(LOG_START_ORDER_CREATION + traceId)
         val orderId = generateUniquePaymentId()
         val orderCode = generateUniquePaymentCode()
         logger.info(LOG_PAYMENT_ID_GENERATED, orderId, traceId)
@@ -170,22 +180,51 @@ class PaymentServiceImpl(
             throw IllegalStateException(ERROR_WHILE_UPDATING_ORDER)
         }
 
-        val result: Response<Data>
+        val result: Response<DataOrder>
         val paymentPageUrl = "${apiConfig.paymentUrl}$orderCode"
         try {
             logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
-            val data = Data(orderCode, paymentPageUrl)
+            val dataOrder = DataOrder(orderCode, paymentPageUrl)
             result = Response(
                 status = SUCCESS,
                 code = STATUS_CODE_SUCCESS,
                 traceId = traceId,
-                data = data,
+                data = dataOrder,
             )
             return ResponseEntity(result, HttpStatus.OK)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
             throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
         }
+    }
+
+    override fun createPayment(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String
+    ): ResponseEntity<Response<DataPay>> {
+        logger.info(LOG_START_PAYMENT_CREATION + traceId)
+
+        val orderFindByCode = try {
+            orderRepository.findByCode(paymentPayRequest.code)
+        } catch (e: Exception) {
+            logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, paymentPayRequest.code, traceId)
+            throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
+        }
+
+        val orderStatus = orderFindByCode.orderStatus
+        if (orderStatus != null) {
+            if (orderStatus.stateId == STATUS_SUCCESS) {
+                logger.error(orderStatus.stateId + LOG_ORDER_STATUS_SUCCESS + traceId)
+                //уточнить касаемо обработки ошибки кода 409 с разными эрор меседжами как это сделать
+                throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
+            }
+            if (orderStatus.stateId == STATUS_OVERDUE||orderStatus.stateId == STATUS_MARKEDDEL)
+                logger.error(orderStatus.stateId + LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL + traceId)
+            //уточнить касаемо обработки ошибки кода 409 с разными эрор меседжами как это сделать
+            throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
+        }
+
+
     }
 
 

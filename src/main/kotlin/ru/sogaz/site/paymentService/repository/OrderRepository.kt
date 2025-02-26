@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.Order
 
 @Repository
-interface OrderRepository : JpaRepository<Order, Long>
+interface OrderRepository : JpaRepository<Order, Long>{
+   fun findByCode(code:String):Order
+}

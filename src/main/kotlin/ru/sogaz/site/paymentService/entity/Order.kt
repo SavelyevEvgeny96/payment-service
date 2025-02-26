@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "orders")
-data class Order(
+ class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
@@ -48,6 +48,4 @@ data class Order(
     var policyholderDoc: String?,
     @Column(name = "recipient_user_id")
     var recipientUserId: String?,
-
-
 )

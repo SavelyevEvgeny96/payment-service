@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import ru.sogaz.site.paymentService.dto.Data
+import ru.sogaz.site.paymentService.dto.DataOrder
+import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
@@ -23,12 +25,8 @@ class PaymentController(
     private val paymentRequestValidator: PaymentRequestValidator,
 ) {
     /**
-     * Метод для создания платежа.
-     * Принимает авторизационный токен, TraceId и данные о платеже.
-     * Валидирует входящие данные и передает их в сервис для дальнейшей обработки.
-     * @param authorization Токен авторизации в формате "Bearer <token>"
+     * Метод для создания заявки.
      * @param traceId Идентификатор трассировки
-     * @param paymentRequest Объект данных о платеже
      * @return Ответ с кодом состояния и данными о платеже или ошибкой
      */
 
@@ -36,11 +34,26 @@ class PaymentController(
     fun createOrder(
         @RequestHeader("TraceId") traceId: String,
         @RequestBody requestWrapper: PaymentRequestWrapper,
-    ): ResponseEntity<Response<Data>> {
+    ): ResponseEntity<Response<DataOrder>> {
         requestWrapper.payments.forEach { paymentRequest ->
             paymentRequest.traceId = traceId
             paymentRequestValidator.isValid(paymentRequest, requestWrapper)
         }
         return paymentService.createOrder(requestWrapper, traceId)
+    }
+    /**
+     * Метод для создания платежа.
+     * @param traceId Идентификатор трассировки
+     * @return Ответ с кодом состояния и данными о платеже или ошибкой
+     */
+    @PostMapping("/pay")
+    fun createPay(
+        @RequestHeader("TraceId") traceId: String,
+        @RequestBody paymentPayRequest: PaymentPayRequest
+    ): ResponseEntity<Response<DataPay>> {
+        paymentPayRequest.traceId = traceId
+        return paymentService.createPayment(
+            paymentPayRequest, traceId
+        )
     }
 }
