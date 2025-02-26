@@ -33,7 +33,7 @@ class PaymentController(
      */
 
     @PostMapping("/create")
-    fun createPayment(
+    fun createOrder(
         @RequestHeader("TraceId") traceId: String,
         @RequestBody requestWrapper: PaymentRequestWrapper,
     ): ResponseEntity<Response<Data>> {
