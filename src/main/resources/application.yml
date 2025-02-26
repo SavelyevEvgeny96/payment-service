@@ -30,6 +30,7 @@ spring:
     password: ${ENVIRONMENT:123456}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
+    enabled: true
   output:
     ansi:
       enabled: ALWAYS

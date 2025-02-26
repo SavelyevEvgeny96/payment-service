@@ -89,7 +89,6 @@ class PaymentServiceImpl(
             throw IllegalStateException(ERROR_ORDER_STATUS_NOT_FOUND)
         }
 
-        // Создание Order
         val order = Order(
             orderId = orderId,
             bankId = bank,
