@@ -5,7 +5,8 @@ package ru.sogaz.site.paymentService.validation
  * Проверяет, что значение поля соответствует одному из допустимых кодов внешней системы.
  */
 
-class ExternalSystemCodeValidator(private val codeRegex: Regex) {
-
+class ExternalSystemCodeValidator(
+    private val codeRegex: Regex,
+) {
     fun isValid(value: String?): Boolean = value?.matches(codeRegex) ?: false
 }

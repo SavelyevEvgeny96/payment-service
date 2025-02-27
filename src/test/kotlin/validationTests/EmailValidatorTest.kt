@@ -1,11 +1,18 @@
 package validationTests
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.EmailValidator
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class EmailValidatorTest {
-    private val emailValidator = EmailValidator()
+    private lateinit var emailValidator: EmailValidator
+
+    @BeforeEach
+    fun setUp() {
+        val emailRegex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")
+        emailValidator = EmailValidator(emailRegex)
+    }
 
     @Test
     fun `должен вернуть true для валидного email`() {
@@ -43,8 +50,8 @@ class EmailValidatorTest {
     }
 
     @Test
-    fun `должен вернуть true для значения null`() {
+    fun `должен вернуть false для значения null`() {
         val result = emailValidator.isValid(null)
-        assertTrue(result, "Null значение должно пройти валидацию")
+        assertFalse(result, "Null значение  не должно пройти валидацию")
     }
 }

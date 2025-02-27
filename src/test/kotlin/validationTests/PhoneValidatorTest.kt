@@ -1,12 +1,19 @@
 package validationTests
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.PhoneValidator
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class PhoneValidatorTest {
-    private val validator = PhoneValidator()
+    private lateinit var validator: PhoneValidator
+
+    @BeforeEach
+    fun setUp() {
+        val phoneRegex = Regex("^(\\+|[1-9])\\d{10,11}\$")
+        validator = PhoneValidator(phoneRegex)
+    }
 
     @Test
     fun `должен вернуть true для правильного формата телефона с кодом страны`() {

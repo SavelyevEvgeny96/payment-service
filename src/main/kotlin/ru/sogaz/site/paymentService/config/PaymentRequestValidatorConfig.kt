@@ -2,7 +2,11 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.validation.*
+import ru.sogaz.site.paymentService.validation.EmailValidator
+import ru.sogaz.site.paymentService.validation.ExternalSystemCodeValidator
+import ru.sogaz.site.paymentService.validation.PaymentEndDateValidatorFormat
+import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
+import ru.sogaz.site.paymentService.validation.PhoneValidator
 
 @Configuration
 open class PaymentRequestValidatorConfig {
@@ -11,11 +15,12 @@ open class PaymentRequestValidatorConfig {
         phoneValidator: PhoneValidator,
         paymentEndDateValidatorFormat: PaymentEndDateValidatorFormat,
         emailValidator: EmailValidator,
-        externalSystemCodeValidator: ExternalSystemCodeValidator
-    ): PaymentRequestValidator = PaymentRequestValidator(
-        emailValidator = emailValidator,
-        externalSystemCodeValidator = externalSystemCodeValidator,
-        phoneValidator = phoneValidator,
-        paymentEndDateValidatorFormat = paymentEndDateValidatorFormat
-    )
+        externalSystemCodeValidator: ExternalSystemCodeValidator,
+    ): PaymentRequestValidator =
+        PaymentRequestValidator(
+            emailValidator = emailValidator,
+            externalSystemCodeValidator = externalSystemCodeValidator,
+            phoneValidator = phoneValidator,
+            paymentEndDateValidatorFormat = paymentEndDateValidatorFormat,
+        )
 }

@@ -3,14 +3,18 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dto.ConfigDataDao
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.*
+import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.repository.BankRepository
+import ru.sogaz.site.paymentService.repository.ClientSystemRepository
+import ru.sogaz.site.paymentService.repository.OrderRepository
+import ru.sogaz.site.paymentService.repository.OrderStatusRepository
+import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
 import java.math.BigDecimal
@@ -124,29 +128,32 @@ class OrderServiceImpl(
                 } catch (e: Exception) {
                     logger.error(
                         e,
-                        LOG_CLIENT_SYSTEM_NOT_FOUND, paymentRequest.externalSystemCode, traceId
+                        LOG_CLIENT_SYSTEM_NOT_FOUND,
+                        paymentRequest.externalSystemCode,
+                        traceId,
                     )
                     throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND)
                 }
 
             var totalPremiumAmount = BigDecimal.ZERO
 
-            val subOrders = SubOrder(
-                subOrderId = subOrderId,
-                operationId = paymentRequest.operationId,
-                clientSystem = clientSystem,
-                docType = paymentRequest.docType,
-                policyId = paymentRequest.policyId,
-                policyNumber = paymentRequest.policyNumber,
-                contractId = paymentRequest.contractId,
-                orderId = order,
-                managerEmail = paymentRequest.managerEmail,
-                hash = paymentRequest.hash,
-                typeInsurance = paymentRequest.typeInsurance,
-                contractNumber = paymentRequest.contractNumber,
-                insuranceProgram = paymentRequest.insuranceProgram,
-                premiumAmount = paymentRequest.premiumAmount,
-            )
+            val subOrders =
+                SubOrder(
+                    subOrderId = subOrderId,
+                    operationId = paymentRequest.operationId,
+                    clientSystem = clientSystem,
+                    docType = paymentRequest.docType,
+                    policyId = paymentRequest.policyId,
+                    policyNumber = paymentRequest.policyNumber,
+                    contractId = paymentRequest.contractId,
+                    orderId = order,
+                    managerEmail = paymentRequest.managerEmail,
+                    hash = paymentRequest.hash,
+                    typeInsurance = paymentRequest.typeInsurance,
+                    contractNumber = paymentRequest.contractNumber,
+                    insuranceProgram = paymentRequest.insuranceProgram,
+                    premiumAmount = paymentRequest.premiumAmount,
+                )
 
             paymentRequest.premiumAmount.let {
                 totalPremiumAmount = totalPremiumAmount.add(BigDecimal(it))
@@ -159,7 +166,7 @@ class OrderServiceImpl(
                 logger.error(e, LOG_ERROR_WHILE_CREATING_SUB_ORDER, traceId)
                 throw InnerException(traceId, ERROR_WHILE_SAVING_SUB_ORDER)
             }
-            order.premiumAmount =  totalPremiumAmount.setScale(2, RoundingMode.HALF_UP).toString()
+            order.premiumAmount = totalPremiumAmount.setScale(2, RoundingMode.HALF_UP).toString()
             try {
                 orderRepository.save(order)
                 logger.info(LOG_ORDER_UPDATED_WITH_PREMIUM, orderCode, traceId)
@@ -187,4 +194,3 @@ class OrderServiceImpl(
         }
     }
 }
-

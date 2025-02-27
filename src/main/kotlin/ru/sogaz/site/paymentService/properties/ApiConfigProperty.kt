@@ -9,9 +9,9 @@ import ru.sogaz.site.paymentService.loggerFor
  */
 @ConfigurationProperties(prefix = "api.payment")
 class ApiConfigProperty {
-
     private val logger = loggerFor(javaClass)
     lateinit var paymentUrl: String
+
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")

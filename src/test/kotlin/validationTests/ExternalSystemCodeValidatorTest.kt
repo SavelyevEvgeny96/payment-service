@@ -1,12 +1,19 @@
 package validationTests
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.ExternalSystemCodeValidator
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ExternalSystemCodeValidatorTest {
-    private val externalSystemCodeValidator = ExternalSystemCodeValidator()
+    private lateinit var externalSystemCodeValidator: ExternalSystemCodeValidator
+
+    @BeforeEach
+    fun setUp() {
+        val externalSystemCodeRegex = Regex("^(ADI|FOP|LK|1C)$")
+        externalSystemCodeValidator = ExternalSystemCodeValidator(externalSystemCodeRegex)
+    }
 
     @Test
     fun `должен вернуть true для допустимого кода внешней системы ADI`() {

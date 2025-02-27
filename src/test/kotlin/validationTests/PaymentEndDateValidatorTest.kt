@@ -1,12 +1,19 @@
 package validationTests
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import ru.sogaz.site.paymentService.validation.PaymentEndDateValidatorFormat
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class PaymentEndDateValidatorTest {
-    private val validator = PaymentEndDateValidatorFormat()
+    private lateinit var validator: PaymentEndDateValidatorFormat
+
+    @BeforeEach
+    fun setUp() {
+        val paymentEndDateFormatRegex = Regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+03:00\$")
+        validator = PaymentEndDateValidatorFormat(paymentEndDateFormatRegex)
+    }
 
     @Test
     fun `должен вернуть true для правильного формата даты`() {

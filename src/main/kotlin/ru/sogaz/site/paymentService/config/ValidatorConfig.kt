@@ -9,7 +9,6 @@ import ru.sogaz.site.paymentService.validation.PhoneValidator
 
 @Configuration
 open class ValidatorConfig {
-
     @Bean
     open fun emailValidator(): EmailValidator {
         val emailRegex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")
@@ -27,6 +26,7 @@ open class ValidatorConfig {
         val codeRegex = Regex("^(\\+|[1-9])\\d{10,11}\$")
         return PhoneValidator(codeRegex)
     }
+
     @Bean
     open fun paymentEndDateFormatValidator(): PaymentEndDateValidatorFormat {
         val codeRegex = Regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+03:00\$")

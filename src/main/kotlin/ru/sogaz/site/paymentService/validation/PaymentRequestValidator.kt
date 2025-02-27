@@ -13,12 +13,12 @@ import ru.sogaz.siter.models.resonses.ValidationErrorData
  * и если есть ошибки, выбрасывается исключение.
  */
 
-class PaymentRequestValidator (
+class PaymentRequestValidator(
     private val paymentEndDateValidatorFormat: PaymentEndDateValidatorFormat,
     private val phoneValidator: PhoneValidator,
     private val emailValidator: EmailValidator,
-    private val externalSystemCodeValidator: ExternalSystemCodeValidator
-){
+    private val externalSystemCodeValidator: ExternalSystemCodeValidator,
+) {
     private val logger = loggerFor(javaClass)
 
     fun isValid(

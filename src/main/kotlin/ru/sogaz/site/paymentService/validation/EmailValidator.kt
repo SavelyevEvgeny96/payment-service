@@ -5,7 +5,8 @@ package ru.sogaz.site.paymentService.validation
  * Проверяет, что значение поля соответствует формату email.
  */
 
-class EmailValidator(private val emailRegex: Regex) {
-
+class EmailValidator(
+    private val emailRegex: Regex,
+) {
     fun isValid(value: String?): Boolean = value?.matches(emailRegex) ?: false
 }
