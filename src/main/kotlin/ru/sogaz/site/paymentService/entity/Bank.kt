@@ -17,8 +17,7 @@ data class Bank(
     var bankId: String,
     @Column(name = "bank_name")
     var bankName: String,
-)
-{
+) {
     // Конструктор по умолчанию нужен для JPA
     constructor() : this(0, "", "")
 }

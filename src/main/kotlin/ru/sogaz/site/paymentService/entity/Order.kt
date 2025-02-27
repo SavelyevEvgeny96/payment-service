@@ -5,17 +5,16 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "orders")
- class Order(
+class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-
     @Column(name = "order_id")
     var orderId: String,
     @Column(name = "code")
     var code: String,
     @ManyToOne
-    @JoinColumn(name = "state_id", referencedColumnName ="state_id")
+    @JoinColumn(name = "state_id", referencedColumnName = "state_id")
     var orderStatus: OrderStatus?,
     @ManyToOne
     @JoinColumn(name = "bank_id", referencedColumnName = "bank_id")

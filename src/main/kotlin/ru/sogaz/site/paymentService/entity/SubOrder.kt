@@ -5,14 +5,13 @@ import jakarta.persistence.*
 @Entity
 @Table(name = "sub_orders")
 data class SubOrder(
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(name = "sub_order_id")
     var subOrderId: String,
     @ManyToOne
-    @JoinColumn(name = "order_id", referencedColumnName ="order_id")
+    @JoinColumn(name = "order_id", referencedColumnName = "order_id")
     var orderId: Order?,
     @Column(name = "operation_id")
     var operationId: String?,

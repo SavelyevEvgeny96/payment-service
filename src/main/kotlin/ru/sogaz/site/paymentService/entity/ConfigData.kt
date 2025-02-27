@@ -18,8 +18,7 @@ data class ConfigData(
     var paramValue: String,
     @Column(name = "param_description")
     var paramDescription: String,
-)
-{
+) {
     // Конструктор по умолчанию нужен для JPA
-    constructor() : this(0, "", "","")
+    constructor() : this(0, "", "", "")
 }

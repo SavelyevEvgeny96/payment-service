@@ -2,8 +2,6 @@ package ru.sogaz.site.paymentService.service
 
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.paymentService.dto.DataOrder
-import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.siter.models.resonses.Response
 

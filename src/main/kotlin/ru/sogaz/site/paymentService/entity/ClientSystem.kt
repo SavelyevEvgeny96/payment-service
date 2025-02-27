@@ -16,8 +16,7 @@ data class ClientSystem(
     var externalSystemCode: String,
     @Column(name = "external_system_name")
     var externalSystemName: String,
-)
-{
+) {
     // Конструктор по умолчанию нужен для JPA
     constructor() : this(0, "", "")
 }
