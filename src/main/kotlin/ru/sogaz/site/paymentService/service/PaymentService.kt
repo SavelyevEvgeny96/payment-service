@@ -23,8 +23,8 @@ interface PaymentService {
         requestWrapper: PaymentRequestWrapper,
         traceId: String,
     ): ResponseEntity<Response<DataOrder>>
-    fun createPayment(
-        request: PaymentPayRequest,
-        traceId: String,
-    ): ResponseEntity<Response<DataPay>>
+//    fun createPayment(
+//        request: PaymentPayRequest,
+//        traceId: String,
+//    ): ResponseEntity<Response<DataPay>>
 }

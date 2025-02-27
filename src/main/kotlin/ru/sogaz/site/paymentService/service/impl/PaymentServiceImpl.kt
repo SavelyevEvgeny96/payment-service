@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.service.impl
 
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -199,34 +200,34 @@ class PaymentServiceImpl(
         }
     }
 
-    override fun createPayment(
-        paymentPayRequest: PaymentPayRequest,
-        traceId: String
-    ): ResponseEntity<Response<DataPay>> {
-        logger.info(LOG_START_PAYMENT_CREATION + traceId)
+//    override fun createPayment(
+//        paymentPayRequest: PaymentPayRequest,
+//        traceId: String
+//    ): ResponseEntity<Response<DataPay>> {
+//        logger.info(LOG_START_PAYMENT_CREATION + traceId)
+//
+//        val orderFindByCode = try {
+//            orderRepository.findByCode(paymentPayRequest.code)
+//        } catch (e: Exception) {
+//            logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, paymentPayRequest.code, traceId)
+//            throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
+//        }
+//
+//        val orderStatus = orderFindByCode.orderStatus
+//        if (orderStatus != null) {
+//            if (orderStatus.stateId == STATUS_SUCCESS) {
+//                logger.error(orderStatus.stateId + LOG_ORDER_STATUS_SUCCESS + traceId)
+//                //уточнить касаемо обработки ошибки кода 409 с разными эрор меседжами как это сделать
+//                throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
+//            }
+//            if (orderStatus.stateId == STATUS_OVERDUE||orderStatus.stateId == STATUS_MARKEDDEL)
+//                logger.error(orderStatus.stateId + LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL + traceId)
+//            //уточнить касаемо обработки ошибки кода 409 с разными эрор меседжами как это сделать
+//            throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
+//        }
+//return
 
-        val orderFindByCode = try {
-            orderRepository.findByCode(paymentPayRequest.code)
-        } catch (e: Exception) {
-            logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, paymentPayRequest.code, traceId)
-            throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
-        }
-
-        val orderStatus = orderFindByCode.orderStatus
-        if (orderStatus != null) {
-            if (orderStatus.stateId == STATUS_SUCCESS) {
-                logger.error(orderStatus.stateId + LOG_ORDER_STATUS_SUCCESS + traceId)
-                //уточнить касаемо обработки ошибки кода 409 с разными эрор меседжами как это сделать
-                throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
-            }
-            if (orderStatus.stateId == STATUS_OVERDUE||orderStatus.stateId == STATUS_MARKEDDEL)
-                logger.error(orderStatus.stateId + LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL + traceId)
-            //уточнить касаемо обработки ошибки кода 409 с разными эрор меседжами как это сделать
-            throw BusinessException(CODE_ERROR_MAKING_PAYMENT, traceId)
-        }
-
-
-    }
+//    }
 
 
     private fun getCodeLength(traceId:String): Int {
