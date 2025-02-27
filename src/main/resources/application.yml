@@ -36,7 +36,8 @@ spring:
       enabled: ALWAYS
 
 api:
-  payment-url: ${PAYMENT_URL:url}
+  payment:
+    paymentUrl: ${PAYMENT_URL:url}
 
 management:
   endpoints:

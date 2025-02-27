@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 import ru.sogaz.siter.models.resonses.Response
@@ -19,6 +20,7 @@ import ru.sogaz.siter.models.resonses.Response
 @RestController
 @RequestMapping("/payment")
 class PaymentController(
+    private val orderService: OrderService,
     private val paymentService: PaymentService,
     private val paymentRequestValidator: PaymentRequestValidator,
 ) {
@@ -37,7 +39,7 @@ class PaymentController(
             paymentRequest.traceId = traceId
             paymentRequestValidator.isValid(paymentRequest, requestWrapper)
         }
-        return paymentService.createOrder(requestWrapper, traceId)
+        return orderService.createOrder(requestWrapper, traceId)
     }
     /**
      * Метод для создания платежа.

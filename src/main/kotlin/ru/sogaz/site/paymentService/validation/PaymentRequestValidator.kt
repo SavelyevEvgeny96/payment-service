@@ -13,7 +13,12 @@ import ru.sogaz.siter.models.resonses.ValidationErrorData
  * и если есть ошибки, выбрасывается исключение.
  */
 
-class PaymentRequestValidator {
+class PaymentRequestValidator (
+    private val paymentEndDateValidatorFormat: PaymentEndDateValidatorFormat,
+    private val phoneValidator: PhoneValidator,
+    private val emailValidator: EmailValidator,
+    private val externalSystemCodeValidator: ExternalSystemCodeValidator
+){
     private val logger = loggerFor(javaClass)
 
     fun isValid(
@@ -36,25 +41,21 @@ class PaymentRequestValidator {
             logger.warn("Ошибка валидации для поля банка: ${paymentRequestWrapper.bank}")
         }
 
-        val emailValidator = EmailValidator()
         if (!emailValidator.isValid(paymentRequestWrapper.recipientEmail)) {
             listResultError.add(validationErrors[CustomPaymentErrors.RECIPIENT_EMAIL])
             logger.warn("Ошибка валидации для email получателя: ${paymentRequestWrapper.recipientEmail}")
         }
 
-        val emailValidatorManager = EmailValidator()
-        if (!emailValidatorManager.isValid(paymentRequest.managerEmail)) {
+        if (!emailValidator.isValid(paymentRequest.managerEmail)) {
             listResultError.add(validationErrors[CustomPaymentErrors.MANAGER_EMAIL])
             logger.warn("Ошибка валидации для email менеджера: ${paymentRequest.managerEmail}")
         }
 
-        val externalSystemCodeValidator = ExternalSystemCodeValidator()
         if (!externalSystemCodeValidator.isValid(paymentRequest.externalSystemCode)) {
             listResultError.add(validationErrors[CustomPaymentErrors.EXTERNAL_SYSTEM_CODE_VALIDATION])
             logger.warn("Ошибка валидации для внешнего кода системы: ${paymentRequest.externalSystemCode}")
         }
 
-        val paymentEndDateValidatorFormat = PaymentEndDateValidatorFormat()
         if (!paymentEndDateValidatorFormat.isValid(paymentRequestWrapper.paymentEndDate)) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE_MASK])
             logger.warn("Ошибка валидации для формата даты окончания платежа: ${paymentRequestWrapper.paymentEndDate}")
@@ -66,7 +67,6 @@ class PaymentRequestValidator {
             logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${paymentRequest.traceId}")
         }
 
-        val phoneValidator = PhoneValidator()
         if (!phoneValidator.isValid(paymentRequestWrapper.recipientPhone)) {
             listResultError.add(validationErrors[CustomPaymentErrors.RECIPIENT_PHONE_VALIDATION])
             logger.warn("Ошибка валидации для телефона получателя: ${paymentRequestWrapper.recipientPhone}")

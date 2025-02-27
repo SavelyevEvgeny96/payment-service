@@ -19,7 +19,7 @@ import jakarta.validation.constraints.NotNull
  */
 data class PaymentRequest(
     @NotNull
-    val operationId: String?,
+    val operationId: String,
     val docType: String,
     @NotNull
     val policyId: String,
@@ -32,7 +32,7 @@ data class PaymentRequest(
     val hash: String?,
     @NotNull
     val externalSystemCode: String,
-    val managerEmail: String?,
+    val managerEmail: String,
     val typeInsurance: String?,
     val insuranceProgram: String?,
     var traceId: String?,
