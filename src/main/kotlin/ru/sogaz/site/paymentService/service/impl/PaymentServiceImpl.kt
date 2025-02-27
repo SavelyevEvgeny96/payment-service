@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_MAKING_PAYMENT
 import ru.sogaz.site.paymentService.config.ApiConfig
@@ -81,7 +82,7 @@ class PaymentServiceImpl(
     ): ResponseEntity<Response<DataOrder>> {
         logger.info(LOG_START_ORDER_CREATION + traceId)
         val orderId = generateUniquePaymentId()
-        val orderCode = generateUniquePaymentCode()
+        val orderCode = generateUniquePaymentCode(traceId)
         logger.info(LOG_PAYMENT_ID_GENERATED, orderId, traceId)
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
@@ -89,14 +90,14 @@ class PaymentServiceImpl(
             bankRepository.findByBankId(requestWrapper.bank).orElseThrow()
         } catch (e: Exception) {
             logger.error(e, LOG_BANK_NOT_FOUND, traceId)
-            throw IllegalStateException(ERROR_BANK_NOT_FOUND)
+            throw InnerException(traceId,ERROR_BANK_NOT_FOUND)
         }
 
         val orderStatus = try {
             orderStatusRepository.findByStateId("NEW")
         } catch (e: Exception) {
             logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
-            throw IllegalStateException(ERROR_ORDER_STATUS_NOT_FOUND)
+            throw InnerException(traceId,ERROR_ORDER_STATUS_NOT_FOUND)
         }
 
         val order = Order(
@@ -123,7 +124,7 @@ class PaymentServiceImpl(
             logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
-            throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
+            throw InnerException(traceId,ERROR_WHILE_SAVING_ORDER)
         }
 
         var totalPremiumAmount: Double = 0.0
@@ -136,7 +137,7 @@ class PaymentServiceImpl(
                 clientSystemRepository.findByExternalSystemCode(paymentRequest.externalSystemCode)
             } catch (e: Exception) {
                 logger.error(e, LOG_CLIENT_SYSTEM_NOT_FOUND, paymentRequest.externalSystemCode, traceId)
-                throw IllegalStateException(ERROR_CLIENT_SYSTEM_NOT_FOUND)
+                throw InnerException(traceId,ERROR_CLIENT_SYSTEM_NOT_FOUND)
             }
 
             val subOrders = SubOrder(
@@ -165,7 +166,7 @@ class PaymentServiceImpl(
                 logger.info(LOG_SUB_ORDER_CREATION_SUCCESS, subOrderId, traceId)
             } catch (e: Exception) {
                 logger.error(e, LOG_ERROR_WHILE_CREATING_SUB_ORDER, traceId)
-                throw IllegalStateException(ERROR_WHILE_SAVING_SUB_ORDER)
+                throw InnerException(traceId,ERROR_WHILE_SAVING_SUB_ORDER)
             }
         }
 
@@ -177,7 +178,7 @@ class PaymentServiceImpl(
             logger.info(LOG_ORDER_UPDATED_WITH_PREMIUM, orderCode, traceId)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_WHILE_UPDATING_ORDER, traceId)
-            throw IllegalStateException(ERROR_WHILE_UPDATING_ORDER)
+            throw InnerException(traceId,ERROR_WHILE_UPDATING_ORDER)
         }
 
         val result: Response<DataOrder>
@@ -194,7 +195,7 @@ class PaymentServiceImpl(
             return ResponseEntity(result, HttpStatus.OK)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
-            throw IllegalStateException(ERROR_WHILE_SAVING_ORDER)
+            throw InnerException(traceId,ERROR_WHILE_SAVING_ORDER)
         }
     }
 
@@ -228,19 +229,19 @@ class PaymentServiceImpl(
     }
 
 
-    private fun getCodeLength(): Int {
+    private fun getCodeLength(traceId:String): Int {
         val config =
             try {
                 configDataRepository.findByParamName("codeLength")
             } catch (e: Exception) {
                 logger.error(e, LOG_CODE_LENGTH_NOT_FOUND)
-                throw IllegalStateException(ERROR_ORDER_CODE_LENGTH_NOT_FOUND)
+                throw InnerException(traceId,ERROR_ORDER_CODE_LENGTH_NOT_FOUND)
             }
         return config?.paramValue?.toIntOrNull() ?: 6
     }
 
-    private fun generateUniquePaymentCode(): String {
-        val codeLength = getCodeLength()
+    private fun generateUniquePaymentCode(traceId:String): String {
+        val codeLength = getCodeLength(traceId)
 
         return UUID
             .randomUUID()
