@@ -6,16 +6,16 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.1.4</version>
 	</parent>
-	<groupId>ru.sogaz.esb</groupId>
-	<artifactId>payment-service</artifactId>
-	<version>1.0.0</version>
-	<name>Payment Service</name>
-	<description></description>
+	<groupId>ru.sogaz.site</groupId>
+	<artifactId>ArtefactId</artifactId>
+	<version>5.0.3</version>
+	<name>kotlin-template</name>
+	<description>Archetype for Kotlin projects</description>
 
 	<properties>
 		<java.version>21</java.version>
 		<kotlin.version>1.9.25</kotlin.version>
-		<spring-cloud.version>2024.0.0-RC1</spring-cloud.version>
+		<spring-cloud.version>2024.0.0</spring-cloud.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
@@ -53,53 +53,11 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>${springdoc-openapi-starter.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>ru.sogaz.site</groupId>
-			<artifactId>exception-starter</artifactId>
-			<version>1.0.30</version>
-		</dependency>
-		<dependency>
-			<groupId>ru.sogaz.site</groupId>
-			<artifactId>models-lib</artifactId>
-			<version>1.0.1</version>
-		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-validation</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.13.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.module</groupId>
-			<artifactId>jackson-module-kotlin</artifactId>
-			<version>2.13.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-reflect</artifactId>
-			<version>1.5.31</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
-			<version>4.29.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
@@ -131,29 +89,28 @@
 			</resource>
 		</resources>
 		<plugins>
-			<!-- Плагин для сборки проекта -->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${maven-compiler-plugin.version}</version>
-				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-					<release>17</release>
-				</configuration>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			<!-- Плагин для создания JAR -->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.2</version>
+				<groupId>org.jetbrains.kotlin</groupId>
+				<artifactId>kotlin-maven-plugin</artifactId>
 				<configuration>
-					<archive>
-						<manifestEntries>
-							<Main-Class>ru.sogaz.site.paymentService.KotlinApplication</Main-Class>
-						</manifestEntries>
-					</archive>
+					<args>
+						<arg>-Xjsr305=strict</arg>
+					</args>
+					<compilerPlugins>
+						<plugin>spring</plugin>
+					</compilerPlugins>
 				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.jetbrains.kotlin</groupId>
+						<artifactId>kotlin-maven-allopen</artifactId>
+						<version>${kotlin.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 			<!--    Плагин для публикации исходных кодов -->
 			<plugin>
@@ -202,40 +159,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.jetbrains.kotlin</groupId>
-				<artifactId>kotlin-maven-plugin</artifactId>
-				<version>${kotlin.version}</version>
-				<executions>
-					<execution>
-						<id>compile</id>
-						<goals>
-							<goal>compile</goal>
-						</goals>
-						<configuration>
-							<jvmTarget>21</jvmTarget>
-						</configuration>
-					</execution>
-					<execution>
-						<id>test-compile</id>
-						<goals>
-							<goal>test-compile</goal>
-						</goals>
-					</execution>
-				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>org.jetbrains.kotlin</groupId>
-						<artifactId>kotlin-maven-allopen</artifactId>
-						<version>${kotlin.version}</version>
-					</dependency>
-					<dependency>
-						<groupId>org.jetbrains.kotlin</groupId>
-						<artifactId>kotlin-maven-noarg</artifactId>
-						<version>${kotlin.version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 			<!-- PMD static code analyzer-->
 			<plugin>
@@ -316,4 +239,3 @@
 	</pluginRepositories>
 
 </project>
-
