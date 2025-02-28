@@ -9,10 +9,8 @@ import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 @Configuration
 class DataDaoConfig {
     @Bean
-    open fun dataDaoConfig(
-        configDataRepository: ConfigDataRepository
-    ): ConfigDataDao =
+    open fun dataDaoConfig(configDataRepository: ConfigDataRepository): ConfigDataDao =
         ConfigDataDaoImpl(
-            configDataRepository = configDataRepository
+            configDataRepository = configDataRepository,
         )
 }
