@@ -25,9 +25,9 @@ spring:
     active: ${ENVIRONMENT:dev}
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${ENVIRONMENT:jdbc:postgresql://localhost:5432/links}
-    username: ${ENVIRONMENT:postgres}
-    password: ${ENVIRONMENT:123456}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/links}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
