@@ -12,6 +12,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
@@ -37,6 +38,8 @@ class PaymentServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val PAYMENT_PREFIX = "/payment/"
+        const val START_PREFIX = "/start"
         const val TOKEN_PREFIX = "/token"
         const val GPB_TOKEN_ROW = "token"
         const val GPB = "gpb"
@@ -144,5 +147,23 @@ class PaymentServiceImpl(
         traceId: String,
         tokenGpb: String
     ): ResponseEntity<Response<DataPay>> {
+    val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${tokenGpb}$START_PREFIX"
 
+
+        val gpbPaymentRequest = GPBPaymentRequest(
+            supported3ds = true,
+            portal_id = apiConfigProperty.portalId,
+            token = tokenGpb,
+            merchantId = apiConfigProperty.merchantId,
+            orderId = paymentPayRequest.code,
+            backUrlS = "someUrl",
+            backUrlF = "someDeclineUrl",
+            amount = 100.0,
+            description = "Оплата ${paymentPayRequest.code}"
+        )
+
+        // Отправляем запрос с объектом
+        val response = restTemplate.postForEntity(url, gpbPaymentRequest, Response<DataPay>())
+
+        }
 }

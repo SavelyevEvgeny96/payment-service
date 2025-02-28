@@ -14,11 +14,13 @@ class ApiConfigProperty {
     lateinit var paymentUrl: String
     lateinit var gpbUrl: String
     lateinit var portalId: String
+    lateinit var merchantId:String
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
         logger.info("paymentUrl = $paymentUrl")
         logger.info("gpbUrl = $gpbUrl")
         logger.info("portalId = $portalId")
+        logger.info("merchantId = $merchantId")
     }
 }

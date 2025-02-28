@@ -40,6 +40,7 @@ api:
     paymentUrl: ${PAYMENT_URL:url}
     gpbUrl: ${GPB_URL:url}
     portalId: ${GPB_PORTAL_ID:ID}
+    merchantId: ${GPB_MERCHANT_ID:MID}
 management:
   endpoints:
     web:
