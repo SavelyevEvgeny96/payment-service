@@ -8,7 +8,6 @@ import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import java.util.Locale
 import java.util.UUID
 
-@Component
 open class ConfigDataDaoImpl(
     private val configDataRepository: ConfigDataRepository,
 ) : ConfigDataDao {
