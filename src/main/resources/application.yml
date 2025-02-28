@@ -38,7 +38,8 @@ spring:
 api:
   payment:
     paymentUrl: ${PAYMENT_URL:url}
-
+    gpbUrl: ${GPB_URL:url}
+    portalId: ${GPB_PORTAL_ID:ID}
 management:
   endpoints:
     web:

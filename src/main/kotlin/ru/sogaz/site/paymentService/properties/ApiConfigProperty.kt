@@ -5,16 +5,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import ru.sogaz.site.paymentService.loggerFor
 
 /**
- * Класса конфиг.параметров
+ * Класса конфиг.параметров для API платежей и Газпромбанка
  */
 @ConfigurationProperties(prefix = "api.payment")
 class ApiConfigProperty {
     private val logger = loggerFor(javaClass)
-    lateinit var paymentUrl: String
 
+    lateinit var paymentUrl: String
+    lateinit var gpbUrl: String
+    lateinit var portalId: String
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
-        logger.info("paymentUrl = " + paymentUrl)
+        logger.info("paymentUrl = $paymentUrl")
+        logger.info("gpbUrl = $gpbUrl")
+        logger.info("portalId = $portalId")
     }
 }
