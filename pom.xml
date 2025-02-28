@@ -142,6 +142,19 @@
 					<release>17</release>
 				</configuration>
 			</plugin>
+			<!-- Плагин для создания JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.4.2</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Main-Class>ru.sogaz.site.paymentService.KotlinApplication</Main-Class>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
 			<!--    Плагин для публикации исходных кодов -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
