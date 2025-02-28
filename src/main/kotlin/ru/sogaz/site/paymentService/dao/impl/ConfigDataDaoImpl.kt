@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.dao.impl
 
-import org.springframework.stereotype.Component
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.loggerFor
