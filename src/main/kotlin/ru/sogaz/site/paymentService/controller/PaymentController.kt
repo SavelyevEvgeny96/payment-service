@@ -1,3 +1,4 @@
+
 package ru.sogaz.site.paymentService.controller
 
 import org.springframework.http.ResponseEntity
@@ -7,8 +8,11 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.dto.DataOrder
+import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.service.OrderService
+import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 import ru.sogaz.siter.models.resonses.Response
 
@@ -20,6 +24,7 @@ import ru.sogaz.siter.models.resonses.Response
 @RequestMapping("/payment")
 class PaymentController(
     private val orderService: OrderService,
+    private val paymentService: PaymentService,
     private val paymentRequestValidator: PaymentRequestValidator,
 ) {
     /**
@@ -38,5 +43,20 @@ class PaymentController(
             paymentRequestValidator.isValid(paymentRequest, requestWrapper)
         }
         return orderService.createOrder(requestWrapper, traceId)
+    }
+    /**
+     * Метод для создания платежа.
+     * @param traceId Идентификатор трассировки
+     * @return Ответ с кодом состояния и данными о платеже или ошибкой
+     */
+    @PostMapping("/pay")
+    fun createPay(
+        @RequestHeader("TraceId") traceId: String,
+        @RequestBody paymentPayRequest: PaymentPayRequest
+    ): ResponseEntity<Response<DataPay>> {
+        paymentPayRequest.traceId = traceId
+        return paymentService.createPayment(
+            paymentPayRequest, traceId
+        )
     }
 }
