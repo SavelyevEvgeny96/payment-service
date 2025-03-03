@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
+import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
 import ru.sogaz.site.paymentService.repository.*
@@ -26,6 +27,7 @@ import ru.sogaz.siter.models.resonses.Response
  * Включает в себя валидацию данных и создание записи о платеже.
  */
 class PaymentServiceImpl(
+   private val actionTypeRepository: ActionTypeRepository,
     private val objectMapper: ObjectMapper,
     private val restTemplate: WebConfigRestTemplate,
     private val configDataRepository: ConfigDataRepository,
@@ -39,6 +41,11 @@ class PaymentServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
+        const val NO = "no"
+        const val RU = "ru"
+        const val PAYMENT_PAGE = "payment_page"
+        const val RUB = "RUB"
         const val PAYMENT_PREFIX = "/payment/"
         const val START_PREFIX = "/start"
         const val TOKEN_PREFIX = "/token"
@@ -81,7 +88,7 @@ class PaymentServiceImpl(
             logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, paymentPayRequest.code, traceId)
             throw BusinessException(CODE_ERROR_ORDER_NOT_FOUND, traceId)
         }
-
+        val premiumAmount = orderFindByCode.premiumAmount
         val orderStatus = orderFindByCode.orderStatus
         if (orderStatus != null) {
             if (orderStatus.stateId == STATUS_SUCCESS) {
@@ -121,7 +128,24 @@ class PaymentServiceImpl(
         if (configBankPriorityCheck.paramValue == TRUE) {
             if (configBankPriority.paramValue == GPB) {
                 val tokenGpb = getGPBToken(traceId)
-                initiateGPBPayment(paymentPayRequest, traceId,tokenGpb)
+                if (tokenGpb.isNotEmpty()){
+                    val actionTypeTokenSuccess=
+                        try {
+                            actionTypeRepository.findByActionName(GET_TOKEN_MASSAGE_SUCCESS)
+                        } catch (e: Exception) {
+                            logger.error(e, , traceId)
+                            throw InnerException(traceId, )
+                        }
+val operationHistory = PaymentOperationHistory(
+    action = actionTypeTokenSuccess,
+    order = orderFindByCode,
+   actionAuthor = ,
+    actionDate =
+
+
+)
+                }
+                initiateGPBPayment(paymentPayRequest, traceId, tokenGpb,premiumAmount)
             } else {
 
             }
@@ -130,10 +154,12 @@ class PaymentServiceImpl(
         return ResponseEntity.ok
 
     }
+
     override fun getGPBToken(traceId: String): String {
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$TOKEN_PREFIX"
         try {
-            val response: ResponseEntity<String> = restTemplate.restTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
+            val response: ResponseEntity<String> =
+                restTemplate.restTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
             val jsonResponse = objectMapper.readTree(response.body)
             return jsonResponse.get(GPB_TOKEN_ROW).asText().toString()
         } catch (e: Exception) {
@@ -141,27 +167,33 @@ class PaymentServiceImpl(
             throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         }
     }
+
     override fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
-        tokenGpb: String
+        tokenGpb: String,
+        premiumAmount:String?
     ): ResponseEntity<Response<DataPay>> {
-    val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${tokenGpb}$START_PREFIX"
+        val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${tokenGpb}$START_PREFIX"
 
         val gpbPaymentRequest = GPBPaymentRequest(
             supported3ds = true,
-            portal_id = apiConfigProperty.portalId,
+            portalId = apiConfigProperty.portalId,
             token = tokenGpb,
             merchantId = apiConfigProperty.merchantId,
             orderId = paymentPayRequest.code,
             backUrlS = apiConfigProperty.backUrlS,
             backUrlF = apiConfigProperty.backUrlF,
-            amount = 100.0,
-            description = "Оплата ${paymentPayRequest.code}"
+            amount = premiumAmount,
+            description = "Оплата для заказа с code{} : " + paymentPayRequest.code,
+            currency = RUB,
+            lang = RU,
+            stateInProgress = NO,
+            stateRedirect = PAYMENT_PAGE,
         )
 
-        
-        val response = restTemplate.restTemplate().postForEntity(url, gpbPaymentRequest,String::class.java)
 
-        }
+        val response = restTemplate.restTemplate().postForEntity(url, gpbPaymentRequest, String::class.java)
+
+    }
 }

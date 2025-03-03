@@ -14,12 +14,12 @@ import jakarta.persistence.Table
 class PaymentOperationHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long?,
+    var id: Long? = null,
     @ManyToOne
     @JoinColumn(name = "action_type_id")
     var action: ActionType,
     @Column(name = "action_date")
-    var actionDate: String,
+    var actionDate: String? = null,
     @ManyToOne
     @JoinColumn(name = "action_author_id")
     var actionAuthor: ClientSystem?,
