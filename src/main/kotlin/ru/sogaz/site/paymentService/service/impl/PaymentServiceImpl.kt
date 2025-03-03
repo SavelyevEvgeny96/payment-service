@@ -68,18 +68,6 @@ class PaymentServiceImpl(
 
     }
 
-    override fun getGPBToken(traceId: String): String {
-        val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$TOKEN_PREFIX"
-        try {
-            val response: ResponseEntity<String> = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java)
-            val jsonResponse = objectMapper.readTree(response.body)
-            return jsonResponse.get(GPB_TOKEN_ROW).asText().toString()
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_GET_TOKEN + traceId)
-            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
-        }
-    }
-
     override fun createPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String
@@ -141,14 +129,23 @@ class PaymentServiceImpl(
         return ResponseEntity.ok
 
     }
-
+    override fun getGPBToken(traceId: String): String {
+        val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$TOKEN_PREFIX"
+        try {
+            val response: ResponseEntity<String> = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java)
+            val jsonResponse = objectMapper.readTree(response.body)
+            return jsonResponse.get(GPB_TOKEN_ROW).asText().toString()
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_GET_TOKEN + traceId)
+            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
+        }
+    }
     override fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
         tokenGpb: String
     ): ResponseEntity<Response<DataPay>> {
     val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${tokenGpb}$START_PREFIX"
-
 
         val gpbPaymentRequest = GPBPaymentRequest(
             supported3ds = true,
@@ -162,8 +159,8 @@ class PaymentServiceImpl(
             description = "Оплата ${paymentPayRequest.code}"
         )
 
-        // Отправляем запрос с объектом
-        val response = restTemplate.postForEntity(url, gpbPaymentRequest, Response<DataPay>())
+        
+        val response = restTemplate.postForEntity(url, gpbPaymentRequest,String::class.java)
 
         }
 }
