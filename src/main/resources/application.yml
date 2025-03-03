@@ -37,10 +37,12 @@ spring:
 
 api:
   payment:
-    paymentUrl: ${PAYMENT_URL:url}
-    gpbUrl: ${GPB_URL:url}
+    paymentUrl: ${PAYMENT_URL:URL}
+    gpbUrl: ${GPB_URL:URL}
     portalId: ${GPB_PORTAL_ID:ID}
     merchantId: ${GPB_MERCHANT_ID:MID}
+    backUrlS: ${BACK_URL_SUCCESS:URL}
+    backUrlF: ${BACK_URL_FALSE:URL}
 management:
   endpoints:
     web:

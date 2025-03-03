@@ -11,6 +11,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
@@ -26,7 +27,7 @@ import ru.sogaz.siter.models.resonses.Response
  */
 class PaymentServiceImpl(
     private val objectMapper: ObjectMapper,
-    private val restTemplate: RestTemplate,
+    private val restTemplate: WebConfigRestTemplate,
     private val configDataRepository: ConfigDataRepository,
     private val apiConfigProperty: ApiConfigProperty,
     private val bankRepository: BankRepository,
@@ -132,7 +133,7 @@ class PaymentServiceImpl(
     override fun getGPBToken(traceId: String): String {
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$TOKEN_PREFIX"
         try {
-            val response: ResponseEntity<String> = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java)
+            val response: ResponseEntity<String> = restTemplate.restTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
             val jsonResponse = objectMapper.readTree(response.body)
             return jsonResponse.get(GPB_TOKEN_ROW).asText().toString()
         } catch (e: Exception) {
@@ -153,14 +154,14 @@ class PaymentServiceImpl(
             token = tokenGpb,
             merchantId = apiConfigProperty.merchantId,
             orderId = paymentPayRequest.code,
-            backUrlS = "someUrl",
-            backUrlF = "someDeclineUrl",
+            backUrlS = apiConfigProperty.backUrlS,
+            backUrlF = apiConfigProperty.backUrlF,
             amount = 100.0,
             description = "Оплата ${paymentPayRequest.code}"
         )
 
         
-        val response = restTemplate.postForEntity(url, gpbPaymentRequest,String::class.java)
+        val response = restTemplate.restTemplate().postForEntity(url, gpbPaymentRequest,String::class.java)
 
         }
 }

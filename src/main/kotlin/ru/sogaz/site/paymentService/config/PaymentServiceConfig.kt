@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
@@ -23,6 +24,8 @@ open class PaymentServiceConfig {
         orderRepository: OrderRepository,
         orderStatusRepository: OrderStatusRepository,
         subOrderRepository: SubOrderRepository,
+        objectMapper: ObjectMapper,
+        restTemplate: WebConfigRestTemplate
     ): PaymentService =
         PaymentServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -32,5 +35,7 @@ open class PaymentServiceConfig {
             orderStatusRepository = orderStatusRepository,
             subOrderRepository = subOrderRepository,
             configDataRepository = configDataRepository,
+            objectMapper = objectMapper,
+            restTemplate = restTemplate
         )
 }
