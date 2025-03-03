@@ -6,16 +6,16 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.1.4</version>
 	</parent>
-	<groupId>ru.sogaz.site</groupId>
-	<artifactId>ArtefactId</artifactId>
-	<version>5.0.3</version>
-	<name>kotlin-template</name>
-	<description>Archetype for Kotlin projects</description>
+	<groupId>ru.sogaz.esb</groupId>
+	<artifactId>payment-service</artifactId>
+	<version>1.0.0</version>
+	<name>Payment Service</name>
+	<description></description>
 
 	<properties>
 		<java.version>21</java.version>
 		<kotlin.version>1.9.25</kotlin.version>
-		<spring-cloud.version>2024.0.0</spring-cloud.version>
+		<spring-cloud.version>2024.0.0-RC1</spring-cloud.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
@@ -53,11 +53,53 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>${springdoc-openapi-starter.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>ru.sogaz.site</groupId>
+			<artifactId>exception-starter</artifactId>
+			<version>1.0.30</version>
+		</dependency>
+		<dependency>
+			<groupId>ru.sogaz.site</groupId>
+			<artifactId>models-lib</artifactId>
+			<version>1.0.1</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.13.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-kotlin</artifactId>
+			<version>2.13.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-reflect</artifactId>
+			<version>1.5.31</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+			<version>4.29.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
@@ -200,6 +242,7 @@
 			</plugin>
 		</plugins>
 	</build>
+
 	<reporting>
 		<plugins>
 			<plugin>
@@ -239,3 +282,4 @@
 	</pluginRepositories>
 
 </project>
+
