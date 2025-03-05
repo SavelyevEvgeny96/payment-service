@@ -46,17 +46,20 @@ class PaymentController(
             ApiResponse(
                 responseCode = "401",
                 description = "Неавторизованный запрос",
-                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500401, \"messageError\": \"Ваш запрос не авторизован\"}"))]
+                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500401," +
+                        " \"messageError\": \"Ваш запрос не авторизован\"}"))]
             ),
             ApiResponse(
                 responseCode = "403",
                 description = "Доступ запрещен",
-                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500403, \"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}"))]
+                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500403, " +
+                        "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}"))]
             ),
             ApiResponse(
                 responseCode = "422",
                 description = "Ошибка валидации данных",
-                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500422, \"messageError\": \"Не все обязательные данные указаны корректно\"}"))]
+                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500422, " +
+                        "\"messageError\": \"Не все обязательные данные указаны корректно\"}"))]
             )
         ],
     )
