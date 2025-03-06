@@ -29,9 +29,9 @@ data class SubOrder(
     @Column(name = "doc_type")
     var docType: String,
     @Column(name = "policy_id")
-    var policyId: String,
+    var policyId: String?,
     @Column(name = "policy_number")
-    var policyNumber: String,
+    var policyNumber: String?,
     @Column(name = "contract_id")
     var contractId: String,
     @Column(name = "insurance_program")

@@ -23,7 +23,6 @@ data class PaymentRequestWrapper(
     val urlToDecline: String?,
     val customURL: String?,
     val bank: String?,
-    @NotNull
     val paymentEndDate: String,
     @NotNull
     val recipientEmail: String,

@@ -117,7 +117,7 @@ class OrderServiceImpl(
             logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
             throw InnerException(traceId, ERROR_WHILE_SAVING_ORDER)
         }
-
+        var totalPremiumAmount = BigDecimal.ZERO
         for (paymentRequest in requestWrapper.payments) {
             val subOrderId = configDataDao.generateUniquePaymentId()
             logger.info(LOG_PAYMENT_ID_GENERATED, subOrderId, traceId)
@@ -134,8 +134,6 @@ class OrderServiceImpl(
                     )
                     throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND)
                 }
-
-            var totalPremiumAmount = BigDecimal.ZERO
 
             val subOrders =
                 SubOrder(
