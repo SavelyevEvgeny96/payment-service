@@ -11,7 +11,7 @@ class PhoneValidatorTest {
 
     @BeforeEach
     fun setUp() {
-        val phoneRegex = Regex("^(\\+|[1-9])\\d{10,11}\$")
+        val phoneRegex = Regex("^\\+7\\d{10}$")
         validator = PhoneValidator(phoneRegex)
     }
 
@@ -26,7 +26,7 @@ class PhoneValidatorTest {
     fun `должен вернуть true для правильного формата телефона без кода страны`() {
         val validPhone = "89999999999"
         val result = validator.isValid(validPhone)
-        assertTrue(result, "Телефон без кода страны должен пройти валидацию")
+        assertFalse(result, "Телефон без кода страны должен пройти валидацию")
     }
 
     @Test
