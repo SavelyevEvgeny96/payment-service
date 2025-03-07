@@ -25,7 +25,7 @@ class Order(
     var orderStatus: OrderStatus?,
     @ManyToOne
     @JoinColumn(name = "bank_id", referencedColumnName = "bank_id")
-    var bankId: Bank,
+    var bankId: Bank?,
     @Column(name = "date_delete")
     var dateDelete: String?,
     @Column(name = "premium_amount")

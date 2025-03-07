@@ -5,7 +5,7 @@ package ru.sogaz.site.paymentService.validation
  * Проверяет, что значение поля банка равно "gpb".
  */
 class BankValidator {
-    fun isValid(value: String?): Boolean = value == GPB
+    fun isValid(value: String?): Boolean = value.isNullOrEmpty() || value == GPB
 
     companion object {
         const val GPB = "gpb"
