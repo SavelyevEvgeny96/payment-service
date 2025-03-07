@@ -11,7 +11,7 @@ import ru.sogaz.site.paymentService.validation.PhoneValidator
 open class ValidatorConfig {
     @Bean
     open fun emailValidator(): EmailValidator {
-        val emailRegex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")
+        val emailRegex = Regex("^(?!\\.)(?!.*\\.\\.)[a-zA-Z0-9._%+-]+(?<!\\.)@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")
         return EmailValidator(emailRegex)
     }
 
@@ -23,7 +23,7 @@ open class ValidatorConfig {
 
     @Bean
     open fun phoneValidator(): PhoneValidator {
-        val codeRegex = Regex("^(\\+|[1-9])\\d{10,11}\$")
+        val codeRegex = Regex("^\\+7\\d{10}$")
         return PhoneValidator(codeRegex)
     }
 
