@@ -61,9 +61,9 @@ class PolicyholderValidatorTest {
     }
 
     @Test
-    fun `должен вернуть false для пустой строки`() {
+    fun `должен вернуть true для пустой строки`() {
         val emptyName = ""
         val result = validator.isValidCorrectInput(emptyName)
-        assertFalse(result, "Имя не должно быть пустым")
+        assertTrue(result, "Имя не должно быть пустым")
     }
 }

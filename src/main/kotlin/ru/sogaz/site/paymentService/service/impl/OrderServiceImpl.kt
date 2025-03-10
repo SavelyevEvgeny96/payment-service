@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
+import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
@@ -21,6 +22,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class OrderServiceImpl(
+    private val configDataRepository: ConfigDataRepository,
     private val configDataDao: ConfigDataDao,
     private val apiConfigProperty: ApiConfigProperty,
     private val bankRepository: BankRepository,
@@ -74,13 +76,14 @@ class OrderServiceImpl(
         logger.info(LOG_PAYMENT_ID_GENERATED, orderId, traceId)
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
-        val bank =
-            try {
-                bankRepository.findByBankId(requestWrapper.bank).orElseThrow()
-            } catch (e: Exception) {
-                logger.error(e, LOG_BANK_NOT_FOUND, traceId)
-                throw InnerException(traceId, ERROR_BANK_NOT_FOUND)
-            }
+        val requestBankId = requestWrapper.bank
+
+        val bank = if (requestBankId.isNullOrBlank()) {
+            val reserveConfigBank = configDataDao.getBankPriority(traceId)
+            bankRepository.findByBankId(reserveConfigBank)
+        } else {
+            bankRepository.findByBankId(requestBankId)
+        }
 
         val orderStatus =
             try {

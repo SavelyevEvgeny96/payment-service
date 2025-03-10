@@ -7,17 +7,16 @@ package ru.sogaz.site.paymentService.validation
  * isValidCorrectInput Проверяет, что значение поля содержит только русские буквы, пробел и тире"
  */
 class PolicyholderValidator {
-    fun isValid(value: String?): Boolean = !value.isNullOrBlank() && value.length in 2..30
+    fun isValid(value: String?): Boolean = value.isNullOrBlank() || value.length in 2..30
 
-    fun isValidDoc(value: String?): Boolean = value?.matches(Regex("^[0-9\\s]+$")) ?: true
+    fun isValidDoc(value: String?): Boolean = value.isNullOrBlank() || value.matches(Regex("^[0-9\\s]+$"))
 
     fun isValidCorrectInput(value: String?): Boolean {
-        if (value.isNullOrEmpty()) {
-            return false
+        if (value.isNullOrBlank()) {
+            return true
         }
 
         val regex = Regex("^[а-яА-ЯёЁ\\s-]+$")
-
         return value.matches(regex)
     }
 }
