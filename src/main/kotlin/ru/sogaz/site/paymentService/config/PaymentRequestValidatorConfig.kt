@@ -2,7 +2,12 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.validation.*
+import ru.sogaz.site.paymentService.validation.PolicyholderValidator
+import ru.sogaz.site.paymentService.validation.EmailValidator
+import ru.sogaz.site.paymentService.validation.ExternalSystemCodeValidator
+import ru.sogaz.site.paymentService.validation.PhoneValidator
+import ru.sogaz.site.paymentService.validation.PaymentEndDateValidatorFormat
+import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 
 @Configuration
 open class PaymentRequestValidatorConfig {
