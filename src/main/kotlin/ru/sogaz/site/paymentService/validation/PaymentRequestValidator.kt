@@ -18,7 +18,12 @@ class PaymentRequestValidator(
     private val phoneValidator: PhoneValidator,
     private val emailValidator: EmailValidator,
     private val externalSystemCodeValidator: ExternalSystemCodeValidator,
+    private val policyholderValidator: PolicyholderValidator
 ) {
+    companion object {
+        const val VALUE_NOT_NULL_IS_EMPTY = "Значение не должно быть пустым или null"
+    }
+
     private val logger = loggerFor(javaClass)
 
     fun isValid(
@@ -40,13 +45,28 @@ class PaymentRequestValidator(
             listResultError.add(validationErrors[CustomPaymentErrors.BANK])
             logger.warn("Ошибка валидации для поля банка: ${paymentRequestWrapper.bank}")
         }
-
+        if (paymentRequest.premiumAmount.isNullOrEmpty()) {
+            listResultError.add(validationErrors[CustomPaymentErrors.PREMIUM_AMOUNT])
+            logger.warn(VALUE_NOT_NULL_IS_EMPTY)
+        }
+        if (paymentRequest.operationId.isNullOrEmpty()) {
+            listResultError.add(validationErrors[CustomPaymentErrors.OPERATION_ID])
+            logger.warn(VALUE_NOT_NULL_IS_EMPTY)
+        }
+        if (paymentRequest.policyId.isNullOrEmpty()) {
+            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_ID])
+            logger.warn(VALUE_NOT_NULL_IS_EMPTY)
+        }
+        if (paymentRequest.policyNumber.isNullOrEmpty()) {
+            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_NUMBER])
+            logger.warn(VALUE_NOT_NULL_IS_EMPTY)
+        }
         if (!emailValidator.isValid(paymentRequestWrapper.recipientEmail)) {
             listResultError.add(validationErrors[CustomPaymentErrors.RECIPIENT_EMAIL])
             logger.warn("Ошибка валидации для email получателя: ${paymentRequestWrapper.recipientEmail}")
         }
 
-        if (!emailValidator.isValid(paymentRequest.managerEmail)) {
+        if (!emailValidator.isValidManager(paymentRequest.managerEmail)) {
             listResultError.add(validationErrors[CustomPaymentErrors.MANAGER_EMAIL])
             logger.warn("Ошибка валидации для email менеджера: ${paymentRequest.managerEmail}")
         }
@@ -55,14 +75,11 @@ class PaymentRequestValidator(
             listResultError.add(validationErrors[CustomPaymentErrors.EXTERNAL_SYSTEM_CODE_VALIDATION])
             logger.warn("Ошибка валидации для внешнего кода системы: ${paymentRequest.externalSystemCode}")
         }
-
+        val paymentPastDateValidator = NotPastDateValidator()
         if (!paymentEndDateValidatorFormat.isValid(paymentRequestWrapper.paymentEndDate)) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE_MASK])
             logger.warn("Ошибка валидации для формата даты окончания платежа: ${paymentRequestWrapper.paymentEndDate}")
-        }
-
-        val paymentPastDateValidator = NotPastDateValidator()
-        if (!paymentPastDateValidator.isValid(paymentRequestWrapper.paymentEndDate)) {
+        } else if (!paymentPastDateValidator.isValid(paymentRequestWrapper.paymentEndDate)) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE])
             logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${paymentRequest.traceId}")
         }
@@ -72,20 +89,17 @@ class PaymentRequestValidator(
             logger.warn("Ошибка валидации для телефона получателя: ${paymentRequestWrapper.recipientPhone}")
         }
 
-        val policyholderValidator = PolicyholderValidator()
         if (!policyholderValidator.isValid(paymentRequestWrapper.policyHolder)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_LENGTH])
             logger.warn("Ошибка валидации для держателя полиса: ${paymentRequestWrapper.policyHolder}")
         }
 
-        val policyholderDocValidator = PolicyholderValidator()
-        if (!policyholderDocValidator.isValidDoc(paymentRequestWrapper.policyHolderDoc)) {
+        if (!policyholderValidator.isValidDoc(paymentRequestWrapper.policyHolderDoc)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_DOC])
             logger.warn("Ошибка валидации для документа держателя полиса: ${paymentRequestWrapper.policyHolderDoc}")
         }
 
-        val policyholderCorrectInput = PolicyholderValidator()
-        if (!policyholderCorrectInput.isValidCorrectInput(paymentRequestWrapper.policyHolder)) {
+        if (!policyholderValidator.isValidCorrectInput(paymentRequestWrapper.policyHolder)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER])
             logger.warn("Ошибка валидации для корректности ввода полиса: ${paymentRequestWrapper.policyHolder}")
         }
@@ -93,7 +107,7 @@ class PaymentRequestValidator(
         if (listResultError.isNotEmpty()) {
             logger.error(
                 "Валидация не прошла для traceId: ${paymentRequest.traceId}." +
-                    " Ошибки: ${listResultError.map { it?.error }}",
+                        " Ошибки: ${listResultError.map { it?.error }}",
             )
             throw ValidationException(
                 CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,
