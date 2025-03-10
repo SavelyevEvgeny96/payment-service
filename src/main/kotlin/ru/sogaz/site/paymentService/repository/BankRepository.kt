@@ -7,7 +7,7 @@ import java.util.Optional
 
 @Repository
 interface BankRepository : JpaRepository<Bank, Long> {
-    fun findByBankId(bankId: String?): Optional<Bank>
+    fun findByBankId(bankId: String?):Bank
 
     fun findFirstByOrderById(): Bank
 }

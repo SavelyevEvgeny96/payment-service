@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
+import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
@@ -33,7 +34,6 @@ class OrderServiceImpl(
 
     companion object {
         const val STATE_ID_NEW = "NEW"
-        const val PREMIUM_FORMAT = "%.2f"
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
         const val SUCCESS = "success"
@@ -42,7 +42,6 @@ class OrderServiceImpl(
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с paymentCode: {} для TraceId: {}"
         const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: {}"
         const val LOG_ERROR_WHILE_UPDATING_ORDER = "Ошибка при обновлении суммы премии заказа"
-        const val LOG_BANK_NOT_FOUND = "Банк не найден, используется по умолчанию для TraceId: {}"
         const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: {} для TraceId: {}"
         const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: {} для TraceId: {}"
         const val LOG_CLIENT_SYSTEM_NOT_FOUND =
@@ -51,7 +50,6 @@ class OrderServiceImpl(
         const val LOG_ERROR_WHILE_CREATING_SUB_ORDER = "Ошибка при создании подзаказа для TraceId: {}"
         const val ERROR_ORDER_STATUS_NOT_FOUND = "Статус заказа не найден для stateId 0"
         const val ERROR_CLIENT_SYSTEM_NOT_FOUND = "Система клиента не найдена"
-        const val ERROR_BANK_NOT_FOUND = "Банк не найден"
         const val ERROR_WHILE_SAVING_ORDER = "Ошибка при сохранении заказа"
         const val ERROR_WHILE_SAVING_SUB_ORDER = "Ошибка при сохранении подзаказа"
         const val ERROR_WHILE_UPDATING_ORDER = "Ошибка сумма премии не обновленна"
@@ -74,13 +72,14 @@ class OrderServiceImpl(
         logger.info(LOG_PAYMENT_ID_GENERATED, orderId, traceId)
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
-        val bank =
-            try {
-                bankRepository.findByBankId(requestWrapper.bank).orElseThrow()
-            } catch (e: Exception) {
-                logger.error(e, LOG_BANK_NOT_FOUND, traceId)
-                throw InnerException(traceId, ERROR_BANK_NOT_FOUND)
-            }
+        val requestBankId = requestWrapper.bank
+
+        val bank = if (requestBankId.isNullOrBlank()) {
+            val reserveConfigBank = configDataDao.getBankPriority(traceId)
+            bankRepository.findByBankId(reserveConfigBank)
+        } else {
+            bankRepository.findByBankId(requestBankId)
+        }
 
         val orderStatus =
             try {

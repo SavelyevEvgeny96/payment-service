@@ -8,6 +8,7 @@ import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
+import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
@@ -31,6 +32,6 @@ open class OrderServiceConfig {
             orderRepository = orderRepository,
             orderStatusRepository = orderStatusRepository,
             subOrderRepository = subOrderRepository,
-            configDataDao = configDataDao,
+            configDataDao = configDataDao
         )
 }

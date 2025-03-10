@@ -13,8 +13,10 @@ open class ConfigDataDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND = "Не найдено значение bankPriority"
         const val LOG_CODE_LENGTH_NOT_FOUND = "Не найдено значение длины для генерации Order.code "
         const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
+
     }
 
     override fun getCodeLength(traceId: String): Int {
@@ -38,6 +40,15 @@ open class ConfigDataDaoImpl(
             .take(codeLength)
             .uppercase(Locale.getDefault())
     }
-
+    override fun getBankPriority(traceId: String): String {
+        val config =
+            try {
+                configDataRepository.findByParamName("bankPriority")
+            } catch (e: Exception) {
+                logger.error(e, LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND)
+                throw InnerException(traceId, LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND)
+            }
+        return config.paramValue
+    }
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
 }
