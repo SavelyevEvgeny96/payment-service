@@ -18,6 +18,7 @@ class PaymentRequestValidator(
     private val phoneValidator: PhoneValidator,
     private val emailValidator: EmailValidator,
     private val externalSystemCodeValidator: ExternalSystemCodeValidator,
+    private val policyholderValidator: PolicyholderValidator
 ) {
     companion object {
         const val VALUE_NOT_NULL_IS_EMPTY = "Значение не должно быть пустым или null"
@@ -88,20 +89,17 @@ class PaymentRequestValidator(
             logger.warn("Ошибка валидации для телефона получателя: ${paymentRequestWrapper.recipientPhone}")
         }
 
-        val policyholderValidator = PolicyholderValidator()
         if (!policyholderValidator.isValid(paymentRequestWrapper.policyHolder)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_LENGTH])
             logger.warn("Ошибка валидации для держателя полиса: ${paymentRequestWrapper.policyHolder}")
         }
 
-        val policyholderDocValidator = PolicyholderValidator()
-        if (!policyholderDocValidator.isValidDoc(paymentRequestWrapper.policyHolderDoc)) {
+        if (!policyholderValidator.isValidDoc(paymentRequestWrapper.policyHolderDoc)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_DOC])
             logger.warn("Ошибка валидации для документа держателя полиса: ${paymentRequestWrapper.policyHolderDoc}")
         }
 
-        val policyholderCorrectInput = PolicyholderValidator()
-        if (!policyholderCorrectInput.isValidCorrectInput(paymentRequestWrapper.policyHolder)) {
+        if (!policyholderValidator.isValidCorrectInput(paymentRequestWrapper.policyHolder)) {
             listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER])
             logger.warn("Ошибка валидации для корректности ввода полиса: ${paymentRequestWrapper.policyHolder}")
         }

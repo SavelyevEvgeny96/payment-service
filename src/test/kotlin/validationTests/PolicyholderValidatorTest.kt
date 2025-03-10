@@ -6,7 +6,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class PolicyholderValidatorTest {
-    private val validator = PolicyholderValidator()
+
+    private val validator = PolicyholderValidator(
+        regex = Regex("^[а-яА-ЯёЁ\\s-]+$"), regexDoc = Regex("^[0-9\\s]+$")
+    )
 
     // Тест для метода isValid
     @Test
