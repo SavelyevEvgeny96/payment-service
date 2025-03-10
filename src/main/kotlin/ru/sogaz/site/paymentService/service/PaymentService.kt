@@ -11,10 +11,11 @@ import ru.sogaz.siter.models.resonses.Response
  */
 interface PaymentService {
     fun createPayment(
-        request: PaymentPayRequest,
+        paymentPayRequest: PaymentPayRequest,
         traceId: String,
     ): ResponseEntity<Response<DataPay>>
 
     fun initiateGPBPayment(paymentPayRequest: PaymentPayRequest, traceId: String,tokenGpb:String,premiumAmount:String?): ResponseEntity<Response<DataPay>>
     fun getGPBToken(traceId: String): String
+
 }

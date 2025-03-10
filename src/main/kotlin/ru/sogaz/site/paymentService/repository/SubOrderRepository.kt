@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.SubOrder
 
 @Repository
-interface SubOrderRepository : JpaRepository<SubOrder, Long>
+interface SubOrderRepository : JpaRepository<SubOrder, Long>{
+    fun findOrderId(orderId:String):SubOrder
+}

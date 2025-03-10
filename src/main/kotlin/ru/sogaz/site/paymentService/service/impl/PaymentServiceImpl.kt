@@ -1,6 +1,8 @@
 package ru.sogaz.site.paymentService.service.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
@@ -12,6 +14,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
@@ -20,6 +23,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
 import ru.sogaz.site.paymentService.repository.*
 import ru.sogaz.site.paymentService.service.PaymentService
+import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.STATUS_CODE_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
 
 /**
@@ -27,7 +31,7 @@ import ru.sogaz.siter.models.resonses.Response
  * Включает в себя валидацию данных и создание записи о платеже.
  */
 class PaymentServiceImpl(
-   private val actionTypeRepository: ActionTypeRepository,
+    private val actionTypeRepository: ActionTypeRepository,
     private val objectMapper: ObjectMapper,
     private val restTemplate: WebConfigRestTemplate,
     private val configDataRepository: ConfigDataRepository,
@@ -37,10 +41,12 @@ class PaymentServiceImpl(
     private val orderRepository: OrderRepository,
     private val orderStatusRepository: OrderStatusRepository,
     private val subOrderRepository: SubOrderRepository,
+    private val operationHistoryRepository: PaymentOperationHistoryRepository
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val DESC = "Оплата для заказа с code{} : "
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val NO = "no"
         const val RU = "ru"
@@ -57,6 +63,7 @@ class PaymentServiceImpl(
         const val STATUS_SUCCESS = "SUCCESS"
         const val STATUS_OVERDUE = "OVERDUE"
         const val STATUS_MARKEDDEL = "MARKEDDEL"
+        const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name \" Получен токен доступа \" "
         const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: {}"
         const val LOG_ERROR_GET_TOKEN = "Ошибка получения токена доступа от GPB , система не доступна для TraceId: {}"
         const val LOG_NOT_FOUND_ORDER_TO_CODE =
@@ -110,7 +117,6 @@ class PaymentServiceImpl(
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
             throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
         }
-
         val configBankPriority =
             try {
                 configDataRepository.findByParamName(BANK_PRIORITY)
@@ -125,34 +131,33 @@ class PaymentServiceImpl(
                 logger.error(e, LOG_ERROR_BANK_PRIORITY_CHECK, traceId)
                 throw InnerException(traceId, ERROR_BANK_PRIORITY_CHECK)
             }
-        if (configBankPriorityCheck.paramValue == TRUE) {
-            if (configBankPriority.paramValue == GPB) {
+        if (configBankPriorityCheck.paramValue == TRUE&&configBankPriority.paramValue == GPB) {
                 val tokenGpb = getGPBToken(traceId)
-                if (tokenGpb.isNotEmpty()){
-                    val actionTypeTokenSuccess=
+                if (tokenGpb.isNotEmpty()) {
+                    val actionTypeTokenSuccess =
                         try {
                             actionTypeRepository.findByActionName(GET_TOKEN_MASSAGE_SUCCESS)
                         } catch (e: Exception) {
-                            logger.error(e, , traceId)
-                            throw InnerException(traceId, )
+                            logger.error(e,LOG_AND_ERROR_FIND_ACTION_TYPE , traceId)
+                            throw InnerException(traceId,LOG_AND_ERROR_FIND_ACTION_TYPE)
                         }
-val operationHistory = PaymentOperationHistory(
-    action = actionTypeTokenSuccess,
-    order = orderFindByCode,
-   actionAuthor = ,
-    actionDate =
-
-
-)
+                    val subOrder =
+                        try {
+                            subOrderRepository.findOrderId(orderFindByCode.code)
+                        } catch (e: Exception) {
+                            logger.error(e,LOG_AND_ERROR_FIND_ACTION_TYPE , traceId)
+                            throw InnerException(traceId,LOG_AND_ERROR_FIND_ACTION_TYPE)
+                        }
+                    val operationHistory = PaymentOperationHistory(
+                        action = actionTypeTokenSuccess,
+                        order = orderFindByCode,
+                        actionAuthor =subOrder.clientSystem,
+                        actionDate = null
+                    )
+                    operationHistoryRepository.save(operationHistory)
                 }
-                initiateGPBPayment(paymentPayRequest, traceId, tokenGpb,premiumAmount)
-            } else {
-
-            }
+            initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount)
         }
-
-        return ResponseEntity.ok
-
     }
 
     override fun getGPBToken(traceId: String): String {
@@ -172,7 +177,7 @@ val operationHistory = PaymentOperationHistory(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
         tokenGpb: String,
-        premiumAmount:String?
+        premiumAmount: String?
     ): ResponseEntity<Response<DataPay>> {
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${tokenGpb}$START_PREFIX"
 
@@ -185,15 +190,31 @@ val operationHistory = PaymentOperationHistory(
             backUrlS = apiConfigProperty.backUrlS,
             backUrlF = apiConfigProperty.backUrlF,
             amount = premiumAmount,
-            description = "Оплата для заказа с code{} : " + paymentPayRequest.code,
+            description = DESC + paymentPayRequest.code,
             currency = RUB,
             lang = RU,
             stateInProgress = NO,
-            stateRedirect = PAYMENT_PAGE,
+            stateRedirect = PAYMENT_PAGE
         )
 
+        val responseEntity: ResponseEntity<Map<String, Any>> =
+            restTemplate.restTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                HttpEntity(gpbPaymentRequest),
+                object : ParameterizedTypeReference<Map<String, Any>>() {}
+            )
+        val responseBody = responseEntity.body
+        val paymentPageUrl = responseBody?.get("paymentPageUrl") as? String ?: ""
 
-        val response = restTemplate.restTemplate().postForEntity(url, gpbPaymentRequest, String::class.java)
+        val dataPay = DataPay(paymentPageUrl)
+        val result: Response<DataPay> = Response(
+            status = OrderServiceImpl.SUCCESS,
+            code = STATUS_CODE_SUCCESS,
+            traceId = traceId,
+            data = dataPay,
+        )
 
+        return ResponseEntity.ok(result)
     }
 }
