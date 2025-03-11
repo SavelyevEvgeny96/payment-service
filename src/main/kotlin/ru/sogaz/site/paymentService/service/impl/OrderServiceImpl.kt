@@ -73,14 +73,7 @@ class OrderServiceImpl(
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
         val requestBankId = requestWrapper.bank
-
-        val bank = if (requestBankId.isNullOrBlank()) {
-            val reserveConfigBank = configDataDao.getBankPriority(traceId)
-            bankRepository.findByBankId(reserveConfigBank)
-        } else {
-            bankRepository.findByBankId(requestBankId)
-        }
-
+        val bank = configDataDao.getBank(requestBankId,traceId)
         val orderStatus =
             try {
                 orderStatusRepository.findByStateId(STATE_ID_NEW)

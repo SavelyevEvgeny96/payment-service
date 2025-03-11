@@ -14,8 +14,4 @@ interface PaymentService {
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
     ): ResponseEntity<Response<DataPay>>
-
-    fun initiateGPBPayment(paymentPayRequest: PaymentPayRequest, traceId: String,tokenGpb:String,premiumAmount:String?): ResponseEntity<Response<DataPay>>
-    fun getGPBToken(traceId: String): String
-
 }

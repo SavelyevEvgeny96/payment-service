@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "orders")
-class Order(
+data class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
@@ -54,4 +54,27 @@ class Order(
     var policyholderDoc: String?,
     @Column(name = "recipient_user_id")
     var recipientUserId: String?,
-)
+) {
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(
+        0,
+        "",
+        "",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "",
+        null,
+        null,
+        null,
+        null,
+        null
+    )
+}
