@@ -29,5 +29,6 @@ interface ConfigDataDao {
         traceId: String,
         tokenGpb: String,
         premiumAmount: String?,
+        order: Order
     ): ResponseEntity<Response<DataPay>>
 }

@@ -37,8 +37,12 @@ open class ConfigDataDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val SAVE_OPERATION_HISTORY="Добавлена запись в таблицу OPERATION_HISTORY при не удачном получении GPB Token "
-       const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
+        const val SAVE_OPERATION_HISTORY_START_PAY_ERROR = "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа"
+        const val SAVE_OPERATION_HISTORY_START_PAY = "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на старт платежа"
+        const val SAVE_OPERATION_HISTORY="Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token "
+        const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
+        const val SENDING_REQUEST_START_PAY = "Отправка запроса для старта платежа"
+        const val ERROR_SENDING_REQUEST_START_PAY = "Ошибка при отправке запроса на старт платежа"
         const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB для TraceId: "
         const val CODE_LENGTH = "codeLength"
         const val BANK_PRIORITY = "bankPriority"
@@ -136,7 +140,32 @@ open class ConfigDataDaoImpl(
         traceId: String,
         tokenGpb: String,
         premiumAmount: String?,
+        order: Order
     ): ResponseEntity<Response<DataPay>> {
+        val actionTypeStartPay=
+            try {
+                actionTypeRepository.findByActionName(SENDING_REQUEST_START_PAY)
+            } catch (e: Exception) {
+                logger.error(e,LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
+                throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
+            }
+        val subOrder =
+            try {
+                subOrderRepository.findFirstByOrderId(order)
+            } catch (e: Exception) {
+                logger.error(e, PaymentServiceImpl.LOG_AND_ERROR_FIND_SUB_ORDER, order.code)
+                throw InnerException(traceId, PaymentServiceImpl.LOG_AND_ERROR_FIND_SUB_ORDER)
+            }
+        val operationHistory =
+            PaymentOperationHistory(
+                action = actionTypeStartPay,
+                order = order,
+                actionAuthor = subOrder.clientSystem,
+                actionDate = null,
+            )
+        operationHistoryRepository.save(operationHistory)
+        logger.info(SAVE_OPERATION_HISTORY_START_PAY)
+
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}${PaymentServiceImpl.START_PREFIX}"
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
@@ -157,7 +186,6 @@ open class ConfigDataDaoImpl(
         )
 
         val requestEntity = HttpEntity(gpbPaymentRequest, headers)
-
         return try {
             val responseEntity: ResponseEntity<Map<String, Any>> = restTemplate.restTemplate().exchange(
                 url,
@@ -165,13 +193,9 @@ open class ConfigDataDaoImpl(
                 requestEntity,
                 object : ParameterizedTypeReference<Map<String, Any>>() {},
             )
-
             logger.info(LOG_SUCCESSFUL_GPB_API ,traceId)
-
             val responseBody = responseEntity.body
-
             val paymentPageUrl = (responseBody?.get(OPTIONS) as? Map<String, Any>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
-
             val dataPay = DataPay(paymentPageUrl)
             val result = Response(
                 status = OrderServiceImpl.SUCCESS,
@@ -182,6 +206,22 @@ open class ConfigDataDaoImpl(
 
             ResponseEntity.ok(result)
         } catch (e: Exception) {
+            val actionTypeStartPayError=
+                try {
+                    actionTypeRepository.findByActionName(ERROR_SENDING_REQUEST_START_PAY)
+                } catch (e: Exception) {
+                    logger.error(e,LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
+                    throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
+                }
+            val operationHistoryError =
+                PaymentOperationHistory(
+                    action = actionTypeStartPayError,
+                    order = order,
+                    actionAuthor = subOrder.clientSystem,
+                    actionDate = null,
+                )
+            operationHistoryRepository.save(operationHistoryError)
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
             logger.error(e,ERROR_GPB_PAYMENT_PROCESSING + "$traceId")
          throw  InnerException(traceId,ERROR_GPB_PAYMENT_PROCESSING)
         }

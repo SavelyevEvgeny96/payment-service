@@ -134,8 +134,10 @@ class PaymentServiceImpl(
                         actionDate = null,
                     )
                 operationHistoryRepository.save(operationHistory)
+
             }
-            val resultResponseGPB = configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount)
+
+            val resultResponseGPB = configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount,orderFindByCode)
 
 
 

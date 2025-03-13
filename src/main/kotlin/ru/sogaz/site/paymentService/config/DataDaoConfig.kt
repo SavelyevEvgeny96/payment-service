@@ -6,8 +6,7 @@ import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.impl.ConfigDataDaoImpl
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
-import ru.sogaz.site.paymentService.repository.BankRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
+import ru.sogaz.site.paymentService.repository.*
 
 @Configuration
 class DataDaoConfig {
@@ -18,6 +17,9 @@ class DataDaoConfig {
         objectMapper: ObjectMapper,
         restTemplate: WebConfigRestTemplate,
         bankRepository: BankRepository,
+        actionTypeRepository: ActionTypeRepository,
+        subOrderRepository: SubOrderRepository,
+        operationHistoryRepository: PaymentOperationHistoryRepository
     ): ConfigDataDao =
         ConfigDataDaoImpl(
             configDataRepository = configDataRepository,
@@ -25,5 +27,8 @@ class DataDaoConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             bankRepository = bankRepository,
+            actionTypeRepository = actionTypeRepository ,
+            subOrderRepository = subOrderRepository,
+            operationHistoryRepository = operationHistoryRepository
         )
 }
