@@ -23,7 +23,6 @@ import java.math.RoundingMode
 class OrderServiceImpl(
     private val configDataDao: ConfigDataDao,
     private val apiConfigProperty: ApiConfigProperty,
-    private val bankRepository: BankRepository,
     private val clientSystemRepository: ClientSystemRepository,
     private val orderRepository: OrderRepository,
     private val orderStatusRepository: OrderStatusRepository,

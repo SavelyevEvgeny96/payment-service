@@ -33,24 +33,20 @@ class PaymentServiceImpl(
     companion object {
         const val DESC = "Оплата для заказа с code{} : "
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
-        const val NO = "no"
-        const val RU = "ru"
-        const val PAYMENT_PAGE = "payment_page"
         const val RUB = "RUB"
         const val PAYMENT_PREFIX = "/payment/"
         const val START_PREFIX = "/start"
         const val TOKEN_PREFIX = "/token"
         const val GPB_TOKEN_ROW = "token"
-        const val GPB = "gpb"
         const val TRUE = "true"
-        const val BANK_PRIORITY = "bankPriority"
         const val BANK_PRIORITY_CHECK = "bankPriorityCheck"
         const val STATUS_SUCCESS = "SUCCESS"
         const val STATUS_OVERDUE = "OVERDUE"
         const val STATUS_MARKEDDEL = "MARKEDDEL"
-        const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name \" Получен токен доступа \" "
+        const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c code: "
+        const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name "
         const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: {}"
-        const val LOG_ERROR_GET_TOKEN = "Ошибка получения токена доступа от GPB , система не доступна для TraceId: {}"
+
         const val LOG_NOT_FOUND_ORDER_TO_CODE =
             "Ошибка совершения платежа. Указанный заказ (идентификатор/code заказа) не найден"
         const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
@@ -64,7 +60,6 @@ class PaymentServiceImpl(
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
         const val ERROR_BANK_PRIORITY_CHECK = "Ошибка поиска параметра \"bankPriorityCheck\""
-        const val ERROR_BANK_PRIORITY = "Ошибка поиска параметра \"bankPriority\""
     }
 
     override fun createPayment(
@@ -104,14 +99,6 @@ class PaymentServiceImpl(
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
             throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
         }
-
-//        val configBankPriority = try {
-//            configDataRepository.findByParamName(BANK_PRIORITY)
-//        } catch (e: Exception) {
-//            logger.error(e, LOG_ERROR_BANK_PRIORITY, traceId)
-//            throw InnerException(traceId, ERROR_BANK_PRIORITY)
-//        }
-
         val configBankPriorityCheck =
             try {
                 configDataRepository.findByParamName(BANK_PRIORITY_CHECK)
@@ -122,7 +109,7 @@ class PaymentServiceImpl(
         val bank = orderFindByCode.bankId
         val checkBank = configDataDao.getBank(bank?.bankId, traceId)
         if (configBankPriorityCheck.paramValue == TRUE || checkBank != null) {
-            val tokenGpb = configDataDao.getGPBToken(traceId)
+            val tokenGpb = configDataDao.getGPBToken(traceId,orderFindByCode)
 
             if (tokenGpb.isNotEmpty()) {
                 val actionTypeTokenSuccess =
@@ -132,13 +119,12 @@ class PaymentServiceImpl(
                         logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
                         throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
                     }
-
                 val subOrder =
                     try {
                         subOrderRepository.findFirstByOrderId(orderFindByCode)
                     } catch (e: Exception) {
-                        logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
-                        throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
+                        logger.error(e, LOG_AND_ERROR_FIND_SUB_ORDER, orderFindByCode.code)
+                        throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER$orderFindByCode.code")
                     }
                 val operationHistory =
                     PaymentOperationHistory(
@@ -149,7 +135,12 @@ class PaymentServiceImpl(
                     )
                 operationHistoryRepository.save(operationHistory)
             }
-            return configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount)
+            val resultResponseGPB = configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount)
+
+
+
+
+            return resultResponseGPB
         }
         val response =
             Response(

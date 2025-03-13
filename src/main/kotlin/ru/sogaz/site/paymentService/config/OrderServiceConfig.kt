@@ -18,7 +18,6 @@ open class OrderServiceConfig {
     open fun orderService(
         configDataDao: ConfigDataDao,
         apiConfigProperty: ApiConfigProperty,
-        bankRepository: BankRepository,
         clientSystemRepository: ClientSystemRepository,
         orderRepository: OrderRepository,
         orderStatusRepository: OrderStatusRepository,
@@ -26,7 +25,6 @@ open class OrderServiceConfig {
     ): OrderService =
         OrderServiceImpl(
             apiConfigProperty = apiConfigProperty,
-            bankRepository = bankRepository,
             clientSystemRepository = clientSystemRepository,
             orderRepository = orderRepository,
             orderStatusRepository = orderStatusRepository,

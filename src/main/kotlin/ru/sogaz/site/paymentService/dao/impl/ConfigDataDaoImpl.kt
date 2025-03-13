@@ -2,9 +2,7 @@ package ru.sogaz.site.paymentService.dao.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
@@ -14,12 +12,14 @@ import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.Bank
+import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
-import ru.sogaz.site.paymentService.repository.BankRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
+import ru.sogaz.site.paymentService.repository.*
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_FIND_ACTION_TYPE
 import ru.sogaz.siter.models.resonses.Response
 import java.util.Locale
 import java.util.UUID
@@ -30,19 +30,31 @@ open class ConfigDataDaoImpl(
     private val objectMapper: ObjectMapper,
     private val restTemplate: WebConfigRestTemplate,
     private val bankRepository: BankRepository,
+    private val actionTypeRepository: ActionTypeRepository,
+    private val subOrderRepository: SubOrderRepository,
+    private val operationHistoryRepository: PaymentOperationHistoryRepository
 ) : ConfigDataDao {
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val SAVE_OPERATION_HISTORY="Добавлена запись в таблицу OPERATION_HISTORY при не удачном получении GPB Token "
+       const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
+        const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB для TraceId: "
+        const val CODE_LENGTH = "codeLength"
+        const val BANK_PRIORITY = "bankPriority"
+        const val PAYMENT_PAGE_URL = "paymentPageUrl"
+        const val OPTIONS = "options"
+        const val LOG_ERROR_GET_TOKEN = "Ошибка получения токена доступа от GPB , система не доступна для TraceId: {}"
         const val LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND = "Не найдено значение bankPriority"
         const val LOG_CODE_LENGTH_NOT_FOUND = "Не найдено значение длины для генерации Order.code "
         const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
+        const val LOG_SUCCESSFUL_GPB_API = "Успешный запрос к GPB API. TraceId: "
     }
 
     override fun getCodeLength(traceId: String): Int {
         val config =
             try {
-                configDataRepository.findByParamName("codeLength")
+                configDataRepository.findByParamName(CODE_LENGTH)
             } catch (e: Exception) {
                 logger.error(e, LOG_CODE_LENGTH_NOT_FOUND)
                 throw InnerException(traceId, ERROR_ORDER_CODE_LENGTH_NOT_FOUND)
@@ -64,7 +76,7 @@ open class ConfigDataDaoImpl(
     override fun getBankPriority(traceId: String): String {
         val config =
             try {
-                configDataRepository.findByParamName("bankPriority")
+                configDataRepository.findByParamName(BANK_PRIORITY)
             } catch (e: Exception) {
                 logger.error(e, LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND)
                 throw InnerException(traceId, LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND)
@@ -82,7 +94,7 @@ open class ConfigDataDaoImpl(
         return bank
     }
 
-    override fun getGPBToken(traceId: String): String {
+    override fun getGPBToken(traceId: String,order:Order): String {
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.TOKEN_PREFIX}"
         try {
             val response: ResponseEntity<String> =
@@ -90,10 +102,34 @@ open class ConfigDataDaoImpl(
             val jsonResponse = objectMapper.readTree(response.body)
             return jsonResponse.get(PaymentServiceImpl.GPB_TOKEN_ROW).asText().toString()
         } catch (e: Exception) {
-            logger.error(e, PaymentServiceImpl.LOG_ERROR_GET_TOKEN + traceId)
+            val actionTypeTokenFail=
+                try {
+                    actionTypeRepository.findByActionName(GET_TOKEN_MASSAGE_FAIL)
+                } catch (e: Exception) {
+                    logger.error(e,LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
+                    throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
+                }
+            val subOrder =
+                try {
+                    subOrderRepository.findFirstByOrderId(order)
+                } catch (e: Exception) {
+                    logger.error(e, PaymentServiceImpl.LOG_AND_ERROR_FIND_SUB_ORDER, order.code)
+                    throw InnerException(traceId, PaymentServiceImpl.LOG_AND_ERROR_FIND_SUB_ORDER)
+                }
+            val operationHistory =
+                PaymentOperationHistory(
+                    action = actionTypeTokenFail,
+                    order = order,
+                    actionAuthor = subOrder.clientSystem,
+                    actionDate = null,
+                )
+            operationHistoryRepository.save(operationHistory)
+            logger.info(SAVE_OPERATION_HISTORY)
+        }
+            logger.error(LOG_ERROR_GET_TOKEN + traceId)
             throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         }
-    }
+
 
     override fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
@@ -103,49 +139,52 @@ open class ConfigDataDaoImpl(
     ): ResponseEntity<Response<DataPay>> {
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}${PaymentServiceImpl.START_PREFIX}"
         val headers = HttpHeaders()
-
-        val gpbPaymentRequest =
-            GPBPaymentRequest(
-                supported3ds = true,
-                portalId = apiConfigProperty.portalId,
-                token = tokenGpb,
-                merchantId = apiConfigProperty.merchantId,
-                orderId = paymentPayRequest.code,
-                backUrlS = apiConfigProperty.backUrlS,
-                backUrlF = apiConfigProperty.backUrlF,
-                amount = premiumAmount,
-                description = PaymentServiceImpl.DESC + paymentPayRequest.code,
-                currency = PaymentServiceImpl.RUB,
-                lang = PaymentServiceImpl.RU,
-                stateInProgress = PaymentServiceImpl.NO,
-                stateRedirect = PaymentServiceImpl.PAYMENT_PAGE,
-                returnUrl = apiConfigProperty.returnUrl,
-            )
-
         headers.contentType = MediaType.APPLICATION_JSON
+
+        val fixedAmount = premiumAmount?.replace(".", "")
+
+        val gpbPaymentRequest = GPBPaymentRequest(
+            portalId = apiConfigProperty.portalId,
+            token = tokenGpb,
+            merchantId = apiConfigProperty.merchantId,
+            orderId = paymentPayRequest.code,
+            backUrlS = apiConfigProperty.backUrlS,
+            backUrlF = apiConfigProperty.backUrlF,
+            amount = fixedAmount,
+            description = PaymentServiceImpl.DESC + paymentPayRequest.code,
+            currency = PaymentServiceImpl.RUB,
+            returnUrl = apiConfigProperty.returnUrl,
+        )
 
         val requestEntity = HttpEntity(gpbPaymentRequest, headers)
 
-        val responseEntity: ResponseEntity<Map<String, Any>> =
-            restTemplate.restTemplate().exchange(
+        return try {
+            val responseEntity: ResponseEntity<Map<String, Any>> = restTemplate.restTemplate().exchange(
                 url,
                 HttpMethod.POST,
                 requestEntity,
                 object : ParameterizedTypeReference<Map<String, Any>>() {},
             )
-        val responseBody = responseEntity.body
-        val paymentPageUrl = responseBody?.get("paymentPageUrl") as? String ?: ""
 
-        val dataPay = DataPay(paymentPageUrl)
-        val result: Response<DataPay> =
-            Response(
+            logger.info(LOG_SUCCESSFUL_GPB_API ,traceId)
+
+            val responseBody = responseEntity.body
+
+            val paymentPageUrl = (responseBody?.get(OPTIONS) as? Map<String, Any>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
+
+            val dataPay = DataPay(paymentPageUrl)
+            val result = Response(
                 status = OrderServiceImpl.SUCCESS,
                 code = OrderServiceImpl.STATUS_CODE_SUCCESS,
                 traceId = traceId,
                 data = dataPay,
             )
 
-        return ResponseEntity.ok(result)
+            ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            logger.error(e,ERROR_GPB_PAYMENT_PROCESSING + "$traceId")
+         throw  InnerException(traceId,ERROR_GPB_PAYMENT_PROCESSING)
+        }
     }
 
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
