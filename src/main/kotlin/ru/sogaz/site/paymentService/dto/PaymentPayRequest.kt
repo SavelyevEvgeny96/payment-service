@@ -1,7 +1,5 @@
 package ru.sogaz.site.paymentService.dto
 
-import jakarta.validation.constraints.NotNull
-
 data class PaymentPayRequest(
     val code: String,
     val urlToReturn: String,

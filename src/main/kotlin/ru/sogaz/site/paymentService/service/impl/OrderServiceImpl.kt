@@ -14,7 +14,6 @@ import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
@@ -73,7 +72,7 @@ class OrderServiceImpl(
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
         val requestBankId = requestWrapper.bank
-        val bank = configDataDao.getBank(requestBankId,traceId)
+        val bank = configDataDao.getBank(requestBankId, traceId)
         val orderStatus =
             try {
                 orderStatusRepository.findByStateId(STATE_ID_NEW)

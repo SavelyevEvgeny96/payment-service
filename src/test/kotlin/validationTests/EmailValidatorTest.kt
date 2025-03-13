@@ -20,18 +20,21 @@ class EmailValidatorTest {
         val result = emailValidator.isValid(validEmail)
         assertTrue(result, "Правильный email должен пройти валидацию")
     }
+
     @Test
     fun `должен вернуть false для невалидного email`() {
         val validEmail = ".test@example.com"
         val result = emailValidator.isValid(validEmail)
         assertFalse(result, "Неправильный email точка в начале адрес или в конце или две точки подряд")
     }
+
     @Test
     fun `должен вернуть false для  невалидного email`() {
         val validEmail = "test@example.com."
         val result = emailValidator.isValid(validEmail)
         assertFalse(result, "Неправильный email точка в начале адрес или в конце или две точки подряд")
     }
+
     @Test
     fun `должен вернуть false  для  невалидного email`() {
         val validEmail = "test@example..com"

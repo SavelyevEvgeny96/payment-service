@@ -9,17 +9,24 @@ import java.util.UUID
 
 interface ConfigDataDao {
     fun getBankPriority(traceId: String): String
+
     fun getCodeLength(traceId: String): Int
 
     fun generateUniquePaymentCode(traceId: String): String
 
     fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
-    fun getBank(bankId:String?,traceId: String):Bank?
+
+    fun getBank(
+        bankId: String?,
+        traceId: String,
+    ): Bank?
+
     fun getGPBToken(traceId: String): String
+
     fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
         tokenGpb: String,
-        premiumAmount: String?
+        premiumAmount: String?,
     ): ResponseEntity<Response<DataPay>>
 }

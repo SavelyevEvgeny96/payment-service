@@ -39,36 +39,59 @@ class PaymentController(
      */
     @Operation(
         summary = "Создать заявку на оплату",
-        description = "Создает заявку и возвращает ссылку на оплату."
+        description = "Создает заявку и возвращает ссылку на оплату.",
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Успешное создание платежа",
-                content = [Content(schema = Schema(implementation = DataOrder::class))]
+                content = [Content(schema = Schema(implementation = DataOrder::class))],
             ),
             ApiResponse(
                 responseCode = "401",
                 description = "Неавторизованный запрос",
-                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500401," +
-                        " \"messageError\": \"Ваш запрос не авторизован\"}"))]
+                content = [
+                    Content(
+                        schema =
+                            Schema(
+                                example =
+                                    "{\"status\": \"error\", \"code\": -1101500401," +
+                                        " \"messageError\": \"Ваш запрос не авторизован\"}",
+                            ),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "403",
                 description = "Доступ запрещен",
-                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500403, " +
-                        "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}"))]
+                content = [
+                    Content(
+                        schema =
+                            Schema(
+                                example =
+                                    "{\"status\": \"error\", \"code\": -1101500403, " +
+                                        "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}",
+                            ),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "422",
                 description = "Ошибка валидации данных",
-                content = [Content(schema = Schema(example = "{\"status\": \"error\", \"code\": -1101500422, " +
-                        "\"messageError\": \"Не все обязательные данные указаны корректно\"}"))]
-            )
+                content = [
+                    Content(
+                        schema =
+                            Schema(
+                                example =
+                                    "{\"status\": \"error\", \"code\": -1101500422, " +
+                                        "\"messageError\": \"Не все обязательные данные указаны корректно\"}",
+                            ),
+                    ),
+                ],
+            ),
         ],
     )
-
     @PostMapping("/create")
     fun createOrder(
         @RequestHeader("TraceId") traceId: String,
@@ -80,6 +103,7 @@ class PaymentController(
         }
         return orderService.createOrder(requestWrapper, traceId)
     }
+
     /**
      * Метод для создания платежа.
      * @param traceId Идентификатор трассировки
@@ -88,11 +112,12 @@ class PaymentController(
     @PostMapping("/pay")
     fun createPay(
         @RequestHeader("TraceId") traceId: String,
-        @RequestBody paymentPayRequest: PaymentPayRequest
+        @RequestBody paymentPayRequest: PaymentPayRequest,
     ): ResponseEntity<Response<DataPay>> {
         paymentPayRequest.traceId = traceId
         return paymentService.createPayment(
-            paymentPayRequest, traceId
+            paymentPayRequest,
+            traceId,
         )
     }
 }

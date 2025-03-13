@@ -15,4 +15,7 @@ data class ActionType(
     var id: Long,
     @Column(name = "action_name", nullable = false)
     var actionName: String,
-)
+) {
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(0, "")
+}

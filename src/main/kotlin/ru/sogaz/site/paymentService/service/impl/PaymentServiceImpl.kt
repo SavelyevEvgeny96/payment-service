@@ -1,24 +1,16 @@
 package ru.sogaz.site.paymentService.service.impl
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
-import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
 import ru.sogaz.site.paymentService.repository.*
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.STATUS_CODE_SUCCESS
@@ -34,7 +26,7 @@ class PaymentServiceImpl(
     private val configDataRepository: ConfigDataRepository,
     private val orderRepository: OrderRepository,
     private val subOrderRepository: SubOrderRepository,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository
+    private val operationHistoryRepository: PaymentOperationHistoryRepository,
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
@@ -73,21 +65,21 @@ class PaymentServiceImpl(
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
         const val ERROR_BANK_PRIORITY_CHECK = "Ошибка поиска параметра \"bankPriorityCheck\""
         const val ERROR_BANK_PRIORITY = "Ошибка поиска параметра \"bankPriority\""
-
     }
 
     override fun createPayment(
         paymentPayRequest: PaymentPayRequest,
-        traceId: String
+        traceId: String,
     ): ResponseEntity<Response<DataPay>> {
         logger.info(LOG_START_PAYMENT_CREATION + traceId)
 
-        val orderFindByCode = try {
-            orderRepository.findByCode(paymentPayRequest.code)
-        } catch (e: Exception) {
-            logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, paymentPayRequest.code, traceId)
-            throw BusinessException(CODE_ERROR_ORDER_NOT_FOUND, traceId)
-        }
+        val orderFindByCode =
+            try {
+                orderRepository.findByCode(paymentPayRequest.code)
+            } catch (e: Exception) {
+                logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, paymentPayRequest.code, traceId)
+                throw BusinessException(CODE_ERROR_ORDER_NOT_FOUND, traceId)
+            }
 
         val premiumAmount = orderFindByCode.premiumAmount
         val orderStatus = orderFindByCode.orderStatus
@@ -120,48 +112,52 @@ class PaymentServiceImpl(
 //            throw InnerException(traceId, ERROR_BANK_PRIORITY)
 //        }
 
-        val configBankPriorityCheck = try {
-            configDataRepository.findByParamName(BANK_PRIORITY_CHECK)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_BANK_PRIORITY_CHECK, traceId)
-            throw InnerException(traceId, ERROR_BANK_PRIORITY_CHECK)
-        }
+        val configBankPriorityCheck =
+            try {
+                configDataRepository.findByParamName(BANK_PRIORITY_CHECK)
+            } catch (e: Exception) {
+                logger.error(e, LOG_ERROR_BANK_PRIORITY_CHECK, traceId)
+                throw InnerException(traceId, ERROR_BANK_PRIORITY_CHECK)
+            }
         val bank = orderFindByCode.bankId
         val checkBank = configDataDao.getBank(bank?.bankId, traceId)
         if (configBankPriorityCheck.paramValue == TRUE || checkBank != null) {
             val tokenGpb = configDataDao.getGPBToken(traceId)
 
             if (tokenGpb.isNotEmpty()) {
-                val actionTypeTokenSuccess = try {
-                    actionTypeRepository.findByActionName(GET_TOKEN_MASSAGE_SUCCESS)
-                } catch (e: Exception) {
-                    logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
-                    throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
-                }
+                val actionTypeTokenSuccess =
+                    try {
+                        actionTypeRepository.findByActionName(GET_TOKEN_MASSAGE_SUCCESS)
+                    } catch (e: Exception) {
+                        logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
+                        throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
+                    }
 
-                val subOrder = try {
-                    subOrderRepository.findByOrderId(orderFindByCode)
-                } catch (e: Exception) {
-                    logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
-                    throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
-                }
-                val operationHistory = PaymentOperationHistory(
-                    action = actionTypeTokenSuccess,
-                    order = orderFindByCode,
-                    actionAuthor = subOrder.clientSystem,
-                    actionDate = null
-                )
+                val subOrder =
+                    try {
+                        subOrderRepository.findFirstByOrderId(orderFindByCode)
+                    } catch (e: Exception) {
+                        logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
+                        throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
+                    }
+                val operationHistory =
+                    PaymentOperationHistory(
+                        action = actionTypeTokenSuccess,
+                        order = orderFindByCode,
+                        actionAuthor = subOrder.clientSystem,
+                        actionDate = null,
+                    )
                 operationHistoryRepository.save(operationHistory)
             }
-
             return configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount)
         }
-        val response = Response(
-            status = OrderServiceImpl.SUCCESS,
-            code = STATUS_CODE_SUCCESS,
-            traceId = traceId,
-            data = DataPay("")
-        )
+        val response =
+            Response(
+                status = OrderServiceImpl.SUCCESS,
+                code = STATUS_CODE_SUCCESS,
+                traceId = traceId,
+                data = DataPay(""),
+            )
         return ResponseEntity.ok(response)
     }
 }

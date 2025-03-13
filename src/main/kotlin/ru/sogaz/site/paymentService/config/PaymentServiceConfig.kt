@@ -1,10 +1,8 @@
 package ru.sogaz.site.paymentService.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
 import ru.sogaz.site.paymentService.repository.*
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
@@ -26,6 +24,6 @@ open class PaymentServiceConfig {
             configDataRepository = configDataRepository,
             actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
-            configDataDao = configDataDao
+            configDataDao = configDataDao,
         )
 }

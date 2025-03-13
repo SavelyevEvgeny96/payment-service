@@ -17,14 +17,13 @@ class DataDaoConfig {
         configDataRepository: ConfigDataRepository,
         objectMapper: ObjectMapper,
         restTemplate: WebConfigRestTemplate,
-        bankRepository: BankRepository
-
+        bankRepository: BankRepository,
     ): ConfigDataDao =
         ConfigDataDaoImpl(
             configDataRepository = configDataRepository,
             apiConfigProperty = apiConfigProperty,
-            restTemplate =restTemplate ,
-            objectMapper =objectMapper ,
-            bankRepository = bankRepository
+            restTemplate = restTemplate,
+            objectMapper = objectMapper,
+            bankRepository = bankRepository,
         )
 }

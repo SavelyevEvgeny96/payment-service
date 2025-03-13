@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.dto
 
 data class GPBPaymentRequest(
+    val returnUrl: String,
     val portalId: String,
     val token: String,
     val supported3ds: Boolean,
@@ -13,5 +14,5 @@ data class GPBPaymentRequest(
     val lang: String,
     val amount: String?,
     val currency: String,
-    val description: String
+    val description: String,
 )

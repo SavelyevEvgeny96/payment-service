@@ -44,4 +44,23 @@ data class SubOrder(
     var hash: String?,
     @Column(name = "premium_amount")
     var premiumAmount: String?,
-)
+) {
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(
+        0,
+        "",
+        null,
+        null,
+        null,
+        null,
+        "",
+        null,
+        null,
+        "",
+        null,
+        null,
+        "",
+        "",
+        null,
+    )
+}
