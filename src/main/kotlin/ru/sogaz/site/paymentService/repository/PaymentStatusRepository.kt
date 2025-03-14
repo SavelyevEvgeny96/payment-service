@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.PaymentStatus
 
 @Repository
-interface PaymentStatusRepository : JpaRepository<PaymentStatus, Long>
+interface PaymentStatusRepository : JpaRepository<PaymentStatus, Long> {
+    fun findByStateId(stateId: String): PaymentStatus
+}

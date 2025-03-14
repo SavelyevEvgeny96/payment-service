@@ -9,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
+import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.*
@@ -21,6 +22,9 @@ import ru.sogaz.siter.models.resonses.Response
  * Включает в себя валидацию данных и создание записи о платеже.
  */
 class PaymentServiceImpl(
+    private val paymentRepository: PaymentRepository,
+    private val paymentTypeRepository: PaymentTypeRepository,
+    private val paymentStatusRepository: PaymentStatusRepository,
     private val configDataDao: ConfigDataDao,
     private val actionTypeRepository: ActionTypeRepository,
     private val configDataRepository: ConfigDataRepository,
@@ -31,6 +35,8 @@ class PaymentServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val PAYMENT_TYPE_PAY = "bankCard"
+        const val PAYMENT_STATUS_NEW = "NEW"
         const val DESC = "Оплата для заказа с code{} : "
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val RUB = "RUB"
@@ -46,7 +52,10 @@ class PaymentServiceImpl(
         const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c code: "
         const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name "
         const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: {}"
-
+        const val LOG_AND_ERROR_GET_PAYMENT_STATUS =
+            "Ошибка получения статуса оплаты из таблицы payment_status для TraceID: "
+        const val LOG_AND_ERROR_GET_TYPE_STATUS =
+            "Ошибка при получении статуса типа оплаты из таблицы payment_type для TraceID:"
         const val LOG_NOT_FOUND_ORDER_TO_CODE =
             "Ошибка совершения платежа. Указанный заказ (идентификатор/code заказа) не найден"
         const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
@@ -109,7 +118,7 @@ class PaymentServiceImpl(
         val bank = orderFindByCode.bankId
         val checkBank = configDataDao.getBank(bank?.bankId, traceId)
         if (configBankPriorityCheck.paramValue == TRUE || checkBank != null) {
-            val tokenGpb = configDataDao.getGPBToken(traceId,orderFindByCode)
+            val tokenGpb = configDataDao.getGPBToken(traceId, orderFindByCode)
 
             if (tokenGpb.isNotEmpty()) {
                 val actionTypeTokenSuccess =
@@ -124,7 +133,7 @@ class PaymentServiceImpl(
                         subOrderRepository.findFirstByOrderId(orderFindByCode)
                     } catch (e: Exception) {
                         logger.error(e, LOG_AND_ERROR_FIND_SUB_ORDER, orderFindByCode.code)
-                        throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER$orderFindByCode.code")
+                        throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER$orderFindByCode")
                     }
                 val operationHistory =
                     PaymentOperationHistory(
@@ -135,9 +144,33 @@ class PaymentServiceImpl(
                     )
                 operationHistoryRepository.save(operationHistory)
 
+                val paymentStatusNEW =
+                    try {
+                        paymentStatusRepository.findByStateId(PAYMENT_STATUS_NEW)
+                    } catch (e: Exception) {
+                        logger.error(e, LOG_AND_ERROR_GET_PAYMENT_STATUS, traceId)
+                        throw InnerException(traceId, LOG_AND_ERROR_GET_PAYMENT_STATUS)
+                    }
+                val paymentType =
+                    try {
+                        paymentTypeRepository.findByTypeId(PAYMENT_TYPE_PAY)
+                    } catch (e: Exception) {
+                        logger.error(e, LOG_AND_ERROR_GET_TYPE_STATUS, traceId)
+                        throw InnerException(traceId, LOG_AND_ERROR_GET_TYPE_STATUS)
+                    }
+                val paymentRecord = Payment(
+                    bank = checkBank,
+                    stateId = paymentStatusNEW,
+                    orderId = orderFindByCode,
+                    typeId = paymentType,
+                )
+                paymentRepository.save(paymentRecord)
+
             }
 
-            val resultResponseGPB = configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount,orderFindByCode)
+
+            val resultResponseGPB =
+                configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount, orderFindByCode)
 
 
 
