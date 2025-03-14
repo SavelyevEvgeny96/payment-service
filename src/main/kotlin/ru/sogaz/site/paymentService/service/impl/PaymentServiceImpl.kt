@@ -168,14 +168,13 @@ class PaymentServiceImpl(
 
             }
 
-
-            val resultResponseGPB =
-                configDataDao.initiateGPBPayment(paymentPayRequest, traceId, tokenGpb, premiumAmount, orderFindByCode)
-
-
-
-
-            return resultResponseGPB
+            return configDataDao.initiateGPBPayment(
+                paymentPayRequest,
+                traceId,
+                tokenGpb,
+                premiumAmount,
+                orderFindByCode
+            )
         }
         val response =
             Response(

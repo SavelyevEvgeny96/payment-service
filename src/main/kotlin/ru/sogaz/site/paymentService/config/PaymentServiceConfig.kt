@@ -17,6 +17,9 @@ open class PaymentServiceConfig {
         actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         configDataDao: ConfigDataDao,
+        paymentStatusRepository: PaymentStatusRepository,
+        paymentRepository: PaymentRepository,
+        paymentTypeRepository: PaymentTypeRepository
     ): PaymentService =
         PaymentServiceImpl(
             orderRepository = orderRepository,
@@ -25,5 +28,8 @@ open class PaymentServiceConfig {
             actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             configDataDao = configDataDao,
+            paymentStatusRepository = paymentStatusRepository,
+            paymentRepository = paymentRepository,
+            paymentTypeRepository = paymentTypeRepository
         )
 }

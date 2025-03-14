@@ -19,7 +19,9 @@ class DataDaoConfig {
         bankRepository: BankRepository,
         actionTypeRepository: ActionTypeRepository,
         subOrderRepository: SubOrderRepository,
-        operationHistoryRepository: PaymentOperationHistoryRepository
+        operationHistoryRepository: PaymentOperationHistoryRepository,
+        paymentRepository: PaymentRepository,
+        paymentStatusRepository: PaymentStatusRepository
     ): ConfigDataDao =
         ConfigDataDaoImpl(
             configDataRepository = configDataRepository,
@@ -29,6 +31,8 @@ class DataDaoConfig {
             bankRepository = bankRepository,
             actionTypeRepository = actionTypeRepository ,
             subOrderRepository = subOrderRepository,
-            operationHistoryRepository = operationHistoryRepository
+            operationHistoryRepository = operationHistoryRepository,
+            paymentRepository = paymentRepository,
+            paymentStatusRepository = paymentStatusRepository
         )
 }
