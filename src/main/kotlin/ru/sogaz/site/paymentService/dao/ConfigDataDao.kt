@@ -22,13 +22,16 @@ interface ConfigDataDao {
         traceId: String,
     ): Bank?
 
-    fun getGPBToken(traceId: String,order: Order): String
+    fun getGPBToken(
+        traceId: String,
+        order: Order,
+    ): String
 
     fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
         tokenGpb: String,
         premiumAmount: String?,
-        order: Order
+        order: Order,
     ): ResponseEntity<Response<DataPay>>
 }

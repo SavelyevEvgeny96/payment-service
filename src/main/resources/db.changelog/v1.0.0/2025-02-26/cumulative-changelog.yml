@@ -22,6 +22,8 @@ databaseChangeLog:
   - include:
       file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payment_type.sql
   - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payments.sql
+  - include:
       file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payment_operation_history.sql
   - include:
       file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_sub_orders.sql

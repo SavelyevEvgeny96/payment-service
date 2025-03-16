@@ -12,5 +12,3 @@ data class GPBPaymentRequest(
     val currency: String,
     val description: String,
 )
-
-

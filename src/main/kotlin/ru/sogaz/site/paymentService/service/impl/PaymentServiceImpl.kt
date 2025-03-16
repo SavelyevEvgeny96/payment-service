@@ -12,7 +12,14 @@ import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.*
+import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.ConfigDataRepository
+import ru.sogaz.site.paymentService.repository.OrderRepository
+import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
+import ru.sogaz.site.paymentService.repository.PaymentRepository
+import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
+import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
+import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.STATUS_CODE_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
@@ -158,14 +165,15 @@ class PaymentServiceImpl(
                         logger.error(e, LOG_AND_ERROR_GET_TYPE_STATUS, traceId)
                         throw InnerException(traceId, LOG_AND_ERROR_GET_TYPE_STATUS)
                     }
-                val paymentRecord = Payment(
-                    bank = checkBank,
-                    stateId = paymentStatusNEW,
-                    orderId = orderFindByCode,
-                    typeId = paymentType,
-                )
+                val paymentRecord =
+                    Payment(
+                        bank = checkBank,
+                        stateId = paymentStatusNEW,
+                        orderId = orderFindByCode,
+                        typeId = paymentType,
+                        paymentBankId = tokenGpb,
+                    )
                 paymentRepository.save(paymentRecord)
-
             }
 
             return configDataDao.initiateGPBPayment(
@@ -173,7 +181,7 @@ class PaymentServiceImpl(
                 traceId,
                 tokenGpb,
                 premiumAmount,
-                orderFindByCode
+                orderFindByCode,
             )
         }
         val response =

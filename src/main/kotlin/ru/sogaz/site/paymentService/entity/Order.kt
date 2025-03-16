@@ -1,6 +1,15 @@
 package ru.sogaz.site.paymentService.entity
 
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
+import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
@@ -48,16 +57,16 @@ data class Order(
     @Column(name = "recipient_user_id")
     var recipientUserId: String?,
 ) {
-        @PrePersist
-        fun prePersist() {
-            createDate = LocalDateTime.now()
-            updateDate = LocalDateTime.now()
-        }
+    @PrePersist
+    fun prePersist() {
+        createDate = LocalDateTime.now()
+        updateDate = LocalDateTime.now()
+    }
 
-        @PreUpdate
-        fun preUpdate() {
-            updateDate = LocalDateTime.now()
-        }
+    @PreUpdate
+    fun preUpdate() {
+        updateDate = LocalDateTime.now()
+    }
 
     // Конструктор по умолчанию нужен для JPA
     constructor() : this(
@@ -82,4 +91,3 @@ data class Order(
         null,
     )
 }
-

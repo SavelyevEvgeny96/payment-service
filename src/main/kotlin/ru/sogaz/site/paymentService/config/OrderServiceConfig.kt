@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
-import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository

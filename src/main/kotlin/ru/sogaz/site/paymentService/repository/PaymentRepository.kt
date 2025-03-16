@@ -6,6 +6,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 
 @Repository
-interface PaymentRepository : JpaRepository<Payment, Long>{
-    fun findByOrderId(orderId:Order):Payment
+interface PaymentRepository : JpaRepository<Payment, Long> {
+    fun findByOrderId(orderId: Order): Payment
 }
