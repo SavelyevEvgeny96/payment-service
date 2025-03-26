@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
@@ -126,7 +127,6 @@ class PaymentServiceImpl(
         val checkBank = configDataDao.getBank(bank?.bankId, traceId)
         if (configBankPriorityCheck.paramValue == TRUE || checkBank != null) {
             val tokenGpb = configDataDao.getGPBToken(traceId, orderFindByCode)
-
             if (tokenGpb.isNotEmpty()) {
                 val actionTypeTokenSuccess =
                     try {
@@ -184,13 +184,6 @@ class PaymentServiceImpl(
                 orderFindByCode,
             )
         }
-        val response =
-            Response(
-                status = OrderServiceImpl.SUCCESS,
-                code = STATUS_CODE_SUCCESS,
-                traceId = traceId,
-                data = DataPay(""),
-            )
-        return ResponseEntity.ok(response)
+         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE,traceId)
     }
 }
