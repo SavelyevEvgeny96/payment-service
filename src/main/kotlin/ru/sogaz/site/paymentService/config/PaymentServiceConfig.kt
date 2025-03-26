@@ -1,44 +1,42 @@
 package ru.sogaz.site.paymentService.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.dao.impl.ConfigDataDaoImpl
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
-import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
+import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
+import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import ru.sogaz.site.paymentService.service.PaymentService
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
 
 @Configuration
-class DataDaoConfig {
+open class PaymentServiceConfig {
     @Bean
-    fun daoConfig(
-        apiConfigProperty: ApiConfigProperty,
+    open fun paymentService(
         configDataRepository: ConfigDataRepository,
-        objectMapper: ObjectMapper,
-        restTemplate: WebConfigRestTemplate,
-        bankRepository: BankRepository,
-        actionTypeRepository: ActionTypeRepository,
+        orderRepository: OrderRepository,
         subOrderRepository: SubOrderRepository,
+        actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
-        paymentRepository: PaymentRepository,
+        configDataDao: ConfigDataDao,
         paymentStatusRepository: PaymentStatusRepository,
-    ): ConfigDataDao =
-        ConfigDataDaoImpl(
-            configDataRepository = configDataRepository,
-            apiConfigProperty = apiConfigProperty,
-            restTemplate = restTemplate,
-            objectMapper = objectMapper,
-            bankRepository = bankRepository,
-            actionTypeRepository = actionTypeRepository,
+        paymentRepository: PaymentRepository,
+        paymentTypeRepository: PaymentTypeRepository,
+    ): PaymentService =
+        PaymentServiceImpl(
+            orderRepository = orderRepository,
             subOrderRepository = subOrderRepository,
+            configDataRepository = configDataRepository,
+            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
-            paymentRepository = paymentRepository,
+            configDataDao = configDataDao,
             paymentStatusRepository = paymentStatusRepository,
+            paymentRepository = paymentRepository,
+            paymentTypeRepository = paymentTypeRepository,
         )
 }

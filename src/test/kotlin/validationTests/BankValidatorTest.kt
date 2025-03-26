@@ -24,6 +24,7 @@ class BankValidatorTest {
         val result = bankValidator.isValid(null)
         assertTrue(result, "Значение должно быть недопустимым, если оно равно null")
     }
+
     @Test
     fun `должен вернуть true если значение ""`() {
         val result = bankValidator.isValid("")

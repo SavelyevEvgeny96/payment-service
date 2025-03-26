@@ -10,11 +10,9 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
-import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
@@ -24,7 +22,6 @@ import java.math.RoundingMode
 class OrderServiceImpl(
     private val configDataDao: ConfigDataDao,
     private val apiConfigProperty: ApiConfigProperty,
-    private val bankRepository: BankRepository,
     private val clientSystemRepository: ClientSystemRepository,
     private val orderRepository: OrderRepository,
     private val orderStatusRepository: OrderStatusRepository,
@@ -73,14 +70,7 @@ class OrderServiceImpl(
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
         val requestBankId = requestWrapper.bank
-
-        val bank = if (requestBankId.isNullOrBlank()) {
-            val reserveConfigBank = configDataDao.getBankPriority(traceId)
-            bankRepository.findByBankId(reserveConfigBank)
-        } else {
-            bankRepository.findByBankId(requestBankId)
-        }
-
+        val bank = configDataDao.getBank(requestBankId, traceId)
         val orderStatus =
             try {
                 orderStatusRepository.findByStateId(STATE_ID_NEW)

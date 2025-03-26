@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.ActionType
 
 @Repository
-interface ActionTypeRepository : JpaRepository<ActionType, Long>
+interface ActionTypeRepository : JpaRepository<ActionType, Long> {
+    fun findByActionName(actionName: String): ActionType
+}

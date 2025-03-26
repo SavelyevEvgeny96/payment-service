@@ -17,4 +17,11 @@ data class PaymentStatus(
     var stateId: String,
     @Column(name = "state_name")
     var stateName: String,
-)
+) {
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(
+        null,
+        "",
+        "",
+    )
+}

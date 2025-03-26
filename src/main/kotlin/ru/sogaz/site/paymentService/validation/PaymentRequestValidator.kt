@@ -18,7 +18,7 @@ class PaymentRequestValidator(
     private val phoneValidator: PhoneValidator,
     private val emailValidator: EmailValidator,
     private val externalSystemCodeValidator: ExternalSystemCodeValidator,
-    private val policyholderValidator: PolicyholderValidator
+    private val policyholderValidator: PolicyholderValidator,
 ) {
     companion object {
         const val VALUE_NOT_NULL_IS_EMPTY = "Значение не должно быть пустым или null"
@@ -107,7 +107,7 @@ class PaymentRequestValidator(
         if (listResultError.isNotEmpty()) {
             logger.error(
                 "Валидация не прошла для traceId: ${paymentRequest.traceId}." +
-                        " Ошибки: ${listResultError.map { it?.error }}",
+                    " Ошибки: ${listResultError.map { it?.error }}",
             )
             throw ValidationException(
                 CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,

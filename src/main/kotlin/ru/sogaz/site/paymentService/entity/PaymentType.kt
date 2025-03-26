@@ -17,4 +17,11 @@ data class PaymentType(
     var typeId: String,
     @Column(name = "type_name")
     var typeName: String,
-)
+) {
+    // Конструктор по умолчанию нужен для JPA
+    constructor() : this(
+        "",
+        "",
+        "",
+    )
+}
