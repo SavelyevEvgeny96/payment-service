@@ -53,6 +53,18 @@ management:
   metrics:
     tags:
       application: ${HOSTNAME:localhost}
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  server:
+    port: ${MANAGEMENT_SERVICE_PORT:8091}
+  health:
+    livenessState:
+      enable: true
+    readinessState:
+      enable: true
 
 logging:
   level:
