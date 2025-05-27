@@ -50,6 +50,7 @@ open class ConfigDataDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val DESC = "Оплата: "
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
         const val PAYMENT_STATUS_REG = "REG"
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
@@ -197,7 +198,8 @@ open class ConfigDataDaoImpl(
         headers.contentType = MediaType.APPLICATION_JSON
 
         val fixedAmount = premiumAmount?.replace(".", "")
-
+        val listSubOrder = subOrderRepository.findAllByOrderId(order)
+        println(listSubOrder)
         val gpbPaymentRequest =
             GPBPaymentRequest(
                 portalId = apiConfigProperty.portalId,
@@ -207,7 +209,8 @@ open class ConfigDataDaoImpl(
                 backUrlS = apiConfigProperty.backUrlS,
                 backUrlF = apiConfigProperty.backUrlF,
                 amount = fixedAmount,
-                description = PaymentServiceImpl.DESC + paymentPayRequest.code,
+                //сделать как в спеке
+                description = DESC + listSubOrder,
                 currency = PaymentServiceImpl.RUB,
                 returnUrl = apiConfigProperty.returnUrl,
             )

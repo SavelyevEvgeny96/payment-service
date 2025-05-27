@@ -45,7 +45,6 @@ class PaymentServiceImpl(
     companion object {
         const val PAYMENT_TYPE_PAY = "bankCard"
         const val PAYMENT_STATUS_NEW = "NEW"
-        const val DESC = "Оплата для заказа с code{} : "
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val RUB = "RUB"
         const val PAYMENT_PREFIX = "/payment/"
