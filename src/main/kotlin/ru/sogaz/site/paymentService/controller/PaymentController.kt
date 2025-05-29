@@ -106,18 +106,14 @@ class PaymentController(
 
     /**
      * Метод для создания платежа.
-     * @param traceId Идентификатор трассировки
      * @return Ответ с кодом состояния и данными о платеже или ошибкой
      */
     @PostMapping("/pay")
     fun createPay(
-        @RequestHeader("TraceId") traceId: String,
         @RequestBody paymentPayRequest: PaymentPayRequest,
     ): ResponseEntity<Response<DataPay>> {
-        paymentPayRequest.traceId = traceId
         return paymentService.createPayment(
-            paymentPayRequest,
-            traceId,
+            paymentPayRequest
         )
     }
 }
