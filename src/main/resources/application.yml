@@ -15,11 +15,7 @@ server:
   main.allow-bean-definition-overriding: true
 
 spring:
-  jpa:
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+
   application:
     name: payment-service
   profiles:
