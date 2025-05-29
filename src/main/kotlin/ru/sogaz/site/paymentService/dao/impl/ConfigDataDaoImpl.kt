@@ -51,6 +51,9 @@ open class ConfigDataDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val DESC_POLICY_NUMBER = "Номера полиса №"
+        const val SEPARATOR = ", №"
+        const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
         const val PAYMENT_STATUS_REG = "REG"
@@ -300,14 +303,14 @@ open class ConfigDataDaoImpl(
                 append(" (")
 
                 if (policyNumbers.isNotEmpty()) {
-                    append("Номера полиса №")
-                    append(policyNumbers.joinToString(", №"))
+                    append(DESC_POLICY_NUMBER)
+                    append(policyNumbers.joinToString(SEPARATOR))
                 }
 
                 if (contractIds.isNotEmpty()) {
                     if (policyNumbers.isNotEmpty()) append("; ")
-                    append("Страхового договора №")
-                    append(contractIds.joinToString(", №"))
+                    append(DESC_INSURANCE_CONTRACT)
+                    append(contractIds.joinToString(SEPARATOR))
                 }
 
                 append(")")
