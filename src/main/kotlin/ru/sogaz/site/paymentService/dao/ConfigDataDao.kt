@@ -5,6 +5,7 @@ import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.siter.models.resonses.Response
 import java.util.UUID
 
@@ -22,6 +23,7 @@ interface ConfigDataDao {
         traceId: String,
     ): Bank?
 
+    fun generateDescription(sabOrderList: List<SubOrder>):String
     fun getGPBToken(
         traceId: String,
         order: Order,

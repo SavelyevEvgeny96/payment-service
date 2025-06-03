@@ -18,6 +18,7 @@ import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
@@ -50,6 +51,10 @@ open class ConfigDataDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val DESC_POLICY_NUMBER = "Номера полиса №"
+        const val SEPARATOR = ", №"
+        const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
+        const val DESC = "Оплата: "
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
         const val PAYMENT_STATUS_REG = "REG"
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
@@ -196,18 +201,26 @@ open class ConfigDataDaoImpl(
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
 
+        val urlTuReturn = paymentPayRequest.urlToReturnF.ifEmpty {
+            apiConfigProperty.backUrlF
+        }
+        val urlTuSuccess = paymentPayRequest.urlToReturn.ifEmpty {
+            apiConfigProperty.backUrlS
+        }
         val fixedAmount = premiumAmount?.replace(".", "")
-
+        val listSubOrder = subOrderRepository.findAllByOrderId(order)
+        val description = generateDescription(listSubOrder)
         val gpbPaymentRequest =
             GPBPaymentRequest(
                 portalId = apiConfigProperty.portalId,
                 token = tokenGpb,
                 merchantId = apiConfigProperty.merchantId,
                 orderId = paymentPayRequest.code,
-                backUrlS = apiConfigProperty.backUrlS,
-                backUrlF = apiConfigProperty.backUrlF,
+                backUrlS = urlTuSuccess,
+                backUrlF = urlTuReturn,
                 amount = fixedAmount,
-                description = PaymentServiceImpl.DESC + paymentPayRequest.code,
+                //сделать как в спеке
+                description = description,
                 currency = PaymentServiceImpl.RUB,
                 returnUrl = apiConfigProperty.returnUrl,
             )
@@ -269,9 +282,41 @@ open class ConfigDataDaoImpl(
                 )
             operationHistoryRepository.save(operationHistoryError)
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
-            logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + "$traceId")
+            logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
         }
+    }
+
+    override fun generateDescription(sabOrderList: List<SubOrder>): String {
+        val policyNumbers = sabOrderList
+            .mapNotNull { it.policyNumber }
+            .filter { it.isNotBlank() && it != "0" }
+
+        val contractIds = sabOrderList
+            .map { it.contractId }
+            .filter { it.isNotBlank() && it != "0" }
+
+        val description = buildString {
+            append(DESC)
+
+            if (policyNumbers.isNotEmpty() || contractIds.isNotEmpty()) {
+                append(" (")
+
+                if (policyNumbers.isNotEmpty()) {
+                    append(DESC_POLICY_NUMBER)
+                    append(policyNumbers.joinToString(SEPARATOR))
+                }
+
+                if (contractIds.isNotEmpty()) {
+                    if (policyNumbers.isNotEmpty()) append("; ")
+                    append(DESC_INSURANCE_CONTRACT)
+                    append(contractIds.joinToString(SEPARATOR))
+                }
+
+                append(")")
+            }
+        }
+        return description
     }
 
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()

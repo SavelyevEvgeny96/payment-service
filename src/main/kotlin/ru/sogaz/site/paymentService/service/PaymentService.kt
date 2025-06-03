@@ -11,7 +11,6 @@ import ru.sogaz.siter.models.resonses.Response
  */
 interface PaymentService {
     fun createPayment(
-        paymentPayRequest: PaymentPayRequest,
-        traceId: String,
+        paymentPayRequest: PaymentPayRequest
     ): ResponseEntity<Response<DataPay>>
 }
