@@ -10,7 +10,6 @@ import ru.sogaz.site.paymentService.loggerFor
 @ConfigurationProperties(prefix = "api.payment")
 class ApiConfigProperty {
     private val logger = loggerFor(javaClass)
-    lateinit var returnUrl: String
     lateinit var paymentUrl: String
     lateinit var gpbUrl: String
     lateinit var portalId: String
@@ -21,7 +20,6 @@ class ApiConfigProperty {
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
-        logger.info("returnUrl = $returnUrl")
         logger.info("paymentUrl = $paymentUrl")
         logger.info("gpbUrl = $gpbUrl")
         logger.info("portalId = $portalId")

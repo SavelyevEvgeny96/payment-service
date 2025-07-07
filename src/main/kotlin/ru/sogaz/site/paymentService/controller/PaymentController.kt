@@ -111,9 +111,8 @@ class PaymentController(
     @PostMapping("/pay")
     fun createPay(
         @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> {
-        return paymentService.createPayment(
-            paymentPayRequest
+    ): ResponseEntity<Response<DataPay>> =
+        paymentService.createPayment(
+            paymentPayRequest,
         )
-    }
 }

@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
+import ru.sogaz.site.paymentService.dto.State
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
@@ -77,6 +78,7 @@ open class ConfigDataDaoImpl(
         const val LOG_CODE_LENGTH_NOT_FOUND = "Не найдено значение длины для генерации Order.code "
         const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
         const val LOG_SUCCESSFUL_GPB_API = "Успешный запрос к GPB API. TraceId: "
+        const val PAYMENT_PAGE = "payment_page"
     }
 
     override fun getCodeLength(traceId: String): Int {
@@ -201,12 +203,9 @@ open class ConfigDataDaoImpl(
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
 
-        val urlTuReturn = paymentPayRequest.urlToReturnF.ifEmpty {
-            apiConfigProperty.backUrlF
-        }
-        val urlTuSuccess = paymentPayRequest.urlToReturn.ifEmpty {
-            apiConfigProperty.backUrlS
-        }
+        val urlTuReturn = paymentPayRequest.urlToReturnF ?: apiConfigProperty.backUrlF
+        val urlTuSuccess = paymentPayRequest.urlToReturn ?: apiConfigProperty.backUrlS
+
         val fixedAmount = premiumAmount?.replace(".", "")
         val listSubOrder = subOrderRepository.findAllByOrderId(order)
         val description = generateDescription(listSubOrder)
@@ -219,10 +218,13 @@ open class ConfigDataDaoImpl(
                 backUrlS = urlTuSuccess,
                 backUrlF = urlTuReturn,
                 amount = fixedAmount,
-                //сделать как в спеке
+                // сделать как в спеке
                 description = description,
                 currency = PaymentServiceImpl.RUB,
-                returnUrl = apiConfigProperty.returnUrl,
+                state =
+                    State(
+                        redirect = PAYMENT_PAGE,
+                    ),
             )
 
         val requestEntity = HttpEntity(gpbPaymentRequest, headers)
@@ -261,9 +263,15 @@ open class ConfigDataDaoImpl(
                     throw InnerException(traceId, LOG_AND_ERROR_GET_PAYMENT_STATUS)
                 }
 
-            getPaymentForUpdate.paymentPageUrl = paymentPageUrl
-            getPaymentForUpdate.stateId = paymentStatusREG
-            paymentRepository.save(getPaymentForUpdate)
+            if (getPaymentForUpdate != null) {
+                getPaymentForUpdate.paymentPageUrl = paymentPageUrl
+            }
+            if (getPaymentForUpdate != null) {
+                getPaymentForUpdate.stateId = paymentStatusREG
+            }
+            if (getPaymentForUpdate != null) {
+                paymentRepository.save(getPaymentForUpdate)
+            }
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
             val actionTypeStartPayError =
@@ -288,34 +296,37 @@ open class ConfigDataDaoImpl(
     }
 
     override fun generateDescription(sabOrderList: List<SubOrder>): String {
-        val policyNumbers = sabOrderList
-            .mapNotNull { it.policyNumber }
-            .filter { it.isNotBlank() && it != "0" }
+        val policyNumbers =
+            sabOrderList
+                .mapNotNull { it.policyNumber }
+                .filter { it.isNotBlank() && it != "0" }
 
-        val contractIds = sabOrderList
-            .map { it.contractId }
-            .filter { it.isNotBlank() && it != "0" }
+        val contractIds =
+            sabOrderList
+                .map { it.contractId }
+                .filter { it.isNotBlank() && it != "0" }
 
-        val description = buildString {
-            append(DESC)
+        val description =
+            buildString {
+                append(DESC)
 
-            if (policyNumbers.isNotEmpty() || contractIds.isNotEmpty()) {
-                append(" (")
+                if (policyNumbers.isNotEmpty() || contractIds.isNotEmpty()) {
+                    append(" (")
 
-                if (policyNumbers.isNotEmpty()) {
-                    append(DESC_POLICY_NUMBER)
-                    append(policyNumbers.joinToString(SEPARATOR))
+                    if (policyNumbers.isNotEmpty()) {
+                        append(DESC_POLICY_NUMBER)
+                        append(policyNumbers.joinToString(SEPARATOR))
+                    }
+
+                    if (contractIds.isNotEmpty()) {
+                        if (policyNumbers.isNotEmpty()) append("; ")
+                        append(DESC_INSURANCE_CONTRACT)
+                        append(contractIds.joinToString(SEPARATOR))
+                    }
+
+                    append(")")
                 }
-
-                if (contractIds.isNotEmpty()) {
-                    if (policyNumbers.isNotEmpty()) append("; ")
-                    append(DESC_INSURANCE_CONTRACT)
-                    append(contractIds.joinToString(SEPARATOR))
-                }
-
-                append(")")
             }
-        }
         return description
     }
 

@@ -20,16 +20,16 @@ data class Payment(
     var id: Long? = null,
     @ManyToOne
     @JoinColumn(name = "state_id", referencedColumnName = "state_id")
-    var stateId: PaymentStatus?,
+    var stateId: PaymentStatus? = null,
     @ManyToOne
     @JoinColumn(name = "type_id", referencedColumnName = "type_id")
-    var typeId: PaymentType?,
+    var typeId: PaymentType? = null,
     @ManyToOne
     @JoinColumn(name = "bank_id", referencedColumnName = "bank_id")
-    var bank: Bank?,
+    var bank: Bank? = null,
     @ManyToOne
     @JoinColumn(name = "order_id", referencedColumnName = "order_id")
-    var orderId: Order,
+    var orderId: Order? = null,
     @Column(name = "payment_bank_id")
     var paymentBankId: String? = null,
     @Column(name = "payment_started")
