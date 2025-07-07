@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.service.impl
 
-import org.aspectj.weaver.tools.Trace
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -24,7 +23,6 @@ import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.STATUS_CODE_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
 
 /**
@@ -81,9 +79,8 @@ class PaymentServiceImpl(
     }
 
     private val traceId = TraceId.get()
-    override fun createPayment(
-        paymentPayRequest: PaymentPayRequest
-    ): ResponseEntity<Response<DataPay>> {
+
+    override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
         logger.info(LOG_START_PAYMENT_CREATION + traceId)
 
         val orderFindByCode =

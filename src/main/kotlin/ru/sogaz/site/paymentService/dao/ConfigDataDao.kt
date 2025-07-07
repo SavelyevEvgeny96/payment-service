@@ -23,7 +23,8 @@ interface ConfigDataDao {
         traceId: String,
     ): Bank?
 
-    fun generateDescription(sabOrderList: List<SubOrder>):String
+    fun generateDescription(sabOrderList: List<SubOrder>): String
+
     fun getGPBToken(
         traceId: String,
         order: Order,

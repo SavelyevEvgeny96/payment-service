@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.dto
 
 data class GPBPaymentRequest(
-    val returnUrl: String?,
+    val state: State?,
     val portalId: String,
     val token: String,
     val merchantId: String,
@@ -11,4 +11,8 @@ data class GPBPaymentRequest(
     val amount: String?,
     val currency: String,
     val description: String,
+)
+
+data class State(
+    val redirect: String?,
 )

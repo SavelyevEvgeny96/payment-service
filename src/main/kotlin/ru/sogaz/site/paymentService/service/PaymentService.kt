@@ -10,7 +10,5 @@ import ru.sogaz.siter.models.resonses.Response
  * Определяет контракт для работы с платежами.
  */
 interface PaymentService {
-    fun createPayment(
-        paymentPayRequest: PaymentPayRequest
-    ): ResponseEntity<Response<DataPay>>
+    fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
 }
