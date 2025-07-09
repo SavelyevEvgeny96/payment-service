@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-create-table
+      author: Savelyev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-table
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_order_status.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_action_type.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_banks.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_config_data.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_client_systems.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_orders.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payment_status.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payment_type.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payments.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_payment_operation_history.sql
+  - include:
+      file: db.changelog/v1.0.0/2025-02-26/DATA/create_table_sub_orders.sql
