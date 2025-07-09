@@ -1,0 +1,14 @@
+package ru.sogaz.site.paymentService.service
+
+import org.springframework.http.ResponseEntity
+import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.PaymentPayRequest
+import ru.sogaz.siter.models.resonses.Response
+
+/**
+ * Интерфейс для сервиса обработки платежей.
+ * Определяет контракт для работы с платежами.
+ */
+interface PaymentService {
+    fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
+}
