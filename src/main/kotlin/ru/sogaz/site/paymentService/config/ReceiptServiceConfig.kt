@@ -1,0 +1,30 @@
+package ru.sogaz.site.paymentService.config
+
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.web.client.RestTemplate
+import ru.sogaz.site.paymentService.properties.ReceiptProperty
+import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
+import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import ru.sogaz.site.paymentService.service.ReceiptService
+import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
+
+@Configuration
+open class ReceiptServiceConfig {
+    @Bean
+    open fun receiptService(
+        subOrderRepository: SubOrderRepository,
+        actionTypeRepository: ActionTypeRepository,
+        operationHistoryRepository: PaymentOperationHistoryRepository,
+        receiptProperty: ReceiptProperty,
+        restTemplate: RestTemplate,
+    ): ReceiptService =
+        ReceiptServiceImpl(
+            subOrderRepository = subOrderRepository,
+            actionTypeRepository = actionTypeRepository,
+            operationHistoryRepository = operationHistoryRepository,
+            receiptProperty = receiptProperty,
+            restTemplate = restTemplate,
+        )
+}

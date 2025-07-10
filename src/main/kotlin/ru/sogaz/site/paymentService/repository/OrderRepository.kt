@@ -8,9 +8,10 @@ import ru.sogaz.site.paymentService.entity.Order
 
 @Repository
 interface OrderRepository : JpaRepository<Order, Long> {
-
     @Query("SELECT o FROM Order o WHERE o.orderStatus.stateId IN :statuses")
-    fun findByStatuses(@Param("statuses") statuses: List<String>): List<Order>
+    fun findByStatuses(
+        @Param("statuses") statuses: List<String>,
+    ): List<Order>
 
     fun findByCode(code: String): Order
 }
