@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
@@ -14,6 +15,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
+import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -126,16 +128,19 @@ class PaymentStatusCheckerServiceImpl(
         }
 
         val payment =
-            paymentRepository.findByOrderId(orderFindByCode)
+            paymentRepository.findAllByOrderId(orderFindByCode)
                 ?: run {
                     logger.error("Платеж для заказа ${order.code} не найден. ID операции: $traceId")
                     throw BusinessException(-1101520409, traceId)
                 }
 
-        when (payment.typeId?.typeId) {
-            "sbp", "bankCard" -> processBankCardPayment(orderFindByCode, payment, traceId)
+
+        val paymentResponse = payment.first {it.stateId?.stateId == "NEW"}
+
+        when (paymentResponse.typeId?.typeId) {
+            "sbp", "bankCard" -> processBankCardPayment(orderFindByCode, paymentResponse, traceId)
             else -> {
-                logger.info("Неподдерживаемый тип платежа ${payment.typeId?.typeId} для заказа ${order.code}. ID операции: $traceId")
+                logger.info("Неподдерживаемый тип платежа ${paymentResponse.typeId?.typeId} для заказа ${order.code}. ID операции: $traceId")
                 return
             }
         }
@@ -147,13 +152,6 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ) {
         logger.info("Обработка платежа по банковской карте для заказа ${order.code}. ID операции: $traceId")
-
-        if (order.bankId?.bankId != "gpb") {
-            logger.info(
-                "Заказ ${order.code} не относится к ГПБ (банк: ${order.bankId?.bankId}). В MVP не обрабатываем. ID операции: $traceId",
-            )
-            return
-        }
 
         logger.info("Обработка платежа ГПБ для заказа ${order.code}. ID операции: $traceId")
 
@@ -176,9 +174,7 @@ class PaymentStatusCheckerServiceImpl(
                 }
 
             val url =
-                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}${STATUS_PREFIX}${order.code}"
-            val headers = HttpHeaders()
-            headers.contentType = MediaType.APPLICATION_JSON
+                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}"
 
             try {
                 logger.info("Отправка запроса статуса платежа в ГПБ. URL: $url. ID операции: $traceId")
@@ -186,16 +182,19 @@ class PaymentStatusCheckerServiceImpl(
                 val response =
                     restTemplate.exchange(
                         url,
-                        HttpMethod.GET,
-                        HttpEntity(null, headers),
-                        object : ParameterizedTypeReference<Map<String, Any>>() {},
-                    )
+                        HttpMethod.POST,
+                        null,
+                        String::class.java,
+                    ).body ?: ""
 
-                if (response.statusCode == HttpStatus.OK) {
+                val objectMapper = ObjectMapper()
+                val paymentResponse: PaymentStatusResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+
+                if (response.isNotEmpty()) {
                     logger.info("Успешный ответ от API ГПБ для заказа ${order.code}. ID операции: $traceId")
-                    processSuccessfulResponse(response.body, order, payment, traceId)
+                    processSuccessfulResponse(paymentResponse, order, payment, traceId)
                 } else {
-                    logger.error("Ошибка при запросе статуса в ГПБ. Код ответа: ${response.statusCode}. ID операции: $traceId")
+                    logger.error("Ошибка при запросе статуса в ГПБ. ID операции: $traceId")
                     throw BusinessException(-1101520504, traceId)
                 }
             } catch (e: Exception) {
@@ -206,7 +205,7 @@ class PaymentStatusCheckerServiceImpl(
     }
 
     private fun processSuccessfulResponse(
-        responseBody: Map<String, Any>?,
+        paymentResponse: PaymentStatusResponse,
         order: Order,
         payment: Payment,
         traceId: String,
@@ -225,8 +224,8 @@ class PaymentStatusCheckerServiceImpl(
         operationHistoryRepository.save(operationHistory)
         logger.info("Запись о проверке статуса добавлена в историю для заказа ${order.code}. ID операции: $traceId")
 
-        val result = responseBody?.get("result") as? Map<String, Any>
-        val status = result?.get("status") as? String
+        val result = paymentResponse.result
+        val status = result.status
 
         logger.info("Получен статус платежа '$status' для заказа ${order.code}. ID операции: $traceId")
 

@@ -36,6 +36,4 @@ class RabbitMQConfig {
             .to(exchange)
             .with(routingKey)
 
-    @Bean
-    fun jsonMessageConverter(): Jackson2JsonMessageConverter = Jackson2JsonMessageConverter()
 }
