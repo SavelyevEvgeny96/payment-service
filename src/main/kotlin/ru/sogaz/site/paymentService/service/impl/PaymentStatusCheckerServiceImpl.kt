@@ -116,31 +116,31 @@ class PaymentStatusCheckerServiceImpl(
                 )
                 return
             }
-
             "NEW", "UPDATE" -> {
                 logger.info("Заказ ${order.code} требует проверки статуса платежа. ID операции: $traceId")
             }
-
             else -> {
                 logger.info("Заказ ${order.code} имеет неожиданный статус ${orderFindByCode.orderStatus?.stateId}. ID операции: $traceId")
                 return
             }
         }
 
-        val payment =
-            paymentRepository.findAllByOrderId(orderFindByCode)
-                ?: run {
-                    logger.error("Платеж для заказа ${order.code} не найден. ID операции: $traceId")
-                    throw BusinessException(-1101520409, traceId)
-                }
+        val payments = paymentRepository.findAllByOrderId(orderFindByCode)
+        if (payments.isEmpty()) {
+            logger.error("Платеж для заказа ${order.code} не найден. ID операции: $traceId")
+            throw BusinessException(-1101520409, traceId)
+        }
 
+        val newPayment = payments.firstOrNull { it.stateId?.stateId == "NEW" }
+        if (newPayment == null) {
+            logger.info("Все платежи для заказа ${order.code} имеют статус REG. Прекращаем обработку. ID операции: $traceId")
+            return
+        }
 
-        val paymentResponse = payment.first {it.stateId?.stateId == "NEW"}
-
-        when (paymentResponse.typeId?.typeId) {
-            "sbp", "bankCard" -> processBankCardPayment(orderFindByCode, paymentResponse, traceId)
+        when (newPayment.typeId?.typeId) {
+            "sbp", "bankCard" -> processBankCardPayment(orderFindByCode, newPayment, traceId)
             else -> {
-                logger.info("Неподдерживаемый тип платежа ${paymentResponse.typeId?.typeId} для заказа ${order.code}. ID операции: $traceId")
+                logger.info("Неподдерживаемый тип платежа ${newPayment.typeId?.typeId} для заказа ${order.code}. ID операции: $traceId")
                 return
             }
         }
