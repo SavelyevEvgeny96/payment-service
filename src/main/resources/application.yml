@@ -16,15 +16,14 @@ server:
 
 spring:
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
     template:
-      exchange: payment.exchange
-      routing-key: payment.routing.key
+      routing-key: ${RABBIT_QUEUE:payment.queue}
     queue:
-      name: payment.queue
+      name: ${RABBIT_QUEUE:payment.queue}
   application:
     name: payment-service
   profiles:

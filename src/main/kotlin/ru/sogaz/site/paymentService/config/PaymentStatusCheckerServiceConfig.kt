@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
@@ -37,6 +38,7 @@ class PaymentStatusCheckerServiceConfig {
         orderStatusRepository: OrderStatusRepository,
         rabbitTemplate: RabbitTemplate,
         objectMapper: ObjectMapper,
+        rabbitProperties: RabbitProperties,
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
@@ -53,5 +55,6 @@ class PaymentStatusCheckerServiceConfig {
             receiptService = receiptService,
             restTemplate = restTemplate,
             objectMapper = objectMapper,
+            rabbit = rabbitProperties,
         )
 }

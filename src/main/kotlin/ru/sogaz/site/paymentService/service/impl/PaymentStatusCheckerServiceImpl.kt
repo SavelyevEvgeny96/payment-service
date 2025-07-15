@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
@@ -45,6 +46,7 @@ class PaymentStatusCheckerServiceImpl(
     private val orderStatusRepository: OrderStatusRepository,
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
+    private val rabbit: RabbitProperties,
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
@@ -80,7 +82,7 @@ class PaymentStatusCheckerServiceImpl(
         val payment =
             paymentRepository.findByPaymentBankId(payment_bank_id)
                 ?: throw BusinessException(-1101520409, traceId).also {
-                    logger.error(LOG_PAYMENT_NOT_FOUND.format("N/A", traceId))
+                    logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
                 }
 
         return when (payment.stateId?.stateId) {
@@ -159,8 +161,6 @@ class PaymentStatusCheckerServiceImpl(
         val tokenGpb = configDataDao.getGPBTokenPayment(traceId, payment)
         if (tokenGpb.isNotEmpty()) {
             try {
-                val actionTypeTokenSuccess = actionTypeRepository.findByActionName("GET_TOKEN_MASSAGE_SUCCESS")
-
                 val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}$tokenGpb"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
@@ -255,8 +255,8 @@ class PaymentStatusCheckerServiceImpl(
             )
 
         rabbitTemplate.convertAndSend(
-            "\${rabbitmq.paid-orders.exchange}",
-            "\${rabbitmq.paid-orders.routing-key}",
+            "",
+            rabbit.template.routingKey,
             paidOrderMessage,
         )
 
