@@ -49,8 +49,8 @@ api:
     backUrlS: ${BACK_URL_SUCCESS:http://test.k835.sogaz.ru/realty/flat/success/}
     backUrlF: ${BACK_URL_FALSE:https:http://test.k835.sogaz.ru/realty/flat/}
   receipt:
-    receiptUrl: ${RECEIPT_URL:URL}
-    receiptPath: ${RECEIPT_PATH:PATH}
+    receiptUrl: ${RECEIPT_URL:http://s00-0000-k835.sogaz.ru/test/payment-receipt-service}
+    receiptPath: ${RECEIPT_PATH:/paymentCheck/create}
 management:
   endpoints:
     web:

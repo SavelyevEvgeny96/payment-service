@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
@@ -41,7 +42,6 @@ class PaymentStatusCheckerServiceImpl(
     private val restTemplate: RestTemplate,
     private val subOrderRepository: SubOrderRepository,
     private val apiConfigProperty: ApiConfigProperty,
-    private val configDataDao: ConfigDataDao,
     private val receiptService: ReceiptService,
     private val orderStatusRepository: OrderStatusRepository,
     private val rabbitTemplate: RabbitTemplate,
@@ -54,7 +54,8 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_START_STATUS_CHECK = "Начало проверки статуса платежа. PaymentBankId: %s. TraceId: %s"
         const val LOG_PAYMENT_NOT_FOUND = "Платеж для заказа %s не найден. TraceId: %s"
         const val LOG_UNSUPPORTED_PAYMENT_TYPE = "Неподдерживаемый тип платежа %s для заказа %s. TraceId: %s"
-        const val LOG_OPERATION_HISTORY_ADDED = "Запись о проверке статуса добавлена в историю для заказа %s. TraceId: %s"
+        const val LOG_OPERATION_HISTORY_ADDED =
+            "Запись о проверке статуса добавлена в историю для заказа %s. TraceId: %s"
         const val LOG_PAYMENT_STATUS_RECEIVED = "Получен статус платежа '%s' для заказа %s. TraceId: %s"
         const val LOG_UNKNOWN_PAYMENT_STATUS = "Неизвестный статус платежа: %s для заказа %s. TraceId: %s"
 
@@ -93,6 +94,7 @@ class PaymentStatusCheckerServiceImpl(
                     ResponseStatusPay(paymentStatus = payment.stateId!!.stateId),
                 )
             }
+
             "REG", "WAIT", "CALLBACK" -> {
                 processPaymentStatusCheck(payment, traceId)
                 getSuccessResponse(
@@ -101,6 +103,7 @@ class PaymentStatusCheckerServiceImpl(
                     ResponseStatusPay(paymentStatus = payment.stateId!!.stateId),
                 )
             }
+
             else -> throw BusinessException(-1101520409, traceId)
         }
     }
@@ -140,6 +143,7 @@ class PaymentStatusCheckerServiceImpl(
                     processBankCardPayment(payment, traceId)
                 }
             }
+
             else ->
                 logger.info(
                     LOG_UNSUPPORTED_PAYMENT_TYPE.format(
@@ -158,26 +162,24 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_CARD_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
         logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
-        val tokenGpb = configDataDao.getGPBTokenPayment(traceId, payment)
-        if (tokenGpb.isNotEmpty()) {
-            try {
-                val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}$tokenGpb"
-                logger.info(LOG_GPB_API_CALL.format(url, traceId))
+        try {
+            val url =
+                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
+            logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
-                val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
-                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+            val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+            val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
 
-                if (response.isNotEmpty()) {
-                    logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                    updatePaymentStatus(payment, paymentResponse, traceId)
-                } else {
-                    logger.error(LOG_GPB_API_ERROR.format(traceId))
-                    throw BusinessException(-1101520504, traceId)
-                }
-            } catch (e: Exception) {
-                logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
+            if (response.isNotEmpty()) {
+                logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                updatePaymentStatus(payment, paymentResponse, traceId)
+            } else {
+                logger.error(LOG_GPB_API_ERROR.format(traceId))
                 throw BusinessException(-1101520504, traceId)
             }
+        } catch (e: Exception) {
+            logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
+            throw BusinessException(-1101520504, traceId)
         }
     }
 
@@ -186,9 +188,9 @@ class PaymentStatusCheckerServiceImpl(
         response: PaymentStatusResponse,
         traceId: String,
     ) {
-        val orderSearch = orderRepository.findByOrderId(payment.orderId)
-
-        val order = orderRepository.findByCode(orderSearch.code)
+        val order = payment.orderId?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
+            ?.orElseThrow { InnerException("Order not found", traceId) }
+            ?: throw InnerException("Payment has no order", traceId)
         val status = response.result.status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.code, traceId))
@@ -204,15 +206,19 @@ class PaymentStatusCheckerServiceImpl(
                     sendToPaidOrdersQueue(order, traceId)
                 }
             }
+
             "UNKNOWN", "INTERIM_SUCCESS", "REFUND" -> {
                 payment.stateId = paymentStatusRepository.findByStateId("WAIT")
             }
+
             "FAILED" -> {
                 payment.stateId = paymentStatusRepository.findByStateId("FAIL")
             }
+
             "DECLINED" -> {
                 payment.stateId = paymentStatusRepository.findByStateId("DECLINED")
             }
+
             else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.code, traceId))
         }
 

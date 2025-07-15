@@ -168,21 +168,6 @@ open class ConfigDataDaoImpl(
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
     }
 
-    override fun getGPBTokenPayment(
-        traceId: String,
-        payment: Payment,
-    ): String {
-        val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.TOKEN_PREFIX}"
-        try {
-            val response: ResponseEntity<String> =
-                restTemplate.restTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
-            val jsonResponse = objectMapper.readTree(response.body)
-            return jsonResponse.get(PaymentServiceImpl.GPB_TOKEN_ROW).asText().toString()
-        } catch (e: Exception) {
-            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
-        }
-    }
-
     override fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,

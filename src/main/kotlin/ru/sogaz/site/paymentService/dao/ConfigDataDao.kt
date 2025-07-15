@@ -31,11 +31,6 @@ interface ConfigDataDao {
         order: Order,
     ): String
 
-    fun getGPBTokenPayment(
-        traceId: String,
-        payment: Payment,
-    ): String
-
     fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
