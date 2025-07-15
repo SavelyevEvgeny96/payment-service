@@ -7,7 +7,7 @@ interface PaymentStatusCheckerService {
     fun checkUnpaidPayments()
 
     fun getStatus(
-        code: String,
+        payment_bank_id: String,
         traceId: String,
     ): Response<ResponseStatusPay>
 }

@@ -18,6 +18,7 @@ import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.State
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
@@ -165,6 +166,21 @@ open class ConfigDataDaoImpl(
         }
         logger.error(LOG_ERROR_GET_TOKEN + traceId)
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
+    }
+
+    override fun getGPBTokenPayment(
+        traceId: String,
+        payment: Payment,
+    ): String {
+        val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.TOKEN_PREFIX}"
+        try {
+            val response: ResponseEntity<String> =
+                restTemplate.restTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
+            val jsonResponse = objectMapper.readTree(response.body)
+            return jsonResponse.get(PaymentServiceImpl.GPB_TOKEN_ROW).asText().toString()
+        } catch (e: Exception) {
+            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
+        }
     }
 
     override fun initiateGPBPayment(

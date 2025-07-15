@@ -2,17 +2,10 @@ package ru.sogaz.site.paymentService.service.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
@@ -51,242 +44,200 @@ class PaymentStatusCheckerServiceImpl(
     private val receiptService: ReceiptService,
     private val orderStatusRepository: OrderStatusRepository,
     private val rabbitTemplate: RabbitTemplate,
+    private val objectMapper: ObjectMapper,
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
-    companion object {
-        const val STATUS_PREFIX = "/payment/pay/status/"
+    private companion object {
+        const val LOG_START_STATUS_CHECK = "Начало проверки статуса платежа. PaymentBankId: %s. TraceId: %s"
+        const val LOG_PAYMENT_NOT_FOUND = "Платеж для заказа %s не найден. TraceId: %s"
+        const val LOG_UNSUPPORTED_PAYMENT_TYPE = "Неподдерживаемый тип платежа %s для заказа %s. TraceId: %s"
+        const val LOG_OPERATION_HISTORY_ADDED = "Запись о проверке статуса добавлена в историю для заказа %s. TraceId: %s"
+        const val LOG_PAYMENT_STATUS_RECEIVED = "Получен статус платежа '%s' для заказа %s. TraceId: %s"
+        const val LOG_UNKNOWN_PAYMENT_STATUS = "Неизвестный статус платежа: %s для заказа %s. TraceId: %s"
+
+        const val LOG_BACKGROUND_TASK_START = "Запуск фоновой задачи проверки статусов платежей. ID операции: %s"
+        const val LOG_UNPAID_PAYMENTS_FOUND = "Найдено %d неоплаченных платежей для проверки"
+        const val LOG_PAYMENT_CHECK_ERROR = "Ошибка при проверке статуса платежа для заказа %s. ID операции: %s"
+        const val LOG_CRITICAL_TASK_ERROR = "Критическая ошибка в фоновой задаче проверки платежей. ID операции: %s"
+
+        const val LOG_CARD_PAYMENT_PROCESSING = "Обработка платежа по банковской карте для платежа %s. ID операции: %s"
+        const val LOG_GPB_PAYMENT_PROCESSING = "Обработка платежа ГПБ для %s. ID операции: %s"
+        const val LOG_GPB_API_CALL = "Отправка запроса статуса платежа в ГПБ. URL: %s. ID операции: %s"
+        const val LOG_GPB_API_SUCCESS = "Успешный ответ от API ГПБ для платежа %s. ID операции: %s"
+        const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции: %s"
+        const val LOG_GPB_API_CALL_ERROR = "Ошибка при вызове API ГПБ для %s. ID операции: %s"
+
+        const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
     }
 
     override fun getStatus(
-        code: String,
+        payment_bank_id: String,
         traceId: String,
     ): Response<ResponseStatusPay> {
-        val orderCode = Order()
-        orderCode.code = code
-        checkOrderPaymentStatus(orderCode, traceId)
+        logger.info(LOG_START_STATUS_CHECK.format(payment_bank_id, traceId))
 
-        return getSuccessResponse(traceId, 1101520200, ResponseStatusPay(paymentStatus = "SUCCESS"))
+        val payment =
+            paymentRepository.findByPaymentBankId(payment_bank_id)
+                ?: throw BusinessException(-1101520409, traceId).also {
+                    logger.error(LOG_PAYMENT_NOT_FOUND.format("N/A", traceId))
+                }
+
+        return when (payment.stateId?.stateId) {
+            "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
+                getSuccessResponse(
+                    traceId,
+                    1101520200,
+                    ResponseStatusPay(paymentStatus = payment.stateId!!.stateId),
+                )
+            }
+            "REG", "WAIT", "CALLBACK" -> {
+                processPaymentStatusCheck(payment, traceId)
+                getSuccessResponse(
+                    traceId,
+                    1101520200,
+                    ResponseStatusPay(paymentStatus = payment.stateId!!.stateId),
+                )
+            }
+            else -> throw BusinessException(-1101520409, traceId)
+        }
     }
 
-    // Основной метод, запускаемый по расписанию
     @Scheduled(fixedDelayString = "\${payment.status.check.interval:60000}")
     override fun checkUnpaidPayments() {
         val traceId = UUID.randomUUID().toString()
-        logger.info("Запуск фоновой задачи проверки статусов платежей. ID операции: $traceId")
+        logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
 
         try {
             val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
 
-            val unpaidOrders =
-                orderRepository.findByStatuses(
-                    listOf("NEW", "UPDATE"),
-                )
+            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
 
-            logger.info("Найдено ${unpaidOrders.size} неоплаченных заказов для проверки")
+            logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
 
-            unpaidOrders.forEach { order ->
+            unpaidOrders.forEach { payment ->
                 try {
-                    checkOrderPaymentStatus(order, traceId)
+                    processPaymentStatusCheck(payment, traceId)
                     Thread.sleep(periodPay)
                 } catch (e: Exception) {
-                    logger.info(
-                        "Ошибка при проверке статуса платежа для заказа ${order.code}. ID операции: $traceId",
-                        e,
-                    )
+                    logger.info(LOG_PAYMENT_CHECK_ERROR.format(payment.paymentBankId, traceId), e)
                 }
             }
         } catch (e: Exception) {
-            logger.info("Критическая ошибка в фоновой задаче проверки платежей. ID операции: $traceId", e)
+            logger.info(LOG_CRITICAL_TASK_ERROR.format(traceId), e)
         }
     }
 
-    private fun checkOrderPaymentStatus(
-        order: Order,
+    private fun processPaymentStatusCheck(
+        payment: Payment,
         traceId: String,
     ) {
-        logger.info("Проверка статуса платежа для заказа ${order.code}. ID операции: $traceId")
-
-        val orderFindByCode = orderRepository.findByCode(order.code)
-
-        when (orderFindByCode.orderStatus?.stateId) {
-            "SUCCESS", "OVERDUE", "MARKEDDEL" -> {
+        when (payment.typeId?.typeId) {
+            "sbp", "bankCard" -> {
+                if (payment.bank?.bankId == "gpb") {
+                    processBankCardPayment(payment, traceId)
+                }
+            }
+            else ->
                 logger.info(
-                    "Заказ ${order.code} уже имеет финальный статус ${orderFindByCode.orderStatus?.stateId}. Пропускаем проверку. ID операции: $traceId",
+                    LOG_UNSUPPORTED_PAYMENT_TYPE.format(
+                        payment.typeId?.typeId,
+                        payment.orderId?.code,
+                        traceId,
+                    ),
                 )
-                return
-            }
-            "NEW", "UPDATE" -> {
-                logger.info("Заказ ${order.code} требует проверки статуса платежа. ID операции: $traceId")
-            }
-            else -> {
-                logger.info("Заказ ${order.code} имеет неожиданный статус ${orderFindByCode.orderStatus?.stateId}. ID операции: $traceId")
-                return
-            }
-        }
-
-        val payments = paymentRepository.findAllByOrderId(orderFindByCode)
-        if (payments.isEmpty()) {
-            logger.error("Платеж для заказа ${order.code} не найден. ID операции: $traceId")
-            throw BusinessException(-1101520409, traceId)
-        }
-
-        val newPayment = payments.firstOrNull { it.stateId?.stateId == "NEW" }
-        if (newPayment == null) {
-            logger.info("Все платежи для заказа ${order.code} имеют статус REG. Прекращаем обработку. ID операции: $traceId")
-            return
-        }
-
-        when (newPayment.typeId?.typeId) {
-            "sbp", "bankCard" -> processBankCardPayment(orderFindByCode, newPayment, traceId)
-            else -> {
-                logger.info("Неподдерживаемый тип платежа ${newPayment.typeId?.typeId} для заказа ${order.code}. ID операции: $traceId")
-                return
-            }
         }
     }
 
     private fun processBankCardPayment(
-        order: Order,
         payment: Payment,
         traceId: String,
     ) {
-        logger.info("Обработка платежа по банковской карте для заказа ${order.code}. ID операции: $traceId")
+        logger.info(LOG_CARD_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
+        logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
-        logger.info("Обработка платежа ГПБ для заказа ${order.code}. ID операции: $traceId")
-
-        val orderFindByCode =
-            try {
-                orderRepository.findByCode(order.code)
-            } catch (e: Exception) {
-                logger.error(e, PaymentServiceImpl.LOG_NOT_FOUND_ORDER_TO_CODE, order.code, traceId)
-                throw BusinessException(CustomPaymentErrors.CODE_ERROR_ORDER_NOT_FOUND, traceId)
-            }
-
-        val tokenGpb = configDataDao.getGPBToken(traceId, orderFindByCode)
+        val tokenGpb = configDataDao.getGPBTokenPayment(traceId, payment)
         if (tokenGpb.isNotEmpty()) {
-            val actionTypeTokenSuccess =
-                try {
-                    actionTypeRepository.findByActionName(PaymentServiceImpl.GET_TOKEN_MASSAGE_SUCCESS)
-                } catch (e: Exception) {
-                    logger.error(e, PaymentServiceImpl.LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
-                    throw InnerException(traceId, PaymentServiceImpl.LOG_AND_ERROR_FIND_ACTION_TYPE)
-                }
-
-            val url =
-                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}"
-
             try {
-                logger.info("Отправка запроса статуса платежа в ГПБ. URL: $url. ID операции: $traceId")
+                val actionTypeTokenSuccess = actionTypeRepository.findByActionName("GET_TOKEN_MASSAGE_SUCCESS")
 
-                val response =
-                    restTemplate.exchange(
-                        url,
-                        HttpMethod.POST,
-                        null,
-                        String::class.java,
-                    ).body ?: ""
+                val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}$tokenGpb"
+                logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
-                val objectMapper = ObjectMapper()
-                val paymentResponse: PaymentStatusResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
 
                 if (response.isNotEmpty()) {
-                    logger.info("Успешный ответ от API ГПБ для заказа ${order.code}. ID операции: $traceId")
-                    processSuccessfulResponse(paymentResponse, order, payment, traceId)
+                    logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                    updatePaymentStatus(payment, paymentResponse, traceId)
                 } else {
-                    logger.error("Ошибка при запросе статуса в ГПБ. ID операции: $traceId")
+                    logger.error(LOG_GPB_API_ERROR.format(traceId))
                     throw BusinessException(-1101520504, traceId)
                 }
             } catch (e: Exception) {
-                logger.info("Ошибка при вызове API ГПБ для заказа ${order.code}. ID операции: $traceId", e)
+                logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
                 throw BusinessException(-1101520504, traceId)
             }
         }
     }
 
-    private fun processSuccessfulResponse(
-        paymentResponse: PaymentStatusResponse,
-        order: Order,
-        payment: Payment,
-        traceId: String,
-    ) {
-        logger.info("Обработка успешного ответа для заказа ${order.code}. ID операции: $traceId")
-
-        val actionType = actionTypeRepository.findByActionName("GET_PAYMENT_STATUS_SUCCESS")
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
-        val operationHistory =
-            PaymentOperationHistory(
-                action = actionType,
-                order = order,
-                actionAuthor = subOrder.clientSystem,
-                actionDate = LocalDateTime.now(),
-            )
-        operationHistoryRepository.save(operationHistory)
-        logger.info("Запись о проверке статуса добавлена в историю для заказа ${order.code}. ID операции: $traceId")
-
-        val result = paymentResponse.result
-        val status = result.status
-
-        logger.info("Получен статус платежа '$status' для заказа ${order.code}. ID операции: $traceId")
-
-        when (status) {
-            "SUCCESS" -> handleSuccessStatus(order, payment, traceId)
-            "UNKNOWN", "INTERIM_SUCCESS", "REFUND" -> updatePaymentStatus(payment, "WAIT", traceId)
-            "FAILED" -> updatePaymentStatus(payment, "FAIL", traceId)
-            "DECLINED" -> updatePaymentStatus(payment, "DECLINED", traceId)
-            else -> logger.warn("Неизвестный статус платежа: $status для заказа ${order.code}. ID операции: $traceId")
-        }
-    }
-
-    private fun handleSuccessStatus(
-        order: Order,
-        payment: Payment,
-        traceId: String,
-    ) {
-        logger.info("Обработка успешного платежа для заказа ${order.code}. ID операции: $traceId")
-
-        val successStatus = paymentStatusRepository.findByStateId("SUCCESS")
-        payment.stateId = successStatus
-        payment.updateDate = LocalDateTime.now()
-        paymentRepository.save(payment)
-        logger.info("Статус платежа обновлен на SUCCESS для заказа ${order.code}. ID операции: $traceId")
-
-        val orderSuccessStatus = orderStatusRepository.findByStateId("SUCCESS")
-        order.orderStatus = orderSuccessStatus
-        order.updateDate = LocalDateTime.now()
-        orderRepository.save(order)
-        logger.info("Статус заказа обновлен на SUCCESS для заказа ${order.code}. ID операции: $traceId")
-
-        val actionType = actionTypeRepository.findByActionName("ORDER_PAID")
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
-        val operationHistory =
-            PaymentOperationHistory(
-                action = actionType,
-                order = order,
-                actionAuthor = subOrder.clientSystem,
-                actionDate = LocalDateTime.now(),
-            )
-        operationHistoryRepository.save(operationHistory)
-        logger.info("Запись об успешной оплате добавлена в историю для заказа ${order.code}. ID операции: $traceId")
-
-        if (order.needReceipt == true) {
-            logger.info("Заказ ${order.code} требует генерации чека. ID операции: $traceId")
-            receiptService.generateReceipt(order, traceId) // чеки
-        }
-
-        sendToPaidOrdersQueue(order, traceId)
-    }
-
     private fun updatePaymentStatus(
         payment: Payment,
-        status: String,
+        response: PaymentStatusResponse,
         traceId: String,
     ) {
-        logger.info("Обновление статуса платежа на $status для платежа ${payment.id}. ID операции: $traceId")
-        val newStatus = paymentStatusRepository.findByStateId(status)
-        payment.stateId = newStatus
+        val orderSearch = orderRepository.findByOrderId(payment.orderId)
+
+        val order = orderRepository.findByCode(orderSearch.code)
+        val status = response.result.status
+
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.code, traceId))
+
+        when (status) {
+            "SUCCESS" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("SUCCESS")
+                payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
+                createOrderHistoryRecord(order, "Заказ оплачен", traceId)
+
+                if (order.needReceipt == true) {
+                    receiptService.generateReceipt(order, traceId)
+                    sendToPaidOrdersQueue(order, traceId)
+                }
+            }
+            "UNKNOWN", "INTERIM_SUCCESS", "REFUND" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("WAIT")
+            }
+            "FAILED" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("FAIL")
+            }
+            "DECLINED" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("DECLINED")
+            }
+            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.code, traceId))
+        }
+
         payment.updateDate = LocalDateTime.now()
         paymentRepository.save(payment)
+    }
+
+    private fun createOrderHistoryRecord(
+        order: Order,
+        action: String,
+        traceId: String,
+    ) {
+        val actionType = actionTypeRepository.findByActionName(action)
+        val subOrder = subOrderRepository.findFirstByOrderId(order)
+
+        val historyRecord =
+            PaymentOperationHistory(
+                action = actionType,
+                order = order,
+                actionAuthor = subOrder.clientSystem,
+                actionDate = LocalDateTime.now(),
+            )
+
+        operationHistoryRepository.save(historyRecord)
+        logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.code, traceId))
     }
 
     private fun sendToPaidOrdersQueue(
@@ -309,6 +260,6 @@ class PaymentStatusCheckerServiceImpl(
             paidOrderMessage,
         )
 
-        logger.info("Отправлено в очередь ${order.code} TraceId: $traceId")
+        logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.code, traceId))
     }
 }

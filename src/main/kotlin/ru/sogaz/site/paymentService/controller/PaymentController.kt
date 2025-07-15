@@ -125,9 +125,9 @@ class PaymentController(
         summary = "Проверить статус оплаты",
         description = "Проверяет статус оплаты и отправляет в очередь (по успешности).",
     )
-    @GetMapping("/pay/status/{code}")
+    @GetMapping("/pay/status/{payment_bank_id}")
     fun getStatusPay(
-        @RequestParam code: String,
+        @RequestParam payment_bank_id: String,
         @RequestHeader traceId: String,
-    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(code, traceId)
+    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, traceId)
 }

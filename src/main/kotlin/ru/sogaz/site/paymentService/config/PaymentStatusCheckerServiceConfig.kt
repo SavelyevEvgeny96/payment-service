@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -35,6 +36,7 @@ class PaymentStatusCheckerServiceConfig {
         receiptService: ReceiptService,
         orderStatusRepository: OrderStatusRepository,
         rabbitTemplate: RabbitTemplate,
+        objectMapper: ObjectMapper,
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
@@ -50,5 +52,6 @@ class PaymentStatusCheckerServiceConfig {
             rabbitTemplate = rabbitTemplate,
             receiptService = receiptService,
             restTemplate = restTemplate,
+            objectMapper = objectMapper,
         )
 }
