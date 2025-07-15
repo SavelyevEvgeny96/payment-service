@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay

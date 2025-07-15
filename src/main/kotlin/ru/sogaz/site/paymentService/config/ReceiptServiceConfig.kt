@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
@@ -19,6 +20,7 @@ open class ReceiptServiceConfig {
         operationHistoryRepository: PaymentOperationHistoryRepository,
         receiptProperty: ReceiptProperty,
         restTemplate: RestTemplate,
+        objectMapper: ObjectMapper
     ): ReceiptService =
         ReceiptServiceImpl(
             subOrderRepository = subOrderRepository,
@@ -26,5 +28,6 @@ open class ReceiptServiceConfig {
             operationHistoryRepository = operationHistoryRepository,
             receiptProperty = receiptProperty,
             restTemplate = restTemplate,
+            objectMapper = objectMapper
         )
 }

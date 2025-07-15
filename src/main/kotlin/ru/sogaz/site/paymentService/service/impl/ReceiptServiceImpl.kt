@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -26,6 +27,7 @@ class ReceiptServiceImpl(
     private val subOrderRepository: SubOrderRepository,
     private val actionTypeRepository: ActionTypeRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
+    private val objectMapper: ObjectMapper
 ) : ReceiptService {
     private val logger = loggerFor(javaClass)
 
@@ -122,21 +124,23 @@ class ReceiptServiceImpl(
                     url,
                     HttpMethod.POST,
                     HttpEntity(requestBody, headers),
-                    PaymentReceiptCreateResponse::class.java,
-                )
+                    String::class.java,
+                ).body ?: ""
+
+            val responseBody = objectMapper.readValue(response, PaymentReceiptCreateResponse::class.java)
 
             when {
-                response.statusCode.is2xxSuccessful -> {
+                responseBody.status == "SUCCESS" -> {
                     logger.info("Чек успешно сгенерирован для заказа ${order.code}. TraceId: $traceId")
-                    saveReceiptOperationHistory(order, response.body?.externalId, traceId)
+                    saveReceiptOperationHistory(order, responseBody.data.externalId, traceId)
                 }
-                response.statusCode == HttpStatus.UNPROCESSABLE_ENTITY -> {
+                responseBody.status == "FAILED" -> {
                     logger.error("Ошибка валидации при генерации чека. TraceId: $traceId")
                     throw InnerException(traceId, "Ошибка валидации данных чека")
                 }
                 else -> {
-                    logger.error("Ошибка API при генерации чека. Status: ${response.statusCode}. TraceId: $traceId")
-                    throw InnerException(traceId, "Ошибка сервиса чеков: ${response.statusCode}")
+                    logger.error("Ошибка API при генерации чека. Status: ${responseBody.code}. TraceId: $traceId")
+                    throw InnerException(traceId, "Ошибка сервиса чеков: ${responseBody.code}")
                 }
             }
         } catch (e: Exception) {
