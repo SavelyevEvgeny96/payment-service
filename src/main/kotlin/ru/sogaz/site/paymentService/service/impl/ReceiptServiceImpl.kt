@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.exceptionStarter.starter.service.ExceptionHandler.Companion.TRACE_ID
 import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.Order
@@ -56,33 +54,29 @@ class ReceiptServiceImpl(
                 throw IllegalArgumentException("Некорректный формат суммы: $this", e)
             }
 
-        val receiptItems =
-            subOrders.map { subOrder ->
-                val itemName =
-                    buildString {
-                        append("Страховая премия")
-                        if (!subOrder.policyNumber.isNullOrEmpty()) {
-                            append(" по страховому полису № ${subOrder.policyNumber}")
-                        }
-                        if (!subOrder.contractId.isNullOrEmpty()) {
-                            append(" по страховому договору № ${subOrder.contractId}")
-                        }
-                    }
-
-                val premiumAmount = subOrder.premiumAmount?.toReceiptAmount()
-
-                if (premiumAmount != null) {
-                    PaymentReceiptCreateRequest.PaymentItemRequest(
-                        name = itemName,
-                        price = premiumAmount,
-                        quantity = 1.00,
-                        sum = premiumAmount,
-                        paymentMethod = "full_payment",
-                        paymentObject = "service",
-                        vat = PaymentReceiptCreateRequest.VatRequest(type = "none"),
-                    )
+        val receiptItems = subOrders.mapNotNull { subOrder ->
+            val itemName = buildString {
+                append("Страховая премия")
+                if (!subOrder.policyNumber.isNullOrEmpty()) {
+                    append(" по страховому полису № ${subOrder.policyNumber}")
+                }
+                if (subOrder.contractId.isNotEmpty()) {
+                    append(" по страховому договору № ${subOrder.contractId}")
                 }
             }
+
+            subOrder.premiumAmount?.toReceiptAmount()?.let { premiumAmount ->
+                PaymentReceiptCreateRequest.PaymentItemRequest(
+                    name = itemName,
+                    price = premiumAmount,
+                    quantity = 1.00,
+                    sum = premiumAmount,
+                    paymentMethod = "full_payment",
+                    paymentObject = "service",
+                    vat = PaymentReceiptCreateRequest.VatRequest(type = "none")
+                )
+            }
+        }
 
         val totalAmount = order.premiumAmount?.toReceiptAmount()
 
@@ -90,22 +84,22 @@ class ReceiptServiceImpl(
             totalAmount?.let { it ->
                 PaymentReceiptCreateRequest(
                     client =
-                        PaymentReceiptCreateRequest.ClientInfo(
-                            email = order.recipientEmail,
-                            phone = order.recipientPhone,
-                            name = order.policyholder,
-                        ),
+                    PaymentReceiptCreateRequest.ClientInfo(
+                        email = order.recipientEmail,
+                        phone = order.recipientPhone,
+                        name = order.policyholder,
+                    ),
                     userId = order.recipientUserId,
                     items = receiptItems,
                     payments =
-                        listOf(
-                            totalAmount.let {
-                                PaymentReceiptCreateRequest.PaymentPaymentRequest(
-                                    type = "1",
-                                    sum = it,
-                                )
-                            },
-                        ),
+                    listOf(
+                        totalAmount.let {
+                            PaymentReceiptCreateRequest.PaymentPaymentRequest(
+                                type = "1",
+                                sum = it,
+                            )
+                        },
+                    ),
                     system = "Atol",
                     total = it,
                     version = "v4",
@@ -114,7 +108,7 @@ class ReceiptServiceImpl(
 
         val headers =
             HttpHeaders().apply {
-                set(TRACE_ID, traceId)
+                set("TraceId", traceId)
                 contentType = MediaType.APPLICATION_JSON
             }
 
@@ -134,10 +128,12 @@ class ReceiptServiceImpl(
                     logger.info("Чек успешно сгенерирован для заказа ${order.code}. TraceId: $traceId")
                     saveReceiptOperationHistory(order, responseBody.data.externalId, traceId)
                 }
+
                 responseBody.status == "FAILED" -> {
-                    logger.error("Ошибка валидации при генерации чека. TraceId: $traceId")
-                    throw InnerException(traceId, "Ошибка валидации данных чека")
+                    logger.error("Ошибка при генерации чека. TraceId: $traceId")
+                    throw InnerException(traceId, "Ошибка данных чека")
                 }
+
                 else -> {
                     logger.error("Ошибка API при генерации чека. Status: ${responseBody.code}. TraceId: $traceId")
                     throw InnerException(traceId, "Ошибка сервиса чеков: ${responseBody.code}")

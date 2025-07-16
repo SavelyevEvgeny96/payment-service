@@ -1,5 +1,3 @@
-
-
 DELETE FROM action_type
 WHERE ctid NOT IN (
     SELECT min(ctid)

@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.dto
 data class PaymentReceiptCreateRequest(
     val client: ClientInfo,
     val userId: String?,
-    val items: List<Unit>,
+    val items: List<PaymentItemRequest>,
     val payments: List<PaymentPaymentRequest?>,
     val total: Double,
     val system: String,

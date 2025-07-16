@@ -245,6 +245,7 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.code, traceId))
     }
 
+    /** начало генерации ИИ qwen2.5-coder:14b  */
     private fun sendToPaidOrdersQueue(
         order: Order,
         traceId: String,
@@ -267,4 +268,6 @@ class PaymentStatusCheckerServiceImpl(
 
         logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.code, traceId))
     }
+
+    /** Конец генерации ИИ qwen2.5-coder:14b  */
 }
