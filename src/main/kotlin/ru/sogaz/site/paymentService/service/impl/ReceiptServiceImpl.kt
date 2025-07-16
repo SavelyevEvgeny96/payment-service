@@ -25,9 +25,27 @@ class ReceiptServiceImpl(
     private val subOrderRepository: SubOrderRepository,
     private val actionTypeRepository: ActionTypeRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : ReceiptService {
     private val logger = loggerFor(javaClass)
+
+    companion object {
+        const val RECEIPT_GENERATED_ACTION = "Заказ оплачен"
+        const val RECEIPT_GENERATION_ERROR_ACTION = "Ошибка при совершени платежа"
+        const val ITEM_NAME_PREFIX = "Страховая премия"
+        const val POLICY_NUMBER_PREFIX = " по страховому полису № "
+        const val CONTRACT_ID_PREFIX = " по страховому договору № "
+        const val LOG_RECEIPT_SUCCESS = "Чек успешно сгенерирован для заказа %s. TraceId: %s"
+        const val LOG_RECEIPT_FAILED = "Ошибка при генерации чека. TraceId: %s"
+        const val LOG_RECEIPT_API_ERROR = "Ошибка API при генерации чека. Status: %s. TraceId: %s"
+        const val LOG_RECEIPT_ERROR = "Ошибка при генерации чека для заказа %s. TraceId: %s"
+        const val ERROR_DATA_RECEIPT = "Ошибка данных чека"
+        const val ERROR_RECEIPT = "Ошибка сервиса чеков: "
+        const val ERROR_RECEIPT_GENERATION = "Ошибка при генерации чека: "
+        const val ERROR_FRACTION_SUM = "Дробная часть должна содержать не более 2 знаков"
+        const val ERROR_HOLL_SUM = "Целая часть должна содержать не более 8 знаков"
+        const val ERROR_INCORRECT_SUM = "Некорректный формат суммы: "
+    }
 
     override fun generateReceipt(
         order: Order,
@@ -44,39 +62,41 @@ class ReceiptServiceImpl(
 
                 val parts = cleanAmount.split(".")
                 if (parts.size > 1 && parts[1].length > 2) {
-                    throw IllegalArgumentException("Дробная часть должна содержать не более 2 знаков")
+                    throw InnerException(traceId, ERROR_FRACTION_SUM)
                 }
                 if (parts[0].length > 8) {
-                    throw IllegalArgumentException("Целая часть должна содержать не более 8 знаков")
+                    throw InnerException(traceId, ERROR_HOLL_SUM)
                 }
                 amount
             } catch (e: NumberFormatException) {
-                throw IllegalArgumentException("Некорректный формат суммы: $this", e)
+                throw InnerException(traceId, ERROR_INCORRECT_SUM + this)
             }
 
-        val receiptItems = subOrders.mapNotNull { subOrder ->
-            val itemName = buildString {
-                append("Страховая премия")
-                if (!subOrder.policyNumber.isNullOrEmpty()) {
-                    append(" по страховому полису № ${subOrder.policyNumber}")
-                }
-                if (subOrder.contractId.isNotEmpty()) {
-                    append(" по страховому договору № ${subOrder.contractId}")
-                }
-            }
+        val receiptItems =
+            subOrders.mapNotNull { subOrder ->
+                val itemName =
+                    buildString {
+                        append(ITEM_NAME_PREFIX)
+                        if (!subOrder.policyNumber.isNullOrEmpty()) {
+                            append(POLICY_NUMBER_PREFIX + subOrder.policyNumber)
+                        }
+                        if (subOrder.contractId.isNotEmpty()) {
+                            append(CONTRACT_ID_PREFIX + subOrder.contractId)
+                        }
+                    }
 
-            subOrder.premiumAmount?.toReceiptAmount()?.let { premiumAmount ->
-                PaymentReceiptCreateRequest.PaymentItemRequest(
-                    name = itemName,
-                    price = premiumAmount,
-                    quantity = 1.00,
-                    sum = premiumAmount,
-                    paymentMethod = "full_payment",
-                    paymentObject = "service",
-                    vat = PaymentReceiptCreateRequest.VatRequest(type = "none")
-                )
+                subOrder.premiumAmount?.toReceiptAmount()?.let { premiumAmount ->
+                    PaymentReceiptCreateRequest.PaymentItemRequest(
+                        name = itemName,
+                        price = premiumAmount,
+                        quantity = 1.00,
+                        sum = premiumAmount,
+                        paymentMethod = "full_payment",
+                        paymentObject = "service",
+                        vat = PaymentReceiptCreateRequest.VatRequest(type = "none"),
+                    )
+                }
             }
-        }
 
         val totalAmount = order.premiumAmount?.toReceiptAmount()
 
@@ -84,22 +104,22 @@ class ReceiptServiceImpl(
             totalAmount?.let { it ->
                 PaymentReceiptCreateRequest(
                     client =
-                    PaymentReceiptCreateRequest.ClientInfo(
-                        email = order.recipientEmail,
-                        phone = order.recipientPhone,
-                        name = order.policyholder,
-                    ),
+                        PaymentReceiptCreateRequest.ClientInfo(
+                            email = order.recipientEmail,
+                            phone = order.recipientPhone,
+                            name = order.policyholder,
+                        ),
                     userId = order.recipientUserId,
                     items = receiptItems,
                     payments =
-                    listOf(
-                        totalAmount.let {
-                            PaymentReceiptCreateRequest.PaymentPaymentRequest(
-                                type = "1",
-                                sum = it,
-                            )
-                        },
-                    ),
+                        listOf(
+                            totalAmount.let {
+                                PaymentReceiptCreateRequest.PaymentPaymentRequest(
+                                    type = "1",
+                                    sum = it,
+                                )
+                            },
+                        ),
                     system = "Atol",
                     total = it,
                     version = "v4",
@@ -114,35 +134,36 @@ class ReceiptServiceImpl(
 
         try {
             val response =
-                restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    HttpEntity(requestBody, headers),
-                    String::class.java,
-                ).body ?: ""
+                restTemplate
+                    .exchange(
+                        url,
+                        HttpMethod.POST,
+                        HttpEntity(requestBody, headers),
+                        String::class.java,
+                    ).body ?: ""
 
             val responseBody = objectMapper.readValue(response, PaymentReceiptCreateResponse::class.java)
 
             when {
                 responseBody.status == "SUCCESS" -> {
-                    logger.info("Чек успешно сгенерирован для заказа ${order.code}. TraceId: $traceId")
+                    logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
                     saveReceiptOperationHistory(order, responseBody.data.externalId, traceId)
                 }
 
                 responseBody.status == "FAILED" -> {
-                    logger.error("Ошибка при генерации чека. TraceId: $traceId")
-                    throw InnerException(traceId, "Ошибка данных чека")
+                    logger.error(LOG_RECEIPT_FAILED.format(traceId))
+                    throw InnerException(traceId, ERROR_DATA_RECEIPT)
                 }
 
                 else -> {
-                    logger.error("Ошибка API при генерации чека. Status: ${responseBody.code}. TraceId: $traceId")
-                    throw InnerException(traceId, "Ошибка сервиса чеков: ${responseBody.code}")
+                    logger.error(LOG_RECEIPT_API_ERROR.format(responseBody.status, traceId))
+                    throw InnerException(traceId, ERROR_RECEIPT + responseBody.code)
                 }
             }
         } catch (e: Exception) {
-            logger.info("Ошибка при генерации чека для заказа ${order.code}. TraceId: $traceId", e)
+            logger.info(LOG_RECEIPT_ERROR.format(order.code, traceId), e)
             saveFailedReceiptOperationHistory(order, e.message, traceId)
-            throw InnerException(traceId, "Ошибка при генерации чека: ${e.message}")
+            throw InnerException(traceId, ERROR_RECEIPT_GENERATION + e.message)
         }
     }
 
@@ -151,7 +172,7 @@ class ReceiptServiceImpl(
         externalId: String?,
         traceId: String,
     ) {
-        val actionType = actionTypeRepository.findByActionName("RECEIPT_GENERATED")
+        val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATED_ACTION)
         val subOrder = subOrderRepository.findFirstByOrderId(order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
@@ -168,8 +189,9 @@ class ReceiptServiceImpl(
         error: String?,
         traceId: String,
     ) {
-        val actionType = actionTypeRepository.findByActionName("RECEIPT_GENERATION_ERROR")
+        val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATION_ERROR_ACTION)
         val subOrder = subOrderRepository.findFirstByOrderId(order)
+
         operationHistoryRepository.save(
             PaymentOperationHistory(
                 action = actionType,

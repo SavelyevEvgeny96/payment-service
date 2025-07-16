@@ -18,7 +18,6 @@ import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.State
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
-import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor

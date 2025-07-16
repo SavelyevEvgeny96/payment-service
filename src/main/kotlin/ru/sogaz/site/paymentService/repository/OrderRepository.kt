@@ -8,5 +8,6 @@ import java.util.Optional
 @Repository
 interface OrderRepository : JpaRepository<Order, Long> {
     fun findByCode(code: String): Order
+
     fun findByOrderId(orderId: String): Optional<Order>
 }

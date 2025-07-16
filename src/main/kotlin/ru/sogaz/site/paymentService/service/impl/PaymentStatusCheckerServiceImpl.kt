@@ -187,9 +187,11 @@ class PaymentStatusCheckerServiceImpl(
         response: PaymentStatusResponse,
         traceId: String,
     ) {
-        val order = payment.orderId?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
-            ?.orElseThrow { InnerException("Order not found", traceId) }
-            ?: throw InnerException("Payment has no order", traceId)
+        val order =
+            payment.orderId
+                ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
+                ?.orElseThrow { InnerException("Order not found", traceId) }
+                ?: throw InnerException("Payment has no order", traceId)
         val status = response.result.status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.code, traceId))

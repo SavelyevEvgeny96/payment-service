@@ -20,7 +20,7 @@ open class ReceiptServiceConfig {
         operationHistoryRepository: PaymentOperationHistoryRepository,
         receiptProperty: ReceiptProperty,
         restTemplate: RestTemplate,
-        objectMapper: ObjectMapper
+        objectMapper: ObjectMapper,
     ): ReceiptService =
         ReceiptServiceImpl(
             subOrderRepository = subOrderRepository,
@@ -28,6 +28,6 @@ open class ReceiptServiceConfig {
             operationHistoryRepository = operationHistoryRepository,
             receiptProperty = receiptProperty,
             restTemplate = restTemplate,
-            objectMapper = objectMapper
+            objectMapper = objectMapper,
         )
 }
