@@ -9,7 +9,9 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.QueueMessageDto
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.VariableDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
@@ -29,6 +31,8 @@ import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class PaymentStatusCheckerServiceImpl(
@@ -71,6 +75,7 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_GPB_API_CALL_ERROR = "Ошибка при вызове API ГПБ для %s. ID операции: %s"
 
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
+        const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
     }
 
     override fun getStatus(
@@ -107,7 +112,7 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    @Scheduled(fixedDelayString = "\${payment.status.check.interval:60000}")
+    @Scheduled(fixedDelayString = "60000")
     override fun checkUnpaidPayments() {
         val traceId = UUID.randomUUID().toString()
         logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
@@ -190,8 +195,8 @@ class PaymentStatusCheckerServiceImpl(
         val order =
             payment.orderId
                 ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
-                ?.orElseThrow { InnerException("Order not found", traceId) }
-                ?: throw InnerException("Payment has no order", traceId)
+                ?.orElseThrow { InnerException("Заказ не найден", traceId) }
+                ?: throw InnerException("Заказ для платежа не найден", traceId)
         val status = response.result.status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.code, traceId))
@@ -203,7 +208,7 @@ class PaymentStatusCheckerServiceImpl(
                 createOrderHistoryRecord(order, "Заказ оплачен", traceId)
 
                 if (order.needReceipt == true) {
-                    receiptService.generateReceipt(order, traceId)
+                    //                  receiptService.generateReceipt(order, traceId)
                     sendToPaidOrdersQueue(order, traceId)
                 }
             }
@@ -252,24 +257,56 @@ class PaymentStatusCheckerServiceImpl(
         order: Order,
         traceId: String,
     ) {
-        val paidOrderMessage =
-            PaidOrderMessage(
-                orderId = order.id!!,
-                orderCode = order.code,
-                paymentDate = LocalDateTime.now(),
-                recipientEmail = order.recipientEmail,
-                recipientPhone = order.recipientPhone,
-                traceId = traceId,
+        try {
+            val subOrders = subOrderRepository.findAllByOrderId(order)
+            val mainSubOrder =
+                subOrders.firstOrNull()
+                    ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
+
+            val requestBody =
+                mainSubOrder.clientSystem?.externalSystemCode?.let {
+                    PaidOrderMessage(
+                        orderId = order.orderId,
+                        recipientEmail = order.recipientEmail,
+                        recipientPhone = order.recipientPhone,
+                        recipientUserId = order.recipientUserId,
+                        externalSystemCode = it,
+                        docType = mainSubOrder.docType,
+                        policyId = mainSubOrder.policyId,
+                        policyNumber = mainSubOrder.policyNumber,
+                        contractNumber = mainSubOrder.contractNumber,
+                        contractId = mainSubOrder.contractId,
+                        typeInsurance = mainSubOrder.typeInsurance,
+                        premiumAmount = mainSubOrder.premiumAmount,
+                        managerEmail = mainSubOrder.managerEmail,
+                        paySuccess = order.updateDate?.atZone(ZoneOffset.UTC)?.format(DateTimeFormatter.ISO_INSTANT),
+                    )
+                }
+
+            val paidOrderMessage =
+                QueueMessageDto(
+                    variables =
+                        listOf(
+                            VariableDto("ClientID", "payService"),
+                            VariableDto("flowCode", "ResultPay"),
+                            VariableDto(
+                                "requestBody",
+                                objectMapper.writeValueAsString(requestBody),
+                            ),
+                        ),
+                )
+
+            rabbitTemplate.convertAndSend(
+                "",
+                rabbit.template.routingKey,
+                paidOrderMessage,
             )
 
-        rabbitTemplate.convertAndSend(
-            "",
-            rabbit.template.routingKey,
-            paidOrderMessage,
-        )
-
-        logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.code, traceId))
+            logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.code, traceId))
+        } catch (e: Exception) {
+            logger.info(LOG_QUEUE_MESSAGE_ERROR + e.message)
+            throw InnerException(traceId, LOG_QUEUE_MESSAGE_ERROR + e.message)
+        }
     }
-
     /** Конец генерации ИИ qwen2.5-coder:14b  */
 }
