@@ -104,7 +104,7 @@ class PaymentStatusCheckerServiceImpl(
                 getSuccessResponse(
                     traceId,
                     1101520200,
-                    ResponseStatusPay(paymentStatus = payment.stateId!!.stateId),
+                    ResponseStatusPay(paymentStatus = payment.stateId!!.stateName),
                 )
             }
 
