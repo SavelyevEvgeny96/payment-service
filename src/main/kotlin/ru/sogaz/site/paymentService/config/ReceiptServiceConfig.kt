@@ -6,7 +6,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.properties.ReceiptProperty
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
+import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
@@ -21,6 +23,8 @@ open class ReceiptServiceConfig {
         receiptProperty: ReceiptProperty,
         restTemplate: RestTemplate,
         objectMapper: ObjectMapper,
+        paymentRepository: PaymentRepository,
+        chequeSentRepository: ChequeSentRepository,
     ): ReceiptService =
         ReceiptServiceImpl(
             subOrderRepository = subOrderRepository,
@@ -29,5 +33,7 @@ open class ReceiptServiceConfig {
             receiptProperty = receiptProperty,
             restTemplate = restTemplate,
             objectMapper = objectMapper,
+            paymentRepository = paymentRepository,
+            chequeSentRepository = chequeSentRepository,
         )
 }

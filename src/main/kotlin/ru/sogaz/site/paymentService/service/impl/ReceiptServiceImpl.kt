@@ -9,12 +9,15 @@ import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
+import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ReceiptProperty
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
+import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import java.time.LocalDateTime
@@ -26,6 +29,8 @@ class ReceiptServiceImpl(
     private val actionTypeRepository: ActionTypeRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val objectMapper: ObjectMapper,
+    private val paymentRepository: PaymentRepository,
+    private val chequeSentRepository: ChequeSentRepository,
 ) : ReceiptService {
     private val logger = loggerFor(javaClass)
 
@@ -53,6 +58,8 @@ class ReceiptServiceImpl(
     ) {
         val url = receiptProperty.receiptUrl
 
+        val payment = paymentRepository.findByOrderId(order)
+
         val subOrders = subOrderRepository.findAllByOrderId(order)
 
         fun String.toReceiptAmount(): Double =
@@ -78,10 +85,10 @@ class ReceiptServiceImpl(
                     buildString {
                         append(ITEM_NAME_PREFIX)
                         if (!subOrder.policyNumber.isNullOrEmpty()) {
-                            append(POLICY_NUMBER_PREFIX + subOrder.policyNumber)
+                            append(POLICY_NUMBER_PREFIX.format(subOrder.policyNumber))
                         }
-                        if (subOrder.contractId.isNotEmpty()) {
-                            append(CONTRACT_ID_PREFIX + subOrder.contractId)
+                        if (!subOrder.contractId.isNullOrEmpty()) {
+                            append(CONTRACT_ID_PREFIX.format(subOrder.contractId))
                         }
                     }
 
@@ -147,24 +154,59 @@ class ReceiptServiceImpl(
             when {
                 responseBody.status == "SUCCESS" -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
+                    payment.paymentBankId?.let { paymentRepository.updateChequeStatus(it, "SENT") }
                     saveReceiptOperationHistory(order, responseBody.data.externalId, traceId)
+                    payment.paymentBankId?.let { saveChequeSentRecord(it, true, traceId) }
                 }
-
                 responseBody.status == "FAILED" -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
+                    payment.paymentBankId?.let { handleReceiptError(order, it, ERROR_DATA_RECEIPT, traceId) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
                 }
-
                 else -> {
                     logger.error(LOG_RECEIPT_API_ERROR.format(responseBody.status, traceId))
+                    payment.paymentBankId?.let {
+                        handleReceiptError(
+                            order,
+                            it,
+                            ERROR_RECEIPT + responseBody.code,
+                            traceId,
+                        )
+                    }
                     throw InnerException(traceId, ERROR_RECEIPT + responseBody.code)
                 }
             }
         } catch (e: Exception) {
             logger.info(LOG_RECEIPT_ERROR.format(order.code, traceId), e)
-            saveFailedReceiptOperationHistory(order, e.message, traceId)
+            payment.paymentBankId?.let { handleReceiptError(order, it, ERROR_RECEIPT_GENERATION + e.message, traceId) }
             throw InnerException(traceId, ERROR_RECEIPT_GENERATION + e.message)
         }
+    }
+
+    private fun handleReceiptError(
+        order: Order,
+        paymentBankId: String,
+        error: String,
+        traceId: String,
+    ) {
+        paymentRepository.updateChequeStatus(paymentBankId, "NOT_SENT")
+        saveFailedReceiptOperationHistory(order, error, traceId)
+        saveChequeSentRecord(paymentBankId, false, traceId)
+    }
+
+    private fun saveChequeSentRecord(
+        paymentBankId: String,
+        success: Boolean,
+        traceId: String,
+    ) {
+        chequeSentRepository.save(
+            ChequeSent(
+                paymentBankId = paymentBankId,
+                status = if (success) "SUCCESS" else "FAILED",
+                dateCreate = LocalDateTime.now(),
+                dateUpdate = LocalDateTime.now(),
+            ),
+        )
     }
 
     private fun saveReceiptOperationHistory(

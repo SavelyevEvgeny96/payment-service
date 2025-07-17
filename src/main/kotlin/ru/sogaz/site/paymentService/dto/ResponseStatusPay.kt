@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dto
 
 data class ResponseStatusPay(
-    private val paymentStatus: String,
+    val paymentStatus: String,
+    val cheque: Boolean,
 )

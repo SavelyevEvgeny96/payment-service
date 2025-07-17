@@ -76,6 +76,7 @@ class PaymentStatusCheckerServiceImpl(
 
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
+        const val ORDERS_NOT_FOUND = "Заказ не найден"
     }
 
     override fun getStatus(
@@ -90,12 +91,21 @@ class PaymentStatusCheckerServiceImpl(
                     logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
                 }
 
+        val chequeStatus = if (payment.stateId?.stateId == "SUCCESS") {
+            checkChequeStatus(payment, traceId)
+        } else {
+            false
+        }
+
         return when (payment.stateId?.stateId) {
             "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
                 getSuccessResponse(
                     traceId,
                     1101520200,
-                    ResponseStatusPay(paymentStatus = payment.stateId!!.stateId),
+                    ResponseStatusPay(
+                        paymentStatus = payment.stateId!!.stateId,
+                        cheque = chequeStatus,
+                    ),
                 )
             }
 
@@ -104,7 +114,10 @@ class PaymentStatusCheckerServiceImpl(
                 getSuccessResponse(
                     traceId,
                     1101520200,
-                    ResponseStatusPay(paymentStatus = payment.stateId!!.stateName),
+                    ResponseStatusPay(
+                        paymentStatus = payment.stateId!!.stateName,
+                        cheque = chequeStatus,
+                    ),
                 )
             }
 
@@ -195,8 +208,8 @@ class PaymentStatusCheckerServiceImpl(
         val order =
             payment.orderId
                 ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
-                ?.orElseThrow { InnerException("Заказ не найден", traceId) }
-                ?: throw InnerException("Заказ для платежа не найден", traceId)
+                ?.orElseThrow { InnerException(ORDERS_NOT_FOUND, traceId) }
+                ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
         val status = response.result.status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.code, traceId))
@@ -309,4 +322,20 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
     /** Конец генерации ИИ qwen2.5-coder:14b  */
+
+    private fun checkChequeStatus(payment: Payment, traceId: String): Boolean {
+        val freshPayment = paymentRepository.findById(payment.id!!)
+            .orElseThrow { BusinessException(-1101520409, traceId) }
+        if (freshPayment.chequeName == "SENT") {
+            return true
+        }
+        val order = freshPayment.orderId ?: return false
+        if (order.needReceipt != true) {
+            return false
+        }
+        if (freshPayment.stateId?.stateId != "SUCCESS") {
+            return false
+        }
+        return true
+    }
 }
