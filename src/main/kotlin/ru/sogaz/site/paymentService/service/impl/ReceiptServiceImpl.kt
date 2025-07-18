@@ -155,7 +155,7 @@ class ReceiptServiceImpl(
                 responseBody.status == "SUCCESS" -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
                     payment.paymentBankId?.let { paymentRepository.updateChequeStatus(it, "SENT") }
-                    saveReceiptOperationHistory(order, responseBody.data.externalId, traceId)
+                    saveReceiptOperationHistory(order)
                     payment.paymentBankId?.let { saveChequeSentRecord(it, true, traceId) }
                 }
                 responseBody.status == "FAILED" -> {
@@ -190,7 +190,7 @@ class ReceiptServiceImpl(
         traceId: String,
     ) {
         paymentRepository.updateChequeStatus(paymentBankId, "NOT_SENT")
-        saveFailedReceiptOperationHistory(order, error, traceId)
+        saveFailedReceiptOperationHistory(order)
         saveChequeSentRecord(paymentBankId, false, traceId)
     }
 
@@ -209,11 +209,7 @@ class ReceiptServiceImpl(
         )
     }
 
-    private fun saveReceiptOperationHistory(
-        order: Order,
-        externalId: String?,
-        traceId: String,
-    ) {
+    private fun saveReceiptOperationHistory(order: Order) {
         val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATED_ACTION)
         val subOrder = subOrderRepository.findFirstByOrderId(order)
         operationHistoryRepository.save(
@@ -226,11 +222,7 @@ class ReceiptServiceImpl(
         )
     }
 
-    private fun saveFailedReceiptOperationHistory(
-        order: Order,
-        error: String?,
-        traceId: String,
-    ) {
+    private fun saveFailedReceiptOperationHistory(order: Order) {
         val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATION_ERROR_ACTION)
         val subOrder = subOrderRepository.findFirstByOrderId(order)
 

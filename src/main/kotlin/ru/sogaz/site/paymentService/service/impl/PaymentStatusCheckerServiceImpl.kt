@@ -91,11 +91,12 @@ class PaymentStatusCheckerServiceImpl(
                     logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
                 }
 
-        val chequeStatus = if (payment.stateId?.stateId == "SUCCESS") {
-            checkChequeStatus(payment, traceId)
-        } else {
-            false
-        }
+        val chequeStatus =
+            if (payment.stateId?.stateId == "SUCCESS") {
+                checkChequeStatus(payment, traceId)
+            } else {
+                false
+            }
 
         return when (payment.stateId?.stateId) {
             "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
@@ -221,7 +222,7 @@ class PaymentStatusCheckerServiceImpl(
                 createOrderHistoryRecord(order, "Заказ оплачен", traceId)
 
                 if (order.needReceipt == true) {
-                    //                  receiptService.generateReceipt(order, traceId)
+                    receiptService.generateReceipt(order, traceId)
                     sendToPaidOrdersQueue(order, traceId)
                 }
             }
@@ -321,11 +322,17 @@ class PaymentStatusCheckerServiceImpl(
             throw InnerException(traceId, LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
+
     /** Конец генерации ИИ qwen2.5-coder:14b  */
 
-    private fun checkChequeStatus(payment: Payment, traceId: String): Boolean {
-        val freshPayment = paymentRepository.findById(payment.id!!)
-            .orElseThrow { BusinessException(-1101520409, traceId) }
+    private fun checkChequeStatus(
+        payment: Payment,
+        traceId: String,
+    ): Boolean {
+        val freshPayment =
+            paymentRepository
+                .findById(payment.id!!)
+                .orElseThrow { BusinessException(-1101520409, traceId) }
         if (freshPayment.chequeName == "SENT") {
             return true
         }

@@ -10,7 +10,7 @@ data class PaymentReceiptCreateResponse(
     val messagesError: String? = null,
     val responseUuid: String,
     var errorsValidate: List<ValidationErrorData?>? = null,
-    val data: PaymentData,
+    val data: PaymentData? = null,
 )
 
 data class PaymentData(
