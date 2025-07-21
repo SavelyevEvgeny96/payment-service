@@ -77,6 +77,7 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
+        const val ORDER_SUCCESS = "Заказ оплачен"
     }
 
     override fun getStatus(
@@ -219,7 +220,7 @@ class PaymentStatusCheckerServiceImpl(
             "SUCCESS" -> {
                 payment.stateId = paymentStatusRepository.findByStateId("SUCCESS")
                 payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
-                createOrderHistoryRecord(order, "Заказ оплачен", traceId)
+                createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
 
                 if (order.needReceipt == true) {
                     receiptService.generateReceipt(order, traceId)
