@@ -15,7 +15,13 @@ interface PaymentRepository : JpaRepository<Payment, Long> {
 
     fun findByPaymentBankId(paymentBankId: String): Payment?
 
-    @Query("SELECT o FROM Payment o WHERE o.stateId IN :statuses")
+    @Query(
+        """
+    SELECT p FROM Payment p 
+    JOIN p.stateId s 
+    WHERE s.stateId IN :statuses
+""",
+    )
     fun findByStatuses(
         @Param("statuses") statuses: List<String>,
     ): List<Payment>

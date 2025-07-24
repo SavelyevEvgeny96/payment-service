@@ -7,6 +7,8 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.QueueMessageDto
@@ -88,7 +90,7 @@ class PaymentStatusCheckerServiceImpl(
 
         val payment =
             paymentRepository.findByPaymentBankId(payment_bank_id)
-                ?: throw BusinessException(-1101520409, traceId).also {
+                ?: throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId).also {
                     logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
                 }
 
@@ -194,11 +196,11 @@ class PaymentStatusCheckerServiceImpl(
                 updatePaymentStatus(payment, paymentResponse, traceId)
             } else {
                 logger.error(LOG_GPB_API_ERROR.format(traceId))
-                throw BusinessException(-1101520504, traceId)
+                throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
             }
         } catch (e: Exception) {
             logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
-            throw BusinessException(-1101520504, traceId)
+            throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
         }
     }
 
@@ -333,7 +335,7 @@ class PaymentStatusCheckerServiceImpl(
         val freshPayment =
             paymentRepository
                 .findById(payment.id!!)
-                .orElseThrow { BusinessException(-1101520409, traceId) }
+                .orElseThrow { BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId) }
         if (freshPayment.chequeName == "SENT") {
             return true
         }
