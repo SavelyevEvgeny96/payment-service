@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
@@ -36,6 +39,7 @@ class PaymentController(
     private val paymentService: PaymentService,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val paymentRequestValidator: PaymentRequestValidator,
+    private val gpbCallbackService: GpbCallbackService
 ) {
     /**
      * Метод для создания заявки.
@@ -130,4 +134,38 @@ class PaymentController(
         @RequestParam payment_bank_id: String,
         @RequestHeader traceId: String,
     ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, traceId)
+
+    @GetMapping("/gpb/state")
+    fun stateGpbCallback(
+        @RequestParam("trx_id") trxId: String,
+        @RequestParam("merch_id") merchId: String,
+        @RequestParam(value = "merchant_trx", required = false) merchantTrx: String?,
+        @RequestParam("result_code") resultCode: Int,
+        @RequestParam(value = "ext_result_code", required = false) extResultCode: String?,
+        @RequestParam("amount") amount: String,
+        @RequestParam(value = "account_id", required = false) accountId: String?,
+        @RequestParam("o.order_id") orderId: String,
+        @RequestParam(value = "p.rrn", required = false) rrn: String?,
+        @RequestParam(value = "p.authcode", required = false) authCode: String?,
+        @RequestParam(value = "p.srcType", required = false) srcType: String?,
+        @RequestParam(value = "signature") signature: String,
+        request: HttpServletRequest
+    ): ResponseEntity<String> {
+        val requestParams = GpbCallbackRequest(
+            trxId = trxId,
+            merchId = merchId,
+            merchantTrx = merchantTrx,
+            resultCode = resultCode,
+            extResultCode = extResultCode,
+            amount = amount,
+            accountId = accountId,
+            orderId = orderId,
+            rrn = rrn,
+            authCode = authCode,
+            srcType = srcType,
+            signature = signature,
+            rawQueryString = request.queryString?.substringBefore("&signature=") ?: ""
+        )
+        return gpbCallbackService.processCallback(requestParams)
+    }
 }
