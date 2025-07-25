@@ -9,7 +9,6 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.atLeastOnce
-import org.mockito.Mockito.doNothing
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -35,7 +34,6 @@ import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
-import java.time.LocalDateTime
 import java.util.UUID
 
 class ReceiptServiceTest {
@@ -192,14 +190,6 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        val local = LocalDateTime.now()
-
-        doNothing().`when`(paymentRepository).updateChequeStatus(
-            "pay123",
-            "NOT_SENT",
-            local,
-        )
-
         val exception =
             assertThrows<InnerException> {
                 service.generateReceipt(order, traceId)
@@ -252,14 +242,6 @@ class ReceiptServiceTest {
                 eq(String::class.java),
             ),
         ).thenThrow(RestClientException("API error"))
-
-        val local = LocalDateTime.now()
-
-        doNothing().`when`(paymentRepository).updateChequeStatus(
-            "pay123",
-            "NOT_SENT",
-            local,
-        )
 
         val exception =
             assertThrows<InnerException> {

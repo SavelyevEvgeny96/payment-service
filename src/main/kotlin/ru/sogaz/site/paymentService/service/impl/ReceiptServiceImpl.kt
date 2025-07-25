@@ -152,8 +152,7 @@ class ReceiptServiceImpl(
             when (response.body?.status) {
                 "SUCCESS" -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
-                    payment.paymentBankId?.let { handleReceiptSuccess(it) }
-                    saveReceiptOperationHistory(order)
+                    payment.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
                 "FAILED" -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
@@ -184,13 +183,27 @@ class ReceiptServiceImpl(
         paymentBankId: String,
         traceId: String,
     ) {
-        paymentRepository.updateChequeStatus(paymentBankId, "NOT_SENT")
+        val payment = paymentRepository.findByPaymentBankId(paymentBankId)
+        payment?.chequeName = "NOT_SENT"
+        payment?.updateDate = LocalDateTime.now()
+        if (payment != null) {
+            paymentRepository.save(payment)
+        }
         saveFailedReceiptOperationHistory(order)
         saveChequeSentRecord(paymentBankId, false, traceId)
     }
 
-    private fun handleReceiptSuccess(paymentBankId: String) {
-        paymentRepository.updateChequeStatus(paymentBankId, "SENT")
+    private fun handleReceiptSuccess(
+        order: Order,
+        paymentBankId: String,
+    ) {
+        val payment = paymentRepository.findByPaymentBankId(paymentBankId)
+        payment?.chequeName = "SENT"
+        payment?.updateDate = LocalDateTime.now()
+        if (payment != null) {
+            paymentRepository.save(payment)
+        }
+        saveReceiptOperationHistory(order)
     }
 
     private fun saveChequeSentRecord(
