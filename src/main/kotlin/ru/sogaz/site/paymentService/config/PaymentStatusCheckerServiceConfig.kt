@@ -5,7 +5,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -30,7 +30,7 @@ class PaymentStatusCheckerServiceConfig {
         operationHistoryRepository: PaymentOperationHistoryRepository,
         paymentStatusRepository: PaymentStatusRepository,
         paymentRepository: PaymentRepository,
-        apiConfigProperty: ApiConfigProperty,
+        apiConfigProperty: ApiConfigProperties,
         restTemplate: RestTemplate,
         receiptService: ReceiptService,
         orderStatusRepository: OrderStatusRepository,
