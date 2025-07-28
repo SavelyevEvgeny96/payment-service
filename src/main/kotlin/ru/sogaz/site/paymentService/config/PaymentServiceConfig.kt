@@ -3,6 +3,10 @@ package ru.sogaz.site.paymentService.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.GetOrderDao
+import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
+import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
@@ -13,6 +17,7 @@ import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
+import ru.sogaz.site.paymentService.util.Util
 
 @Configuration
 open class PaymentServiceConfig {
@@ -27,16 +32,26 @@ open class PaymentServiceConfig {
         paymentStatusRepository: PaymentStatusRepository,
         paymentRepository: PaymentRepository,
         paymentTypeRepository: PaymentTypeRepository,
+        getOrderDao: GetOrderDao,
+        getSubOrderDao: GetSubOrderDao,
+        util: Util,
+        getPaymentTypeDao: GetPaymentTypeDao,
+        getPaymentStatusDao: GetPaymentStatusDao
     ): PaymentService =
         PaymentServiceImpl(
             orderRepository = orderRepository,
-            subOrderRepository = subOrderRepository,
             configDataRepository = configDataRepository,
             actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             configDataDao = configDataDao,
-            paymentStatusRepository = paymentStatusRepository,
             paymentRepository = paymentRepository,
-            paymentTypeRepository = paymentTypeRepository,
+            getOrderDao = getOrderDao,
+            getSubOrderDao = getSubOrderDao,
+            util = util,
+            getPaymentTypeDao = getPaymentTypeDao,
+            getPaymentStatusDao = getPaymentStatusDao
         )
+
+    @Bean
+    fun utilConfig() = Util()
 }
