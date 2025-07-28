@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetOrderDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.dao.impl.ConfigDataDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.GetActionTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetOrderDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetPaymentStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetPaymentTypeDaoImpl
@@ -67,4 +69,7 @@ class DataDaoConfig {
     @Bean
     fun daoGetPaymentStatusDaoConfig(paymentStatusRepository: PaymentStatusRepository): GetPaymentStatusDao =
         GetPaymentStatusDaoImpl(paymentStatusRepository = paymentStatusRepository)
+    @Bean
+    fun daoActionTypeConfig(actionTypeRepository: ActionTypeRepository): GetActionTypeDao =
+        GetActionTypeDaoImpl(actionTypeRepository = actionTypeRepository)
 }

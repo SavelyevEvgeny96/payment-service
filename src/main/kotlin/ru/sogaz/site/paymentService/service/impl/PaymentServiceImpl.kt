@@ -8,6 +8,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.filterStarter.util.TraceId
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetOrderDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
@@ -37,7 +38,7 @@ class PaymentServiceImpl(
     private val getPaymentTypeDao: GetPaymentTypeDao,
     private val getPaymentStatusDao: GetPaymentStatusDao,
     private val configDataDao: ConfigDataDao,
-    private val actionTypeRepository: ActionTypeRepository,
+    private val getActionTypeDao: GetActionTypeDao,
     private val configDataRepository: ConfigDataRepository,
     private val orderRepository: OrderRepository,
     private val getSubOrderDao: GetSubOrderDao,
@@ -111,13 +112,7 @@ class PaymentServiceImpl(
         if (configBankPriorityCheck.paramValue == TRUE || checkBank != null) {
             val tokenGpb = configDataDao.getGPBToken(traceId, orderFindByCode)
             if (tokenGpb.isNotEmpty()) {
-                val actionTypeTokenSuccess =
-                    try {
-                        actionTypeRepository.findByActionName(GET_TOKEN_MASSAGE_SUCCESS)
-                    } catch (e: Exception) {
-                        logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
-                        throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
-                    }
+                val actionTypeTokenSuccess =getActionTypeDao.getActionType(traceId,GET_TOKEN_MASSAGE_SUCCESS)
                val subOrder = getSubOrderDao.getSubOrder(traceId,orderFindByCode)
                 val operationHistory =
                     PaymentOperationHistory(

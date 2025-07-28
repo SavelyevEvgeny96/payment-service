@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetOrderDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
@@ -36,12 +37,12 @@ open class PaymentServiceConfig {
         getSubOrderDao: GetSubOrderDao,
         util: Util,
         getPaymentTypeDao: GetPaymentTypeDao,
-        getPaymentStatusDao: GetPaymentStatusDao
+        getPaymentStatusDao: GetPaymentStatusDao,
+        getActionTypeDao: GetActionTypeDao
     ): PaymentService =
         PaymentServiceImpl(
             orderRepository = orderRepository,
             configDataRepository = configDataRepository,
-            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             configDataDao = configDataDao,
             paymentRepository = paymentRepository,
@@ -49,7 +50,8 @@ open class PaymentServiceConfig {
             getSubOrderDao = getSubOrderDao,
             util = util,
             getPaymentTypeDao = getPaymentTypeDao,
-            getPaymentStatusDao = getPaymentStatusDao
+            getPaymentStatusDao = getPaymentStatusDao,
+            getActionTypeDao = getActionTypeDao
         )
 
     @Bean
