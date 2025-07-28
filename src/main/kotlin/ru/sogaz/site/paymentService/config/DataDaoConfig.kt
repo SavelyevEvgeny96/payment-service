@@ -3,15 +3,19 @@ package ru.sogaz.site.paymentService.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
+import ru.sogaz.site.paymentService.dao.GetBankDao
+import ru.sogaz.site.paymentService.dao.GetBankPriorityDao
 import ru.sogaz.site.paymentService.dao.GetOrderDao
+import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
-import ru.sogaz.site.paymentService.dao.impl.ConfigDataDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetActionTypeDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.GetBankDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.GetBankPriorityDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetOrderDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.GetPaymentDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetPaymentStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetPaymentTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetSubOrderDaoImpl
@@ -28,31 +32,7 @@ import ru.sogaz.site.paymentService.repository.SubOrderRepository
 
 @Configuration
 class DataDaoConfig {
-    @Bean
-    fun daoConfig(
-        apiConfigProperty: ApiConfigProperty,
-        configDataRepository: ConfigDataRepository,
-        objectMapper: ObjectMapper,
-        restTemplate: WebConfigRestTemplate,
-        bankRepository: BankRepository,
-        actionTypeRepository: ActionTypeRepository,
-        subOrderRepository: SubOrderRepository,
-        operationHistoryRepository: PaymentOperationHistoryRepository,
-        paymentRepository: PaymentRepository,
-        paymentStatusRepository: PaymentStatusRepository,
-    ): ConfigDataDao =
-        ConfigDataDaoImpl(
-            configDataRepository = configDataRepository,
-            apiConfigProperty = apiConfigProperty,
-            restTemplate = restTemplate,
-            objectMapper = objectMapper,
-            bankRepository = bankRepository,
-            actionTypeRepository = actionTypeRepository,
-            subOrderRepository = subOrderRepository,
-            operationHistoryRepository = operationHistoryRepository,
-            paymentRepository = paymentRepository,
-            paymentStatusRepository = paymentStatusRepository,
-        )
+
 
     @Bean
     fun daoGetOrderConfig(orderRepository: OrderRepository): GetOrderDao =
@@ -69,7 +49,24 @@ class DataDaoConfig {
     @Bean
     fun daoGetPaymentStatusDaoConfig(paymentStatusRepository: PaymentStatusRepository): GetPaymentStatusDao =
         GetPaymentStatusDaoImpl(paymentStatusRepository = paymentStatusRepository)
+
     @Bean
     fun daoActionTypeConfig(actionTypeRepository: ActionTypeRepository): GetActionTypeDao =
         GetActionTypeDaoImpl(actionTypeRepository = actionTypeRepository)
+
+    @Bean
+    fun daoGetBankConfig(bankRepository: BankRepository, getBankPriorityDao: GetBankPriorityDao): GetBankDao =
+        GetBankDaoImpl(
+            bankRepository = bankRepository,
+            getBankPriorityDao = getBankPriorityDao
+        )
+
+    @Bean
+    fun daoGetBankPriority(configDataRepository: ConfigDataRepository): GetBankPriorityDao = GetBankPriorityDaoImpl(
+        configDataRepository = configDataRepository
+    )
+
+    @Bean
+    fun daoGetPaymentConfig(paymentRepository: PaymentRepository): GetPaymentDao =
+        GetPaymentDaoImpl(paymentRepository = paymentRepository)
 }

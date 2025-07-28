@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.GetBankDao
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
@@ -15,17 +15,19 @@ import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
+import ru.sogaz.site.paymentService.util.Util
 import ru.sogaz.siter.models.resonses.Response
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 class OrderServiceImpl(
-    private val configDataDao: ConfigDataDao,
     private val apiConfigProperty: ApiConfigProperty,
     private val clientSystemRepository: ClientSystemRepository,
     private val orderRepository: OrderRepository,
     private val orderStatusRepository: OrderStatusRepository,
     private val subOrderRepository: SubOrderRepository,
+    private val util: Util,
+    private val getBankDao: GetBankDao
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -64,13 +66,13 @@ class OrderServiceImpl(
         traceId: String,
     ): ResponseEntity<Response<DataOrder>> {
         logger.info(LOG_START_ORDER_CREATION + traceId)
-        val orderId = configDataDao.generateUniquePaymentId()
-        val orderCode = configDataDao.generateUniquePaymentCode(traceId)
+        val orderId = util.generateUniquePaymentId()
+        val orderCode = util.generateUniquePaymentCode(traceId)
         logger.info(LOG_PAYMENT_ID_GENERATED, orderId, traceId)
         logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
 
         val requestBankId = requestWrapper.bank
-        val bank = configDataDao.getBank(requestBankId, traceId)
+        val bank = getBankDao.getBank(requestBankId, traceId)
         val orderStatus =
             try {
                 orderStatusRepository.findByStateId(STATE_ID_NEW)
@@ -108,7 +110,7 @@ class OrderServiceImpl(
         }
         var totalPremiumAmount = BigDecimal.ZERO
         for (paymentRequest in requestWrapper.payments) {
-            val subOrderId = configDataDao.generateUniquePaymentId()
+            val subOrderId = util.generateUniquePaymentId()
             logger.info(LOG_PAYMENT_ID_GENERATED, subOrderId, traceId)
 
             val clientSystem =
