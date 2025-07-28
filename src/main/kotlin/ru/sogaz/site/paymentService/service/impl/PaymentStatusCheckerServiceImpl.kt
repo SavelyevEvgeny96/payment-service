@@ -118,7 +118,7 @@ class PaymentStatusCheckerServiceImpl(
                 )
             }
 
-            else -> throw BusinessException(-1101520409, traceId)
+            else -> throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId)
         }
     }
 
