@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentStatus
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -36,7 +36,7 @@ class PaymentStatusCheckerServiceTest {
     private val actionTypeRepository = mock<ActionTypeRepository>()
     private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
     private val paymentStatusRepository = mock<PaymentStatusRepository>()
-    private val apiConfigProperty = mock<ApiConfigProperty>()
+    private val apiConfigProperty = mock<ApiConfigProperties>()
     private val orderStatusRepository = mock<OrderStatusRepository>()
     private val rabbitTemplate = mock<RabbitTemplate>()
     private val objectMapper = mock<ObjectMapper>()
@@ -114,6 +114,6 @@ class PaymentStatusCheckerServiceTest {
 
         val response = service.getStatus(paymentBankId, traceId)
 
-        assertThat(response.data?.cheque).isTrue()
+        assertThat(response.data?.cheque).isFalse()
     }
 }

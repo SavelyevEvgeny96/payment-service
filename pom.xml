@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>exception-starter</artifactId>
-			<version>1.0.76-dev</version>
+			<version>1.0.79-dev</version>
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>

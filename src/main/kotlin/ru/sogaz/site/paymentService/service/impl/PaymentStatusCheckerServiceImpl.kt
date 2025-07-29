@@ -18,7 +18,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -46,7 +46,7 @@ class PaymentStatusCheckerServiceImpl(
     private val actionTypeRepository: ActionTypeRepository,
     private val restTemplate: RestTemplate,
     private val subOrderRepository: SubOrderRepository,
-    private val apiConfigProperty: ApiConfigProperty,
+    private val apiConfigProperty: ApiConfigProperties,
     private val receiptService: ReceiptService,
     private val orderStatusRepository: OrderStatusRepository,
     private val rabbitTemplate: RabbitTemplate,
@@ -74,7 +74,7 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_GPB_API_CALL = "Отправка запроса статуса платежа в ГПБ. URL: %s. ID операции: %s"
         const val LOG_GPB_API_SUCCESS = "Успешный ответ от API ГПБ для платежа %s. ID операции: %s"
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции: %s"
-        const val LOG_GPB_API_CALL_ERROR = "Ошибка при вызове API ГПБ для %s. ID операции: %s"
+        const val LOG_GPB_API_CALL_ERROR = "Произошла ошибка на одном из шагов операции, история сохранена."
 
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
@@ -94,13 +94,6 @@ class PaymentStatusCheckerServiceImpl(
                     logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
                 }
 
-        val chequeStatus =
-            if (payment.stateId?.stateId == "SUCCESS") {
-                checkChequeStatus(payment, traceId)
-            } else {
-                false
-            }
-
         return when (payment.stateId?.stateId) {
             "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
                 getSuccessResponse(
@@ -108,7 +101,7 @@ class PaymentStatusCheckerServiceImpl(
                     1101520200,
                     ResponseStatusPay(
                         paymentStatus = payment.stateId!!.stateId,
-                        cheque = chequeStatus,
+                        cheque = checkChequeStatus(payment, traceId),
                     ),
                 )
             }
@@ -120,12 +113,12 @@ class PaymentStatusCheckerServiceImpl(
                     1101520200,
                     ResponseStatusPay(
                         paymentStatus = payment.stateId!!.stateName,
-                        cheque = chequeStatus,
+                        cheque = checkChequeStatus(payment, traceId),
                     ),
                 )
             }
 
-            else -> throw BusinessException(-1101520409, traceId)
+            else -> throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId)
         }
     }
 
@@ -200,7 +193,6 @@ class PaymentStatusCheckerServiceImpl(
             }
         } catch (e: Exception) {
             logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
-            throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
         }
     }
 
@@ -339,13 +331,6 @@ class PaymentStatusCheckerServiceImpl(
         if (freshPayment.chequeName == "SENT") {
             return true
         }
-        val order = freshPayment.orderId ?: return false
-        if (order.needReceipt != true) {
-            return false
-        }
-        if (freshPayment.stateId?.stateId != "SUCCESS") {
-            return false
-        }
-        return true
+        return false
     }
 }

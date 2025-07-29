@@ -9,7 +9,6 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.atLeastOnce
-import org.mockito.Mockito.doNothing
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -28,18 +27,17 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.properties.ReceiptProperty
+import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
-import java.time.LocalDateTime
 import java.util.UUID
 
 class ReceiptServiceTest {
-    private val receiptProperty = mock<ReceiptProperty>()
+    private val receiptProperty = mock<ReceiptProperties>()
     private val restTemplate = mock<RestTemplate>()
     private val subOrderRepository = mock<SubOrderRepository>()
     private val actionTypeRepository = mock<ActionTypeRepository>()
@@ -98,19 +96,16 @@ class ReceiptServiceTest {
         )
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
-        val mockResponse = """{"status":"SUCCESS"}"""
-        `when`(objectMapper.readValue(mockResponse, PaymentReceiptCreateResponse::class.java))
-            .thenReturn(
-                PaymentReceiptCreateResponse(
-                    "SUCCESS",
-                    200,
-                    "222",
-                    null,
-                    null,
-                    UUID.randomUUID().toString(),
-                    null,
-                    PaymentData("222", "222"),
-                ),
+        val mockResponse =
+            PaymentReceiptCreateResponse(
+                "SUCCESS",
+                200,
+                "222",
+                null,
+                null,
+                UUID.randomUUID().toString(),
+                null,
+                PaymentData("222", "222"),
             )
 
         `when`(
@@ -118,7 +113,7 @@ class ReceiptServiceTest {
                 any(String::class.java),
                 any(HttpMethod::class.java),
                 any(HttpEntity::class.java),
-                eq(String::class.java),
+                eq(PaymentReceiptCreateResponse::class.java),
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
@@ -129,7 +124,7 @@ class ReceiptServiceTest {
             eq(receiptProperty.receiptUrl),
             eq(HttpMethod.POST),
             captor.capture(),
-            eq(String::class.java),
+            eq(PaymentReceiptCreateResponse::class.java),
         )
 
         val request = captor.value.body as PaymentReceiptCreateRequest
@@ -195,14 +190,6 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        val local = LocalDateTime.now()
-
-        doNothing().`when`(paymentRepository).updateChequeStatus(
-            "pay123",
-            "NOT_SENT",
-            local,
-        )
-
         val exception =
             assertThrows<InnerException> {
                 service.generateReceipt(order, traceId)
@@ -255,14 +242,6 @@ class ReceiptServiceTest {
                 eq(String::class.java),
             ),
         ).thenThrow(RestClientException("API error"))
-
-        val local = LocalDateTime.now()
-
-        doNothing().`when`(paymentRepository).updateChequeStatus(
-            "pay123",
-            "NOT_SENT",
-            local,
-        )
 
         val exception =
             assertThrows<InnerException> {

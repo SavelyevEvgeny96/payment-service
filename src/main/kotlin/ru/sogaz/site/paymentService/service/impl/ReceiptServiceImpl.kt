@@ -13,7 +13,7 @@ import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ReceiptProperty
+import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
@@ -23,7 +23,7 @@ import ru.sogaz.site.paymentService.service.ReceiptService
 import java.time.LocalDateTime
 
 class ReceiptServiceImpl(
-    private val receiptProperty: ReceiptProperty,
+    private val receiptProperty: ReceiptProperties,
     private val restTemplate: RestTemplate,
     private val subOrderRepository: SubOrderRepository,
     private val actionTypeRepository: ActionTypeRepository,
@@ -146,39 +146,34 @@ class ReceiptServiceImpl(
                         url,
                         HttpMethod.POST,
                         HttpEntity(requestBody, headers),
-                        String::class.java,
-                    ).body ?: ""
+                        PaymentReceiptCreateResponse::class.java,
+                    )
 
-            val responseBody = objectMapper.readValue(response, PaymentReceiptCreateResponse::class.java)
-
-            when {
-                responseBody.status == "SUCCESS" -> {
+            when (response.body?.status) {
+                "SUCCESS" -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
-                    payment.paymentBankId?.let { paymentRepository.updateChequeStatus(it, "SENT") }
-                    saveReceiptOperationHistory(order)
-                    payment.paymentBankId?.let { saveChequeSentRecord(it, true, traceId) }
+                    payment.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
-                responseBody.status == "FAILED" -> {
+                "FAILED" -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
-                    payment.paymentBankId?.let { handleReceiptError(order, it, ERROR_DATA_RECEIPT, traceId) }
+                    payment.paymentBankId?.let { handleReceiptError(order, it, traceId) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
                 }
                 else -> {
-                    logger.error(LOG_RECEIPT_API_ERROR.format(responseBody.status, traceId))
+                    logger.error(LOG_RECEIPT_API_ERROR.format(response.body?.status, traceId))
                     payment.paymentBankId?.let {
                         handleReceiptError(
                             order,
                             it,
-                            ERROR_RECEIPT + responseBody.code,
                             traceId,
                         )
                     }
-                    throw InnerException(traceId, ERROR_RECEIPT + responseBody.code)
+                    throw InnerException(traceId, ERROR_RECEIPT + response.body?.code)
                 }
             }
         } catch (e: Exception) {
             logger.info(LOG_RECEIPT_ERROR.format(order.code, traceId), e)
-            payment.paymentBankId?.let { handleReceiptError(order, it, ERROR_RECEIPT_GENERATION + e.message, traceId) }
+            payment.paymentBankId?.let { handleReceiptError(order, it, traceId) }
             throw InnerException(traceId, ERROR_RECEIPT_GENERATION + e.message)
         }
     }
@@ -186,12 +181,29 @@ class ReceiptServiceImpl(
     private fun handleReceiptError(
         order: Order,
         paymentBankId: String,
-        error: String,
         traceId: String,
     ) {
-        paymentRepository.updateChequeStatus(paymentBankId, "NOT_SENT")
+        val payment = paymentRepository.findByPaymentBankId(paymentBankId)
+        payment?.chequeName = "NOT_SENT"
+        payment?.updateDate = LocalDateTime.now()
+        if (payment != null) {
+            paymentRepository.save(payment)
+        }
         saveFailedReceiptOperationHistory(order)
         saveChequeSentRecord(paymentBankId, false, traceId)
+    }
+
+    private fun handleReceiptSuccess(
+        order: Order,
+        paymentBankId: String,
+    ) {
+        val payment = paymentRepository.findByPaymentBankId(paymentBankId)
+        payment?.chequeName = "SENT"
+        payment?.updateDate = LocalDateTime.now()
+        if (payment != null) {
+            paymentRepository.save(payment)
+        }
+        saveReceiptOperationHistory(order)
     }
 
     private fun saveChequeSentRecord(
