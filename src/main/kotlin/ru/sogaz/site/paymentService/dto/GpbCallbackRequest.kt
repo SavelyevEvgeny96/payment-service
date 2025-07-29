@@ -13,5 +13,5 @@ data class GpbCallbackRequest(
     val authCode: String?,
     val srcType: String?,
     val signature: String,
-    val rawQueryString: String
+    val rawQueryString: String,
 )

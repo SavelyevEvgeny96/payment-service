@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.service.impl
 
 import org.springframework.http.ResponseEntity
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.ActionType
@@ -14,6 +15,7 @@ import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
+import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.time.LocalDateTime
 
 class GpbCallbackServiceImpl(
@@ -21,9 +23,8 @@ class GpbCallbackServiceImpl(
     private val orderRepository: OrderRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val paymentStatusService: PaymentStatusCheckerService,
-    private val signatureVerifier: SignatureVerifier
-): GpbCallbackService {
-
+    private val signatureVerifier: SignatureVerifier,
+) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
@@ -33,8 +34,9 @@ class GpbCallbackServiceImpl(
                 return createErrorResponse("Invalid signature")
             }
 
-            val payment = paymentRepository.findByPaymentBankId(request.trxId)
-                ?: return createErrorResponse("Платеж не найден")
+            val payment =
+                paymentRepository.findByPaymentBankId(request.trxId)
+                    ?: return createErrorResponse("Платеж не найден")
 
             updatePaymentStatus(payment)
 
@@ -58,43 +60,53 @@ class GpbCallbackServiceImpl(
     }
 
     private fun logOperation(payment: Payment) {
-        val order = orderRepository.findByOrderId(payment.orderId?.orderId.toString())
+        try {
+            val orderId = payment.orderId?.id ?: throw InnerException(getTraceId(), "Order ID не найден")
+            val order =
+                orderRepository.findById(orderId).orElseThrow {
+                    InnerException(getTraceId(), "Заказ с этим ID не найден $orderId")
+                }
 
-        val actions = ActionType()
-        actions.actionName = "Получение CALLBACK от ГПБ"
-        val actionsAuthor = ClientSystem()
-        actionsAuthor.externalSystemName = "Сервис оплат"
-        operationHistoryRepository.save(
-            PaymentOperationHistory(
-                action = actions,
-                actionDate = LocalDateTime.now(),
-                actionAuthor = actionsAuthor,
-                order = order.get()
+            val actions = ActionType()
+            actions.actionName = "Получение CALLBACK от ГПБ"
+            val actionsAuthor = ClientSystem()
+            actionsAuthor.externalSystemName = "Сервис оплат"
+            operationHistoryRepository.save(
+                PaymentOperationHistory(
+                    action = actions,
+                    actionDate = LocalDateTime.now(),
+                    actionAuthor = actionsAuthor,
+                    order = order,
+                ),
             )
-        )
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     private fun createSuccessResponse(): ResponseEntity<String> {
-        val response = """
+        val response =
+            """
             <register-payment-response>
               <result>
                 <code>1</code>
                 <desc>OK</desc>
               </result>
             </register-payment-response>
-        """.trimIndent()
+            """.trimIndent()
         return ResponseEntity.ok(response)
     }
 
     private fun createErrorResponse(description: String): ResponseEntity<String> {
-        val response = """
+        val response =
+            """
             <register-payment-response>
               <result>
                 <code>2</code>
                 <desc>$description</desc>
               </result>
             </register-payment-response>
-        """.trimIndent()
+            """.trimIndent()
         return ResponseEntity.ok(response)
     }
 }

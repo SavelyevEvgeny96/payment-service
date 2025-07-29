@@ -39,7 +39,7 @@ class PaymentController(
     private val paymentService: PaymentService,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val paymentRequestValidator: PaymentRequestValidator,
-    private val gpbCallbackService: GpbCallbackService
+    private val gpbCallbackService: GpbCallbackService,
 ) {
     /**
      * Метод для создания заявки.
@@ -149,23 +149,24 @@ class PaymentController(
         @RequestParam(value = "p.authcode", required = false) authCode: String?,
         @RequestParam(value = "p.srcType", required = false) srcType: String?,
         @RequestParam(value = "signature") signature: String,
-        request: HttpServletRequest
+        request: HttpServletRequest,
     ): ResponseEntity<String> {
-        val requestParams = GpbCallbackRequest(
-            trxId = trxId,
-            merchId = merchId,
-            merchantTrx = merchantTrx,
-            resultCode = resultCode,
-            extResultCode = extResultCode,
-            amount = amount,
-            accountId = accountId,
-            orderId = orderId,
-            rrn = rrn,
-            authCode = authCode,
-            srcType = srcType,
-            signature = signature,
-            rawQueryString = request.queryString?.substringBefore("&signature=") ?: ""
-        )
+        val requestParams =
+            GpbCallbackRequest(
+                trxId = trxId,
+                merchId = merchId,
+                merchantTrx = merchantTrx,
+                resultCode = resultCode,
+                extResultCode = extResultCode,
+                amount = amount,
+                accountId = accountId,
+                orderId = orderId,
+                rrn = rrn,
+                authCode = authCode,
+                srcType = srcType,
+                signature = signature,
+                rawQueryString = request.queryString?.substringBefore("&signature=") ?: "",
+            )
         return gpbCallbackService.processCallback(requestParams)
     }
 }
