@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.GetBankDao
+import ru.sogaz.site.paymentService.dao.GetClientSystemDao
+import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
@@ -22,9 +24,9 @@ import java.math.RoundingMode
 
 class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperty,
-    private val clientSystemRepository: ClientSystemRepository,
+    private val getClientSystemDao: GetClientSystemDao,
     private val orderRepository: OrderRepository,
-    private val orderStatusRepository: OrderStatusRepository,
+    private val getOrderStatusDao: GetOrderStatusDao,
     private val subOrderRepository: SubOrderRepository,
     private val util: Util,
     private val getBankDao: GetBankDao
@@ -43,8 +45,6 @@ class OrderServiceImpl(
         const val LOG_ERROR_WHILE_UPDATING_ORDER = "Ошибка при обновлении суммы премии заказа"
         const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: {} для TraceId: {}"
         const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: {} для TraceId: {}"
-        const val LOG_CLIENT_SYSTEM_NOT_FOUND =
-            "Не удалось найти систему клиента для externalSystemCode: {} и TraceId: {}"
         const val LOG_ERROR_WHILE_CREATING_ORDER = "Ошибка при создании заказа для TraceId: {}"
         const val LOG_ERROR_WHILE_CREATING_SUB_ORDER = "Ошибка при создании подзаказа для TraceId: {}"
         const val ERROR_ORDER_STATUS_NOT_FOUND = "Статус заказа не найден для stateId 0"
@@ -73,14 +73,7 @@ class OrderServiceImpl(
 
         val requestBankId = requestWrapper.bank
         val bank = getBankDao.getBank(requestBankId, traceId)
-        val orderStatus =
-            try {
-                orderStatusRepository.findByStateId(STATE_ID_NEW)
-            } catch (e: Exception) {
-                logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
-                throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)
-            }
-
+        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
         val order =
             Order(
                 orderId = orderId,
@@ -112,20 +105,7 @@ class OrderServiceImpl(
         for (paymentRequest in requestWrapper.payments) {
             val subOrderId = util.generateUniquePaymentId()
             logger.info(LOG_PAYMENT_ID_GENERATED, subOrderId, traceId)
-
-            val clientSystem =
-                try {
-                    clientSystemRepository.findByExternalSystemCode(paymentRequest.externalSystemCode)
-                } catch (e: Exception) {
-                    logger.error(
-                        e,
-                        LOG_CLIENT_SYSTEM_NOT_FOUND,
-                        paymentRequest.externalSystemCode,
-                        traceId,
-                    )
-                    throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND)
-                }
-
+            val clientSystem = getClientSystemDao.getClientSystem(traceId, paymentRequest.externalSystemCode)
             val subOrders =
                 SubOrder(
                     subOrderId = subOrderId,
@@ -143,7 +123,6 @@ class OrderServiceImpl(
                     insuranceProgram = paymentRequest.insuranceProgram,
                     premiumAmount = paymentRequest.premiumAmount,
                 )
-
             paymentRequest.premiumAmount.let {
                 totalPremiumAmount = totalPremiumAmount.add(BigDecimal(it))
             }
