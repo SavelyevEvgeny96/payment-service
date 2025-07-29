@@ -11,7 +11,8 @@ import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LO
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.STATUS_MARKEDDEL
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.STATUS_OVERDUE
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.STATUS_SUCCESS
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 
 class Util(
     private val configDataRepository: ConfigDataRepository,
