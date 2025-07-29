@@ -69,7 +69,6 @@ class DataDaoConfig {
         GetBankPriorityDaoImpl(
             configDataRepository = configDataRepository,
         )
-
     @Bean
     fun daoGetPaymentConfig(paymentRepository: PaymentRepository): GetPaymentDao = GetPaymentDaoImpl(paymentRepository = paymentRepository)
 
