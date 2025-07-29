@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
@@ -18,7 +18,7 @@ import ru.sogaz.site.paymentService.util.Util
 class GazpromServiceConfig {
     @Bean
     fun daoConfig(
-        apiConfigProperty: ApiConfigProperty,
+        apiConfigProperty: ApiConfigProperties,
         objectMapper: ObjectMapper,
         restTemplate: WebConfigRestTemplate,
         subOrderRepository: SubOrderRepository,

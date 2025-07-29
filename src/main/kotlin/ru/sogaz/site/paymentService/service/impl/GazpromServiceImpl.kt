@@ -22,7 +22,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
@@ -33,7 +33,7 @@ import ru.sogaz.siter.models.resonses.Response
 class GazpromServiceImpl(
     private val getActionTypeDao: GetActionTypeDao,
     private val paymentRepository: PaymentRepository,
-    private val apiConfigProperty: ApiConfigProperty,
+    private val apiConfigProperty: ApiConfigProperties,
     private val objectMapper: ObjectMapper,
     private val subOrderRepository: SubOrderRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
