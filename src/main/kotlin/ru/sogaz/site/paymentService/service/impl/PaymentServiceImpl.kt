@@ -6,7 +6,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
-import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetBankDao
 import ru.sogaz.site.paymentService.dao.GetBankPriorityDao
@@ -59,7 +59,6 @@ class PaymentServiceImpl(
         const val GPB_TOKEN_ROW = "token"
         const val TRUE = "true"
         const val PAYMENT_STATUS_NEW = "NEW"
-        const val BANK_PRIORITY_CHECK = "bankPriorityCheck"
         const val STATUS_SUCCESS = "SUCCESS"
         const val STATUS_OVERDUE = "OVERDUE"
         const val STATUS_MARKEDDEL = "MARKEDDEL"
@@ -85,7 +84,7 @@ class PaymentServiceImpl(
         const val ERROR_BANK_PRIORITY_CHECK = "Ошибка поиска параметра \"bankPriorityCheck\""
     }
 
-    private val traceId = TraceId.get()
+    private val traceId = getTraceId()
 
     override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
         logger.info(LOG_START_PAYMENT_CREATION + traceId)

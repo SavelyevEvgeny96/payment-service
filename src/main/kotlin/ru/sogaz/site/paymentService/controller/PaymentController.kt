@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
@@ -94,11 +95,10 @@ class PaymentController(
     )
     @PostMapping("/create")
     fun createOrder(
-        @RequestHeader("TraceId") traceId: String,
+        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody requestWrapper: PaymentRequestWrapper,
     ): ResponseEntity<Response<DataOrder>> {
         requestWrapper.payments.forEach { paymentRequest ->
-            paymentRequest.traceId = traceId
             paymentRequestValidator.isValid(paymentRequest, requestWrapper)
         }
         return orderService.createOrder(requestWrapper, traceId)
@@ -110,6 +110,7 @@ class PaymentController(
      */
     @PostMapping("/pay")
     fun createPay(
+        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody paymentPayRequest: PaymentPayRequest,
     ): ResponseEntity<Response<DataPay>> =
         paymentService.createPayment(
