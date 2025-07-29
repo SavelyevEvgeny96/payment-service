@@ -15,7 +15,15 @@ server:
   main.allow-bean-definition-overriding: true
 
 spring:
-
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
+    template:
+      routing-key: ${RABBIT_QUEUE:payment.queue}
+    queue:
+      name: ${RABBIT_QUEUE:payment.queue}
   application:
     name: payment-service
   profiles:
@@ -24,7 +32,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:123456}
+    password: ${DB_PASSWORD:1234}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -40,6 +48,9 @@ api:
     merchantId: ${GPB_MERCHANT_ID:B80540E3096C8730BCE3}
     backUrlS: ${BACK_URL_SUCCESS:http://test.k835.sogaz.ru/realty/flat/success/}
     backUrlF: ${BACK_URL_FALSE:https:http://test.k835.sogaz.ru/realty/flat/}
+  receipt:
+    receiptUrl: ${RECEIPT_URL:http://s00-0000-k835.sogaz.ru/test/payment-receipt-service/paymentCheck/create}
+    receiptPath: ${RECEIPT_PATH:/paymentCheck/create}
 management:
   endpoints:
     web:
