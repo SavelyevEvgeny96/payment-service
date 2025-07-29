@@ -39,18 +39,7 @@ class GpbCallbackServiceTest {
     private val testRequest =
         GpbCallbackRequest(
             trxId = "ZLZA2BRR45VP6YF0",
-            merchId = "GCS_merchant2",
-            merchantTrx = null,
-            resultCode = 1,
-            extResultCode = null,
-            amount = "1004",
-            accountId = "4EEA096E50948B54C32C32455AD6BCAC",
-            orderId = "ord-da03ea907e5b",
-            rrn = "240524141650",
-            authCode = "410545",
-            srcType = "CARD",
             signature = "test_signature",
-            rawQueryString = "test_query_string",
         )
 
     @Test
@@ -75,7 +64,7 @@ class GpbCallbackServiceTest {
                 data = ResponseStatusPay("222", true),
             )
 
-        `when`(signatureVerifier.verifySignature(testRequest.rawQueryString, testRequest.signature)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentRepository.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(payment.orderId?.id?.let { orderRepository.findById(it) }).thenReturn(Optional.of(order))
         `when`(operationHistoryRepository.save(any())).thenAnswer { it.arguments[0] }
@@ -95,7 +84,7 @@ class GpbCallbackServiceTest {
                 orderId = null
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest.rawQueryString, testRequest.signature)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentRepository.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
 
         val response = service.processCallback(testRequest)
@@ -111,7 +100,7 @@ class GpbCallbackServiceTest {
                 orderId = Order().apply { id = 999L }
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest.rawQueryString, testRequest.signature)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentRepository.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(payment.orderId?.id?.let { orderRepository.findById(it) }).thenReturn(Optional.empty())
 

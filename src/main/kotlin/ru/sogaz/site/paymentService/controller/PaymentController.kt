@@ -138,34 +138,27 @@ class PaymentController(
     @GetMapping("/gpb/state")
     fun stateGpbCallback(
         @RequestParam("trx_id") trxId: String,
-        @RequestParam("merch_id") merchId: String,
-        @RequestParam(value = "merchant_trx", required = false) merchantTrx: String?,
-        @RequestParam("result_code") resultCode: Int,
-        @RequestParam(value = "ext_result_code", required = false) extResultCode: String?,
-        @RequestParam("amount") amount: String,
+        @RequestParam("merch_id") merchId: String?,
+        @RequestParam("result_code") resultCode: Int?,
+        @RequestParam("amount") amount: String?,
         @RequestParam(value = "account_id", required = false) accountId: String?,
-        @RequestParam("o.order_id") orderId: String,
+        @RequestParam("o.order_id") orderId: String?,
         @RequestParam(value = "p.rrn", required = false) rrn: String?,
         @RequestParam(value = "p.authcode", required = false) authCode: String?,
         @RequestParam(value = "p.srcType", required = false) srcType: String?,
+        @RequestParam(value = "p.maskedPan", required = false) maskedPan: String?,
+        @RequestParam(value = "p.isFullyAuthenticated", required = false) isFullyAuthenticated: String?,
+        @RequestParam(value = "p.transmissionDateTime", required = false) transmissionDateTime: String?,
+        @RequestParam("discountType") discountType: String?,
+        @RequestParam(value = "p..paymentSystem", required = false) paymentSystem: String?,
+        @RequestParam("ts") ts: String?,
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
     ): ResponseEntity<String> {
         val requestParams =
             GpbCallbackRequest(
                 trxId = trxId,
-                merchId = merchId,
-                merchantTrx = merchantTrx,
-                resultCode = resultCode,
-                extResultCode = extResultCode,
-                amount = amount,
-                accountId = accountId,
-                orderId = orderId,
-                rrn = rrn,
-                authCode = authCode,
-                srcType = srcType,
                 signature = signature,
-                rawQueryString = request.queryString?.substringBefore("&signature=") ?: "",
             )
         return gpbCallbackService.processCallback(requestParams)
     }

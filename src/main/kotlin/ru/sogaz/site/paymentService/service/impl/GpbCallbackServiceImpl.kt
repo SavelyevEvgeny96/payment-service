@@ -29,7 +29,7 @@ class GpbCallbackServiceImpl(
 
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
-            if (!signatureVerifier.verifySignature(request.rawQueryString, request.signature)) {
+            if (!signatureVerifier.verifySignature(request.signature)) {
                 logger.info("Произошла ошибка для trx_id: ${request.trxId}")
                 return createErrorResponse("Invalid signature")
             }

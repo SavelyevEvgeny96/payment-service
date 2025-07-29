@@ -16,16 +16,12 @@ class SignatureVerifierImpl(
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
-    override fun verifySignature(
-        data: String,
-        signatureBase64: String,
-    ): Boolean =
+    override fun verifySignature(signatureBase64: String): Boolean =
         try {
             val signatureBytes = Base64.getDecoder().decode(signatureBase64)
             val signature =
                 Signature.getInstance("SHA256withRSA").apply {
                     initVerify(loadPublicKey())
-                    update(data.toByteArray(Charsets.UTF_8))
                 }
             signature.verify(signatureBytes)
         } catch (e: Exception) {
