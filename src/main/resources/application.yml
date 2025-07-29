@@ -8,7 +8,7 @@ app:
     app_profile: ${ENVIRONMENT:dev}
     java-version: ${JAVA_VERSION:21}
   certs:
-    gpb: | 
+    gpb: |
       -----BEGIN CERTIFICATE-----
       MIIGazCCBVOgAwIBAgIMWjPU+0NRR/wHAB9LMA0GCSqGSIb3DQEBCwUAMFMxCzAJ
       BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSkwJwYDVQQDEyBH
