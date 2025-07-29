@@ -14,6 +14,7 @@ data class PaymentStatus(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: String? = null,
     @Column(name = "state_id")
+    @JvmField
     var stateId: String,
     @Column(name = "state_name")
     var stateName: String,

@@ -42,6 +42,8 @@ data class Payment(
     var createDate: LocalDateTime? = null,
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
+    @Column(name = "cheque_name")
+    var chequeName: String? = null,
 ) {
     @PrePersist
     fun prePersist() {

@@ -7,17 +7,21 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.ResponseStatusPay
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
+import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 import ru.sogaz.siter.models.resonses.Response
 
@@ -30,6 +34,7 @@ import ru.sogaz.siter.models.resonses.Response
 class PaymentController(
     private val orderService: OrderService,
     private val paymentService: PaymentService,
+    private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val paymentRequestValidator: PaymentRequestValidator,
 ) {
     /**
@@ -115,4 +120,14 @@ class PaymentController(
         paymentService.createPayment(
             paymentPayRequest,
         )
+
+    @Operation(
+        summary = "Проверить статус оплаты",
+        description = "Проверяет статус оплаты и отправляет в очередь (по успешности).",
+    )
+    @GetMapping("/pay/status/{payment_bank_id}")
+    fun getStatusPay(
+        @RequestParam payment_bank_id: String,
+        @RequestHeader traceId: String,
+    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, traceId)
 }

@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,6 +13,7 @@ open class JacksonConfig {
     open fun objectMapper(): ObjectMapper {
         val objectMapper = ObjectMapper()
         objectMapper.registerModule(KotlinModule())
+        objectMapper.registerModule(JavaTimeModule())
         return objectMapper
     }
 
