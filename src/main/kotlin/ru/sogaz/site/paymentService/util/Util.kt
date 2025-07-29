@@ -14,8 +14,7 @@ import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.ST
 import java.util.*
 
 class Util(
-    private val configDataRepository: ConfigDataRepository
-
+    private val configDataRepository: ConfigDataRepository,
 ) {
     companion object {
         const val DESC_POLICY_NUMBER = "Номера полиса №"
@@ -25,14 +24,15 @@ class Util(
         const val CODE_LENGTH = "codeLength"
         const val LOG_CODE_LENGTH_NOT_FOUND = "Не найдено значение длины для генерации Order.code "
         const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
-
     }
+
     private val logger = loggerFor(javaClass)
+
     fun checkStatusOrder(
         orderStatus: OrderStatus?,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
-        traceId: String
+        traceId: String,
     ) {
         if (orderStatus != null) {
             if (orderStatus.stateId == STATUS_SUCCESS) {
@@ -56,6 +56,7 @@ class Util(
             }
         return config.paramValue.toIntOrNull() ?: 6
     }
+
     fun generateUniquePaymentCode(traceId: String): String {
         val codeLength = getCodeLength(traceId)
 
@@ -66,6 +67,7 @@ class Util(
             .take(codeLength)
             .uppercase(Locale.getDefault())
     }
+
     fun generateDescription(sabOrderList: List<SubOrder>): String {
         val policyNumbers =
             sabOrderList
@@ -100,5 +102,6 @@ class Util(
             }
         return description
     }
+
     fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
 }

@@ -8,14 +8,19 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_FIND_SUB_ORDER
 
-class GetSubOrderDaoImpl(private val subOrderRepository: SubOrderRepository): GetSubOrderDao {
+class GetSubOrderDaoImpl(
+    private val subOrderRepository: SubOrderRepository,
+) : GetSubOrderDao {
     private val logger = loggerFor(javaClass)
-   override fun getSubOrder(traceId: String, order: Order): SubOrder {
-        return try {
+
+    override fun getSubOrder(
+        traceId: String,
+        order: Order,
+    ): SubOrder =
+        try {
             subOrderRepository.findFirstByOrderId(order)
         } catch (e: Exception) {
             logger.error(e, LOG_AND_ERROR_FIND_SUB_ORDER, order.code)
             throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER$order")
         }
-    }
 }

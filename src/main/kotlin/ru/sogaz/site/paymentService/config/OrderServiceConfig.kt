@@ -26,7 +26,7 @@ open class OrderServiceConfig {
         util: Util,
         getClientSystemDao: GetClientSystemDao,
         getOrderStatusDao: GetOrderStatusDao,
-        getBankDao: GetBankDao
+        getBankDao: GetBankDao,
     ): OrderService =
         OrderServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -35,7 +35,6 @@ open class OrderServiceConfig {
             util = util,
             getBankDao = getBankDao,
             getClientSystemDao = getClientSystemDao,
-            getOrderStatusDao = getOrderStatusDao
-
+            getOrderStatusDao = getOrderStatusDao,
         )
 }

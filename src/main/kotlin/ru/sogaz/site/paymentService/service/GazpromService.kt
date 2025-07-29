@@ -11,7 +11,7 @@ interface GazpromService {
     fun getGPBToken(
         traceId: String,
         order: Order,
-        subOrder: SubOrder
+        subOrder: SubOrder,
     ): String
 
     fun initiateGPBPayment(
@@ -20,6 +20,6 @@ interface GazpromService {
         tokenGpb: String,
         premiumAmount: String?,
         order: Order,
-        subOrder: SubOrder
+        subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>>
 }

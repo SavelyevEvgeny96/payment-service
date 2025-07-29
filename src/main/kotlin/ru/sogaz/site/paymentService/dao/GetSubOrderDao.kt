@@ -4,5 +4,8 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 
 interface GetSubOrderDao {
-    fun getSubOrder(traceId: String, order: Order): SubOrder
+    fun getSubOrder(
+        traceId: String,
+        order: Order,
+    ): SubOrder
 }

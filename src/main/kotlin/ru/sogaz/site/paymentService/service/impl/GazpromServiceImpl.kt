@@ -40,13 +40,11 @@ class GazpromServiceImpl(
     private val restTemplate: WebConfigRestTemplate,
     private val util: Util,
     private val getPaymentStatusDao: GetPaymentStatusDao,
-    private val getPaymentDao: GetPaymentDao
-) :
-    GazpromService {
+    private val getPaymentDao: GetPaymentDao,
+) : GazpromService {
     private val logger = loggerFor(javaClass)
 
     companion object {
-
         const val PAYMENT_STATUS_REG = "REG"
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа"
@@ -68,7 +66,7 @@ class GazpromServiceImpl(
     override fun getGPBToken(
         traceId: String,
         order: Order,
-        subOrder: SubOrder
+        subOrder: SubOrder,
     ): String {
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.TOKEN_PREFIX}"
         try {
@@ -98,7 +96,7 @@ class GazpromServiceImpl(
         tokenGpb: String,
         premiumAmount: String?,
         order: Order,
-        subOrder: SubOrder
+        subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>> {
         val actionTypeStartPay = getActionTypeDao.getActionType(traceId, SENDING_REQUEST_START_PAY)
         val operationHistory =
@@ -179,5 +177,4 @@ class GazpromServiceImpl(
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
         }
     }
-
 }

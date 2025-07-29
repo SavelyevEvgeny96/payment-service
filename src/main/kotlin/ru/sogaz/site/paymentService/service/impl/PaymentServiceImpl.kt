@@ -45,7 +45,7 @@ class PaymentServiceImpl(
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val util: Util,
     private val getBankDao: GetBankDao,
-    private val getBankPriorityDao: GetBankPriorityDao
+    private val getBankPriorityDao: GetBankPriorityDao,
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
@@ -83,7 +83,6 @@ class PaymentServiceImpl(
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
         const val ERROR_BANK_PRIORITY_CHECK = "Ошибка поиска параметра \"bankPriorityCheck\""
-
     }
 
     private val traceId = TraceId.get()
@@ -136,7 +135,7 @@ class PaymentServiceImpl(
                 tokenGpb,
                 premiumAmount,
                 orderFindByCode,
-                subOrder
+                subOrder,
             )
         }
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)

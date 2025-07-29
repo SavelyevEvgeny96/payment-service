@@ -7,14 +7,19 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_GET_TYPE_STATUS
 
-class GetPaymentTypeDaoImpl(private val paymentTypeRepository: PaymentTypeRepository) : GetPaymentTypeDao {
+class GetPaymentTypeDaoImpl(
+    private val paymentTypeRepository: PaymentTypeRepository,
+) : GetPaymentTypeDao {
     private val logger = loggerFor(javaClass)
-    override fun getPaymentType(traceId: String, type: String): PaymentType {
-        return try {
+
+    override fun getPaymentType(
+        traceId: String,
+        type: String,
+    ): PaymentType =
+        try {
             paymentTypeRepository.findByTypeId(type)
         } catch (e: Exception) {
             logger.error(e, LOG_AND_ERROR_GET_TYPE_STATUS, traceId)
             throw InnerException(traceId, LOG_AND_ERROR_GET_TYPE_STATUS)
         }
-    }
 }

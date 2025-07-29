@@ -23,7 +23,9 @@ import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
 import ru.sogaz.site.paymentService.util.Util
 
 @Configuration
-open class PaymentServiceConfig(private val configDataRepository: ConfigDataRepository) {
+open class PaymentServiceConfig(
+    private val configDataRepository: ConfigDataRepository,
+) {
     @Bean
     open fun paymentService(
         configDataRepository: ConfigDataRepository,
@@ -42,7 +44,7 @@ open class PaymentServiceConfig(private val configDataRepository: ConfigDataRepo
         getActionTypeDao: GetActionTypeDao,
         gazpromService: GazpromService,
         getBankDao: GetBankDao,
-        getBankPriorityDao: GetBankPriorityDao
+        getBankPriorityDao: GetBankPriorityDao,
     ): PaymentService =
         PaymentServiceImpl(
             orderRepository = orderRepository,
@@ -57,7 +59,7 @@ open class PaymentServiceConfig(private val configDataRepository: ConfigDataRepo
             getActionTypeDao = getActionTypeDao,
             gazpromService = gazpromService,
             getBankDao = getBankDao,
-            getBankPriorityDao = getBankPriorityDao
+            getBankPriorityDao = getBankPriorityDao,
         )
 
     @Bean

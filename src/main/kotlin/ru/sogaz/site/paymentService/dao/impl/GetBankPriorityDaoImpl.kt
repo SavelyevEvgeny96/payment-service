@@ -5,13 +5,14 @@ import ru.sogaz.site.paymentService.dao.GetBankPriorityDao
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 
-class GetBankPriorityDaoImpl(private val configDataRepository: ConfigDataRepository) : GetBankPriorityDao {
+class GetBankPriorityDaoImpl(
+    private val configDataRepository: ConfigDataRepository,
+) : GetBankPriorityDao {
     private val logger = loggerFor(javaClass)
 
     companion object {
         const val BANK_PRIORITY = "bankPriority"
         const val LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND = "Не найдено значение bankPriority"
-
     }
 
     override fun getBankPriority(traceId: String): String {

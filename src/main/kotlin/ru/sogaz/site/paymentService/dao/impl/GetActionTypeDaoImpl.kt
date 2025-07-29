@@ -7,14 +7,19 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_FIND_ACTION_TYPE
 
-class GetActionTypeDaoImpl(private val actionTypeRepository: ActionTypeRepository):GetActionTypeDao {
+class GetActionTypeDaoImpl(
+    private val actionTypeRepository: ActionTypeRepository,
+) : GetActionTypeDao {
     private val logger = loggerFor(javaClass)
-    override fun getActionType(traceId: String, actionType: String): ActionType {
-        return try {
+
+    override fun getActionType(
+        traceId: String,
+        actionType: String,
+    ): ActionType =
+        try {
             actionTypeRepository.findByActionName(actionType)
         } catch (e: Exception) {
             logger.error(e, LOG_AND_ERROR_FIND_ACTION_TYPE, traceId)
             throw InnerException(traceId, LOG_AND_ERROR_FIND_ACTION_TYPE)
         }
-    }
 }
