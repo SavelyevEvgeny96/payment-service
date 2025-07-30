@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.service.impl
 
-import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.loggerFor
