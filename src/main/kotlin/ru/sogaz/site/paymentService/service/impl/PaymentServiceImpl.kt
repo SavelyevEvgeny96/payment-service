@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.PaymentContext
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
@@ -64,7 +65,7 @@ class PaymentServiceImpl(
         const val STATUS_MARKEDDEL = "MARKEDDEL"
         const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c code: "
         const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name "
-        const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: {}"
+        const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: "
         const val LOG_AND_ERROR_GET_PAYMENT_STATUS =
             "Ошибка получения статуса оплаты из таблицы payment_status для TraceID: "
         const val LOG_AND_ERROR_GET_TYPE_STATUS =
@@ -87,24 +88,11 @@ class PaymentServiceImpl(
     private val traceId = getTraceId()
 
     override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
-        logger.info(LOG_START_PAYMENT_CREATION + traceId)
-        val orderFindByCode = getOrderDao.getOrderByCode(paymentPayRequest.code, traceId)
-        val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
-        val premiumAmount = orderFindByCode.premiumAmount
-        val orderStatus = orderFindByCode.orderStatus
-        util.checkStatusOrder(orderStatus, CODE_ERROR_ORDER_IS_PAID_FOR, CODE_ERROR_ORDER_IS_NOT_AVAILABLE, traceId)
-        orderFindByCode.urlToReturn = paymentPayRequest.urlToReturn
-        orderFindByCode.urlToDecline = paymentPayRequest.urlToReturnF
-        try {
-            orderRepository.save(orderFindByCode)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
-            throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
-        }
-        val configBankPriorityCheck = getBankPriorityDao.getBankPriority(traceId)
-        val bank = orderFindByCode.bankId
-        val checkBank = getBankDao.getBank(bank?.bankId, traceId)
-        if (configBankPriorityCheck == TRUE || checkBank != null) {
+        val paymentContext = buildPaymentContext(paymentPayRequest,CODE_ERROR_ORDER_IS_PAID_FOR,CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
+        val checkBank = paymentContext.checkBank
+        val orderFindByCode = paymentContext.order
+        val subOrder = paymentContext.subOrder
+        if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
             val tokenGpb = gazpromService.getGPBToken(traceId, orderFindByCode, subOrder)
             if (tokenGpb.isNotEmpty()) {
                 val actionTypeTokenSuccess = getActionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
@@ -112,7 +100,7 @@ class PaymentServiceImpl(
                     PaymentOperationHistory(
                         action = actionTypeTokenSuccess,
                         order = orderFindByCode,
-                        actionAuthor = subOrder.clientSystem,
+                        actionAuthor = paymentContext.subOrder.clientSystem,
                         actionDate = null,
                     )
                 operationHistoryRepository.save(operationHistory)
@@ -132,11 +120,47 @@ class PaymentServiceImpl(
                 paymentPayRequest,
                 traceId,
                 tokenGpb,
-                premiumAmount,
+                paymentContext.premiumAmount,
                 orderFindByCode,
                 subOrder,
             )
         }
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
     }
+
+    override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+        logger.info(LOG_START_PAYMENT_CREATION + traceId)
+        //Когда будут готовы коды эксепшинов новые для сбп подставить новые коды в метод
+        val paymentContext = buildPaymentContext(paymentPayRequest)
+        val checkBank = paymentContext.checkBank
+        val orderFindByCode = paymentContext.order
+        val subOrder = paymentContext.subOrder
+            //дальше логика работы с банком по сбп
+    }
+
+    override fun buildPaymentContext(
+        paymentPayRequest: PaymentPayRequest,
+        errorCodeIsPaidFor: Int,
+        errorCodeIsNotAvailable: Int,
+    ): PaymentContext {
+        logger.info(LOG_START_PAYMENT_CREATION + traceId)
+        val orderFindByCode = getOrderDao.getOrderByCode(paymentPayRequest.code, traceId)
+        val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
+        val premiumAmount = orderFindByCode.premiumAmount
+        val orderStatus = orderFindByCode.orderStatus
+        util.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable, traceId)
+        orderFindByCode.urlToReturn = paymentPayRequest.urlToReturn
+        orderFindByCode.urlToDecline = paymentPayRequest.urlToReturnF
+        try {
+            orderRepository.save(orderFindByCode)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
+            throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
+        }
+        val configBankPriorityCheck = getBankPriorityDao.getBankPriority(traceId)
+        val bank = orderFindByCode.bankId
+        val checkBank = getBankDao.getBank(bank?.bankId, traceId)
+        return PaymentContext(orderFindByCode, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
+    }
+
 }

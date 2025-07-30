@@ -133,6 +133,7 @@ class GazpromServiceImpl(
                         redirect = PAYMENT_PAGE,
                     ),
             )
+        //залогировать реквест и респонс
         val requestEntity = HttpEntity(gpbPaymentRequest, headers)
         try {
             val responseEntity: ResponseEntity<Map<String, Any>> =

@@ -121,6 +121,12 @@ class PaymentController(
         paymentService.createPayment(
             paymentPayRequest,
         )
+    @PostMapping("/paySbp")
+    fun createPaySbp (
+        @RequestHeader(TRACE_ID) traceId: String,
+        @RequestBody paymentPayRequest: PaymentPayRequest,
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
+
 
     @Operation(
         summary = "Проверить статус оплаты",
