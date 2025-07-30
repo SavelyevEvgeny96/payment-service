@@ -6,6 +6,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR_SBP
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetBankDao
@@ -130,8 +131,7 @@ class PaymentServiceImpl(
 
     override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
         logger.info(LOG_START_PAYMENT_CREATION + traceId)
-        //Когда будут готовы коды эксепшинов новые для сбп подставить новые коды в метод
-        val paymentContext = buildPaymentContext(paymentPayRequest)
+        val paymentContext = buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR_SBP,CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
