@@ -4,15 +4,15 @@ import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
-import ru.sogaz.site.paymentService.entity.ActionType
-import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
-import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
+import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -24,6 +24,9 @@ class GpbCallbackServiceImpl(
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val paymentStatusService: PaymentStatusCheckerService,
     private val signatureVerifier: SignatureVerifier,
+    private val paymentStatusRepository: PaymentStatusRepository,
+    private val actionTypeRepository: ActionTypeRepository,
+    private val clientSystemRepository: ClientSystemRepository,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -52,8 +55,7 @@ class GpbCallbackServiceImpl(
     }
 
     private fun updatePaymentStatus(payment: Payment) {
-        val paymentStatus = PaymentStatus()
-        paymentStatus.stateId = "CALLBACK"
+        val paymentStatus = paymentStatusRepository.findByStateId("CALLBACK")
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentRepository.save(payment)
@@ -67,10 +69,8 @@ class GpbCallbackServiceImpl(
                     InnerException(getTraceId(), "Заказ с этим ID не найден $orderId")
                 }
 
-            val actions = ActionType()
-            actions.actionName = "Получение CALLBACK от ГПБ"
-            val actionsAuthor = ClientSystem()
-            actionsAuthor.externalSystemName = "Сервис оплат"
+            val actions = actionTypeRepository.findByActionName("Получение CALLBACK от ГПБ")
+            val actionsAuthor = clientSystemRepository.findByExternalSystemCode("PAY")
             operationHistoryRepository.save(
                 PaymentOperationHistory(
                     action = actions,

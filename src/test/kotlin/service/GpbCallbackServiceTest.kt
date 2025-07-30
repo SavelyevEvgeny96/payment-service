@@ -8,11 +8,16 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
+import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.impl.GpbCallbackServiceImpl
@@ -26,6 +31,9 @@ class GpbCallbackServiceTest {
     private val paymentStatusService = mock<PaymentStatusCheckerService>()
     private val signatureVerifier = mock<SignatureVerifier>()
     private val paymentStatusCheckerService = mock<PaymentStatusCheckerService>()
+    private val paymentStatusRepository = mock<PaymentStatusRepository>()
+    private val actionTypeRepository = mock<ActionTypeRepository>()
+    private val clientSystemRepository = mock<ClientSystemRepository>()
 
     private val service =
         GpbCallbackServiceImpl(
@@ -34,6 +42,9 @@ class GpbCallbackServiceTest {
             operationHistoryRepository,
             paymentStatusService,
             signatureVerifier,
+            paymentStatusRepository,
+            actionTypeRepository,
+            clientSystemRepository,
         )
 
     private val testRequest =
@@ -63,9 +74,13 @@ class GpbCallbackServiceTest {
                 traceId = "222",
                 data = ResponseStatusPay("222", true),
             )
+        val externalSystem = ClientSystem(1, "PAY", "Test")
 
+        val action = ActionType(1, "Получение CALLBACK от ГПБ")
         `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentRepository.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
+        `when`(actionTypeRepository.findByActionName("Получение CALLBACK от ГПБ")).thenReturn(action)
+        `when`(clientSystemRepository.findByExternalSystemCode("PAY")).thenReturn(externalSystem)
         `when`(payment.orderId?.id?.let { orderRepository.findById(it) }).thenReturn(Optional.of(order))
         `when`(operationHistoryRepository.save(any())).thenAnswer { it.arguments[0] }
         `when`(paymentStatusCheckerService.getStatus(testRequest.trxId, "222")).thenReturn(responseStatus)

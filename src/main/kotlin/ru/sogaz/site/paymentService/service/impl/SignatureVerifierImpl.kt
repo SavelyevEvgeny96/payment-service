@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.service.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -19,7 +19,7 @@ class SignatureVerifierImpl(
         try {
             val signatureBytes = Base64.getDecoder().decode(signatureBase64)
             val signature =
-                Signature.getInstance("SHA256withRSA").apply {
+                Signature.getInstance("SHA1withRSA").apply {
                     initVerify(loadPublicKey())
                 }
             signature.verify(signatureBytes)
@@ -48,6 +48,6 @@ class SignatureVerifierImpl(
             cert.publicKey
         } catch (e: Exception) {
             logger.info("Ошибка загрузки ключа")
-            throw InnerException(getTraceId(), e.message)
+            throw InnerException(RequestInfo.getTraceId(), e.message)
         }
 }
