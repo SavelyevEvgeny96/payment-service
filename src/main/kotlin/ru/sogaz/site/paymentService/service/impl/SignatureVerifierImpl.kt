@@ -15,7 +15,7 @@ class SignatureVerifierImpl(
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
-    companion object{
+    companion object {
         const val SIGNATURE_FAIL = "Сертификат не верифицирован"
         const val ERROR_KEY = "Ошибка загрузки ключа"
     }

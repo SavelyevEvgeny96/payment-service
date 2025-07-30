@@ -30,7 +30,7 @@ class GpbCallbackServiceImpl(
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
-    companion object{
+    companion object {
         const val PAYMENT_NOT_FOUND = "Платеж не найден"
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
@@ -40,6 +40,7 @@ class GpbCallbackServiceImpl(
         const val PAY = "PAY"
         const val ERROR_TRX_ID = "Произошла ошибка для trx_id: "
     }
+
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
             if (!signatureVerifier.verifySignature(request.signature)) {
