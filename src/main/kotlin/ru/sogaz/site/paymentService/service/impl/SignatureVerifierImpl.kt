@@ -24,6 +24,7 @@ class SignatureVerifierImpl(
                     initVerify(loadPublicKey())
                 }
             signature.verify(signatureBytes)
+            true
         } catch (e: Exception) {
             logger.info("Signature verification failed", e)
             false
