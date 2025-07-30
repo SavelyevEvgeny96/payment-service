@@ -30,16 +30,26 @@ class GpbCallbackServiceImpl(
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
+    companion object{
+        const val PAYMENT_NOT_FOUND = "Платеж не найден"
+        const val INTERNAL_SERVER_ERROR = "Internal server error"
+        const val INVALID_SIGNATURE = "Invalid signature"
+        const val CONST_CALLBACK = "CALLBACK"
+        const val ORDER_NOT_FOUND = "Order ID не найден"
+        const val CALLBACK_SUCCESS = "Получение CALLBACK от ГПБ"
+        const val PAY = "PAY"
+        const val ERROR_TRX_ID = "Произошла ошибка для trx_id: "
+    }
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
             if (!signatureVerifier.verifySignature(request.signature)) {
-                logger.info("Произошла ошибка для trx_id: ${request.trxId}")
-                return createErrorResponse("Invalid signature")
+                logger.info(ERROR_TRX_ID + request.trxId)
+                return createErrorResponse(INVALID_SIGNATURE)
             }
 
             val payment =
                 paymentRepository.findByPaymentBankId(request.trxId)
-                    ?: return createErrorResponse("Платеж не найден")
+                    ?: return createErrorResponse(PAYMENT_NOT_FOUND)
 
             updatePaymentStatus(payment)
 
@@ -49,13 +59,13 @@ class GpbCallbackServiceImpl(
 
             createSuccessResponse()
         } catch (e: Exception) {
-            logger.info("Произошла ошибка для trx_id: ${request.trxId}", e)
-            createErrorResponse("Internal server error")
+            logger.info(ERROR_TRX_ID + request.trxId, e)
+            createErrorResponse(INTERNAL_SERVER_ERROR)
         }
     }
 
     private fun updatePaymentStatus(payment: Payment) {
-        val paymentStatus = paymentStatusRepository.findByStateId("CALLBACK")
+        val paymentStatus = paymentStatusRepository.findByStateId(CONST_CALLBACK)
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentRepository.save(payment)
@@ -63,14 +73,14 @@ class GpbCallbackServiceImpl(
 
     private fun logOperation(payment: Payment) {
         try {
-            val orderId = payment.orderId?.id ?: throw InnerException(getTraceId(), "Order ID не найден")
+            val orderId = payment.orderId?.id ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
                 orderRepository.findById(orderId).orElseThrow {
-                    InnerException(getTraceId(), "Заказ с этим ID не найден $orderId")
+                    InnerException(getTraceId(), ORDER_NOT_FOUND + orderId)
                 }
 
-            val actions = actionTypeRepository.findByActionName("Получение CALLBACK от ГПБ")
-            val actionsAuthor = clientSystemRepository.findByExternalSystemCode("PAY")
+            val actions = actionTypeRepository.findByActionName(CALLBACK_SUCCESS)
+            val actionsAuthor = clientSystemRepository.findByExternalSystemCode(PAY)
             operationHistoryRepository.save(
                 PaymentOperationHistory(
                     action = actions,

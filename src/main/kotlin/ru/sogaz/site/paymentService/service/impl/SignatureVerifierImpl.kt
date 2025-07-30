@@ -15,6 +15,11 @@ class SignatureVerifierImpl(
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
+    companion object{
+        const val SIGNATURE_FAIL = "Сертификат не верифицирован"
+        const val ERROR_KEY = "Ошибка загрузки ключа"
+    }
+
     override fun verifySignature(signatureBase64: String): Boolean =
         try {
             val signatureBytes = Base64.getDecoder().decode(signatureBase64)
@@ -25,7 +30,7 @@ class SignatureVerifierImpl(
             signature.verify(signatureBytes)
             true
         } catch (e: Exception) {
-            logger.info("Signature verification failed", e)
+            logger.info(SIGNATURE_FAIL, e)
             false
         }
 
@@ -47,7 +52,7 @@ class SignatureVerifierImpl(
 
             cert.publicKey
         } catch (e: Exception) {
-            logger.info("Ошибка загрузки ключа")
+            logger.info(ERROR_KEY)
             throw InnerException(RequestInfo.getTraceId(), e.message)
         }
 }
