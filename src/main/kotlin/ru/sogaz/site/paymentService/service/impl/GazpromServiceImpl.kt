@@ -16,6 +16,7 @@ import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
+import ru.sogaz.site.paymentService.dto.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.State
 import ru.sogaz.site.paymentService.entity.Order
@@ -46,6 +47,8 @@ class GazpromServiceImpl(
 
     companion object {
         const val PAYMENT_STATUS_REG = "REG"
+        const val TEMPLATE_VERSION = "01"
+        const val QR_TTL = "02"
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа"
         const val SAVE_OPERATION_HISTORY_START_PAY =
@@ -54,6 +57,8 @@ class GazpromServiceImpl(
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token "
         const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
         const val SENDING_REQUEST_START_PAY = "Отправка запроса для старта платежа"
+        const val GET_PAYMENT_LINK = "Получение ссылки для оплаты"
+        const val LOG_MESSAGE_GET_PAYMENT_LINK = "Добавлена запись в таблицу история операций на получение ссылки для оплаты  "
         const val ERROR_SENDING_REQUEST_START_PAY = "Ошибка при отправке запроса на старт платежа"
         const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB для TraceId: "
         const val PAYMENT_PAGE_URL = "paymentPageUrl"
@@ -177,5 +182,38 @@ class GazpromServiceImpl(
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
         }
+    }
+
+    override fun initiateGPBSBPPayment(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String,
+        premiumAmount: String?,
+        order: Order,
+        subOrder: SubOrder
+    ): ResponseEntity<Response<DataPay>> {
+        val actionTypeGetLinkPay = getActionTypeDao.getActionType(traceId, GET_PAYMENT_LINK)
+        val operationHistory =
+            PaymentOperationHistory(
+                action = actionTypeGetLinkPay,
+                order = order,
+                actionAuthor = subOrder.clientSystem,
+                actionDate = null,
+            )
+        operationHistoryRepository.save(operationHistory)
+        logger.info(LOG_MESSAGE_GET_PAYMENT_LINK)
+        val url =apiConfigProperty.gpbSbpUrl
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        val fixedAmount = premiumAmount?.replace(".", "")
+        val listSubOrder = subOrderRepository.findAllByOrderId(order)
+        val description = util.generateDescription(listSubOrder)
+        val gpbSbpPaymentRequest = GPBSBPPaymentRequest(
+            amount = fixedAmount,
+            account =apiConfigProperty.paymentAccount,
+            merchantId = apiConfigProperty.merchantIdSbpGpb,
+            templateVersion = TEMPLATE_VERSION,
+            qrTtl = QR_TTL,
+
+        )
     }
 }

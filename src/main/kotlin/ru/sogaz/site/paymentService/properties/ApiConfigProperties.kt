@@ -12,6 +12,9 @@ class ApiConfigProperties {
     private val logger = loggerFor(javaClass)
     lateinit var paymentUrl: String
     lateinit var gpbUrl: String
+    lateinit var paymentAccount:String
+    lateinit var merchantIdSbpGpb:String
+    lateinit var gpbSbpUrl:String
     lateinit var portalId: String
     lateinit var merchantId: String
     lateinit var backUrlF: String
@@ -20,6 +23,9 @@ class ApiConfigProperties {
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
+        logger.info("paymentAccount = $paymentAccount")
+        logger.info("merchantIdSbpGpb = $merchantIdSbpGpb")
+        logger.info("gpbSbpUrl = $gpbSbpUrl")
         logger.info("paymentUrl = $paymentUrl")
         logger.info("gpbUrl = $gpbUrl")
         logger.info("portalId = $portalId")

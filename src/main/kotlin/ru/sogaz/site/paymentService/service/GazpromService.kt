@@ -22,4 +22,12 @@ interface GazpromService {
         order: Order,
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>>
+
+    fun initiateGPBSBPPayment(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String,
+        premiumAmount: String?,
+        order: Order,
+        subOrder: SubOrder,
+    ): ResponseEntity<Response<DataPay>>
 }

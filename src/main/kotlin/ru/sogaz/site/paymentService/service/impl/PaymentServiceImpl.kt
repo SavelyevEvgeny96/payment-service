@@ -135,7 +135,9 @@ class PaymentServiceImpl(
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
-            //дальше логика работы с банком по сбп
+        if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
+
+        }
     }
 
     override fun buildPaymentContext(
