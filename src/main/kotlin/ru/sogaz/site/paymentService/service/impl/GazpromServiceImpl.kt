@@ -64,7 +64,7 @@ class GazpromServiceImpl(
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token "
         const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
         const val SENDING_REQUEST_START_PAY = "Отправка запроса для старта платежа"
-        const val GET_PAYMENT_LINK = "Получение ссылки для оплаты"
+        const val GET_PAYMENT_LINK = "Получение ссылки на оплату"
         const val LOG_MESSAGE_GET_PAYMENT_LINK =
             "Добавлена запись в таблицу история операций на получение ссылки для оплаты  "
         const val ERROR_SENDING_REQUEST_START_PAY = "Ошибка при отправке запроса на старт платежа"
@@ -271,7 +271,7 @@ class GazpromServiceImpl(
             operationHistoryRepository.save(operationHistoryError)
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
-            throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
+            throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
         }
     }
 
