@@ -6,8 +6,10 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
@@ -16,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
+import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
@@ -36,6 +40,7 @@ class PaymentController(
     private val paymentService: PaymentService,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val paymentRequestValidator: PaymentRequestValidator,
+    private val gpbCallbackService: GpbCallbackService,
 ) {
     /**
      * Метод для создания заявки.
@@ -127,7 +132,35 @@ class PaymentController(
     )
     @GetMapping("/pay/status/{payment_bank_id}")
     fun getStatusPay(
-        @RequestParam payment_bank_id: String,
+        @PathVariable payment_bank_id: String,
         @RequestHeader traceId: String,
     ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, traceId)
+
+    @GetMapping("/gpb/state")
+    fun stateGpbCallback(
+        @RequestParam("trx_id") trxId: String,
+        @RequestParam("merch_id") merchId: String?,
+        @RequestParam("result_code") resultCode: Int?,
+        @RequestParam("amount") amount: String?,
+        @RequestParam(value = "account_id", required = false) accountId: String?,
+        @RequestParam("o.order_id") orderId: String?,
+        @RequestParam(value = "p.rrn", required = false) rrn: String?,
+        @RequestParam(value = "p.authcode", required = false) authCode: String?,
+        @RequestParam(value = "p.srcType", required = false) srcType: String?,
+        @RequestParam(value = "p.maskedPan", required = false) maskedPan: String?,
+        @RequestParam(value = "p.isFullyAuthenticated", required = false) isFullyAuthenticated: String?,
+        @RequestParam(value = "p.transmissionDateTime", required = false) transmissionDateTime: String?,
+        @RequestParam("discountType") discountType: String?,
+        @RequestParam(value = "p..paymentSystem", required = false) paymentSystem: String?,
+        @RequestParam("ts") ts: String?,
+        @RequestParam(value = "signature") signature: String,
+        request: HttpServletRequest,
+    ): ResponseEntity<String> {
+        val requestParams =
+            GpbCallbackRequest(
+                trxId = trxId,
+                signature = signature,
+            )
+        return gpbCallbackService.processCallback(requestParams)
+    }
 }
