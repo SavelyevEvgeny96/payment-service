@@ -29,9 +29,13 @@ class SignatureVerifierConfig {
         try {
             val keyBytes =
                 gpbConfigProperties.gpb
-                    .lines()
-                    .filter { it.isNotBlank() && !it.startsWith("-----") }
-                    .joinToString("")
+                    .replace("\"", "")
+                    .replace("\\n", "\n")
+                    .replace("-----BEGIN CERTIFICATE-----", "")
+                    .replace("-----END CERTIFICATE-----", "")
+                    .replace("\n", "")
+                    .replace("\r", "")
+                    .replace(" ", "")
                     .trim()
                     .let { Base64.getDecoder().decode(it) }
 
