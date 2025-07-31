@@ -8,7 +8,7 @@ app:
     app_profile: ${ENVIRONMENT:dev}
     java-version: ${JAVA_VERSION:21}
   certs:
-    gpb: ${GPB_CERT:CERT}
+    gpb: ${GPB_CERT:123}
 
 server:
   port: ${SERVER_PORT:8080}

@@ -1,60 +1,31 @@
 package ru.sogaz.site.paymentService.service.impl
 
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import java.io.ByteArrayInputStream
-import java.security.PublicKey
 import java.security.Signature
 import java.util.Base64
 
 class SignatureVerifierImpl(
-    private val gpbConfigProperties: GpbConfigProperties,
+    private val preconfiguredSignature: Signature,
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val SIGNATURE_FAIL = "Сертификат не верифицирован"
-        const val ERROR_KEY = "Ошибка загрузки ключа"
-        const val CONST_X_509 = "X.509"
-        const val CONST_INSTANCE = "SHA1withRSA"
+        const val VEREFIELD_FAIL = "Ошибка верификации подписи"
     }
 
     override fun verifySignature(signatureBase64: String): Boolean =
         try {
             val signatureBytes = Base64.getDecoder().decode(signatureBase64)
-            val signature =
-                Signature.getInstance(CONST_INSTANCE).apply {
-                    initVerify(loadPublicKey())
+            synchronized(preconfiguredSignature) {
+                preconfiguredSignature.apply {
+                    update(signatureBytes)
+                    verify(signatureBytes)
                 }
-            signature.verify(signatureBytes)
+            }
             true
         } catch (e: Exception) {
-            logger.info(SIGNATURE_FAIL, e)
+            logger.info(VEREFIELD_FAIL, e)
             false
-        }
-
-    private fun loadPublicKey(): PublicKey =
-        try {
-            val keyBytes =
-                gpbConfigProperties.gpb
-                    .lines()
-                    .filter { it.isNotBlank() && !it.startsWith("-----") }
-                    .joinToString("")
-                    .trim()
-
-            val certBytes = Base64.getDecoder().decode(keyBytes)
-
-            val certFactory =
-                java.security.cert.CertificateFactory
-                    .getInstance(CONST_X_509)
-            val cert = certFactory.generateCertificate(ByteArrayInputStream(certBytes))
-
-            cert.publicKey
-        } catch (e: Exception) {
-            logger.info(ERROR_KEY)
-            throw InnerException(RequestInfo.getTraceId(), e.message)
         }
 }
