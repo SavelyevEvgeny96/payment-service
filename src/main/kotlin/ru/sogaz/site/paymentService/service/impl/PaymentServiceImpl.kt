@@ -18,6 +18,8 @@ import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentContext
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
+import ru.sogaz.site.paymentService.entity.Bank
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
@@ -65,6 +67,7 @@ class PaymentServiceImpl(
         const val STATUS_OVERDUE = "OVERDUE"
         const val STATUS_MARKEDDEL = "MARKEDDEL"
         const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c code: "
+        const val LOG_ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления заявки оплаты для TraiceId:  "
         const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name "
         const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: "
         const val LOG_AND_ERROR_GET_PAYMENT_STATUS =
@@ -89,7 +92,8 @@ class PaymentServiceImpl(
     private val traceId = getTraceId()
 
     override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
-        val paymentContext = buildPaymentContext(paymentPayRequest,CODE_ERROR_ORDER_IS_PAID_FOR,CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
+        val paymentContext =
+            buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
@@ -105,6 +109,7 @@ class PaymentServiceImpl(
                         actionDate = null,
                     )
                 operationHistoryRepository.save(operationHistory)
+                updatePaymentRecord(checkBank, PAYMENT_STATUS_NEW, PAYMENT_TYPE_PAY, orderFindByCode, tokenGpb)
                 val paymentStatusNEW = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_NEW)
                 val paymentTypePayCard = getPaymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
                 val paymentRecord =
@@ -131,13 +136,21 @@ class PaymentServiceImpl(
 
     override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
         logger.info(LOG_START_PAYMENT_CREATION + traceId)
-        val paymentContext = buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR_SBP,CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
+        val paymentContext =
+            buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR_SBP, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
         if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-
+            updatePaymentRecord(checkBank, PAYMENT_STATUS_NEW, PAYMENT_TYPE_PAY, orderFindByCode, null)
         }
+        return gazpromService.initiateGPBSBPPayment(
+            paymentPayRequest,
+            traceId,
+            paymentContext.premiumAmount,
+            orderFindByCode,
+            subOrder
+        )
     }
 
     override fun buildPaymentContext(
@@ -165,4 +178,24 @@ class PaymentServiceImpl(
         return PaymentContext(orderFindByCode, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
     }
 
+    private fun updatePaymentRecord(
+        checkBank: Bank?, paymentStatusConstant: String, paymentTypeConstant: String, order: Order,
+        tokenGpb: String?
+    ) {
+        try {
+            val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, paymentStatusConstant)
+            val paymentType = getPaymentTypeDao.getPaymentType(traceId, paymentTypeConstant)
+            val paymentRecord =
+                Payment(
+                    bank = checkBank,
+                    stateId = paymentStatus,
+                    orderId = order,
+                    typeId = paymentType,
+                    paymentBankId = tokenGpb,
+                )
+            paymentRepository.save(paymentRecord)
+        } catch (e: Exception) {
+            logger.error(LOG_ERROR_UPDATE_PAYMENT_RECORD + traceId)
+        }
+    }
 }

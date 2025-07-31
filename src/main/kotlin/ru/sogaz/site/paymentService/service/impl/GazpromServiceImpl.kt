@@ -28,6 +28,8 @@ import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GazpromService
+import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.SUCCESS
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.site.paymentService.util.Util
 import ru.sogaz.siter.models.resonses.Response
 
@@ -48,9 +50,14 @@ class GazpromServiceImpl(
     companion object {
         const val PAYMENT_STATUS_REG = "REG"
         const val TEMPLATE_VERSION = "01"
-        const val QR_TTL = "02"
+        const val QR_TTL = "60"
+        const val QR_TYPE = "02"
+        const val SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR =
+            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа по СБП ГАЗПРОМ БАНК"
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
-            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа"
+            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа ГАЗПРОМ БАНК "
+        const val STATUS_CODE_SUCCESS_PAY_SBP = 1101530200
+        const val STATUS_CODE_SUCCESS_PAY_CARD = 1101510200
         const val SAVE_OPERATION_HISTORY_START_PAY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на старт платежа"
         const val SAVE_OPERATION_HISTORY =
@@ -58,13 +65,18 @@ class GazpromServiceImpl(
         const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
         const val SENDING_REQUEST_START_PAY = "Отправка запроса для старта платежа"
         const val GET_PAYMENT_LINK = "Получение ссылки для оплаты"
-        const val LOG_MESSAGE_GET_PAYMENT_LINK = "Добавлена запись в таблицу история операций на получение ссылки для оплаты  "
+        const val LOG_MESSAGE_GET_PAYMENT_LINK =
+            "Добавлена запись в таблицу история операций на получение ссылки для оплаты  "
         const val ERROR_SENDING_REQUEST_START_PAY = "Ошибка при отправке запроса на старт платежа"
+        const val ERROR_SENDING_REQUEST_START_PAY_SBP = "Ошибка при отправке запроса для получения платежной ссылки"
         const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB для TraceId: "
         const val PAYMENT_PAGE_URL = "paymentPageUrl"
+        const val PAYLOAD = "payload"
         const val OPTIONS = "options"
+        const val DATA = "data"
         const val LOG_ERROR_GET_TOKEN = "Ошибка получения токена доступа от GPB , система не доступна для TraceId: {}"
         const val LOG_SUCCESSFUL_GPB_API = "Успешный запрос к GPB API. TraceId: "
+        const val LOG_SUCCESSFUL_GPB_API_SBP = "Успешный запрос к GPB API по SBP. TraceId: "
         const val PAYMENT_PAGE = "payment_page"
     }
 
@@ -132,15 +144,18 @@ class GazpromServiceImpl(
                 backUrlF = urlTuReturn,
                 amount = fixedAmount,
                 description = description,
-                currency = PaymentServiceImpl.RUB,
+                currency = RUB,
                 state =
                     State(
                         redirect = PAYMENT_PAGE,
                     ),
             )
-        //залогировать реквест и респонс
+
         val requestEntity = HttpEntity(gpbPaymentRequest, headers)
         try {
+            logger.info(
+                "GPB payment request [traceId=$traceId]: body=${requestEntity.body}"
+            )
             val responseEntity: ResponseEntity<Map<String, Any>> =
                 restTemplate.restTemplate().exchange(
                     url,
@@ -150,23 +165,20 @@ class GazpromServiceImpl(
                 )
             logger.info(LOG_SUCCESSFUL_GPB_API, traceId)
             val responseBody = responseEntity.body
+            logger.info(
+                "GPB payment response [traceId=$traceId]: body=${responseBody}"
+            )
             val paymentPageUrl =
                 (responseBody?.get(OPTIONS) as? Map<String, Any>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
             val dataPay = DataPay(paymentPageUrl)
             val result =
                 Response(
-                    status = OrderServiceImpl.SUCCESS,
-                    code = OrderServiceImpl.STATUS_CODE_SUCCESS,
+                    status = SUCCESS,
+                    code = STATUS_CODE_SUCCESS_PAY_CARD,
                     traceId = traceId,
                     data = dataPay,
                 )
-            val getPaymentForUpdate = getPaymentDao.getPayment(traceId, order)
-            val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
-            if (getPaymentForUpdate != null) {
-                getPaymentForUpdate.paymentPageUrl = paymentPageUrl
-                getPaymentForUpdate.stateId = paymentStatusREG
-                paymentRepository.save(getPaymentForUpdate)
-            }
+            paymentUpdate(traceId, order, paymentPageUrl)
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
             val actionTypeStartPayError = getActionTypeDao.getActionType(traceId, ERROR_SENDING_REQUEST_START_PAY)
@@ -201,7 +213,7 @@ class GazpromServiceImpl(
             )
         operationHistoryRepository.save(operationHistory)
         logger.info(LOG_MESSAGE_GET_PAYMENT_LINK)
-        val url =apiConfigProperty.gpbSbpUrl
+        val url = apiConfigProperty.gpbSbpUrl
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         val fixedAmount = premiumAmount?.replace(".", "")
@@ -209,11 +221,67 @@ class GazpromServiceImpl(
         val description = util.generateDescription(listSubOrder)
         val gpbSbpPaymentRequest = GPBSBPPaymentRequest(
             amount = fixedAmount,
-            account =apiConfigProperty.paymentAccount,
+            account = apiConfigProperty.paymentAccount,
             merchantId = apiConfigProperty.merchantIdSbpGpb,
             templateVersion = TEMPLATE_VERSION,
             qrTtl = QR_TTL,
-
+            callbackMerchantNotifications = apiConfigProperty.callbackUrlSbp,
+            qrcType = QR_TYPE,
+            paymentPurpose = description,
+            currency = RUB
         )
+        val requestEntity = HttpEntity(gpbSbpPaymentRequest, headers)
+        try {
+            logger.info(
+                "GPB payment SBP request [traceId=$traceId]: body=${requestEntity.body}"
+            )
+            val responseEntity: ResponseEntity<Map<String, Any>> =
+                restTemplate.restTemplate().exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    object : ParameterizedTypeReference<Map<String, Any>>() {},
+                )
+            val responseBody = responseEntity.body
+            logger.info(
+                "GPB payment SBP response [traceId=$traceId]: body=${responseBody}"
+            )
+            val paymentPageUrl =
+                (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
+            val dataPay = DataPay(paymentPageUrl)
+            val result =
+                Response(
+                    status = SUCCESS,
+                    code = STATUS_CODE_SUCCESS_PAY_SBP,
+                    traceId = traceId,
+                    data = dataPay,
+                )
+            paymentUpdate(traceId, order, paymentPageUrl)
+            logger.info(LOG_SUCCESSFUL_GPB_API_SBP, traceId)
+            return ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            val actionTypeStartPayError = getActionTypeDao.getActionType(traceId, ERROR_SENDING_REQUEST_START_PAY_SBP)
+            val operationHistoryError =
+                PaymentOperationHistory(
+                    action = actionTypeStartPayError,
+                    order = order,
+                    actionAuthor = subOrder.clientSystem,
+                    actionDate = null,
+                )
+            operationHistoryRepository.save(operationHistoryError)
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
+            logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
+            throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
+        }
+    }
+
+    private fun paymentUpdate(traceId: String, order: Order, paymentPageUrl: String) {
+        val getPaymentForUpdate = getPaymentDao.getPayment(traceId, order)
+        val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
+        if (getPaymentForUpdate != null) {
+            getPaymentForUpdate.paymentPageUrl = paymentPageUrl
+            getPaymentForUpdate.stateId = paymentStatusREG
+            paymentRepository.save(getPaymentForUpdate)
+        }
     }
 }

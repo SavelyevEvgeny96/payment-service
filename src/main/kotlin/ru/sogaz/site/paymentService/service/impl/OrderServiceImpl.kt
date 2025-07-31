@@ -35,7 +35,7 @@ class OrderServiceImpl(
         const val STATE_ID_NEW = "NEW"
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
-        const val SUCCESS = "success"
+        const val SUCCESS = "SUCCESS"
         const val LOG_START_ORDER_CREATION = "Начало создания заявки для TraceId: {}"
         const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан с orderCode: {} для TraceId: {}"
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с paymentCode: {} для TraceId: {}"

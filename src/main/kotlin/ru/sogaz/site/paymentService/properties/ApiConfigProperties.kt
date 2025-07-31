@@ -14,6 +14,7 @@ class ApiConfigProperties {
     lateinit var gpbUrl: String
     lateinit var paymentAccount:String
     lateinit var merchantIdSbpGpb:String
+    lateinit var callbackUrlSbp:String
     lateinit var gpbSbpUrl:String
     lateinit var portalId: String
     lateinit var merchantId: String
