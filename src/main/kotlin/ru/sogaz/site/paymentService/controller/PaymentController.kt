@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
@@ -131,7 +132,7 @@ class PaymentController(
     )
     @GetMapping("/pay/status/{payment_bank_id}")
     fun getStatusPay(
-        @RequestParam payment_bank_id: String,
+        @PathVariable payment_bank_id: String,
         @RequestHeader traceId: String,
     ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, traceId)
 
