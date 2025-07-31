@@ -18,13 +18,15 @@ class SignatureVerifierImpl(
     companion object {
         const val SIGNATURE_FAIL = "Сертификат не верифицирован"
         const val ERROR_KEY = "Ошибка загрузки ключа"
+        const val CONST_X_509 = "X.509"
+        const val CONST_INSTANCE = "SHA1withRSA"
     }
 
     override fun verifySignature(signatureBase64: String): Boolean =
         try {
             val signatureBytes = Base64.getDecoder().decode(signatureBase64)
             val signature =
-                Signature.getInstance("SHA1withRSA").apply {
+                Signature.getInstance(CONST_INSTANCE).apply {
                     initVerify(loadPublicKey())
                 }
             signature.verify(signatureBytes)
@@ -47,7 +49,7 @@ class SignatureVerifierImpl(
 
             val certFactory =
                 java.security.cert.CertificateFactory
-                    .getInstance("X.509")
+                    .getInstance(CONST_X_509)
             val cert = certFactory.generateCertificate(ByteArrayInputStream(certBytes))
 
             cert.publicKey
