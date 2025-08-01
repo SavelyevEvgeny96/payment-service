@@ -31,7 +31,7 @@ class GpbCallbackServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val PAYMENT_NOT_FOUND = "Платеж не найден"
+        const val PAYMENT_NOT_FOUND = "Not Found"
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
         const val CONST_CALLBACK = "CALLBACK"
