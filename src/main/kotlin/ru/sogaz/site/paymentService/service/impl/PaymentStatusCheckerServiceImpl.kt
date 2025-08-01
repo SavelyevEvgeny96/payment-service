@@ -122,30 +122,30 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    @Scheduled(fixedDelayString = "60000")
-    override fun checkUnpaidPayments() {
-        val traceId = UUID.randomUUID().toString()
-        logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
-
-        try {
-            val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
-
-            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
-
-            logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
-
-            unpaidOrders.forEach { payment ->
-                try {
-                    processPaymentStatusCheck(payment, traceId)
-                    Thread.sleep(periodPay)
-                } catch (e: Exception) {
-                    logger.info(LOG_PAYMENT_CHECK_ERROR.format(payment.paymentBankId, traceId), e)
-                }
-            }
-        } catch (e: Exception) {
-            logger.info(LOG_CRITICAL_TASK_ERROR.format(traceId), e)
-        }
-    }
+//    @Scheduled(fixedDelayString = "60000")
+//    override fun checkUnpaidPayments() {
+//        val traceId = UUID.randomUUID().toString()
+//        logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
+//
+//        try {
+//            val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
+//
+//            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
+//
+//            logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
+//
+//            unpaidOrders.forEach { payment ->
+//                try {
+//                    processPaymentStatusCheck(payment, traceId)
+//                    Thread.sleep(periodPay)
+//                } catch (e: Exception) {
+//                    logger.info(LOG_PAYMENT_CHECK_ERROR.format(payment.paymentBankId, traceId), e)
+//                }
+//            }
+//        } catch (e: Exception) {
+//            logger.info(LOG_CRITICAL_TASK_ERROR.format(traceId), e)
+//        }
+//    }
 
     private fun processPaymentStatusCheck(
         payment: Payment,

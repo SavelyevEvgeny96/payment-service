@@ -109,23 +109,13 @@ class PaymentServiceImpl(
                         actionDate = null,
                     )
                 operationHistoryRepository.save(operationHistory)
-                updatePaymentRecord(checkBank, PAYMENT_STATUS_NEW, PAYMENT_TYPE_PAY, orderFindByCode, tokenGpb)
-                val paymentStatusNEW = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_NEW)
-                val paymentTypePayCard = getPaymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
-                val paymentRecord =
-                    Payment(
-                        bank = checkBank,
-                        stateId = paymentStatusNEW,
-                        orderId = orderFindByCode,
-                        typeId = paymentTypePayCard,
-                        paymentBankId = tokenGpb,
-                    )
-                paymentRepository.save(paymentRecord)
             }
+            val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
             return gazpromService.initiateGPBPayment(
                 paymentPayRequest,
                 traceId,
                 tokenGpb,
+                paymentId,
                 paymentContext.premiumAmount,
                 orderFindByCode,
                 subOrder,
@@ -136,17 +126,19 @@ class PaymentServiceImpl(
 
     override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
         logger.info(LOG_START_PAYMENT_CREATION + traceId)
+        var paymentId: Long? = null
         val paymentContext =
             buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR_SBP, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
         if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            updatePaymentRecord(checkBank, PAYMENT_STATUS_NEW, PAYMENT_TYPE_PAY, orderFindByCode, null)
+            paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
         }
         return gazpromService.initiateGPBSBPPayment(
             paymentPayRequest,
             traceId,
+            paymentId,
             paymentContext.premiumAmount,
             orderFindByCode,
             subOrder
@@ -178,24 +170,21 @@ class PaymentServiceImpl(
         return PaymentContext(orderFindByCode, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
     }
 
-    private fun updatePaymentRecord(
-        checkBank: Bank?, paymentStatusConstant: String, paymentTypeConstant: String, order: Order,
+    private fun createPaymentRecord(
+        checkBank: Bank?, order: Order,
         tokenGpb: String?
-    ) {
-        try {
-            val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, paymentStatusConstant)
-            val paymentType = getPaymentTypeDao.getPaymentType(traceId, paymentTypeConstant)
-            val paymentRecord =
-                Payment(
-                    bank = checkBank,
-                    stateId = paymentStatus,
-                    orderId = order,
-                    typeId = paymentType,
-                    paymentBankId = tokenGpb,
-                )
-            paymentRepository.save(paymentRecord)
-        } catch (e: Exception) {
-            logger.error(LOG_ERROR_UPDATE_PAYMENT_RECORD + traceId)
-        }
+    ): Long? {
+        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_NEW)
+        val paymentType = getPaymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
+        val paymentRecord =
+            Payment(
+                bank = checkBank,
+                stateId = paymentStatus,
+                orderId = order,
+                typeId = paymentType,
+                paymentBankId = tokenGpb,
+            )
+        val saved = paymentRepository.save(paymentRecord)
+        return saved.id
     }
 }

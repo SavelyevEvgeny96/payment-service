@@ -6,25 +6,26 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
+import java.util.*
 
 class GetPaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
 ) : GetPaymentDao {
     companion object {
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
-        const val ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному order_id: "
+        const val ERROR_GET_PAYMENT_BY_ORDER_ID = "Ошибка поиска платежа по order_id Exception:  "
     }
 
     private val logger = loggerFor(javaClass)
 
     override fun getPayment(
         traceId: String,
-        order: Order,
+        paymentId:Long,
     ): Payment? =
         try {
-            paymentRepository.findByOrderId(order)
+            paymentRepository.findById(paymentId)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, traceId)
-            throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID$order")
+            throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID ${e.message}")
         }
 }

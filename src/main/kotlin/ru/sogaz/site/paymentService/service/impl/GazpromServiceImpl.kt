@@ -111,6 +111,7 @@ class GazpromServiceImpl(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
         tokenGpb: String,
+        paymentId:Long?,
         premiumAmount: String?,
         order: Order,
         subOrder: SubOrder,
@@ -154,7 +155,7 @@ class GazpromServiceImpl(
         val requestEntity = HttpEntity(gpbPaymentRequest, headers)
         try {
             logger.info(
-                "GPB payment request [traceId=$traceId]: body=${requestEntity.body}"
+                "GPB payment Card request [traceId=$traceId]:  body=\n${objectMapper.writeValueAsString(requestEntity.body)}"
             )
             val responseEntity: ResponseEntity<Map<String, Any>> =
                 restTemplate.restTemplate().exchange(
@@ -166,7 +167,7 @@ class GazpromServiceImpl(
             logger.info(LOG_SUCCESSFUL_GPB_API, traceId)
             val responseBody = responseEntity.body
             logger.info(
-                "GPB payment response [traceId=$traceId]: body=${responseBody}"
+                "GPB payment Card response [traceId=$traceId]: body=${responseBody}"
             )
             val paymentPageUrl =
                 (responseBody?.get(OPTIONS) as? Map<String, Any>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
@@ -199,6 +200,7 @@ class GazpromServiceImpl(
     override fun initiateGPBSBPPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
+        paymentId:Long?,
         premiumAmount: String?,
         order: Order,
         subOrder: SubOrder
@@ -233,7 +235,7 @@ class GazpromServiceImpl(
         val requestEntity = HttpEntity(gpbSbpPaymentRequest, headers)
         try {
             logger.info(
-                "GPB payment SBP request [traceId=$traceId]: body=${requestEntity.body}"
+                "GPB payment SBP request [traceId=$traceId]: body=\n${objectMapper.writeValueAsString(requestEntity.body)}"
             )
             val responseEntity: ResponseEntity<Map<String, Any>> =
                 restTemplate.restTemplate().exchange(
@@ -269,19 +271,17 @@ class GazpromServiceImpl(
                     actionDate = null,
                 )
             operationHistoryRepository.save(operationHistoryError)
-            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
         }
     }
 
-    private fun paymentUpdate(traceId: String, order: Order, paymentPageUrl: String) {
-        val getPaymentForUpdate = getPaymentDao.getPayment(traceId, order)
+    private fun paymentUpdate(traceId: String, paymentId: Long, paymentPageUrl: String) {
+        val getPaymentForUpdate = getPaymentDao.getPayment(traceId, paymentId)
         val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
-        if (getPaymentForUpdate != null) {
-            getPaymentForUpdate.paymentPageUrl = paymentPageUrl
+            getPaymentForUpdate.get().paymentPageUrl = paymentPageUrl
             getPaymentForUpdate.stateId = paymentStatusREG
             paymentRepository.save(getPaymentForUpdate)
-        }
     }
 }
