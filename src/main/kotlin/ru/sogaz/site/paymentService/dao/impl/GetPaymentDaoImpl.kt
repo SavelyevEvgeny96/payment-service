@@ -23,7 +23,7 @@ class GetPaymentDaoImpl(
         paymentId:Long,
     ): Payment? =
         try {
-            paymentRepository.findById(paymentId)
+            paymentRepository.findById(paymentId).orElse(null)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, traceId)
             throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID ${e.message}")

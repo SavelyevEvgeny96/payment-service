@@ -60,6 +60,7 @@ class GazpromServiceImpl(
         const val STATUS_CODE_SUCCESS_PAY_CARD = 1101510200
         const val SAVE_OPERATION_HISTORY_START_PAY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на старт платежа"
+        const val ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления платежа payment_id == null"
         const val SAVE_OPERATION_HISTORY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token "
         const val GET_TOKEN_MASSAGE_FAIL = "Ошибка при получении токена доступа"
@@ -111,7 +112,7 @@ class GazpromServiceImpl(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
         tokenGpb: String,
-        paymentId:Long?,
+        paymentId: Long?,
         premiumAmount: String?,
         order: Order,
         subOrder: SubOrder,
@@ -179,7 +180,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(traceId, order, paymentPageUrl)
+            paymentUpdate(traceId, paymentId, paymentPageUrl)
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
             val actionTypeStartPayError = getActionTypeDao.getActionType(traceId, ERROR_SENDING_REQUEST_START_PAY)
@@ -200,7 +201,7 @@ class GazpromServiceImpl(
     override fun initiateGPBSBPPayment(
         paymentPayRequest: PaymentPayRequest,
         traceId: String,
-        paymentId:Long?,
+        paymentId: Long?,
         premiumAmount: String?,
         order: Order,
         subOrder: SubOrder
@@ -258,7 +259,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(traceId, order, paymentPageUrl)
+            paymentUpdate(traceId, paymentId, paymentPageUrl)
             logger.info(LOG_SUCCESSFUL_GPB_API_SBP, traceId)
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -277,11 +278,18 @@ class GazpromServiceImpl(
         }
     }
 
-    private fun paymentUpdate(traceId: String, paymentId: Long, paymentPageUrl: String) {
-        val getPaymentForUpdate = getPaymentDao.getPayment(traceId, paymentId)
-        val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
-            getPaymentForUpdate.get().paymentPageUrl = paymentPageUrl
-            getPaymentForUpdate.stateId = paymentStatusREG
-            paymentRepository.save(getPaymentForUpdate)
+    private fun paymentUpdate(traceId: String, paymentId: Long?, paymentPageUrl: String) {
+        if (paymentId != null) {
+            val getPaymentForUpdate = getPaymentDao.getPayment(traceId, paymentId)
+            val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
+            getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
+            getPaymentForUpdate?.stateId = paymentStatusREG
+            if (getPaymentForUpdate != null) {
+                paymentRepository.save(getPaymentForUpdate)
+            }
+        } else {
+            logger.error(ERROR_UPDATE_PAYMENT_RECORD)
+            throw InnerException(traceId,ERROR_UPDATE_PAYMENT_RECORD)
+        }
     }
 }
