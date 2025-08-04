@@ -22,8 +22,8 @@ import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -43,7 +43,6 @@ class PaymentServiceImpl(
     private val getPaymentTypeDao: GetPaymentTypeDao,
     private val getPaymentStatusDao: GetPaymentStatusDao,
     private val getActionTypeDao: GetActionTypeDao,
-    private val configDataRepository: ConfigDataRepository,
     private val orderRepository: OrderRepository,
     private val getSubOrderDao: GetSubOrderDao,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
@@ -62,14 +61,12 @@ class PaymentServiceImpl(
         const val TOKEN_PREFIX = "/token"
         const val GPB_TOKEN_ROW = "token"
         const val TRUE = "true"
-        const val PAYMENT_STATUS_NEW = "NEW"
-        const val STATUS_SUCCESS = "SUCCESS"
-        const val STATUS_OVERDUE = "OVERDUE"
-        const val STATUS_MARKEDDEL = "MARKEDDEL"
         const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c code: "
-        const val LOG_ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления заявки оплаты для TraiceId:  "
         const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name "
-        const val LOG_START_PAYMENT_CREATION = "Начало создания платежа для TraiceId: "
+        const val LOG_START_PAYMENT_RECORD = ">>> СТАРТ метода создание записи в таблице payments "
+        const val LOG_END_PAYMENT_RECORD = "<<< КОНЕЦ метода создание записи в таблице payments для payment_id: "
+        const val LOG_START_PAYMENT_CREATION = "***** Начало ***** создания платежа по карте для TraceId: "
+        const val LOG_START_PAYMENT_CREATION_SBP = "***** Начало ***** создания платежа по СБП для TraceId: "
         const val LOG_AND_ERROR_GET_PAYMENT_STATUS =
             "Ошибка получения статуса оплаты из таблицы payment_status для TraceID: "
         const val LOG_AND_ERROR_GET_TYPE_STATUS =
@@ -79,19 +76,14 @@ class PaymentServiceImpl(
         const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
         const val LOG_ERROR_UPDATE_ORDER_BY_CODE = "Обновление полей urlToReturn и urlToDecline в  заявке не выполненно"
         const val ERROR_UPDATE_ORDER_BY_CODE = "Ошибка Обновления полей urlToReturn и urlToDecline для заявки с code: "
-        const val LOG_ERROR_BANK_PRIORITY_CHECK =
-            "Параметр с paramName \"bankPriorityCheck\"  не найден в конфигурационной таблице"
-        const val LOG_ERROR_BANK_PRIORITY =
-            "Параметр с paramName \"bankPriority\"  не найден в конфигурационной таблице"
-
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
-        const val ERROR_BANK_PRIORITY_CHECK = "Ошибка поиска параметра \"bankPriorityCheck\""
     }
 
     private val traceId = getTraceId()
 
     override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+        logger.info("$LOG_START_PAYMENT_CREATION $traceId")
         val paymentContext =
             buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
         val checkBank = paymentContext.checkBank
@@ -125,7 +117,7 @@ class PaymentServiceImpl(
     }
 
     override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
-        logger.info(LOG_START_PAYMENT_CREATION + traceId)
+        logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
         var paymentId: Long? = null
         val paymentContext =
             buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR_SBP, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
@@ -141,7 +133,7 @@ class PaymentServiceImpl(
             paymentId,
             paymentContext.premiumAmount,
             orderFindByCode,
-            subOrder
+            subOrder,
         )
     }
 
@@ -150,7 +142,6 @@ class PaymentServiceImpl(
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
     ): PaymentContext {
-        logger.info(LOG_START_PAYMENT_CREATION + traceId)
         val orderFindByCode = getOrderDao.getOrderByCode(paymentPayRequest.code, traceId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
         val premiumAmount = orderFindByCode.premiumAmount
@@ -171,10 +162,12 @@ class PaymentServiceImpl(
     }
 
     private fun createPaymentRecord(
-        checkBank: Bank?, order: Order,
-        tokenGpb: String?
+        checkBank: Bank?,
+        order: Order,
+        tokenGpb: String?,
     ): Long? {
-        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_NEW)
+        logger.info(LOG_START_PAYMENT_RECORD)
+        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, StatusEnum.NEW.value)
         val paymentType = getPaymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
         val paymentRecord =
             Payment(
@@ -185,6 +178,7 @@ class PaymentServiceImpl(
                 paymentBankId = tokenGpb,
             )
         val saved = paymentRepository.save(paymentRecord)
+        logger.info("$LOG_END_PAYMENT_RECORD ${saved.id}")
         return saved.id
     }
 }

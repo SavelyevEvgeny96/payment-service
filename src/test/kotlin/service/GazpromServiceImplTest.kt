@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -19,18 +20,21 @@ import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.GET_PAYMENT_LINK
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
 import ru.sogaz.site.paymentService.util.Util
+import java.util.Optional
 
 class GazpromServiceImplTest {
-
     private val getActionTypeDao: GetActionTypeDao = mock()
     private val actionTypeRepository: ActionTypeRepository = mock()
     private val paymentRepository: PaymentRepository = mock()
@@ -43,6 +47,7 @@ class GazpromServiceImplTest {
     private val util: Util = mock()
     private val getPaymentStatusDao: GetPaymentStatusDao = mock()
     private val getPaymentDao: GetPaymentDao = mock()
+    private val generatorService: GeneratorService = mock()
 
     private lateinit var service: GazpromServiceImpl
 
@@ -52,25 +57,26 @@ class GazpromServiceImplTest {
         whenever(apiConfigProperty.gpbUrl).thenReturn("http://fake-gpb/")
         whenever(apiConfigProperty.portalId).thenReturn("portal123")
 
-        service = GazpromServiceImpl(
-            getActionTypeDao,
-            paymentRepository,
-            apiConfigProperty,
-            objectMapper,
-            subOrderRepository,
-            operationHistoryRepository,
-            restTemplateWrapper,
-            util,
-            getPaymentStatusDao,
-            getPaymentDao
-        )
+        service =
+            GazpromServiceImpl(
+                generatorService,
+                getActionTypeDao,
+                paymentRepository,
+                apiConfigProperty,
+                objectMapper,
+                subOrderRepository,
+                operationHistoryRepository,
+                restTemplateWrapper,
+                getPaymentStatusDao,
+                getPaymentDao,
+            )
     }
 
     @Test
     fun `should return token when GPB API responds successfully`() {
         val responseJson = """{ "${PaymentServiceImpl.GPB_TOKEN_ROW}": "abc123" }"""
         whenever(
-            restTemplate.exchange(any<String>(), eq(HttpMethod.POST), isNull(), eq(String::class.java))
+            restTemplate.exchange(any<String>(), eq(HttpMethod.POST), isNull(), eq(String::class.java)),
         ).thenReturn(ResponseEntity.ok(responseJson))
 
         val order = mock<Order>()
@@ -87,8 +93,60 @@ class GazpromServiceImplTest {
             }
         val token = service.getGPBToken("trace-1", order, subOrder)
 
-
         assert(token == "abc123")
         verify(operationHistoryRepository, never()).save(any())
+    }
+
+    @Test
+    fun `should return payment link when GPB SBP API responds successfully`() {
+        val traceId = "trace-123"
+        val order = Order(orderId = "ORD-1", code = "CODE-1", recipientEmail = "mail@test.com")
+        val clientSystem = ClientSystem().apply { externalSystemCode = "SYS" }
+        val subOrder =
+            SubOrder(
+                subOrderId = "SUB-1",
+                orderId = order,
+                docType = "DOC",
+                contractId = "CONT-1",
+                contractNumber = "CN-1",
+                clientSystem = clientSystem,
+            )
+
+        val actionType = mock<ru.sogaz.site.paymentService.entity.ActionType>()
+        whenever(getActionTypeDao.getActionType(traceId, GET_PAYMENT_LINK)).thenReturn(actionType)
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(generatorService.generateDescription(anyList())).thenReturn("Test description")
+
+        val apiResponse =
+            mapOf(
+                "data" to mapOf("payload" to "http://pay-link"),
+            )
+        whenever(
+            restTemplate.exchange(
+                any<String>(),
+                eq(HttpMethod.POST),
+                any(),
+                any<org.springframework.core.ParameterizedTypeReference<Map<String, Any>>>(),
+            ),
+        ).thenReturn(ResponseEntity.ok(apiResponse))
+
+        whenever(apiConfigProperty.gpbSbpUrl).thenReturn("http://fake-sbp")
+        whenever(apiConfigProperty.paymentAccount).thenReturn("acc123")
+        whenever(apiConfigProperty.merchantIdSbpGpb).thenReturn("mrc123")
+        whenever(apiConfigProperty.callbackUrlSbp).thenReturn("http://callback")
+
+        val paymentRequest =
+            ru.sogaz.site.paymentService.dto
+                .PaymentPayRequest("code", null, null)
+        val payment =
+            Payment(
+                id = 1L,
+                orderId = order,
+            )
+        whenever(paymentRepository.findById(1L)).thenReturn(Optional.of(payment))
+        val response = service.initiateGPBSBPPayment(paymentRequest, traceId, payment.id, "1000", order, subOrder)
+
+        assert(response.body?.data?.paymentPageUrl == "http://pay-link")
+        verify(operationHistoryRepository).save(any())
     }
 }

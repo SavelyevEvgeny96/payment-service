@@ -12,6 +12,12 @@ import ru.sogaz.siter.models.resonses.Response
  */
 interface PaymentService {
     fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
+
     fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
-    fun buildPaymentContext(paymentPayRequest: PaymentPayRequest,errorCodeIsPaidFor: Int,errorCodeIsNotAvailable: Int,): PaymentContext
+
+    fun buildPaymentContext(
+        paymentPayRequest: PaymentPayRequest,
+        errorCodeIsPaidFor: Int,
+        errorCodeIsNotAvailable: Int,
+    ): PaymentContext
 }

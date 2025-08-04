@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.util.Util
 import ru.sogaz.siter.models.resonses.Response
@@ -28,6 +29,7 @@ class OrderServiceImpl(
     private val subOrderRepository: SubOrderRepository,
     private val util: Util,
     private val getBankDao: GetBankDao,
+    private val generatorService: GeneratorService,
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -36,16 +38,16 @@ class OrderServiceImpl(
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
         const val SUCCESS = "SUCCESS"
-        const val LOG_START_ORDER_CREATION = "Начало создания заявки для TraceId: {}"
-        const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан с orderCode: {} для TraceId: {}"
+        const val LOG_START_ORDER_CREATION = "***** Начало ***** создания заявки для TraceId: "
+        const val LOG_END_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
+        const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан и сохранен в базу с orderCode: "
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с paymentCode: {} для TraceId: {}"
-        const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: {}"
+        const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: "
         const val LOG_ERROR_WHILE_UPDATING_ORDER = "Ошибка при обновлении суммы премии заказа"
-        const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: {} для TraceId: {}"
-        const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: {} для TraceId: {}"
-        const val LOG_ERROR_WHILE_CREATING_ORDER = "Ошибка при создании заказа для TraceId: {}"
-        const val LOG_ERROR_WHILE_CREATING_SUB_ORDER = "Ошибка при создании подзаказа для TraceId: {}"
-        const val ERROR_ORDER_STATUS_NOT_FOUND = "Статус заказа не найден для stateId 0"
+        const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: "
+        const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: "
+        const val LOG_ERROR_WHILE_CREATING_ORDER = "Ошибка при создании заказа для TraceId: "
+        const val LOG_ERROR_WHILE_CREATING_SUB_ORDER = "Ошибка при создании подзаказа для TraceId: "
         const val ERROR_CLIENT_SYSTEM_NOT_FOUND = "Система клиента не найдена"
         const val ERROR_WHILE_SAVING_ORDER = "Ошибка при сохранении заказа"
         const val ERROR_WHILE_SAVING_SUB_ORDER = "Ошибка при сохранении подзаказа"
@@ -64,10 +66,10 @@ class OrderServiceImpl(
         traceId: String,
     ): ResponseEntity<Response<DataOrder>> {
         logger.info(LOG_START_ORDER_CREATION + traceId)
-        val orderId = util.generateUniquePaymentId()
-        val orderCode = util.generateUniquePaymentCode(traceId)
-        logger.info(LOG_PAYMENT_ID_GENERATED, orderId, traceId)
-        logger.info(LOG_PAYMENT_CODE_GENERATED, orderCode, traceId)
+        val orderId = generatorService.generateUniquePaymentId()
+        val orderCode = generatorService.generateUniquePaymentCode(traceId)
+        logger.info("$LOG_PAYMENT_ID_GENERATED $orderId")
+        logger.info("$LOG_PAYMENT_CODE_GENERATED $orderCode")
 
         val requestBankId = requestWrapper.bank
         val bank = getBankDao.getBank(requestBankId, traceId)
@@ -94,14 +96,14 @@ class OrderServiceImpl(
 
         try {
             orderRepository.save(order)
-            logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
+            logger.info("$LOG_ORDER_CREATION_SUCCESS $orderCode")
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
+            logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
             throw InnerException(traceId, ERROR_WHILE_SAVING_ORDER)
         }
         var totalPremiumAmount = BigDecimal.ZERO
         for (paymentRequest in requestWrapper.payments) {
-            val subOrderId = util.generateUniquePaymentId()
+            val subOrderId = generatorService.generateUniquePaymentId()
             logger.info(LOG_PAYMENT_ID_GENERATED, subOrderId, traceId)
             val clientSystem = getClientSystemDao.getClientSystem(traceId, paymentRequest.externalSystemCode)
             val subOrders =
@@ -144,7 +146,7 @@ class OrderServiceImpl(
         val result: Response<DataOrder>
         val paymentPageUrl = "${apiConfigProperty.paymentUrl}$orderCode"
         try {
-            logger.info(LOG_ORDER_CREATION_SUCCESS, orderCode, traceId)
+            logger.info("$LOG_ORDER_CREATION_SUCCESS $orderCode")
             val dataOrder = DataOrder(orderCode, paymentPageUrl)
             result =
                 Response(
@@ -153,9 +155,10 @@ class OrderServiceImpl(
                     traceId = traceId,
                     data = dataOrder,
                 )
+            logger.info("$LOG_END_ORDER_CREATION $traceId")
             return ResponseEntity(result, HttpStatus.OK)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_WHILE_CREATING_ORDER, traceId)
+            logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
             throw InnerException(traceId, ERROR_WHILE_SAVING_ORDER)
         }
     }

@@ -28,7 +28,6 @@ open class PaymentServiceConfig(
 ) {
     @Bean
     open fun paymentService(
-        configDataRepository: ConfigDataRepository,
         orderRepository: OrderRepository,
         subOrderRepository: SubOrderRepository,
         actionTypeRepository: ActionTypeRepository,
@@ -48,7 +47,6 @@ open class PaymentServiceConfig(
     ): PaymentService =
         PaymentServiceImpl(
             orderRepository = orderRepository,
-            configDataRepository = configDataRepository,
             operationHistoryRepository = operationHistoryRepository,
             paymentRepository = paymentRepository,
             getOrderDao = getOrderDao,

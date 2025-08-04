@@ -11,8 +11,8 @@ import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GazpromService
+import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl
-import ru.sogaz.site.paymentService.util.Util
 
 @Configuration
 class GazpromServiceConfig {
@@ -25,9 +25,9 @@ class GazpromServiceConfig {
         operationHistoryRepository: PaymentOperationHistoryRepository,
         paymentRepository: PaymentRepository,
         getActionTypeDao: GetActionTypeDao,
-        util: Util,
         getPaymentStatusDao: GetPaymentStatusDao,
         getPaymentDao: GetPaymentDao,
+        generatorService: GeneratorService,
     ): GazpromService =
         GazpromServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -37,8 +37,8 @@ class GazpromServiceConfig {
             operationHistoryRepository = operationHistoryRepository,
             paymentRepository = paymentRepository,
             getActionTypeDao = getActionTypeDao,
-            util = util,
             getPaymentStatusDao = getPaymentStatusDao,
             getPaymentDao = getPaymentDao,
+            generatorService = generatorService,
         )
 }

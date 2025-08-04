@@ -2,11 +2,9 @@ package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.GetPaymentDao
-import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import java.util.*
 
 class GetPaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
@@ -20,7 +18,7 @@ class GetPaymentDaoImpl(
 
     override fun getPayment(
         traceId: String,
-        paymentId:Long,
+        paymentId: Long,
     ): Payment? =
         try {
             paymentRepository.findById(paymentId).orElse(null)

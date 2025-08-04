@@ -10,7 +10,7 @@ data class PaymentReceiptCreateRequest(
     val version: String,
 ) {
     data class ClientInfo(
-        val email: String,
+        val email: String?,
         val phone: String?,
         val name: String?,
     )

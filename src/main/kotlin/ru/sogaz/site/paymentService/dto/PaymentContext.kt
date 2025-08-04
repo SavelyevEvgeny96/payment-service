@@ -11,5 +11,5 @@ data class PaymentContext(
     val premiumAmount: String?,
     val orderStatus: OrderStatus?,
     val configBankPriorityCheck: String,
-    val checkBank: Bank?
+    val checkBank: Bank?,
 )

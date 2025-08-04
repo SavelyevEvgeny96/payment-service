@@ -5,9 +5,9 @@ class GPBSBPPaymentRequest(
     val merchantId: String,
     val templateVersion: String,
     val qrcType: String,
-    val amount:String?,
-    val currency:String,
-    val paymentPurpose:String,
-    val callbackMerchantNotifications:String,
-    val qrTtl:String
+    val amount: String?,
+    val currency: String,
+    val paymentPurpose: String?,
+    val callbackMerchantNotifications: String,
+    val qrTtl: String,
 )

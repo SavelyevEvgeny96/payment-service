@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.http.HttpMethod
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -35,7 +34,6 @@ import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 class PaymentStatusCheckerServiceImpl(
     private val orderRepository: OrderRepository,
@@ -83,15 +81,15 @@ class PaymentStatusCheckerServiceImpl(
     }
 
     override fun getStatus(
-        payment_bank_id: String,
+        paymentBankId: String,
         traceId: String,
     ): Response<ResponseStatusPay> {
-        logger.info(LOG_START_STATUS_CHECK.format(payment_bank_id, traceId))
+        logger.info(LOG_START_STATUS_CHECK.format(paymentBankId, traceId))
 
         val payment =
-            paymentRepository.findByPaymentBankId(payment_bank_id)
+            paymentRepository.findByPaymentBankId(paymentBankId)
                 ?: throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId).also {
-                    logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
+                    logger.error(LOG_PAYMENT_NOT_FOUND.format(paymentBankId, traceId))
                 }
 
         return when (payment.stateId?.stateId) {

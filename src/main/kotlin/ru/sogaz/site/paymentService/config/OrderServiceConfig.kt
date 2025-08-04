@@ -10,6 +10,7 @@ import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
 import ru.sogaz.site.paymentService.util.Util
@@ -27,6 +28,7 @@ open class OrderServiceConfig {
         getClientSystemDao: GetClientSystemDao,
         getOrderStatusDao: GetOrderStatusDao,
         getBankDao: GetBankDao,
+        generatorService: GeneratorService,
     ): OrderService =
         OrderServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -36,5 +38,6 @@ open class OrderServiceConfig {
             getBankDao = getBankDao,
             getClientSystemDao = getClientSystemDao,
             getOrderStatusDao = getOrderStatusDao,
+            generatorService = generatorService,
         )
 }

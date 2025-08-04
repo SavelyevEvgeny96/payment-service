@@ -5,13 +5,16 @@ import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.ERROR_ORDER_STATUS_NOT_FOUND
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
 
 class GetOrderStatusDaoImpl(
     private val orderStatusRepository: OrderStatusRepository,
 ) : GetOrderStatusDao {
     private val logger = loggerFor(javaClass)
+
+    companion object {
+        const val ERROR_ORDER_STATUS_NOT_FOUND = "Статус заказа не найден для stateId 0"
+    }
 
     override fun getOrderStatus(
         traceId: String,

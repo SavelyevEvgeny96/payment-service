@@ -5,6 +5,6 @@ import ru.sogaz.site.paymentService.entity.Payment
 interface GetPaymentDao {
     fun getPayment(
         traceId: String,
-        paymentId:Long,
+        paymentId: Long,
     ): Payment?
 }
