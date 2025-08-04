@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.entity
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -18,7 +19,7 @@ data class Payment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @ManyToOne
+    @ManyToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "state_id", referencedColumnName = "state_id")
     var stateId: PaymentStatus? = null,
     @ManyToOne
@@ -42,6 +43,8 @@ data class Payment(
     var createDate: LocalDateTime? = null,
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
+    @Column(name = "cheque_name")
+    var chequeName: String? = null,
 ) {
     @PrePersist
     fun prePersist() {
