@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
@@ -16,7 +16,7 @@ open class OrderServiceConfig {
     @Bean
     open fun orderService(
         configDataDao: ConfigDataDao,
-        apiConfigProperty: ApiConfigProperty,
+        apiConfigProperty: ApiConfigProperties,
         clientSystemRepository: ClientSystemRepository,
         orderRepository: OrderRepository,
         orderStatusRepository: OrderStatusRepository,

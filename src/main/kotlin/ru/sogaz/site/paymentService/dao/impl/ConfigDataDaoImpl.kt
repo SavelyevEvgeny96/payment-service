@@ -21,7 +21,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ApiConfigProperty
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -40,7 +40,7 @@ import java.util.UUID
 open class ConfigDataDaoImpl(
     private val paymentStatusRepository: PaymentStatusRepository,
     private val paymentRepository: PaymentRepository,
-    private val apiConfigProperty: ApiConfigProperty,
+    private val apiConfigProperty: ApiConfigProperties,
     private val configDataRepository: ConfigDataRepository,
     private val objectMapper: ObjectMapper,
     private val restTemplate: WebConfigRestTemplate,
