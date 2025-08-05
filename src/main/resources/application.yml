@@ -7,6 +7,8 @@ app:
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
     app_profile: ${ENVIRONMENT:dev}
     java-version: ${JAVA_VERSION:21}
+  certs:
+    gpb: ${GPB_CERT}
 
 server:
   port: ${SERVER_PORT:8080}

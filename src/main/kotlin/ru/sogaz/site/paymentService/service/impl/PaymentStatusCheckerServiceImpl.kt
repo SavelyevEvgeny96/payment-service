@@ -114,7 +114,7 @@ class PaymentStatusCheckerServiceImpl(
                     traceId,
                     1101520200,
                     ResponseStatusPay(
-                        paymentStatus = payment.stateId!!.stateName,
+                        paymentStatus = payment.stateId!!.stateId,
                         cheque = checkChequeStatus(payment, traceId),
                     ),
                 )
