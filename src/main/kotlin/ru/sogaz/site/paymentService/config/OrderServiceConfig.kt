@@ -2,9 +2,9 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.dao.GetBankDao
+import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
-import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
@@ -26,18 +26,17 @@ open class OrderServiceConfig {
         subOrderRepository: SubOrderRepository,
         util: Util,
         getClientSystemDao: GetClientSystemDao,
-        getOrderStatusDao: GetOrderStatusDao,
-        getBankDao: GetBankDao,
+        bankDao: BankDao,
         generatorService: GeneratorService,
+        orderDao: OrderDao,
     ): OrderService =
         OrderServiceImpl(
             apiConfigProperty = apiConfigProperty,
             orderRepository = orderRepository,
             subOrderRepository = subOrderRepository,
-            util = util,
-            getBankDao = getBankDao,
+            bankDao = bankDao,
             getClientSystemDao = getClientSystemDao,
-            getOrderStatusDao = getOrderStatusDao,
             generatorService = generatorService,
+            orderDao = orderDao,
         )
 }

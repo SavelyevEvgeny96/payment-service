@@ -2,13 +2,12 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetBankDao
-import ru.sogaz.site.paymentService.dao.GetBankPriorityDao
-import ru.sogaz.site.paymentService.dao.GetOrderDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
@@ -19,6 +18,7 @@ import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.PaymentService
+import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
 import ru.sogaz.site.paymentService.util.Util
 
@@ -35,29 +35,27 @@ open class PaymentServiceConfig(
         paymentStatusRepository: PaymentStatusRepository,
         paymentRepository: PaymentRepository,
         paymentTypeRepository: PaymentTypeRepository,
-        getOrderDao: GetOrderDao,
+        orderDao: OrderDao,
         getSubOrderDao: GetSubOrderDao,
-        util: Util,
+        paymentStatusCheckerService: PaymentStatusCheckerService,
         getPaymentTypeDao: GetPaymentTypeDao,
         getPaymentStatusDao: GetPaymentStatusDao,
         getActionTypeDao: GetActionTypeDao,
         gazpromService: GazpromService,
-        getBankDao: GetBankDao,
-        getBankPriorityDao: GetBankPriorityDao,
+        bankDao: BankDao,
     ): PaymentService =
         PaymentServiceImpl(
             orderRepository = orderRepository,
             operationHistoryRepository = operationHistoryRepository,
             paymentRepository = paymentRepository,
-            getOrderDao = getOrderDao,
+            orderDao = orderDao,
             getSubOrderDao = getSubOrderDao,
-            util = util,
             getPaymentTypeDao = getPaymentTypeDao,
             getPaymentStatusDao = getPaymentStatusDao,
             getActionTypeDao = getActionTypeDao,
             gazpromService = gazpromService,
-            getBankDao = getBankDao,
-            getBankPriorityDao = getBankPriorityDao,
+            bankDao = bankDao,
+            paymentStatusCheckerService = paymentStatusCheckerService,
         )
 
     @Bean

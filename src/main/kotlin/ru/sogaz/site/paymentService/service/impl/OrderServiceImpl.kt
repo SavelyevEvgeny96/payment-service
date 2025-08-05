@@ -3,9 +3,9 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.GetBankDao
+import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
-import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
@@ -16,7 +16,6 @@ import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
-import ru.sogaz.site.paymentService.util.Util
 import ru.sogaz.siter.models.resonses.Response
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -25,11 +24,10 @@ class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
     private val getClientSystemDao: GetClientSystemDao,
     private val orderRepository: OrderRepository,
-    private val getOrderStatusDao: GetOrderStatusDao,
     private val subOrderRepository: SubOrderRepository,
-    private val util: Util,
-    private val getBankDao: GetBankDao,
+    private val bankDao: BankDao,
     private val generatorService: GeneratorService,
+    private val orderDao: OrderDao,
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -73,8 +71,8 @@ class OrderServiceImpl(
         logger.info("$LOG_PAYMENT_CODE_GENERATED $orderCode")
 
         val requestBankId = requestWrapper.bank
-        val bank = getBankDao.getBank(requestBankId, traceId)
-        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
+        val bank = bankDao.getBank(requestBankId, traceId)
+        val orderStatus = orderDao.getOrderStatus(traceId, STATE_ID_NEW)
         val order =
             Order(
                 orderId = orderId,

@@ -8,13 +8,12 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR_SBP
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetBankDao
-import ru.sogaz.site.paymentService.dao.GetBankPriorityDao
-import ru.sogaz.site.paymentService.dao.GetOrderDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentContext
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
@@ -29,7 +28,7 @@ import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.util.Util
+import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.siter.models.resonses.Response
 
 /**
@@ -38,7 +37,7 @@ import ru.sogaz.siter.models.resonses.Response
  */
 class PaymentServiceImpl(
     private val gazpromService: GazpromService,
-    private val getOrderDao: GetOrderDao,
+    private val orderDao: OrderDao,
     private val paymentRepository: PaymentRepository,
     private val getPaymentTypeDao: GetPaymentTypeDao,
     private val getPaymentStatusDao: GetPaymentStatusDao,
@@ -46,9 +45,8 @@ class PaymentServiceImpl(
     private val orderRepository: OrderRepository,
     private val getSubOrderDao: GetSubOrderDao,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
-    private val util: Util,
-    private val getBankDao: GetBankDao,
-    private val getBankPriorityDao: GetBankPriorityDao,
+    private val paymentStatusCheckerService: PaymentStatusCheckerService,
+    private val bankDao: BankDao,
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
@@ -142,11 +140,11 @@ class PaymentServiceImpl(
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
     ): PaymentContext {
-        val orderFindByCode = getOrderDao.getOrderByCode(paymentPayRequest.code, traceId)
+        val orderFindByCode = orderDao.getOrderByCode(paymentPayRequest.code, traceId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
         val premiumAmount = orderFindByCode.premiumAmount
         val orderStatus = orderFindByCode.orderStatus
-        util.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable, traceId)
+        paymentStatusCheckerService.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable, traceId)
         orderFindByCode.urlToReturn = paymentPayRequest.urlToReturn
         orderFindByCode.urlToDecline = paymentPayRequest.urlToReturnF
         try {
@@ -155,9 +153,9 @@ class PaymentServiceImpl(
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
             throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
         }
-        val configBankPriorityCheck = getBankPriorityDao.getBankPriority(traceId)
+        val configBankPriorityCheck = bankDao.getBankPriority(traceId)
         val bank = orderFindByCode.bankId
-        val checkBank = getBankDao.getBank(bank?.bankId, traceId)
+        val checkBank = bankDao.getBank(bank?.bankId, traceId)
         return PaymentContext(orderFindByCode, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
     }
 
