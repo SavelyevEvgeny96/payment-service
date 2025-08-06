@@ -34,7 +34,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
+    password: ${DB_PASSWORD:123456}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -46,10 +46,15 @@ api:
   payment:
     paymentUrl: ${PAYMENT_URL:URL}
     gpbUrl: ${GPB_URL:https://lt.pga.gazprombank.ru/api/v4/}
+    gpbSbpUrl: ${GPB_SBP_URL:https://testapi.sbp.gazprombank.ru:9443/merchant/qrc-data}
+    callbackUrlSbp: ${CALLBACK_URL_SBP:https://example.com/callback}
+    paymentAccount: ${PAYMENT_ACCOUNT:40701810800000030052}
     portalId: ${GPB_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}
+    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:MA0000016649}
     merchantId: ${GPB_MERCHANT_ID:B80540E3096C8730BCE3}
     backUrlS: ${BACK_URL_SUCCESS:http://test.k835.sogaz.ru/realty/flat/success/}
     backUrlF: ${BACK_URL_FALSE:https:http://test.k835.sogaz.ru/realty/flat/}
+
   receipt:
     receiptUrl: ${RECEIPT_URL:http://s00-0000-k835.sogaz.ru/test/payment-receipt-service/paymentCheck/create}
     receiptPath: ${RECEIPT_PATH:/paymentCheck/create}
