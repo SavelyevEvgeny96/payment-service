@@ -7,17 +7,24 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.impl.GeneratorServiceImpl
-import ru.sogaz.site.paymentService.util.Util
 
 class GeneratorServiceImplTest {
-    private lateinit var util: Util
+    private lateinit var configDataService: ConfigDataService
     private lateinit var service: GeneratorServiceImpl
+
+    companion object {
+        const val DESC_POLICY_NUMBER = "Номера полиса №"
+        const val SEPARATOR = ", №"
+        const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
+        const val DESC = "Оплата: "
+    }
 
     @BeforeEach
     fun setUp() {
-        util = mock()
-        service = GeneratorServiceImpl(util)
+        configDataService = mock()
+        service = GeneratorServiceImpl(configDataService)
     }
 
     @Test
@@ -25,7 +32,7 @@ class GeneratorServiceImplTest {
         val traceId = "trace-1"
         val expectedLength = 10
 
-        whenever(util.getCodeLength(traceId)).thenReturn(expectedLength)
+        whenever(configDataService.getCodeLength(traceId)).thenReturn(expectedLength)
 
         val code = service.generateUniquePaymentCode(traceId)
 
@@ -47,11 +54,11 @@ class GeneratorServiceImplTest {
         val description = service.generateDescription(subOrders)
 
         // Проверяем, что описание содержит нужные части
-        assertTrue(description.contains(Util.DESC))
-        assertTrue(description.contains(Util.DESC_POLICY_NUMBER))
+        assertTrue(description.contains(DESC))
+        assertTrue(description.contains(DESC_POLICY_NUMBER))
         assertTrue(description.contains("PN1"))
         assertTrue(description.contains("PN2"))
-        assertTrue(description.contains(Util.DESC_INSURANCE_CONTRACT))
+        assertTrue(description.contains(DESC_INSURANCE_CONTRACT))
         assertTrue(description.contains("CID1"))
         assertTrue(description.contains("CID2"))
         assertTrue(description.contains("("))
@@ -69,7 +76,7 @@ class GeneratorServiceImplTest {
 
         val description = service.generateDescription(subOrders)
 
-        assertEquals(Util.DESC, description)
+        assertEquals(DESC, description)
     }
 
     @Test

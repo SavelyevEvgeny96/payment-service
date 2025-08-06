@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
-import ru.sogaz.site.paymentService.util.Util
 
 @Configuration
 open class OrderServiceConfig {
@@ -24,7 +23,6 @@ open class OrderServiceConfig {
         orderRepository: OrderRepository,
         orderStatusRepository: OrderStatusRepository,
         subOrderRepository: SubOrderRepository,
-        util: Util,
         getClientSystemDao: GetClientSystemDao,
         bankDao: BankDao,
         generatorService: GeneratorService,

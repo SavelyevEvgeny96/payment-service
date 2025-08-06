@@ -23,7 +23,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
@@ -31,12 +30,10 @@ import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.GET_PAYMENT_LINK
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
-import ru.sogaz.site.paymentService.util.Util
 import java.util.Optional
 
 class GazpromServiceImplTest {
     private val getActionTypeDao: GetActionTypeDao = mock()
-    private val actionTypeRepository: ActionTypeRepository = mock()
     private val paymentRepository: PaymentRepository = mock()
     private val apiConfigProperty: ApiConfigProperties = mock()
     private val objectMapper = ObjectMapper()
@@ -44,7 +41,6 @@ class GazpromServiceImplTest {
     private val operationHistoryRepository: PaymentOperationHistoryRepository = mock()
     private val restTemplateWrapper: WebConfigRestTemplate = mock()
     private val restTemplate: RestTemplate = mock()
-    private val util: Util = mock()
     private val getPaymentStatusDao: GetPaymentStatusDao = mock()
     private val getPaymentDao: GetPaymentDao = mock()
     private val generatorService: GeneratorService = mock()

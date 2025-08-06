@@ -1,17 +1,14 @@
-package ru.sogaz.site.paymentService.util
+package ru.sogaz.site.paymentService.service.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
+import ru.sogaz.site.paymentService.service.ConfigDataService
 
-class Util(
+class ConfigDataServiceImpl(
     private val configDataRepository: ConfigDataRepository,
-) {
+) : ConfigDataService {
     companion object {
-        const val DESC_POLICY_NUMBER = "Номера полиса №"
-        const val SEPARATOR = ", №"
-        const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
-        const val DESC = "Оплата: "
         const val CODE_LENGTH = "codeLength"
         const val LOG_CODE_LENGTH_NOT_FOUND = "Не найдено значение длины для генерации Order.code "
         const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
@@ -19,7 +16,7 @@ class Util(
 
     private val logger = loggerFor(javaClass)
 
-    fun getCodeLength(traceId: String): Int {
+    override fun getCodeLength(traceId: String): Int {
         val config =
             try {
                 configDataRepository.findByParamName(CODE_LENGTH)

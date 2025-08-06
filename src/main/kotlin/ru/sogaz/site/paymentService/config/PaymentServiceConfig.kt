@@ -20,7 +20,6 @@ import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
-import ru.sogaz.site.paymentService.util.Util
 
 @Configuration
 open class PaymentServiceConfig(
@@ -57,7 +56,4 @@ open class PaymentServiceConfig(
             bankDao = bankDao,
             paymentStatusCheckerService = paymentStatusCheckerService,
         )
-
-    @Bean
-    fun utilConfig() = Util(configDataRepository = configDataRepository)
 }

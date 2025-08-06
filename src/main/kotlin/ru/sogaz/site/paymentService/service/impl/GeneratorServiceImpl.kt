@@ -1,20 +1,23 @@
 package ru.sogaz.site.paymentService.service.impl
 
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.GeneratorService
-import ru.sogaz.site.paymentService.util.Util
-import ru.sogaz.site.paymentService.util.Util.Companion.DESC
-import ru.sogaz.site.paymentService.util.Util.Companion.DESC_INSURANCE_CONTRACT
-import ru.sogaz.site.paymentService.util.Util.Companion.DESC_POLICY_NUMBER
-import ru.sogaz.site.paymentService.util.Util.Companion.SEPARATOR
 import java.util.Locale
 import java.util.UUID
 
 class GeneratorServiceImpl(
-    private val util: Util,
+    private val configDataService: ConfigDataService,
 ) : GeneratorService {
+    companion object {
+        const val DESC_POLICY_NUMBER = "Номера полиса №"
+        const val SEPARATOR = ", №"
+        const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
+        const val DESC = "Оплата: "
+    }
+
     override fun generateUniquePaymentCode(traceId: String): String {
-        val codeLength = util.getCodeLength(traceId)
+        val codeLength = configDataService.getCodeLength(traceId)
 
         return UUID
             .randomUUID()
