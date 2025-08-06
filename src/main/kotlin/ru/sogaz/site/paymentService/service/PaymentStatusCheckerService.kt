@@ -1,13 +1,19 @@
 package ru.sogaz.site.paymentService.service
 
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.siter.models.resonses.Response
 
 interface PaymentStatusCheckerService {
-    fun checkUnpaidPayments()
-
     fun getStatus(
-        payment_bank_id: String,
+        paymentBankId: String,
         traceId: String,
     ): Response<ResponseStatusPay>
+
+    fun checkStatusOrder(
+        orderStatus: OrderStatus?,
+        errorCodeIsPaidFor: Int,
+        errorCodeIsNotAvailable: Int,
+        traceId: String,
+    )
 }

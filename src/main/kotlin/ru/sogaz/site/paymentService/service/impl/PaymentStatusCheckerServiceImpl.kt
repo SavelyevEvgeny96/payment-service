@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.http.HttpMethod
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -15,8 +14,10 @@ import ru.sogaz.site.paymentService.dto.QueueMessageDto
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
 import ru.sogaz.site.paymentService.dto.VariableDto
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
@@ -30,12 +31,13 @@ import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 class PaymentStatusCheckerServiceImpl(
     private val orderRepository: OrderRepository,
@@ -83,15 +85,15 @@ class PaymentStatusCheckerServiceImpl(
     }
 
     override fun getStatus(
-        payment_bank_id: String,
+        paymentBankId: String,
         traceId: String,
     ): Response<ResponseStatusPay> {
-        logger.info(LOG_START_STATUS_CHECK.format(payment_bank_id, traceId))
+        logger.info(LOG_START_STATUS_CHECK.format(paymentBankId, traceId))
 
         val payment =
-            paymentRepository.findByPaymentBankId(payment_bank_id)
+            paymentRepository.findByPaymentBankId(paymentBankId)
                 ?: throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId).also {
-                    logger.error(LOG_PAYMENT_NOT_FOUND.format(payment_bank_id, traceId))
+                    logger.error(LOG_PAYMENT_NOT_FOUND.format(paymentBankId, traceId))
                 }
 
         return when (payment.stateId?.stateId) {
@@ -122,31 +124,6 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    @Scheduled(fixedDelayString = "60000")
-    override fun checkUnpaidPayments() {
-        val traceId = UUID.randomUUID().toString()
-        logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
-
-        try {
-            val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
-
-            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
-
-            logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
-
-            unpaidOrders.forEach { payment ->
-                try {
-                    processPaymentStatusCheck(payment, traceId)
-                    Thread.sleep(periodPay)
-                } catch (e: Exception) {
-                    logger.info(LOG_PAYMENT_CHECK_ERROR.format(payment.paymentBankId, traceId), e)
-                }
-            }
-        } catch (e: Exception) {
-            logger.info(LOG_CRITICAL_TASK_ERROR.format(traceId), e)
-        }
-    }
-
     private fun processPaymentStatusCheck(
         payment: Payment,
         traceId: String,
@@ -166,6 +143,29 @@ class PaymentStatusCheckerServiceImpl(
                         traceId,
                     ),
                 )
+        }
+    }
+
+    override fun checkStatusOrder(
+        orderStatus: OrderStatus?,
+        errorCodeIsPaidFor: Int,
+        errorCodeIsNotAvailable: Int,
+        traceId: String,
+    ) {
+        val status = StatusEnum.fromValue(orderStatus?.stateId)
+        if (status != null) {
+            when {
+                status.isPaidFor() -> {
+                    logger.error("${orderStatus?.stateId} $LOG_ORDER_STATUS_SUCCESS $traceId")
+                    throw BusinessException(errorCodeIsPaidFor, traceId)
+                }
+                status.isNotAvailable() -> {
+                    logger.error("${orderStatus?.stateId} $LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL $traceId")
+                    throw BusinessException(errorCodeIsNotAvailable, traceId)
+                }
+                else -> {
+                }
+            }
         }
     }
 

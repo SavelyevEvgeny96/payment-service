@@ -10,7 +10,7 @@ data class GPBPaymentRequest(
     val backUrlF: String,
     val amount: String?,
     val currency: String,
-    val description: String,
+    val description: String?,
 )
 
 data class State(
