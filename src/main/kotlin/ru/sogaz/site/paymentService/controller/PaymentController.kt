@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
+import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
 import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
@@ -23,6 +25,7 @@ import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.service.AkbCallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
@@ -42,6 +45,7 @@ class PaymentController(
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val paymentRequestValidator: PaymentRequestValidator,
     private val gpbCallbackService: GpbCallbackService,
+    private val akbCallbackService: AkbCallbackService,
 ) {
     /**
      * Метод для создания заявки.
@@ -169,5 +173,22 @@ class PaymentController(
                 signature = signature,
             )
         return gpbCallbackService.processCallback(requestParams)
+    }
+
+    @PostMapping("/akb/state")
+    fun stateRussiaCallback(
+        @RequestParam("ORDER_ID") orderId: String,
+        @RequestParam("ORDER_RID") orderRid: String?,
+        @RequestParam("ORDER_STATUS") orderStatus: String?,
+        @RequestParam("ORDER_STORED_TOKENS_IDS") orderToken: String?,
+        @RequestParam(value = "pmoResultCode", required = false) pmoResultCode: String?,
+        @RequestParam(value = "ridByPmo", required = false) ridByPmo: String?,
+        request: HttpServletRequest,
+    ): Response<AkbCallbackResponse> {
+        val requestParams =
+            AkbCallbackRequest(
+                bankId = orderId,
+            )
+        return akbCallbackService.processCallback(requestParams)
     }
 }
