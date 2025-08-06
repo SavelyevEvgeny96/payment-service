@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
-import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest

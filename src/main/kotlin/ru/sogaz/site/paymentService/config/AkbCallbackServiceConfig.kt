@@ -2,9 +2,10 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.sogaz.site.paymentService.dao.GetPaymentDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
@@ -17,20 +18,22 @@ class AkbCallbackServiceConfig {
     @Bean
     fun akbCallbackService(
         paymentRepository: PaymentRepository,
-        orderRepository: OrderRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         paymentStatusService: PaymentStatusCheckerService,
         paymentStatusRepository: PaymentStatusRepository,
         actionTypeRepository: ActionTypeRepository,
         clientSystemRepository: ClientSystemRepository,
+        getPaymentDao: GetPaymentDao,
+        orderDao: OrderDao,
     ): AkbCallbackService =
         AkbCallbackServiceImpl(
             paymentRepository,
             paymentStatusRepository,
             actionTypeRepository,
             clientSystemRepository,
-            orderRepository,
             operationHistoryRepository,
             paymentStatusService,
+            getPaymentDao,
+            orderDao,
         )
 }

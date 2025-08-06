@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_NOT_FOUND_ORDER_TO_CODE
+import java.util.*
 
 class OrderDaoImpl(
     private val orderRepository: OrderRepository,
@@ -39,6 +40,17 @@ class OrderDaoImpl(
     ): OrderStatus =
         try {
             orderStatusRepository.findByStateId(stateOrder)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
+            throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)
+        }
+
+    override fun getOrderId(
+        traceId: String,
+        orderId: String,
+    ): Order? =
+        try {
+            orderRepository.findByOrderId(orderId)
         } catch (e: Exception) {
             logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
             throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)

@@ -7,4 +7,9 @@ interface GetPaymentDao {
         traceId: String,
         paymentId: Long,
     ): Payment?
+
+    fun getPaymentFromBankId(
+        bankId: String,
+        traceId: String,
+    ): Payment?
 }

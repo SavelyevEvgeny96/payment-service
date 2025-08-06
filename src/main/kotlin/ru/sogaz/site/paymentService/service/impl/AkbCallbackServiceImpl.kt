@@ -2,14 +2,18 @@ package ru.sogaz.site.paymentService.service.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.GetPaymentDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
+import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
@@ -24,69 +28,81 @@ class AkbCallbackServiceImpl(
     private val paymentStatusRepository: PaymentStatusRepository,
     private val actionTypeRepository: ActionTypeRepository,
     private val clientSystemRepository: ClientSystemRepository,
-    private val orderRepository: OrderRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val paymentStatusService: PaymentStatusCheckerService,
+    private val getPaymentDao: GetPaymentDao,
+    private val orderDao: OrderDao,
 ) : AkbCallbackService {
     private val logger = loggerFor(javaClass)
 
+    private val callbackPaymentStatus: PaymentStatus by lazy {
+        paymentStatusRepository.findByStateId(CONST_CALLBACK)
+            ?: throw IllegalStateException("Cтатус платежа CALLBACK_AKB не найден")
+    }
+
+    private val callbackAction: ActionType by lazy {
+        actionTypeRepository.findByActionName(CALLBACK_SUCCESS)
+            ?: throw IllegalStateException("ActionType для CALLBACK_SUCCESS не найден")
+    }
+
+    private val payClientSystem: ClientSystem by lazy {
+        clientSystemRepository.findByExternalSystemCode(PAY)
+            ?: throw IllegalStateException("Автор для PAY не найден")
+    }
+
     companion object {
-        const val CONST_CALLBACK = "CALLBACK"
+        const val CONST_CALLBACK = "CALLBACK_AKB"
         const val ORDER_NOT_FOUND = "Order ID не найден"
         const val CALLBACK_SUCCESS = "Получение CALLBACK от АКБ Россия"
         const val PAY = "PAY"
         const val ERROR_BANK_ID = "Произошла ошибка для bank_id: "
         const val CODE_SUCCESS = 1101511200
+        const val STATUS_OK = "OK"
     }
 
     override fun processCallback(request: AkbCallbackRequest): Response<AkbCallbackResponse> {
         val traceId = getTraceId()
         return try {
-            val payment =
-                paymentRepository.findByPaymentBankId(request.bankId)
-                    ?: throw InnerException(traceId, "")
+            val payment = getPaymentDao.getPaymentFromBankId(request.bankId, traceId)
 
-            updatePaymentStatus(payment)
+            if (payment != null) {
+                updatePaymentStatus(payment)
 
-            logOperation(payment)
+                logOperation(payment, traceId)
 
-            payment.paymentBankId?.let { paymentStatusService.getStatus(it, getTraceId()) }
-
-            val response = AkbCallbackResponse("OK")
+            }
+            val response = AkbCallbackResponse(STATUS_OK)
 
             getSuccessResponse(traceId, CODE_SUCCESS, response)
         } catch (e: Exception) {
             logger.info(ERROR_BANK_ID + request.bankId, e)
-            throw InnerException(traceId, "")
+            throw InnerException(traceId, ERROR_BANK_ID + request.bankId)
         }
     }
 
     private fun updatePaymentStatus(payment: Payment) {
-        val paymentStatus = paymentStatusRepository.findByStateId(CONST_CALLBACK)
-        payment.stateId = paymentStatus
+        payment.stateId = callbackPaymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentRepository.save(payment)
     }
 
-    private fun logOperation(payment: Payment) {
+    private fun logOperation(
+        payment: Payment,
+        traceId: String,
+    ) {
         try {
             val orderId =
-                payment.orderId?.id ?: throw InnerException(
+                payment.orderId ?: throw InnerException(
                     getTraceId(),
                     ORDER_NOT_FOUND,
                 )
-            val order =
-                orderRepository.findById(orderId).orElseThrow {
-                    InnerException(getTraceId(), ORDER_NOT_FOUND + orderId)
-                }
+            val order = orderId.orderId?.let { orderDao.getOrderId(traceId, it) }
 
-            val actions = actionTypeRepository.findByActionName(CALLBACK_SUCCESS)
-            val actionsAuthor = clientSystemRepository.findByExternalSystemCode(PAY)
             operationHistoryRepository.save(
                 PaymentOperationHistory(
-                    action = actions,
+                    action = callbackAction,
                     actionDate = LocalDateTime.now(),
-                    actionAuthor = actionsAuthor,
+                    actionAuthor = payClientSystem,
                     order = order,
                 ),
             )
