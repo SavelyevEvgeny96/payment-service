@@ -43,4 +43,15 @@ class OrderDaoImpl(
             logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
             throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)
         }
+
+    override fun getOrderId(
+        traceId: String,
+        orderId: String,
+    ): Order? =
+        try {
+            orderRepository.findByOrderId(orderId)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
+            throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)
+        }
 }

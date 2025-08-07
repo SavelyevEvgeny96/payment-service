@@ -66,11 +66,6 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_PAYMENT_STATUS_RECEIVED = "Получен статус платежа '%s' для заказа %s. TraceId: %s"
         const val LOG_UNKNOWN_PAYMENT_STATUS = "Неизвестный статус платежа: %s для заказа %s. TraceId: %s"
 
-        const val LOG_BACKGROUND_TASK_START = "Запуск фоновой задачи проверки статусов платежей. ID операции: %s"
-        const val LOG_UNPAID_PAYMENTS_FOUND = "Найдено %d неоплаченных платежей для проверки"
-        const val LOG_PAYMENT_CHECK_ERROR = "Ошибка при проверке статуса платежа для заказа %s. ID операции: %s"
-        const val LOG_CRITICAL_TASK_ERROR = "Критическая ошибка в фоновой задаче проверки платежей. ID операции: %s"
-
         const val LOG_CARD_PAYMENT_PROCESSING = "Обработка платежа по банковской карте для платежа %s. ID операции: %s"
         const val LOG_GPB_PAYMENT_PROCESSING = "Обработка платежа ГПБ для %s. ID операции: %s"
         const val LOG_GPB_API_CALL = "Отправка запроса статуса платежа в ГПБ. URL: %s. ID операции: %s"
@@ -124,7 +119,7 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processPaymentStatusCheck(
+    override fun processPaymentStatusCheck(
         payment: Payment,
         traceId: String,
     ) {

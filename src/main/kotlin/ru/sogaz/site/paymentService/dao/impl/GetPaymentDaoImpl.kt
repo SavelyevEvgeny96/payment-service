@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
@@ -12,6 +13,7 @@ class GetPaymentDaoImpl(
     companion object {
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
         const val ERROR_GET_PAYMENT_BY_ORDER_ID = "Ошибка поиска платежа по order_id Exception:  "
+        const val PAYMENT_NOT_FOUND = "Ошибка запроса смены статуса. Указанный ордер не найден"
     }
 
     private val logger = loggerFor(javaClass)
@@ -25,5 +27,13 @@ class GetPaymentDaoImpl(
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, traceId)
             throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID ${e.message}")
+        }
+
+    override fun getPaymentFromBankId(bankId: String): Payment =
+        try {
+            paymentRepository.findByPaymentBankId(bankId)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID)
+            throw InnerException(getTraceId(), "$PAYMENT_NOT_FOUND ${e.message}")
         }
 }

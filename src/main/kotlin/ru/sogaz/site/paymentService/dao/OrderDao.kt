@@ -13,4 +13,9 @@ interface OrderDao {
         traceId: String,
         stateOrder: String,
     ): OrderStatus
+
+    fun getOrderId(
+        traceId: String,
+        orderId: String,
+    ): Order?
 }
