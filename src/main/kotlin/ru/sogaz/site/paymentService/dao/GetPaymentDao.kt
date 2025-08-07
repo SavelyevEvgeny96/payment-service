@@ -8,8 +8,5 @@ interface GetPaymentDao {
         paymentId: Long,
     ): Payment?
 
-    fun getPaymentFromBankId(
-        bankId: String,
-        traceId: String,
-    ): Payment?
+    fun getPaymentFromBankId(bankId: String): Payment
 }

@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
@@ -28,14 +29,11 @@ class GetPaymentDaoImpl(
             throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID ${e.message}")
         }
 
-    override fun getPaymentFromBankId(
-        bankId: String,
-        traceId: String,
-    ): Payment? =
+    override fun getPaymentFromBankId(bankId: String): Payment =
         try {
             paymentRepository.findByPaymentBankId(bankId)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID)
-            throw InnerException(traceId, "$PAYMENT_NOT_FOUND ${e.message}")
+            throw InnerException(getTraceId(), "$PAYMENT_NOT_FOUND ${e.message}")
         }
 }
