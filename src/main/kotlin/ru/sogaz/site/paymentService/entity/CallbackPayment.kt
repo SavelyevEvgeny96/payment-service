@@ -5,6 +5,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
@@ -13,17 +15,28 @@ import java.time.LocalDateTime
 data class CallbackPayment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    var id: Long? = null,
     @Column(name = "bank_id", nullable = false)
-    val bankId: String? = null,
+    var bankId: String? = null,
     @Column(name = "type_id", nullable = false)
-    val typeId: String? = null,
+    var typeId: String? = null,
     @Column(name = "payment_bank_id", nullable = false)
-    val paymentBankId: String? = null,
+    var paymentBankId: String? = null,
     @Column(name = "qrc_id")
-    val qrcId: String? = null,
+    var qrcId: String? = null,
     @Column(name = "create_date", nullable = false, updatable = false)
-    val createDate: LocalDateTime? = null,
+    var createDate: LocalDateTime? = null,
     @Column(name = "update_date", nullable = false)
     var updateDate: LocalDateTime? = null,
-)
+) {
+    @PrePersist
+    fun prePersist() {
+        createDate = LocalDateTime.now()
+        updateDate = LocalDateTime.now()
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        updateDate = LocalDateTime.now()
+    }
+}
