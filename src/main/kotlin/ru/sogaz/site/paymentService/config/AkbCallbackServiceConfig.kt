@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.repository.CallbackPaymentRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -24,6 +25,7 @@ class AkbCallbackServiceConfig(
         operationHistoryRepository: PaymentOperationHistoryRepository,
         getPaymentDao: GetPaymentDao,
         orderDao: OrderDao,
+        callbackPaymentRepository: CallbackPaymentRepository,
     ): AkbCallbackService {
         val callbackPaymentsStatus =
             paymentStatusRepository.findByStateId("CALLBACK_AKB")
@@ -42,6 +44,7 @@ class AkbCallbackServiceConfig(
             operationHistoryRepository = operationHistoryRepository,
             getPaymentDao = getPaymentDao,
             orderDao = orderDao,
+            callbackPaymentRepository = callbackPaymentRepository,
             callbackPaymentStatus = callbackPaymentsStatus,
             callbackAction = callbackActions,
             payClientSystem = payClientSystems,
