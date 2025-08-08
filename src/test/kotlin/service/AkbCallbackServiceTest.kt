@@ -6,9 +6,11 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.ClientSystem
@@ -20,10 +22,9 @@ import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.impl.AkbCallbackServiceImpl
 
 class AkbCallbackServiceTest {
-    private val paymentRepository = mock<PaymentRepository>()
+    private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
-    private val getPaymentDao = mock<GetPaymentDao>()
-    private val orderDao = mock<OrderDao>()
+    private val callbackPaymentDao = mock<CallbackPaymentDao>()
     private val callbackPaymentStatus = PaymentStatus().apply { stateId = "CALLBACK_AKB" }
     private val callbackAction = ActionType(1, "Получение CALLBACK от АКБ Россия")
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
@@ -48,8 +49,8 @@ class AkbCallbackServiceTest {
             }
 
         val paymentRepository = mock<PaymentRepository>()
-        val getPaymentDao =
-            mock<GetPaymentDao>().apply {
+        val paymentDao =
+            mock<PaymentDao>().apply {
                 `when`(getPaymentFromBankId(testRequest.bankId)).thenReturn(payment)
             }
         val orderDao =
@@ -62,13 +63,13 @@ class AkbCallbackServiceTest {
             }
         val service =
             AkbCallbackServiceImpl(
-                paymentRepository = paymentRepository,
-                operationHistoryRepository = operationHistoryRepository,
-                getPaymentDao = getPaymentDao,
+                paymentDao = paymentDao,
                 orderDao = orderDao,
+                callbackPaymentDao = callbackPaymentDao,
                 callbackPaymentStatus = callbackPaymentStatus,
                 callbackAction = callbackAction,
                 payClientSystem = payClientSystem,
+                paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
         val response = service.processCallback(testRequest)
@@ -85,14 +86,13 @@ class AkbCallbackServiceTest {
                 orderId = Order().apply { id = 1L }
             }
 
-        val getPaymentDao =
-            mock<GetPaymentDao>().apply {
+        val paymentDao =
+            mock<PaymentDao>().apply {
                 `when`(getPaymentFromBankId(testRequest.bankId)).thenReturn(payment)
             }
-        val paymentRepository =
-            mock<PaymentRepository>().apply {
-                `when`(save(any())).thenThrow(RuntimeException("DB error"))
-            }
+
+        `when`(paymentDao.save(payment)).thenThrow(RuntimeException("DB error"))
+
         val orderDao =
             mock<OrderDao>().apply {
                 `when`(getOrderId("222", "222")).thenReturn(Order())
@@ -100,17 +100,17 @@ class AkbCallbackServiceTest {
 
         val service =
             AkbCallbackServiceImpl(
-                paymentRepository = paymentRepository,
-                operationHistoryRepository = operationHistoryRepository,
-                getPaymentDao = getPaymentDao,
+                paymentDao = paymentDao,
                 orderDao = orderDao,
+                callbackPaymentDao = callbackPaymentDao,
                 callbackPaymentStatus = callbackPaymentStatus,
                 callbackAction = callbackAction,
                 payClientSystem = payClientSystem,
+                paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val exceptions = assertThrows<InnerException> { service.processCallback(testRequest) }
+        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest) }
 
-        assertThat(exceptions.message).isNotNull()
+        assertThat(exceptions.getErrorCode()).isNotNull()
     }
 }

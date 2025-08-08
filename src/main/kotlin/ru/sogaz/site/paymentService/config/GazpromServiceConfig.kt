@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -26,7 +26,7 @@ class GazpromServiceConfig {
         paymentRepository: PaymentRepository,
         getActionTypeDao: GetActionTypeDao,
         getPaymentStatusDao: GetPaymentStatusDao,
-        getPaymentDao: GetPaymentDao,
+        paymentDao: PaymentDao,
         generatorService: GeneratorService,
     ): GazpromService =
         GazpromServiceImpl(
@@ -38,7 +38,7 @@ class GazpromServiceConfig {
             paymentRepository = paymentRepository,
             getActionTypeDao = getActionTypeDao,
             getPaymentStatusDao = getPaymentStatusDao,
-            getPaymentDao = getPaymentDao,
+            paymentDao = paymentDao,
             generatorService = generatorService,
         )
 }

@@ -16,8 +16,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -42,7 +42,7 @@ class GazpromServiceImplTest {
     private val restTemplateWrapper: WebConfigRestTemplate = mock()
     private val restTemplate: RestTemplate = mock()
     private val getPaymentStatusDao: GetPaymentStatusDao = mock()
-    private val getPaymentDao: GetPaymentDao = mock()
+    private val paymentDao: PaymentDao = mock()
     private val generatorService: GeneratorService = mock()
 
     private lateinit var service: GazpromServiceImpl
@@ -64,7 +64,7 @@ class GazpromServiceImplTest {
                 operationHistoryRepository,
                 restTemplateWrapper,
                 getPaymentStatusDao,
-                getPaymentDao,
+                paymentDao,
             )
     }
 
