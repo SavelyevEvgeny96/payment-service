@@ -2,13 +2,13 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.CallbackPaymentRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.AkbCallbackService
 import ru.sogaz.site.paymentService.service.impl.AkbCallbackServiceImpl
@@ -21,11 +21,11 @@ class AkbCallbackServiceConfig(
 ) {
     @Bean
     fun akbCallbackService(
-        paymentRepository: PaymentRepository,
-        operationHistoryRepository: PaymentOperationHistoryRepository,
-        getPaymentDao: GetPaymentDao,
+        paymentDao: PaymentDao,
         orderDao: OrderDao,
         callbackPaymentRepository: CallbackPaymentRepository,
+        callbackPaymentDao: CallbackPaymentDao,
+        paymentOperationHistoryDao: PaymentOperationHistoryDao,
     ): AkbCallbackService {
         val callbackPaymentsStatus =
             paymentStatusRepository.findByStateId("CALLBACK_AKB")
@@ -40,14 +40,13 @@ class AkbCallbackServiceConfig(
                 ?: throw IllegalStateException("Автор для PAY не найден")
 
         return AkbCallbackServiceImpl(
-            paymentRepository = paymentRepository,
-            operationHistoryRepository = operationHistoryRepository,
-            getPaymentDao = getPaymentDao,
+            paymentDao = paymentDao,
             orderDao = orderDao,
-            callbackPaymentRepository = callbackPaymentRepository,
             callbackPaymentStatus = callbackPaymentsStatus,
             callbackAction = callbackActions,
             payClientSystem = payClientSystems,
+            callbackPaymentDao = callbackPaymentDao,
+            paymentOperationHistoryDao = paymentOperationHistoryDao,
         )
     }
 }

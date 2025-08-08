@@ -12,8 +12,8 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.GPBSBPPaymentRequest
@@ -43,7 +43,7 @@ class GazpromServiceImpl(
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val restTemplate: WebConfigRestTemplate,
     private val getPaymentStatusDao: GetPaymentStatusDao,
-    private val getPaymentDao: GetPaymentDao,
+    private val paymentDao: PaymentDao,
 ) : GazpromService {
     private val logger = loggerFor(javaClass)
 
@@ -301,7 +301,7 @@ class GazpromServiceImpl(
         paymentPageUrl: String,
     ) {
         if (paymentId != null) {
-            val getPaymentForUpdate = getPaymentDao.getPayment(traceId, paymentId)
+            val getPaymentForUpdate = paymentDao.getPayment(traceId, paymentId)
             val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
             getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
             getPaymentForUpdate?.stateId = paymentStatusREG

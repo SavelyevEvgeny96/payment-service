@@ -2,16 +2,17 @@ package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 
-class GetPaymentDaoImpl(
+class PaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
-) : GetPaymentDao {
+) : PaymentDao {
     companion object {
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
+        const val LOG_ERROR_GET_PAYMENT_SAVE = "Не удалось сохранить данные платежа"
         const val ERROR_GET_PAYMENT_BY_ORDER_ID = "Ошибка поиска платежа по order_id Exception:  "
         const val PAYMENT_NOT_FOUND = "Ошибка запроса смены статуса. Указанный ордер не найден"
     }
@@ -36,4 +37,13 @@ class GetPaymentDaoImpl(
             logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID)
             throw InnerException(getTraceId(), "$PAYMENT_NOT_FOUND ${e.message}")
         }
+
+    override fun save(payment: Payment) {
+        try {
+            paymentRepository.save(payment)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
+            throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
+        }
+    }
 }

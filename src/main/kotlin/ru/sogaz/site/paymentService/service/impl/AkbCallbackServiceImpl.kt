@@ -4,8 +4,10 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dao.GetPaymentDao
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
 import ru.sogaz.site.paymentService.entity.ActionType
@@ -15,23 +17,19 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.CallbackPaymentRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.AkbCallbackService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
 
 class AkbCallbackServiceImpl(
-    private val paymentRepository: PaymentRepository,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository,
-    private val getPaymentDao: GetPaymentDao,
+    private val paymentDao: PaymentDao,
     private val orderDao: OrderDao,
-    private val callbackPaymentRepository: CallbackPaymentRepository,
     private val callbackPaymentStatus: PaymentStatus,
     private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
+    private val callbackPaymentDao: CallbackPaymentDao,
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
 ) : AkbCallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -48,7 +46,7 @@ class AkbCallbackServiceImpl(
     override fun processCallback(request: AkbCallbackRequest): Response<AkbCallbackResponse> {
         val traceId = getTraceId()
         return try {
-            val payment = getPaymentDao.getPaymentFromBankId(request.bankId)
+            val payment = paymentDao.getPaymentFromBankId(request.bankId)
 
             updatePaymentStatus(payment, traceId)
 
@@ -74,7 +72,7 @@ class AkbCallbackServiceImpl(
                 createDate = LocalDateTime.now(),
                 updateDate = LocalDateTime.now(),
             )
-        callbackPaymentRepository.save(callbackPayment)
+        callbackPaymentDao.save(callbackPayment)
     }
 
     private fun updatePaymentStatus(
@@ -84,7 +82,7 @@ class AkbCallbackServiceImpl(
         try {
             payment.stateId = callbackPaymentStatus
             payment.updateDate = LocalDateTime.now()
-            paymentRepository.save(payment)
+            paymentDao.save(payment)
         } catch (e: Exception) {
             logger.info(ERROR_PAYMENT_UPDATE)
             throw InnerException(traceId, e.message)
@@ -103,7 +101,7 @@ class AkbCallbackServiceImpl(
                 )
             val order = orderId.orderId?.let { orderDao.getOrderId(traceId, it) }
 
-            operationHistoryRepository.save(
+            paymentOperationHistoryDao.save(
                 PaymentOperationHistory(
                     action = callbackAction,
                     actionDate = LocalDateTime.now(),
