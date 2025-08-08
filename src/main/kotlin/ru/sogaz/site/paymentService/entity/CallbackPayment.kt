@@ -16,17 +16,17 @@ data class CallbackPayment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @Column(name = "bank_id", nullable = false)
+    @Column(name = "bank_id")
     var bankId: String? = null,
-    @Column(name = "type_id", nullable = false)
+    @Column(name = "type_id")
     var typeId: String? = null,
-    @Column(name = "payment_bank_id", nullable = false)
+    @Column(name = "payment_bank_id")
     var paymentBankId: String? = null,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
-    @Column(name = "create_date", nullable = false, updatable = false)
+    @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
-    @Column(name = "update_date", nullable = false)
+    @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
 ) {
     @PrePersist
