@@ -6,7 +6,7 @@ import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 
-class GetOrderStatusDaoImpl(
+class OrderStatusDaoImpl(
     private val orderStatusRepository: OrderStatusRepository,
 ) : OrderStatusDao {
     private val logger = loggerFor(javaClass)
