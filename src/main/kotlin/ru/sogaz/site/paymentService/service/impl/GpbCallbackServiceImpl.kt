@@ -3,30 +3,31 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
+import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
+import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.entity.ClientSystem
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
-import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
-import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.time.LocalDateTime
 
 class GpbCallbackServiceImpl(
-    private val paymentRepository: PaymentRepository,
-    private val orderRepository: OrderRepository,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository,
-    private val paymentStatusService: PaymentStatusCheckerService,
+    private val paymentDao: PaymentDao,
+    private val orderDao: OrderDao,
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
-    private val paymentStatusRepository: PaymentStatusRepository,
-    private val actionTypeRepository: ActionTypeRepository,
-    private val clientSystemRepository: ClientSystemRepository,
+    private val getPaymentStatusDao: GetPaymentStatusDao,
+    private val getOrderStatusDao: GetOrderStatusDao,
+    private val callbackAction: ActionType,
+    private val payClientSystem: ClientSystem,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -34,14 +35,15 @@ class GpbCallbackServiceImpl(
         const val PAYMENT_NOT_FOUND = "Not Found"
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
-        const val CONST_CALLBACK = "CALLBACK"
+        const val CONST_CALLBACK = "SUCCESS"
         const val ORDER_NOT_FOUND = "Order ID не найден"
-        const val CALLBACK_SUCCESS = "Получение CALLBACK от ГПБ"
-        const val PAY = "PAY"
         const val ERROR_TRX_ID = "Произошла ошибка для trx_id: "
     }
 
-    override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
+    override fun processCallback(
+        request: GpbCallbackRequest,
+        traceId: String,
+    ): ResponseEntity<String> {
         return try {
             if (!signatureVerifier.verifySignature(request.signature)) {
                 logger.info(ERROR_TRX_ID + request.trxId)
@@ -49,14 +51,22 @@ class GpbCallbackServiceImpl(
             }
 
             val payment =
-                paymentRepository.findByPaymentBankId(request.trxId)
+                paymentDao.findByPaymentBankId(request.trxId)
                     ?: return createErrorResponse(PAYMENT_NOT_FOUND)
 
-            updatePaymentStatus(payment)
+            if (payment.orderId == null ||
+                payment.orderId?.orderId?.let {
+                    orderDao.getOrderId(traceId, it)
+                } == null
+            ) {
+                return createErrorResponse(INTERNAL_SERVER_ERROR)
+            }
 
-            logOperation(payment)
+            updatePaymentStatus(payment, traceId)
 
-            payment.paymentBankId?.let { paymentStatusService.getStatus(it, getTraceId()) }
+            updateOrderStatus(order = payment.orderId!!, traceId)
+
+            logOperation(payment, traceId)
 
             createSuccessResponse()
         } catch (e: Exception) {
@@ -65,28 +75,42 @@ class GpbCallbackServiceImpl(
         }
     }
 
-    private fun updatePaymentStatus(payment: Payment) {
-        val paymentStatus = paymentStatusRepository.findByStateId(CONST_CALLBACK)
+    private fun updatePaymentStatus(
+        payment: Payment,
+        traceId: String,
+    ) {
+        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, CONST_CALLBACK)
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
-        paymentRepository.save(payment)
+        paymentDao.save(payment)
     }
 
-    private fun logOperation(payment: Payment) {
+    private fun updateOrderStatus(
+        order: Order,
+        traceId: String,
+    ) {
+        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, CONST_CALLBACK)
+        order.orderStatus = orderStatus
+        order.updateDate = LocalDateTime.now()
+        orderDao.save(order)
+    }
+
+    private fun logOperation(
+        payment: Payment,
+        traceId: String,
+    ) {
         try {
-            val orderId = payment.orderId?.id ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
+            val orderId = payment.orderId ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
-                orderRepository.findById(orderId).orElseThrow {
-                    InnerException(getTraceId(), ORDER_NOT_FOUND + orderId)
+                orderId.orderId?.let {
+                    orderDao.getOrderId(traceId, it)
                 }
 
-            val actions = actionTypeRepository.findByActionName(CALLBACK_SUCCESS)
-            val actionsAuthor = clientSystemRepository.findByExternalSystemCode(PAY)
-            operationHistoryRepository.save(
+            paymentOperationHistoryDao.save(
                 PaymentOperationHistory(
-                    action = actions,
+                    action = callbackAction,
                     actionDate = LocalDateTime.now(),
-                    actionAuthor = actionsAuthor,
+                    actionAuthor = payClientSystem,
                     order = order,
                 ),
             )
