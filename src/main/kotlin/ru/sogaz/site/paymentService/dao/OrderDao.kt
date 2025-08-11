@@ -9,11 +9,6 @@ interface OrderDao {
         traceId: String,
     ): Order
 
-    fun getOrderStatus(
-        traceId: String,
-        stateOrder: String,
-    ): OrderStatus
-
     fun getOrderId(
         traceId: String,
         orderId: String,

@@ -41,9 +41,8 @@ import ru.sogaz.site.paymentService.repository.SubOrderRepository
 class DataDaoConfig {
     @Bean
     fun daoGetOrderConfig(
-        orderRepository: OrderRepository,
-        orderStatusRepository: OrderStatusRepository,
-    ): OrderDao = OrderDaoImpl(orderRepository = orderRepository, orderStatusRepository = orderStatusRepository)
+        orderRepository: OrderRepository
+    ): OrderDao = OrderDaoImpl(orderRepository = orderRepository)
 
     @Bean
     fun daoGetSubOrderConfig(subOrderRepository: SubOrderRepository): GetSubOrderDao =
@@ -72,7 +71,8 @@ class DataDaoConfig {
         )
 
     @Bean
-    fun daoGetPaymentConfig(paymentRepository: PaymentRepository): PaymentDao = PaymentDaoImpl(paymentRepository = paymentRepository)
+    fun daoGetPaymentConfig(paymentRepository: PaymentRepository): PaymentDao =
+        PaymentDaoImpl(paymentRepository = paymentRepository)
 
     @Bean
     fun callbackPaymentDaoConfig(callbackPaymentRepository: CallbackPaymentRepository): CallbackPaymentDao =
@@ -83,7 +83,8 @@ class DataDaoConfig {
         PaymentOperationHistoryDaoImpl(paymentOperationHistoryRepository = paymentOperationHistoryRepository)
 
     @Bean
-    fun orderStatusDao(orderStatusRepository: OrderStatusRepository): OrderStatusDao = OrderStatusDaoImpl(orderStatusRepository)
+    fun orderStatusDao(orderStatusRepository: OrderStatusRepository): OrderStatusDao =
+        OrderStatusDaoImpl(orderStatusRepository)
 
     @Bean
     fun daoGetClientSystemConfig(clientSystemRepository: ClientSystemRepository): GetClientSystemDao =

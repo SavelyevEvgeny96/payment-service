@@ -15,7 +15,6 @@ import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LO
 
 class OrderDaoImpl(
     private val orderRepository: OrderRepository,
-    private val orderStatusRepository: OrderStatusRepository,
 ) : OrderDao {
     private val logger = loggerFor(javaClass)
 
@@ -33,17 +32,6 @@ class OrderDaoImpl(
         } catch (e: Exception) {
             logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, code, traceId)
             throw BusinessException(CODE_ERROR_ORDER_NOT_FOUND, traceId)
-        }
-
-    override fun getOrderStatus(
-        traceId: String,
-        stateOrder: String,
-    ): OrderStatus =
-        try {
-            orderStatusRepository.findByStateId(stateOrder)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
-            throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)
         }
 
     override fun getOrderId(
