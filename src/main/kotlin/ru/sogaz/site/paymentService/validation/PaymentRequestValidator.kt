@@ -29,8 +29,9 @@ class PaymentRequestValidator(
     fun isValid(
         paymentRequest: PaymentRequest?,
         paymentRequestWrapper: PaymentRequestWrapper,
+        traceId: String
     ) {
-        logger.info("Начало валидации для traceId: ${paymentRequest?.traceId}")
+        logger.info("Начало валидации для traceId: $traceId")
 
         if (paymentRequest == null) {
             logger.error("Ошибка: PaymentRequest не был передан.")
@@ -81,7 +82,7 @@ class PaymentRequestValidator(
             logger.warn("Ошибка валидации для формата даты окончания платежа: ${paymentRequestWrapper.paymentEndDate}")
         } else if (!paymentPastDateValidator.isValid(paymentRequestWrapper.paymentEndDate)) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE])
-            logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${paymentRequest.traceId}")
+            logger.warn("Ошибка: дата окончания платежа прошла для traceId: $traceId")
         }
 
         if (!phoneValidator.isValid(paymentRequestWrapper.recipientPhone)) {
@@ -106,16 +107,16 @@ class PaymentRequestValidator(
 
         if (listResultError.isNotEmpty()) {
             logger.error(
-                "Валидация не прошла для traceId: ${paymentRequest.traceId}." +
-                    " Ошибки: ${listResultError.map { it?.error }}",
+                "Валидация не прошла для traceId: $traceId." +
+                        " Ошибки: ${listResultError.map { it?.error }}",
             )
             throw ValidationException(
                 CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,
-                paymentRequest.traceId,
+                traceId,
                 listResultError,
             )
         }
 
-        logger.info("Валидация прошла успешно для traceId: ${paymentRequest.traceId}")
+        logger.info("Валидация прошла успешно для traceId: $traceId")
     }
 }

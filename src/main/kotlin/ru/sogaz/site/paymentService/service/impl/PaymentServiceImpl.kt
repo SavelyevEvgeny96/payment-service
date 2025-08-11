@@ -7,7 +7,6 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR_SBP
-import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
@@ -78,12 +77,18 @@ class PaymentServiceImpl(
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
     }
 
-    private val traceId = getTraceId()
-
-    override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+    override fun createPayment(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String,
+    ): ResponseEntity<Response<DataPay>> {
         logger.info("$LOG_START_PAYMENT_CREATION $traceId")
         val paymentContext =
-            buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
+            buildPaymentContext(
+                paymentPayRequest,
+                CODE_ERROR_ORDER_IS_PAID_FOR,
+                CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
+                traceId,
+            )
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
@@ -100,7 +105,7 @@ class PaymentServiceImpl(
                     )
                 operationHistoryRepository.save(operationHistory)
             }
-            val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
+            val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb, traceId)
             return gazpromService.initiateGPBPayment(
                 paymentPayRequest,
                 traceId,
@@ -114,16 +119,24 @@ class PaymentServiceImpl(
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
     }
 
-    override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+    override fun createPaymentSbp(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String,
+    ): ResponseEntity<Response<DataPay>> {
         logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
         var paymentId: Long? = null
         val paymentContext =
-            buildPaymentContext(paymentPayRequest, CODE_ERROR_ORDER_IS_PAID_FOR_SBP, CODE_ERROR_ORDER_IS_NOT_AVAILABLE)
+            buildPaymentContext(
+                paymentPayRequest,
+                CODE_ERROR_ORDER_IS_PAID_FOR_SBP,
+                CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
+                traceId,
+            )
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
         if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+            paymentId = createPaymentRecord(checkBank, orderFindByCode, null, traceId)
         }
         return gazpromService.initiateGPBSBPPayment(
             paymentPayRequest,
@@ -139,6 +152,7 @@ class PaymentServiceImpl(
         paymentPayRequest: PaymentPayRequest,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
+        traceId: String,
     ): PaymentContext {
         val orderFindByCode = orderDao.getOrderByCode(paymentPayRequest.code, traceId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
@@ -163,6 +177,7 @@ class PaymentServiceImpl(
         checkBank: Bank?,
         order: Order,
         tokenGpb: String?,
+        traceId: String,
     ): Long? {
         logger.info(LOG_START_PAYMENT_RECORD)
         val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, StatusEnum.NEW.value)
