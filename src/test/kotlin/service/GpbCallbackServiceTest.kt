@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
-import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -24,7 +24,7 @@ class GpbCallbackServiceTest {
     private val orderDao = mock<OrderDao>()
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val getPaymentStatusDao = mock<GetPaymentStatusDao>()
-    private val getOrderStatusDao = mock<GetOrderStatusDao>()
+    private val getOrderStatusDao = mock<OrderStatusDao>()
 
     private val callbackAction = ActionType(1, "Заказ оплачен")
     private val payClientSystem = ClientSystem(1, "PAY", "Test")

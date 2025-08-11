@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -25,7 +25,7 @@ class GpbCallbackServiceImpl(
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
     private val getPaymentStatusDao: GetPaymentStatusDao,
-    private val getOrderStatusDao: GetOrderStatusDao,
+    private val getOrderStatusDao: OrderStatusDao,
     private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
 ) : GpbCallbackService {

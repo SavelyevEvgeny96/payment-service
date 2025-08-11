@@ -1,14 +1,14 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.GetOrderStatusDao
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 
 class GetOrderStatusDaoImpl(
     private val orderStatusRepository: OrderStatusRepository,
-) : GetOrderStatusDao {
+) : OrderStatusDao {
     private val logger = loggerFor(javaClass)
 
     companion object {
