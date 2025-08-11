@@ -52,7 +52,6 @@ class GpbCallbackServiceImpl(
 
             val payment =
                 paymentDao.findByPaymentBankId(request.trxId)
-                    ?: return createErrorResponse(PAYMENT_NOT_FOUND)
 
             if (payment.orderId == null ||
                 payment.orderId?.orderId?.let {
