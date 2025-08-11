@@ -10,6 +10,7 @@ import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl
@@ -20,6 +21,7 @@ import ru.sogaz.site.paymentService.dao.impl.GetPaymentStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetPaymentTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.GetSubOrderDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.OrderDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.OrderStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentOperationHistoryDaoImpl
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
@@ -79,6 +81,9 @@ class DataDaoConfig {
     @Bean
     fun paymentOperationHistoryDao(paymentOperationHistoryRepository: PaymentOperationHistoryRepository): PaymentOperationHistoryDao =
         PaymentOperationHistoryDaoImpl(paymentOperationHistoryRepository = paymentOperationHistoryRepository)
+
+    @Bean
+    fun orderStatusDao(orderStatusRepository: OrderStatusRepository): OrderStatusDao = OrderStatusDaoImpl(orderStatusRepository)
 
     @Bean
     fun daoGetClientSystemConfig(clientSystemRepository: ClientSystemRepository): GetClientSystemDao =

@@ -15,6 +15,7 @@ class PaymentDaoImpl(
         const val LOG_ERROR_GET_PAYMENT_SAVE = "Не удалось сохранить данные платежа"
         const val ERROR_GET_PAYMENT_BY_ORDER_ID = "Ошибка поиска платежа по order_id Exception:  "
         const val PAYMENT_NOT_FOUND = "Ошибка запроса смены статуса. Указанный ордер не найден"
+        const val LOG_ERROR_PAYMENT_FIND = "Не удалось найти платеж по данному bankId"
     }
 
     private val logger = loggerFor(javaClass)
@@ -46,4 +47,12 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
         }
     }
+
+    override fun findByPaymentBankId(paymentId: String): Payment =
+        try {
+            paymentRepository.findByPaymentBankId(paymentId)
+        } catch (e: Exception) {
+            logger.error(e, LOG_ERROR_PAYMENT_FIND)
+            throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
+        }
 }

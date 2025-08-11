@@ -18,4 +18,6 @@ interface OrderDao {
         traceId: String,
         orderId: String,
     ): Order?
+
+    fun save(order: Order)
 }

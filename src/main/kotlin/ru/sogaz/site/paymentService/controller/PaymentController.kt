@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
@@ -167,12 +168,13 @@ class PaymentController(
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
     ): ResponseEntity<String> {
+        val traceId = RequestInfo.getTraceId()
         val requestParams =
             GpbCallbackRequest(
                 trxId = trxId,
                 signature = signature,
             )
-        return gpbCallbackService.processCallback(requestParams)
+        return gpbCallbackService.processCallback(requestParams, traceId)
     }
 
     @PostMapping("/akb/state")
