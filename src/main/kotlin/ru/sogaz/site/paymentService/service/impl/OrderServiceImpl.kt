@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
-import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
@@ -27,7 +27,7 @@ class OrderServiceImpl(
     private val subOrderRepository: SubOrderRepository,
     private val bankDao: BankDao,
     private val generatorService: GeneratorService,
-    private val orderDao: OrderDao,
+    private val orderStatusDao: OrderStatusDao,
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -72,7 +72,7 @@ class OrderServiceImpl(
 
         val requestBankId = requestWrapper.bank
         val bank = bankDao.getBank(requestBankId, traceId)
-        val orderStatus = orderDao.getOrderStatus(traceId, STATE_ID_NEW)
+        val orderStatus = orderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
         val order =
             Order(
                 orderId = orderId,

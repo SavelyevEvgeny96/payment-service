@@ -40,10 +40,7 @@ import ru.sogaz.site.paymentService.repository.SubOrderRepository
 @Configuration
 class DataDaoConfig {
     @Bean
-    fun daoGetOrderConfig(
-        orderRepository: OrderRepository,
-        orderStatusRepository: OrderStatusRepository,
-    ): OrderDao = OrderDaoImpl(orderRepository = orderRepository, orderStatusRepository = orderStatusRepository)
+    fun daoGetOrderConfig(orderRepository: OrderRepository): OrderDao = OrderDaoImpl(orderRepository = orderRepository)
 
     @Bean
     fun daoGetSubOrderConfig(subOrderRepository: SubOrderRepository): GetSubOrderDao =
