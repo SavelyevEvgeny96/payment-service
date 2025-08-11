@@ -12,12 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import ru.sogaz.site.filterStarter.services.RequestInfo
-import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
 import ru.sogaz.site.paymentService.dto.DataOrder
@@ -50,7 +48,7 @@ class PaymentController(
 ) {
     /**
      * Метод для создания заявки.
-     * @param traceId Идентификатор трассировки
+     * getTraceId() Идентификатор трассировки
      * @return Ответ с кодом состояния и данными о платеже или ошибкой
      */
     @Operation(
@@ -110,13 +108,12 @@ class PaymentController(
     )
     @PostMapping("/create")
     fun createOrder(
-        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody requestWrapper: PaymentRequestWrapper,
     ): ResponseEntity<Response<DataOrder>> {
         requestWrapper.payments.forEach { paymentRequest ->
-            paymentRequestValidator.isValid(paymentRequest, requestWrapper)
+            paymentRequestValidator.isValid(paymentRequest, requestWrapper, getTraceId())
         }
-        return orderService.createOrder(requestWrapper, traceId)
+        return orderService.createOrder(requestWrapper, getTraceId())
     }
 
     /**
@@ -125,18 +122,17 @@ class PaymentController(
      */
     @PostMapping("/pay")
     fun createPay(
-        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody paymentPayRequest: PaymentPayRequest,
     ): ResponseEntity<Response<DataPay>> =
         paymentService.createPayment(
             paymentPayRequest,
+            getTraceId(),
         )
 
     @PostMapping("/paySbp")
     fun createPaySbp(
-        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest, getTraceId())
 
     @Operation(
         summary = "Проверить статус оплаты",
@@ -145,8 +141,7 @@ class PaymentController(
     @GetMapping("/pay/status/{payment_bank_id}")
     fun getStatusPay(
         @PathVariable payment_bank_id: String,
-        @RequestHeader traceId: String,
-    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, traceId)
+    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, getTraceId())
 
     @GetMapping("/gpb/state")
     fun stateGpbCallback(
@@ -168,13 +163,12 @@ class PaymentController(
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
     ): ResponseEntity<String> {
-        val traceId = RequestInfo.getTraceId()
         val requestParams =
             GpbCallbackRequest(
                 trxId = trxId,
                 signature = signature,
             )
-        return gpbCallbackService.processCallback(requestParams, traceId)
+        return gpbCallbackService.processCallback(requestParams, getTraceId())
     }
 
     @PostMapping("/akb/state")

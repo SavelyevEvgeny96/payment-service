@@ -31,5 +31,4 @@ data class PaymentRequest(
     val managerEmail: String?,
     val typeInsurance: String?,
     val insuranceProgram: String?,
-    var traceId: String?,
 )

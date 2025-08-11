@@ -11,13 +11,20 @@ import ru.sogaz.siter.models.resonses.Response
  * Определяет контракт для работы с платежами.
  */
 interface PaymentService {
-    fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
+    fun createPayment(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String,
+    ): ResponseEntity<Response<DataPay>>
 
-    fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
+    fun createPaymentSbp(
+        paymentPayRequest: PaymentPayRequest,
+        traceId: String,
+    ): ResponseEntity<Response<DataPay>>
 
     fun buildPaymentContext(
         paymentPayRequest: PaymentPayRequest,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
+        traceId: String,
     ): PaymentContext
 }
