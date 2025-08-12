@@ -22,8 +22,6 @@ data class SubOrder(
     var orderId: Order? = null,
     @Column(name = "operation_id")
     var operationId: String? = "",
-    @Column(name = "manager_email")
-    var managerEmail: String? = "",
     @ManyToOne
     @JoinColumn(name = "external_system_code", referencedColumnName = "external_system_code")
     var clientSystem: ClientSystem? = null,
@@ -41,8 +39,6 @@ data class SubOrder(
     var typeInsurance: String? = "",
     @Column(name = "contract_number")
     var contractNumber: String? = "",
-    @Column(name = "hash")
-    var hash: String? = "",
     @Column(name = "premium_amount")
     var premiumAmount: String? = "",
 )

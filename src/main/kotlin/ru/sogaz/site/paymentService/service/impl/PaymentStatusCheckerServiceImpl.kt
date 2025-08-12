@@ -211,10 +211,8 @@ class PaymentStatusCheckerServiceImpl(
                 payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
                 createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
 
-                if (order.needReceipt == true) {
-                    receiptService.generateReceipt(order, traceId)
-                    sendToPaidOrdersQueue(order, traceId)
-                }
+                receiptService.generateReceipt(order, traceId)
+                sendToPaidOrdersQueue(order, traceId)
             }
 
             "UNKNOWN", "INTERIM_SUCCESS", "REFUND" -> {
@@ -272,8 +270,6 @@ class PaymentStatusCheckerServiceImpl(
                     PaidOrderMessage(
                         orderId = order.orderId,
                         recipientEmail = order.recipientEmail,
-                        recipientPhone = order.recipientPhone,
-                        recipientUserId = order.recipientUserId,
                         externalSystemCode = it,
                         docType = mainSubOrder.docType,
                         policyId = mainSubOrder.policyId,
@@ -282,7 +278,6 @@ class PaymentStatusCheckerServiceImpl(
                         contractId = mainSubOrder.contractId,
                         typeInsurance = mainSubOrder.typeInsurance,
                         premiumAmount = mainSubOrder.premiumAmount,
-                        managerEmail = mainSubOrder.managerEmail,
                         paySuccess = order.updateDate?.atZone(ZoneOffset.UTC)?.format(DateTimeFormatter.ISO_INSTANT),
                     )
                 }

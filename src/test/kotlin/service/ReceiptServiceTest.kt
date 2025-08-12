@@ -79,9 +79,6 @@ class ReceiptServiceTest {
                 code = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
-                recipientPhone = "+79991234567"
-                policyholder = "Test User"
-                recipientUserId = "user123"
             }
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
@@ -151,9 +148,6 @@ class ReceiptServiceTest {
                 code = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
-                recipientPhone = "+79991234567"
-                policyholder = "Test User"
-                recipientUserId = "user123"
             }
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
@@ -217,9 +211,6 @@ class ReceiptServiceTest {
                 code = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
-                recipientPhone = "+79991234567"
-                policyholder = "Test User"
-                recipientUserId = "user123"
             }
 
         val payment =

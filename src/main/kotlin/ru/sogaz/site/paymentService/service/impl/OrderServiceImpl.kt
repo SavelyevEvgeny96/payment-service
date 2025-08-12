@@ -81,16 +81,10 @@ class OrderServiceImpl(
                 code = orderCode,
                 dateDelete = null,
                 paymentEndDate = requestWrapper.paymentEndDate,
-                customURL = requestWrapper.customURL,
                 premiumAmount = null,
                 urlToDecline = requestWrapper.urlToDecline,
                 urlToReturn = requestWrapper.urlToReturn,
-                recipientUserId = requestWrapper.recipientUserId,
                 recipientEmail = requestWrapper.recipientEmail,
-                recipientPhone = requestWrapper.recipientPhone,
-                needReceipt = requestWrapper.needReceipt,
-                policyholder = requestWrapper.policyHolder,
-                policyholderDoc = requestWrapper.policyHolderDoc,
             )
 
         try {
@@ -115,8 +109,6 @@ class OrderServiceImpl(
                     policyNumber = paymentRequest.policyNumber,
                     contractId = paymentRequest.contractId,
                     orderId = order,
-                    managerEmail = paymentRequest.managerEmail,
-                    hash = paymentRequest.hash,
                     typeInsurance = paymentRequest.typeInsurance,
                     contractNumber = paymentRequest.contractNumber,
                     insuranceProgram = paymentRequest.insuranceProgram,

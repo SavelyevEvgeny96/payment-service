@@ -95,7 +95,6 @@ class PaymentStatusCheckerServiceTest {
         val traceId = "test-trace"
         val order =
             Order().apply {
-                needReceipt = true
                 code = "TEST-ORDER"
                 recipientEmail = "test@example.com"
             }
