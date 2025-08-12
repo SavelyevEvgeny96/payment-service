@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.validation.EmailValidator
 import ru.sogaz.site.paymentService.validation.ExternalSystemCodeValidator
 import ru.sogaz.site.paymentService.validation.PaymentEndDateValidatorFormat
-import ru.sogaz.site.paymentService.validation.PhoneValidator
-import ru.sogaz.site.paymentService.validation.PolicyholderValidator
 
 @Configuration
 open class ValidatorConfig {
@@ -17,22 +15,9 @@ open class ValidatorConfig {
     }
 
     @Bean
-    fun isValidCorrectInput(): PolicyholderValidator {
-        val regex = Regex("^[а-яА-ЯёЁ\\s-]+$")
-        val regexDoc = Regex("^[0-9\\s]+$")
-        return PolicyholderValidator(regex, regexDoc)
-    }
-
-    @Bean
     open fun externalSystemCodeValidator(): ExternalSystemCodeValidator {
         val codeRegex = Regex("^(ADI|FOP|LK|1C)$")
         return ExternalSystemCodeValidator(codeRegex)
-    }
-
-    @Bean
-    open fun phoneValidator(): PhoneValidator {
-        val codeRegex = Regex("^\\+7\\d{10}$")
-        return PhoneValidator(codeRegex)
     }
 
     @Bean

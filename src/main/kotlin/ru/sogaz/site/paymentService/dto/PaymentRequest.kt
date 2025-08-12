@@ -25,10 +25,8 @@ data class PaymentRequest(
     val contractNumber: String,
     val contractId: String,
     val premiumAmount: String?,
-    val hash: String?,
     @NotNull
     val externalSystemCode: String,
-    val managerEmail: String?,
     val typeInsurance: String?,
     val insuranceProgram: String?,
 )
