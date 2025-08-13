@@ -72,7 +72,7 @@ class CallbackServiceTest {
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val response = service.processCallback(testRequest)
+        val response = service.processCallback(testRequest, "222")
 
         assertThat(response.data).isNotNull
         assertThat(response.data?.state).isEqualTo("OK")
@@ -109,7 +109,7 @@ class CallbackServiceTest {
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest) }
+        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest, "222") }
 
         assertThat(exceptions.getErrorCode()).isNotNull()
     }

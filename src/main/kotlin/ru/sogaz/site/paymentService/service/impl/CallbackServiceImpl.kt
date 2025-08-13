@@ -45,15 +45,17 @@ class CallbackServiceImpl(
         const val BANK_CARD = "bankCard"
         const val START_METHOD_PROCESS_CALL =
             ">>> СТАРТ метода проверки CALLBACK" +
-                    " traceID: "
+                " traceID: "
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val OPERATION_PAYMENT_FAIL = "Запись в таблицу истории операций не добавлена. Произошла ошибка"
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
     }
 
-    override fun processCallback(request: CallbackRequest): Response<CallbackResponse> {
-        val traceId = getTraceId()
+    override fun processCallback(
+        request: CallbackRequest,
+        traceId: String,
+    ): Response<CallbackResponse> {
         logger.info("$START_METHOD_PROCESS_CALL $traceId")
         return try {
             val payment = paymentDao.getPaymentFromBankId(request.bankId)
@@ -80,23 +82,26 @@ class CallbackServiceImpl(
         val existingPayment = payment.paymentBankId?.let { callbackPaymentDao.findByPaymentBankId(it) }
 
         if (existingPayment == null) {
-            val newCallbackPayment = CallbackPayment(
-                bankId = when (payment.bank?.bankId) {
-                    "akb" -> AKB_RUS
-                    else -> SBP_GPB
-                },
-                typeId = BANK_CARD,
-                paymentBankId = payment.paymentBankId,
-                createDate = LocalDateTime.now(),
-                updateDate = LocalDateTime.now()
-            )
+            val newCallbackPayment =
+                CallbackPayment(
+                    bankId =
+                        when (payment.bank?.bankId) {
+                            "akb" -> AKB_RUS
+                            else -> SBP_GPB
+                        },
+                    typeId = BANK_CARD,
+                    paymentBankId = payment.paymentBankId,
+                    createDate = LocalDateTime.now(),
+                    updateDate = LocalDateTime.now(),
+                )
             callbackPaymentDao.save(newCallbackPayment)
         } else {
             existingPayment.apply {
-                bankId = when (payment.bank?.bankId) {
-                    "akb" -> AKB_RUS
-                    else -> SBP_GPB
-                }
+                bankId =
+                    when (payment.bank?.bankId) {
+                        "akb" -> AKB_RUS
+                        else -> SBP_GPB
+                    }
                 typeId = BANK_CARD
                 paymentBankId = payment.paymentBankId
                 updateDate = LocalDateTime.now()
