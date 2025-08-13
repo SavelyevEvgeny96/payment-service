@@ -38,24 +38,12 @@ data class Order(
     var urlToReturn: String? = "",
     @Column(name = "url_to_decline")
     var urlToDecline: String? = "",
-    @Column(name = "custom_url")
-    var customURL: String? = "",
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
     @Column(name = "recipient_email")
     var recipientEmail: String? = "",
-    @Column(name = "need_receipt")
-    var needReceipt: Boolean? = null,
-    @Column(name = "recipient_phone")
-    var recipientPhone: String? = "",
-    @Column(name = "policyholder")
-    var policyholder: String? = "",
-    @Column(name = "policyholder_doc")
-    var policyholderDoc: String? = "",
-    @Column(name = "recipient_user_id")
-    var recipientUserId: String? = "",
 ) {
     @PrePersist
     fun prePersist() {

@@ -9,6 +9,4 @@ class EmailValidator(
     private val emailRegex: Regex,
 ) {
     fun isValid(value: String?): Boolean = value?.matches(emailRegex) ?: false
-
-    fun isValidManager(value: String?): Boolean = value.isNullOrEmpty() || value.matches(emailRegex)
 }

@@ -113,10 +113,7 @@ class ReceiptServiceImpl(
                     client =
                         PaymentReceiptCreateRequest.ClientInfo(
                             email = order.recipientEmail,
-                            phone = order.recipientPhone,
-                            name = order.policyholder,
                         ),
-                    userId = order.recipientUserId,
                     items = receiptItems,
                     payments =
                         listOf(
