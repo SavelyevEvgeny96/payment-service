@@ -1,5 +1,5 @@
 package ru.sogaz.site.paymentService.dto
 
-data class AkbCallbackRequest(
+data class CallbackRequest(
     val bankId: String,
 )

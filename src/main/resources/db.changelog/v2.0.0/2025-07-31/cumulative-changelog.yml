@@ -9,3 +9,7 @@ databaseChangeLog:
       file: db.changelog\v2.0.0\2025-07-31\DATA\insert_table_action_type.sql
   - include:
       file: db.changelog\v2.0.0\2025-07-31\DATA\create_table_callback_payments.sql
+  - include:
+      file: db.changelog\v2.0.0\2025-07-31\DATA\update_table_payment_status.sql
+  - include:
+      file: db.changelog\v2.0.0\2025-07-31\DATA\update_table_action_type.sql
