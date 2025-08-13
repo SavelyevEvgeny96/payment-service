@@ -5,7 +5,9 @@ import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
@@ -17,6 +19,7 @@ import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
+import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -28,6 +31,7 @@ class OrderServiceImpl(
     private val bankDao: BankDao,
     private val generatorService: GeneratorService,
     private val orderStatusDao: OrderStatusDao,
+    private val orderDao: OrderDao,
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -35,8 +39,11 @@ class OrderServiceImpl(
         const val STATE_ID_NEW = "NEW"
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
+        const val STATUS_CODE_SUCCESS_GET_ORDER_STATUS = 1201503200
         const val SUCCESS = "SUCCESS"
-        const val LOG_START_ORDER_CREATION = "***** Начало ***** создания заявки для TraceId: "
+        const val LOG_START_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки для orderId: "
+        const val LOG_END_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки  stateId =  "
+        const val LOG_START_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
         const val LOG_END_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
         const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан и сохранен в базу с orderCode: "
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с subOrderId: "
@@ -151,5 +158,15 @@ class OrderServiceImpl(
             logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
             throw InnerException(traceId, ERROR_WHILE_SAVING_ORDER)
         }
+    }
+
+    override fun getOrderStatus(
+        orderId: String,
+        traceId: String,
+    ): Response<DataGetOrderStatus> {
+        logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
+        val orderStatusId = orderDao.getOrderId(traceId, orderId)?.orderStatus?.stateId
+        logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")
+        return getSuccessResponse(traceId, STATUS_CODE_SUCCESS_GET_ORDER_STATUS, DataGetOrderStatus(orderStatusId))
     }
 }

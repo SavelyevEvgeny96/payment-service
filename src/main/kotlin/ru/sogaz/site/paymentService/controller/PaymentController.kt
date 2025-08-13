@@ -1,4 +1,3 @@
-
 package ru.sogaz.site.paymentService.controller
 
 import io.swagger.v3.oas.annotations.Operation
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
 import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
+import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
@@ -142,6 +142,11 @@ class PaymentController(
     fun getStatusPay(
         @PathVariable payment_bank_id: String,
     ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, getTraceId())
+
+    @GetMapping("/order/status/{orderId}")
+    fun getOrderStatus(
+        @PathVariable orderId: String,
+    ): Response<DataGetOrderStatus> = orderService.getOrderStatus(orderId, getTraceId())
 
     @GetMapping("/gpb/state")
     fun stateGpbCallback(
