@@ -14,7 +14,7 @@ import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.impl.CallbackServiceImpl
 
 @Configuration
-class AkbCallbackServiceConfig(
+class CallbackServiceConfig(
     private val paymentStatusRepository: PaymentStatusRepository,
     private val actionTypeRepository: ActionTypeRepository,
     private val clientSystemRepository: ClientSystemRepository,
