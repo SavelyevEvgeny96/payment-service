@@ -24,4 +24,12 @@ class CallbackPaymentDaoImpl(
             throw InnerException(RequestInfo.getTraceId(), LOG_ERROR_CALLBACK_PAYMENT + e.message)
         }
     }
+
+    override fun findByPaymentBankId(paymentBankId: String): CallbackPayment? =
+        try {
+            callbackPaymentRepository.findByPaymentBankId(paymentBankId)
+        } catch (e: Exception) {
+            logger.error(e, "Не удалось найти данные платежа по paymentBankId")
+            null
+        }
 }

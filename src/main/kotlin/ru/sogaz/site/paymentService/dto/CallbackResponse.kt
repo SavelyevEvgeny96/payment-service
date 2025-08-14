@@ -1,5 +1,5 @@
 package ru.sogaz.site.paymentService.dto
 
-data class AkbCallbackResponse(
+data class CallbackResponse(
     val state: String,
 )
