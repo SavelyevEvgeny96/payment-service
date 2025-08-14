@@ -87,9 +87,6 @@ class PaymentStatusCheckerServiceImpl(
 
         val payment =
             paymentRepository.findByPaymentBankId(paymentBankId)
-                ?: throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId).also {
-                    logger.error(LOG_PAYMENT_NOT_FOUND.format(paymentBankId, traceId))
-                }
 
         return when (payment.stateId?.stateId) {
             "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
@@ -126,7 +123,9 @@ class PaymentStatusCheckerServiceImpl(
         when (payment.typeId?.typeId) {
             "sbp", "bankCard" -> {
                 if (payment.bank?.bankId == "gpb") {
-                    processBankCardPayment(payment, traceId)
+                    processBankCardPaymentGpb(payment, traceId)
+                } else if (payment.bank?.bankId == "akb_rus"){
+                    processBankCardPaymentAkb(payment, traceId)
                 }
             }
 
@@ -164,7 +163,12 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processBankCardPayment(
+    private fun processBankCardPaymentAkb(
+        payment: Payment,
+        traceId: String,
+    ) {}
+
+    private fun processBankCardPaymentGpb(
         payment: Payment,
         traceId: String,
     ) {
