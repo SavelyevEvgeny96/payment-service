@@ -69,7 +69,7 @@ class GpbCallbackServiceTest {
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(orderDao.getOrderId(traceId, ordersId)).thenReturn(order)
 
-        val response = service.processCallback(testRequest, traceId)
+        val response = service.processCallback(testRequest)
 
         assertThat(response.body).contains("<code>1</code>")
         verify(paymentDao).save(payment)
@@ -86,7 +86,7 @@ class GpbCallbackServiceTest {
         `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
 
-        val response = service.processCallback(testRequest, "222")
+        val response = service.processCallback(testRequest)
 
         assertThat(response.body).contains("<code>2</code>")
     }
@@ -103,7 +103,7 @@ class GpbCallbackServiceTest {
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(payment.orderId?.orderId?.let { orderDao.getOrderId("222", it) }).thenReturn(null)
 
-        val response = service.processCallback(testRequest, "222")
+        val response = service.processCallback(testRequest)
 
         assertThat(response.body).contains("<code>2</code>")
     }

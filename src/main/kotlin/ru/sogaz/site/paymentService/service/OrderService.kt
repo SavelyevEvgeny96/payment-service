@@ -11,16 +11,9 @@ interface OrderService {
      * Метод для создания платежа.
      * Проверяет данные о платеже, валидирует их и создает запись о платеже.
      * @param requestWrapper Данные о заказе(содержит внутри лист PaymentRequest)
-     * @param traceId Идентификатор трассировки
      * @return Объект Response с информацией о платеже
      */
-    fun createOrder(
-        requestWrapper: PaymentRequestWrapper,
-        traceId: String,
-    ): ResponseEntity<Response<DataOrder>>
+    fun createOrder(requestWrapper: PaymentRequestWrapper): ResponseEntity<Response<DataOrder>>
 
-    fun getOrderStatus(
-        orderId: String,
-        traceId: String,
-    ): Response<DataGetOrderStatus>
+    fun getOrderStatus(orderId: String): Response<DataGetOrderStatus>
 }

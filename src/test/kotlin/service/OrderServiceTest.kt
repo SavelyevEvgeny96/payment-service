@@ -55,7 +55,7 @@ class OrderServiceTest {
                 getClientSystemDao = getClientSystemDao,
                 orderStatusDao = orderStatusDao,
             )
-        val response: Response<DataGetOrderStatus> = service.getOrderStatus(orderId, traceId)
+        val response: Response<DataGetOrderStatus> = service.getOrderStatus(orderId)
         assertThat(response.data?.orderStatus).isEqualTo("NEW")
         assertThat(response.code).isEqualTo(1201503200)
     }
@@ -78,7 +78,7 @@ class OrderServiceTest {
                 orderStatusDao = orderStatusDao,
             )
         assertThrows<InnerException> {
-            service.getOrderStatus(orderId, traceId)
+            service.getOrderStatus(orderId)
         }
     }
 }

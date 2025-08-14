@@ -4,8 +4,5 @@ import org.springframework.http.ResponseEntity
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 
 interface GpbCallbackService {
-    fun processCallback(
-        request: GpbCallbackRequest,
-        traceId: String,
-    ): ResponseEntity<String>
+    fun processCallback(request: GpbCallbackRequest): ResponseEntity<String>
 }

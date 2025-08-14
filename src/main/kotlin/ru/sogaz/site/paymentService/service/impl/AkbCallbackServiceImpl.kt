@@ -48,9 +48,9 @@ class AkbCallbackServiceImpl(
         return try {
             val payment = paymentDao.getPaymentFromBankId(request.bankId)
 
-            updatePaymentStatus(payment, traceId)
+            updatePaymentStatus(payment)
 
-            logOperation(payment, traceId)
+            logOperation(payment)
 
             saveCallbackPayment(payment)
 
@@ -75,10 +75,8 @@ class AkbCallbackServiceImpl(
         callbackPaymentDao.save(callbackPayment)
     }
 
-    private fun updatePaymentStatus(
-        payment: Payment,
-        traceId: String,
-    ) {
+    private fun updatePaymentStatus(payment: Payment) {
+        val traceId = getTraceId()
         try {
             payment.stateId = callbackPaymentStatus
             payment.updateDate = LocalDateTime.now()
@@ -89,10 +87,8 @@ class AkbCallbackServiceImpl(
         }
     }
 
-    private fun logOperation(
-        payment: Payment,
-        traceId: String,
-    ) {
+    private fun logOperation(payment: Payment) {
+        val traceId = getTraceId()
         try {
             val orderId =
                 payment.orderId ?: throw InnerException(

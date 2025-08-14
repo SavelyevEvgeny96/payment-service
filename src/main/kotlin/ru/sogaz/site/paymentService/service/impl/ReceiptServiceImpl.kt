@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ChequeSent
@@ -52,10 +53,8 @@ class ReceiptServiceImpl(
         const val ERROR_INCORRECT_SUM = "Некорректный формат суммы: "
     }
 
-    override fun generateReceipt(
-        order: Order,
-        traceId: String,
-    ) {
+    override fun generateReceipt(order: Order) {
+        val traceId = getTraceId()
         val url = receiptProperty.receiptUrl
 
         val payment = paymentRepository.findByOrderId(order)
@@ -151,18 +150,19 @@ class ReceiptServiceImpl(
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
                     payment.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
+
                 "FAILED" -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
-                    payment.paymentBankId?.let { handleReceiptError(order, it, traceId) }
+                    payment.paymentBankId?.let { handleReceiptError(order, it) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
                 }
+
                 else -> {
                     logger.error(LOG_RECEIPT_API_ERROR.format(response.body?.status, traceId))
                     payment.paymentBankId?.let {
                         handleReceiptError(
                             order,
                             it,
-                            traceId,
                         )
                     }
                     throw InnerException(traceId, ERROR_RECEIPT + response.body?.code)
@@ -170,7 +170,7 @@ class ReceiptServiceImpl(
             }
         } catch (e: Exception) {
             logger.info(LOG_RECEIPT_ERROR.format(order.code, traceId), e)
-            payment.paymentBankId?.let { handleReceiptError(order, it, traceId) }
+            payment.paymentBankId?.let { handleReceiptError(order, it) }
             throw InnerException(traceId, ERROR_RECEIPT_GENERATION + e.message)
         }
     }
@@ -178,16 +178,13 @@ class ReceiptServiceImpl(
     private fun handleReceiptError(
         order: Order,
         paymentBankId: String,
-        traceId: String,
     ) {
         val payment = paymentRepository.findByPaymentBankId(paymentBankId)
-        payment?.chequeName = "NOT_SENT"
-        payment?.updateDate = LocalDateTime.now()
-        if (payment != null) {
-            paymentRepository.save(payment)
-        }
+        payment.chequeName = "NOT_SENT"
+        payment.updateDate = LocalDateTime.now()
+        paymentRepository.save(payment)
         saveFailedReceiptOperationHistory(order)
-        saveChequeSentRecord(paymentBankId, false, traceId)
+        saveChequeSentRecord(paymentBankId, false)
     }
 
     private fun handleReceiptSuccess(
@@ -195,18 +192,15 @@ class ReceiptServiceImpl(
         paymentBankId: String,
     ) {
         val payment = paymentRepository.findByPaymentBankId(paymentBankId)
-        payment?.chequeName = "SENT"
-        payment?.updateDate = LocalDateTime.now()
-        if (payment != null) {
-            paymentRepository.save(payment)
-        }
+        payment.chequeName = "SENT"
+        payment.updateDate = LocalDateTime.now()
+        paymentRepository.save(payment)
         saveReceiptOperationHistory(order)
     }
 
     private fun saveChequeSentRecord(
         paymentBankId: String,
         success: Boolean,
-        traceId: String,
     ) {
         chequeSentRepository.save(
             ChequeSent(

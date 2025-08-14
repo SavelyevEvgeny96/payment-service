@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
@@ -67,10 +68,8 @@ class OrderServiceImpl(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    override fun createOrder(
-        requestWrapper: PaymentRequestWrapper,
-        traceId: String,
-    ): ResponseEntity<Response<DataOrder>> {
+    override fun createOrder(requestWrapper: PaymentRequestWrapper): ResponseEntity<Response<DataOrder>> {
+        val traceId = getTraceId()
         logger.info(LOG_START_ORDER_CREATION + traceId)
         val orderId = generatorService.generateUniquePaymentId()
         val orderCode = generatorService.generateUniquePaymentCode(traceId)
@@ -160,10 +159,8 @@ class OrderServiceImpl(
         }
     }
 
-    override fun getOrderStatus(
-        orderId: String,
-        traceId: String,
-    ): Response<DataGetOrderStatus> {
+    override fun getOrderStatus(orderId: String): Response<DataGetOrderStatus> {
+        val traceId = getTraceId()
         logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
         val orderStatusId = orderDao.getOrderId(traceId, orderId)?.orderStatus?.stateId
         logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")

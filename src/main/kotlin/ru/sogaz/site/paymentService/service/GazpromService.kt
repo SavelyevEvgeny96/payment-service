@@ -9,14 +9,12 @@ import ru.sogaz.siter.models.resonses.Response
 
 interface GazpromService {
     fun getGPBToken(
-        traceId: String,
         order: Order,
         subOrder: SubOrder,
     ): String
 
     fun initiateGPBPayment(
         paymentPayRequest: PaymentPayRequest,
-        traceId: String,
         tokenGpb: String,
         paymentId: Long?,
         premiumAmount: String?,
@@ -26,7 +24,6 @@ interface GazpromService {
 
     fun initiateGPBSBPPayment(
         paymentPayRequest: PaymentPayRequest,
-        traceId: String,
         paymentId: Long?,
         premiumAmount: String?,
         order: Order,

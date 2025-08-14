@@ -114,7 +114,7 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        service.generateReceipt(order, traceId)
+        service.generateReceipt(order)
 
         val captor = ArgumentCaptor.forClass(HttpEntity::class.java)
         verify(restTemplate).exchange(
@@ -184,10 +184,9 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        val exception =
-            assertThrows<InnerException> {
-                service.generateReceipt(order, traceId)
-            }
+        assertThrows<InnerException> {
+            service.generateReceipt(order)
+        }
         verify(operationHistoryRepository, atLeastOnce()).save(any())
     }
 
@@ -236,7 +235,7 @@ class ReceiptServiceTest {
 
         val exception =
             assertThrows<InnerException> {
-                service.generateReceipt(order, traceId)
+                service.generateReceipt(order)
             }
 
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
