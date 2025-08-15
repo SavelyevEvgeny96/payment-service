@@ -52,7 +52,7 @@ class GpbCallbackServiceImpl(
 
             if (payment.orderId == null ||
                 payment.orderId?.orderId?.let {
-                    orderDao.getOrderId(traceId, it)
+                    orderDao.getOrderId(it)
                 } == null
             ) {
                 return createErrorResponse(INTERNAL_SERVER_ERROR)
@@ -88,12 +88,11 @@ class GpbCallbackServiceImpl(
     }
 
     private fun logOperation(payment: Payment) {
-        val traceId = getTraceId()
         try {
             val orderId = payment.orderId ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
                 orderId.orderId?.let {
-                    orderDao.getOrderId(traceId, it)
+                    orderDao.getOrderId(it)
                 }
 
             paymentOperationHistoryDao.save(

@@ -185,7 +185,7 @@ class GazpromServiceImpl(
                 "GPB payment Card response [traceId=$traceId]: body=$responseBody",
             )
             val paymentPageUrl =
-                (responseBody?.get(OPTIONS) as? Map<String, Any>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
+                (responseBody?.get(OPTIONS) as? Map<*, *>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
             val dataPay = DataPay(paymentPageUrl)
             val result =
                 Response(

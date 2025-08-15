@@ -162,7 +162,7 @@ class OrderServiceImpl(
     override fun getOrderStatus(orderId: String): Response<DataGetOrderStatus> {
         val traceId = getTraceId()
         logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
-        val orderStatusId = orderDao.getOrderId(traceId, orderId)?.orderStatus?.stateId
+        val orderStatusId = orderDao.getOrderId(orderId)?.orderStatus?.stateId
         logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")
         return getSuccessResponse(traceId, STATUS_CODE_SUCCESS_GET_ORDER_STATUS, DataGetOrderStatus(orderStatusId))
     }

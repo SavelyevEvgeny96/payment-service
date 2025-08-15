@@ -8,10 +8,7 @@ interface OrderDao {
         traceId: String,
     ): Order
 
-    fun getOrderId(
-        traceId: String,
-        orderId: String,
-    ): Order?
+    fun getOrderId(orderId: String): Order?
 
     fun save(order: Order)
 }

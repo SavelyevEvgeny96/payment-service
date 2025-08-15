@@ -88,14 +88,13 @@ class AkbCallbackServiceImpl(
     }
 
     private fun logOperation(payment: Payment) {
-        val traceId = getTraceId()
         try {
             val orderId =
                 payment.orderId ?: throw InnerException(
                     getTraceId(),
                     ORDER_NOT_FOUND,
                 )
-            val order = orderId.orderId?.let { orderDao.getOrderId(traceId, it) }
+            val order = orderId.orderId?.let { orderDao.getOrderId(it) }
 
             paymentOperationHistoryDao.save(
                 PaymentOperationHistory(

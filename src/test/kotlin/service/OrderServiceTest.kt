@@ -35,7 +35,7 @@ class OrderServiceTest {
     fun `getOrderStatus should return success when order exists`() {
         val orderDao =
             mock<OrderDao>().apply {
-                `when`(getOrderId(traceId, orderId)).thenReturn(
+                `when`(getOrderId(orderId)).thenReturn(
                     Order().apply {
                         orderStatus =
                             OrderStatus().apply {
@@ -63,7 +63,7 @@ class OrderServiceTest {
     @Test
     fun `getOrderStatus should throw InnerException when repository fails`() {
         val orderDao = mock<OrderDao>()
-        `when`(orderDao.getOrderId(traceId, orderId))
+        `when`(orderDao.getOrderId(orderId))
             .thenThrow(InnerException(traceId, "DB error"))
         val orderRepository = mock<OrderRepository>()
         val service =

@@ -29,15 +29,12 @@ class AkbCallbackServiceConfig(
     ): AkbCallbackService {
         val callbackPaymentsStatus =
             paymentStatusRepository.findByStateId("CALLBACK_AKB")
-                ?: throw IllegalStateException("Cтатус платежа CALLBACK_AKB не найден")
 
         val callbackActions =
             actionTypeRepository.findByActionName("Получение CALLBACK от АКБ Россия")
-                ?: throw IllegalStateException("ActionType для CALLBACK_SUCCESS не найден")
 
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
-                ?: throw IllegalStateException("Автор для PAY не найден")
 
         return AkbCallbackServiceImpl(
             paymentDao = paymentDao,

@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.eq
+import org.mockito.ArgumentMatchers.same
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -83,11 +84,10 @@ class ReceiptServiceTest {
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                paymentBankId = "pay123"
-            },
-        )
+        `when`(paymentRepository.findByOrderId(same(order))).thenReturn(Payment().apply {
+            id = 12
+
+        })
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATED_ACTION)).thenReturn(
             ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATED_ACTION),
         )
