@@ -10,15 +10,17 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
+import ru.sogaz.site.paymentService.dto.CallbackRequest
 import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentStatus
+import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
+import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.impl.AkbCallbackServiceImpl
 
-class AkbCallbackServiceTest {
+class CallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
     private val callbackPaymentStatus = PaymentStatus().apply { stateId = "CALLBACK_AKB" }
@@ -26,7 +28,7 @@ class AkbCallbackServiceTest {
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val testRequest =
-        AkbCallbackRequest(
+        CallbackRequest(
             bankId = "ZLZA2BRR45VP6YF0",
         )
 
@@ -53,7 +55,7 @@ class AkbCallbackServiceTest {
                 `when`(getOrderId("1L")).thenReturn(order)
             }
         val service =
-            AkbCallbackServiceImpl(
+            CallbackServiceImpl(
                 paymentDao = paymentDao,
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
@@ -63,7 +65,7 @@ class AkbCallbackServiceTest {
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val response = service.processCallback(testRequest)
+        val response = service.processCallback(testRequest, "222")
 
         assertThat(response.data).isNotNull
         assertThat(response.data?.state).isEqualTo("OK")
@@ -90,7 +92,7 @@ class AkbCallbackServiceTest {
             }
 
         val service =
-            AkbCallbackServiceImpl(
+            CallbackServiceImpl(
                 paymentDao = paymentDao,
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
@@ -100,7 +102,7 @@ class AkbCallbackServiceTest {
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest) }
+        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest, "222") }
 
         assertThat(exceptions.getErrorCode()).isNotNull()
     }
