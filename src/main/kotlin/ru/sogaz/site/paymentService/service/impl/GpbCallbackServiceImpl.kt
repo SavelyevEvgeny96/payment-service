@@ -36,7 +36,14 @@ class GpbCallbackServiceImpl(
         const val INVALID_SIGNATURE = "Invalid signature"
         const val CONST_CALLBACK = "SUCCESS"
         const val ORDER_NOT_FOUND = "Order ID не найден"
-        const val ERROR_TRX_ID = "Произошла ошибка для trx_id: "
+        const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
+        const val START_METHOD_PROCESS_CALL =
+            ">>> СТАРТ метода проверки CALLBACK от банка" +
+                " traceID: "
+        const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
+        const val UPDATE_ORDER_STATUS = "Статус заказа в таблице ЗАКАЗОВ обновлен. paymentBankId: "
+        const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
+        const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
     }
 
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
@@ -66,7 +73,7 @@ class GpbCallbackServiceImpl(
 
             createSuccessResponse()
         } catch (e: Exception) {
-            logger.info(ERROR_TRX_ID + request.trxId, e)
+            logger.error(ERROR_TRX_ID + request.trxId)
             createErrorResponse(INTERNAL_SERVER_ERROR)
         }
     }
@@ -104,6 +111,7 @@ class GpbCallbackServiceImpl(
                 ),
             )
         } catch (e: Exception) {
+            logger.error(ERROR_SAVE_OPERATIONS + e.message)
             throw e
         }
     }
