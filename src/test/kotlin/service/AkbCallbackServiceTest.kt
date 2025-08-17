@@ -16,7 +16,6 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentStatus
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.service.impl.AkbCallbackServiceImpl
 
 class AkbCallbackServiceTest {

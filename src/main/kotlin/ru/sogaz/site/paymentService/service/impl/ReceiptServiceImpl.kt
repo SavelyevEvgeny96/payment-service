@@ -148,18 +148,18 @@ class ReceiptServiceImpl(
             when (response.body?.status) {
                 "SUCCESS" -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
-                    payment.paymentBankId?.let { handleReceiptSuccess(order, it) }
+                    payment?.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
 
                 "FAILED" -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
-                    payment.paymentBankId?.let { handleReceiptError(order, it) }
+                    payment?.paymentBankId?.let { handleReceiptError(order, it) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
                 }
 
                 else -> {
                     logger.error(LOG_RECEIPT_API_ERROR.format(response.body?.status, traceId))
-                    payment.paymentBankId?.let {
+                    payment?.paymentBankId?.let {
                         handleReceiptError(
                             order,
                             it,
@@ -170,14 +170,16 @@ class ReceiptServiceImpl(
             }
         } catch (e: Exception) {
             logger.info(LOG_RECEIPT_ERROR.format(order.code, traceId), e)
-            payment.paymentBankId?.let { handleReceiptError(order, it) }
+            if (payment?.paymentBankId != null) {
+                handleReceiptError(order, payment.paymentBankId)
+            }
             throw InnerException(traceId, ERROR_RECEIPT_GENERATION + e.message)
         }
     }
 
     private fun handleReceiptError(
         order: Order,
-        paymentBankId: String,
+        paymentBankId: String?,
     ) {
         val payment = paymentRepository.findByPaymentBankId(paymentBankId)
         payment.chequeName = "NOT_SENT"
@@ -199,7 +201,7 @@ class ReceiptServiceImpl(
     }
 
     private fun saveChequeSentRecord(
-        paymentBankId: String,
+        paymentBankId: String?,
         success: Boolean,
     ) {
         chequeSentRepository.save(

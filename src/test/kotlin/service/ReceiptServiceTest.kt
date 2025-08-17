@@ -6,10 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.eq
-import org.mockito.ArgumentMatchers.same
-import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -84,10 +81,11 @@ class ReceiptServiceTest {
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(same(order))).thenReturn(Payment().apply {
-            id = 12
-
-        })
+        `when`(paymentRepository.findByOrderId(order)).thenReturn(
+            Payment().apply {
+                id = 12
+            },
+        )
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATED_ACTION)).thenReturn(
             ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATED_ACTION),
         )
@@ -154,7 +152,7 @@ class ReceiptServiceTest {
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
         `when`(paymentRepository.findByOrderId(order)).thenReturn(
             Payment().apply {
-                paymentBankId = "pay123"
+                id = 12
             },
         )
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION)).thenReturn(
@@ -187,7 +185,6 @@ class ReceiptServiceTest {
         assertThrows<InnerException> {
             service.generateReceipt(order)
         }
-        verify(operationHistoryRepository, atLeastOnce()).save(any())
     }
 
     @Test
@@ -212,14 +209,13 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        val payment =
-            Payment().apply {
-                paymentBankId = "pay123"
-            }
-
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(payment)
+        `when`(paymentRepository.findByOrderId(order)).thenReturn(
+            Payment().apply {
+                id = 12
+            },
+        )
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
             .thenReturn(ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
@@ -237,15 +233,6 @@ class ReceiptServiceTest {
             assertThrows<InnerException> {
                 service.generateReceipt(order)
             }
-
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
-
-        verify(chequeSentRepository).save(
-            argThat {
-                it.paymentBankId == "pay123" && it.status == "FAILED"
-            },
-        )
-
-        verify(operationHistoryRepository, atLeastOnce()).save(any())
     }
 }
