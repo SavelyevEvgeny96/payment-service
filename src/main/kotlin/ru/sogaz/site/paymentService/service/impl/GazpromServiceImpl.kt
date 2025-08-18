@@ -64,10 +64,10 @@ class GazpromServiceImpl(
         const val END__METHOD_PAY_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП для платежа с payment_id: "
         const val START_METHOD_GET_TOKEN_GPB =
             ">>> СТАРТ метода получение токена из банка Газпром для" +
-                " инициирования оплаты по карте для order_id: "
+                    " инициирования оплаты по карте для order_id: "
         const val END_METHOD_GET_TOKEN_GPB =
             "<<< КОНЕЦ метода получение токена из банка Газпром для" +
-                " инициирования оплаты по карте для order_id: "
+                    " инициирования оплаты по карте для order_id: "
         const val SAVE_OPERATION_HISTORY_START_PAY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на старт платежа"
         const val ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления платежа payment_id == null"
@@ -83,6 +83,7 @@ class GazpromServiceImpl(
         const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB для TraceId: "
         const val PAYMENT_PAGE_URL = "paymentPageUrl"
         const val PAYLOAD = "payload"
+        const val QRC_ID = "qrcId"
         const val OPTIONS = "options"
         const val DATA = "data"
         const val LOG_ERROR_GET_TOKEN = "Ошибка получения токена доступа от GPB , система не доступна для TraceId: "
@@ -193,7 +194,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(traceId, paymentId, paymentPageUrl)
+            paymentUpdate(traceId, paymentId, paymentPageUrl, "")
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -266,6 +267,7 @@ class GazpromServiceImpl(
             logger.info(
                 "GPB payment SBP response [traceId=$traceId]: body=$responseBody",
             )
+            val qrcId = (responseBody?.get(DATA) as? Map<*, *>)?.get(QRC_ID) as? String ?: ""
             val paymentPageUrl =
                 (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
             val dataPay = DataPay(paymentPageUrl)
@@ -276,7 +278,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(traceId, paymentId, paymentPageUrl)
+            paymentUpdate(traceId, paymentId, paymentPageUrl, qrcId)
             logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -299,12 +301,14 @@ class GazpromServiceImpl(
         traceId: String,
         paymentId: Long?,
         paymentPageUrl: String,
+        qtcId: String
     ) {
         if (paymentId != null) {
             val getPaymentForUpdate = paymentDao.getPayment(traceId, paymentId)
             val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
             getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
             getPaymentForUpdate?.stateId = paymentStatusREG
+            getPaymentForUpdate?.qrcId = qtcId
             if (getPaymentForUpdate != null) {
                 paymentRepository.save(getPaymentForUpdate)
             }
