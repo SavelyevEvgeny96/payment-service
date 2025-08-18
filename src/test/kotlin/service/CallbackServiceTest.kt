@@ -1,5 +1,4 @@
 package service
-
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -16,9 +15,7 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentStatus
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.service.impl.AkbCallbackServiceImpl
+import ru.sogaz.site.paymentService.service.impl.CallbackServiceImpl
 
 class CallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
@@ -65,7 +62,7 @@ class CallbackServiceTest {
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val response = service.processCallback(testRequest, "222")
+        val response = service.processCallback(testRequest)
 
         assertThat(response.data).isNotNull
         assertThat(response.data?.state).isEqualTo("OK")
@@ -102,7 +99,7 @@ class CallbackServiceTest {
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
-        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest, "222") }
+        val exceptions = assertThrows<BusinessException> { service.processCallback(testRequest) }
 
         assertThat(exceptions.getErrorCode()).isNotNull()
     }

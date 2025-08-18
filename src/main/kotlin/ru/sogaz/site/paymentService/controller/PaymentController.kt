@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.CallbackRequest
 import ru.sogaz.site.paymentService.dto.CallbackResponse
+import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
@@ -188,7 +189,7 @@ class PaymentController(
             CallbackRequest(
                 bankId = orderId,
             )
-        return callbackService.processCallback(requestParams, getTraceId())
+        return callbackService.processCallback(requestParams)
     }
 
     @GetMapping("/sbp/gpb/state")
@@ -218,6 +219,6 @@ class PaymentController(
             CallbackRequest(
                 bankId = transactionId,
             )
-        return callbackService.processCallback(requestParams, getTraceId())
+        return callbackService.processCallback(requestParams)
     }
 }
