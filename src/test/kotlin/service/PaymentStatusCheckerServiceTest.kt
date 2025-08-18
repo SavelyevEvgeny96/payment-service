@@ -94,7 +94,7 @@ class PaymentStatusCheckerServiceTest {
         val paymentBankId = "test123"
         val order =
             Order().apply {
-                code = "TEST-ORDER"
+                orderId = "TEST-ORDER"
                 recipientEmail = "test@example.com"
             }
         val payment =

@@ -147,7 +147,7 @@ class ReceiptServiceImpl(
 
             when (response.body?.status) {
                 "SUCCESS" -> {
-                    logger.info(LOG_RECEIPT_SUCCESS.format(order.code, traceId))
+                    logger.info(LOG_RECEIPT_SUCCESS.format(order.orderId, traceId))
                     payment?.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
 
@@ -169,7 +169,7 @@ class ReceiptServiceImpl(
                 }
             }
         } catch (e: Exception) {
-            logger.info(LOG_RECEIPT_ERROR.format(order.code, traceId), e)
+            logger.info(LOG_RECEIPT_ERROR.format(order.orderId, traceId), e)
             if (payment?.paymentBankId != null) {
                 handleReceiptError(order, payment.paymentBankId)
             }

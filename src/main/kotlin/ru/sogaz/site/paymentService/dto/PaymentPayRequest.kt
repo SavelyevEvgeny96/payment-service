@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.dto
 
 data class PaymentPayRequest(
-    val code: String,
+    val orderId: String,
     val urlToReturn: String?,
     val urlToReturnF: String?,
 )

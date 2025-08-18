@@ -72,9 +72,7 @@ class OrderServiceImpl(
         val traceId = getTraceId()
         logger.info(LOG_START_ORDER_CREATION + traceId)
         val orderId = generatorService.generateUniquePaymentId()
-        val orderCode = generatorService.generateUniquePaymentCode(traceId)
         logger.info("$LOG_PAYMENT_ID_GENERATED $orderId")
-        logger.info("$LOG_PAYMENT_CODE_GENERATED $orderCode")
 
         val requestBankId = requestWrapper.bank
         val bank = bankDao.getBank(requestBankId, traceId)
@@ -84,7 +82,6 @@ class OrderServiceImpl(
                 orderId = orderId,
                 bankId = bank,
                 orderStatus = orderStatus,
-                code = orderCode,
                 dateDelete = null,
                 paymentEndDate = requestWrapper.paymentEndDate,
                 premiumAmount = null,
@@ -95,7 +92,7 @@ class OrderServiceImpl(
 
         try {
             orderRepository.save(order)
-            logger.info("$LOG_ORDER_CREATION_SUCCESS $orderCode")
+            logger.info("$LOG_ORDER_CREATION_SUCCESS $orderId")
         } catch (e: Exception) {
             logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
             throw InnerException(traceId, ERROR_WHILE_SAVING_ORDER)
@@ -141,9 +138,9 @@ class OrderServiceImpl(
             }
         }
         val result: Response<DataOrder>
-        val paymentPageUrl = "${apiConfigProperty.paymentUrl}$orderCode"
+        val paymentPageUrl = "${apiConfigProperty.paymentUrl}$orderId"
         try {
-            val dataOrder = DataOrder(orderCode, paymentPageUrl)
+            val dataOrder = DataOrder(orderId, paymentPageUrl)
             result =
                 Response(
                     status = SUCCESS,

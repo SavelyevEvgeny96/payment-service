@@ -15,12 +15,12 @@ class GetSubOrderDaoImpl(
 
     override fun getSubOrder(
         traceId: String,
-        order: Order,
+        order: Order?,
     ): SubOrder =
         try {
             subOrderRepository.findFirstByOrderId(order)
         } catch (e: Exception) {
-            logger.error(e, LOG_AND_ERROR_FIND_SUB_ORDER, order.code)
+            logger.error(LOG_AND_ERROR_FIND_SUB_ORDER)
             throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER$order")
         }
 }
