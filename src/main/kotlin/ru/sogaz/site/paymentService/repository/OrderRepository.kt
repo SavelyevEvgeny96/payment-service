@@ -6,7 +6,6 @@ import ru.sogaz.site.paymentService.entity.Order
 
 @Repository
 interface OrderRepository : JpaRepository<Order, Long> {
-    fun findByCode(code: String): Order
 
-    fun findByOrderId(orderId: String): Order?
+    fun findByOrderId(orderId: String): Order
 }

@@ -1,14 +1,12 @@
 package ru.sogaz.site.paymentService.validation
 
+import ru.sogaz.site.paymentService.enums.BankEnum
+
 /**
- * Валидатор для аннотации `@ValidatePaymentRequest`.
  * Проверяет, что значение поля банка равно "gpb".
  */
 
 class BankValidator {
-    fun isValid(value: String?): Boolean = value.isNullOrEmpty() || value == GPB
+    fun isValid(value: String?): Boolean = value.isNullOrEmpty() || BankEnum.exists(value)
 
-    companion object {
-        const val GPB = "gpb"
-    }
 }

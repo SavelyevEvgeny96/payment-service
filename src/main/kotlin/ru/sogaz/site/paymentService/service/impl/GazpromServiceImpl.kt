@@ -154,7 +154,7 @@ class GazpromServiceImpl(
                 portalId = apiConfigProperty.portalId,
                 token = tokenGpb,
                 merchantId = apiConfigProperty.merchantId,
-                orderId = paymentPayRequest.code,
+                orderId = paymentPayRequest.orderId,
                 backUrlS = urlTuSuccess,
                 backUrlF = urlTuReturn,
                 amount = fixedAmount,

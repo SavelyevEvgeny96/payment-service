@@ -21,21 +21,10 @@ class OrderDaoImpl(
         const val LOG_ERROR_ORDER_SAVE = "Не удалось сохранить данные по заказу"
     }
 
-    override fun getOrderByCode(
-        code: String,
-        traceId: String,
-    ): Order =
-        try {
-            orderRepository.findByCode(code)
-        } catch (e: Exception) {
-            logger.error(e, LOG_NOT_FOUND_ORDER_TO_CODE, code, traceId)
-            throw BusinessException(CODE_ERROR_ORDER_NOT_FOUND, traceId)
-        }
-
     override fun getOrderId(
         traceId: String,
         orderId: String,
-    ): Order? =
+    ): Order =
         try {
             orderRepository.findByOrderId(orderId)
         } catch (e: Exception) {

@@ -72,7 +72,7 @@ class PaymentServiceImpl(
             "Ошибка совершения платежа. Указанный заказ (идентификатор/code заказа) не найден"
         const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
         const val LOG_ERROR_UPDATE_ORDER_BY_CODE = "Обновление полей urlToReturn и urlToDecline в  заявке не выполненно"
-        const val ERROR_UPDATE_ORDER_BY_CODE = "Ошибка Обновления полей urlToReturn и urlToDecline для заявки с code: "
+        const val ERROR_UPDATE_ORDER_BY_CODE = "Ошибка Обновления полей urlToReturn и urlToDecline для заявки с orderId: "
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
     }
@@ -154,7 +154,7 @@ class PaymentServiceImpl(
         errorCodeIsNotAvailable: Int,
         traceId: String,
     ): PaymentContext {
-        val orderFindByCode = orderDao.getOrderByCode(paymentPayRequest.code, traceId)
+        val orderFindByCode = orderDao.getOrderId(paymentPayRequest.orderId, traceId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
         val premiumAmount = orderFindByCode.premiumAmount
         val orderStatus = orderFindByCode.orderStatus
@@ -165,7 +165,7 @@ class PaymentServiceImpl(
             orderRepository.save(orderFindByCode)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
-            throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
+            throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.orderId)
         }
         val configBankPriorityCheck = bankDao.getBankPriority(traceId)
         val bank = orderFindByCode.bankId

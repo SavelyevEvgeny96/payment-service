@@ -22,6 +22,10 @@ data class Payment(
     @ManyToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "state_id", referencedColumnName = "state_id")
     var stateId: PaymentStatus? = null,
+    @Column(name = "qrc_id")
+    var qrcId: String? = null,
+    @Column(name = "payment_pass")
+    var paymentPass: String? = null,
     @ManyToOne
     @JoinColumn(name = "type_id", referencedColumnName = "type_id")
     var typeId: PaymentType? = null,

@@ -16,17 +16,6 @@ class GeneratorServiceImpl(
         const val DESC = "Оплата: "
     }
 
-    override fun generateUniquePaymentCode(traceId: String): String {
-        val codeLength = configDataService.getCodeLength(traceId)
-
-        return UUID
-            .randomUUID()
-            .toString()
-            .replace("-", "")
-            .take(codeLength)
-            .uppercase(Locale.getDefault())
-    }
-
     override fun generateDescription(sabOrderList: List<SubOrder>): String {
         val policyNumbers =
             sabOrderList
