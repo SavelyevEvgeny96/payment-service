@@ -8,6 +8,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.QueueMessageDto
@@ -59,7 +60,6 @@ class PaymentStatusCheckerServiceImpl(
 
     private companion object {
         const val LOG_START_STATUS_CHECK = "Начало проверки статуса платежа. PaymentBankId: %s. TraceId: %s"
-        const val LOG_PAYMENT_NOT_FOUND = "Платеж для заказа %s не найден. TraceId: %s"
         const val LOG_UNSUPPORTED_PAYMENT_TYPE = "Неподдерживаемый тип платежа %s для заказа %s. TraceId: %s"
         const val LOG_OPERATION_HISTORY_ADDED =
             "Запись о проверке статуса добавлена в историю для заказа %s. TraceId: %s"
@@ -79,18 +79,11 @@ class PaymentStatusCheckerServiceImpl(
         const val ORDER_SUCCESS = "Заказ оплачен"
     }
 
-    override fun getStatus(
-        paymentBankId: String,
-        traceId: String,
-    ): Response<ResponseStatusPay> {
+    override fun getStatus(paymentBankId: String): Response<ResponseStatusPay> {
+        val traceId = getTraceId()
         logger.info(LOG_START_STATUS_CHECK.format(paymentBankId, traceId))
-
         val payment =
             paymentRepository.findByPaymentBankId(paymentBankId)
-                ?: throw BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId).also {
-                    logger.error(LOG_PAYMENT_NOT_FOUND.format(paymentBankId, traceId))
-                }
-
         return when (payment.stateId?.stateId) {
             "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
                 getSuccessResponse(
@@ -104,7 +97,7 @@ class PaymentStatusCheckerServiceImpl(
             }
 
             "REG", "WAIT", "CALLBACK" -> {
-                processPaymentStatusCheck(payment, traceId)
+                processPaymentStatusCheck(payment)
                 getSuccessResponse(
                     traceId,
                     1101520200,
@@ -119,14 +112,12 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    override fun processPaymentStatusCheck(
-        payment: Payment,
-        traceId: String,
-    ) {
+    override fun processPaymentStatusCheck(payment: Payment) {
+        val traceId = getTraceId()
         when (payment.typeId?.typeId) {
             "sbp", "bankCard" -> {
                 if (payment.bank?.bankId == "gpb") {
-                    processBankCardPayment(payment, traceId)
+                    processBankCardPayment(payment)
                 }
             }
 
@@ -145,8 +136,8 @@ class PaymentStatusCheckerServiceImpl(
         orderStatus: OrderStatus?,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
-        traceId: String,
     ) {
+        val traceId = getTraceId()
         val status = StatusEnum.fromValue(orderStatus?.stateId)
         if (status != null) {
             when {
@@ -164,10 +155,8 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processBankCardPayment(
-        payment: Payment,
-        traceId: String,
-    ) {
+    private fun processBankCardPayment(payment: Payment) {
+        val traceId = getTraceId()
         logger.info(LOG_CARD_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
         logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
@@ -181,7 +170,7 @@ class PaymentStatusCheckerServiceImpl(
 
             if (response.isNotEmpty()) {
                 logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                updatePaymentStatus(payment, paymentResponse, traceId)
+                updatePaymentStatus(payment, paymentResponse)
             } else {
                 logger.error(LOG_GPB_API_ERROR.format(traceId))
                 throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
@@ -194,8 +183,8 @@ class PaymentStatusCheckerServiceImpl(
     private fun updatePaymentStatus(
         payment: Payment,
         response: PaymentStatusResponse,
-        traceId: String,
     ) {
+        val traceId = getTraceId()
         val order =
             payment.orderId
                 ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
@@ -211,7 +200,7 @@ class PaymentStatusCheckerServiceImpl(
                 payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
                 createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
 
-                receiptService.generateReceipt(order, traceId)
+                receiptService.generateReceipt(order)
                 sendToPaidOrdersQueue(order, traceId)
             }
 

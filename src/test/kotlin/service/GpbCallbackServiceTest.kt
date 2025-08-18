@@ -50,8 +50,6 @@ class GpbCallbackServiceTest {
     @Test
     fun `processCallback should return success response when all steps are successful`() {
         val ordersId = "ORDER_123"
-        val traceId = "222"
-
         val order =
             Order().apply {
                 id = 1L
@@ -67,9 +65,9 @@ class GpbCallbackServiceTest {
 
         `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(orderDao.getOrderId(traceId, ordersId)).thenReturn(order)
+        `when`(orderDao.getOrderId(ordersId)).thenReturn(order)
 
-        val response = service.processCallback(testRequest, traceId)
+        val response = service.processCallback(testRequest)
 
         assertThat(response.body).contains("<code>1</code>")
         verify(paymentDao).save(payment)
@@ -86,7 +84,7 @@ class GpbCallbackServiceTest {
         `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
 
-        val response = service.processCallback(testRequest, "222")
+        val response = service.processCallback(testRequest)
 
         assertThat(response.body).contains("<code>2</code>")
     }
@@ -101,9 +99,9 @@ class GpbCallbackServiceTest {
 
         `when`(signatureVerifier.verifySignature(testRequest.signature)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(payment.orderId?.orderId?.let { orderDao.getOrderId("222", it) }).thenReturn(null)
+        `when`(payment.orderId?.orderId?.let { orderDao.getOrderId(it) }).thenReturn(null)
 
-        val response = service.processCallback(testRequest, "222")
+        val response = service.processCallback(testRequest)
 
         assertThat(response.body).contains("<code>2</code>")
     }

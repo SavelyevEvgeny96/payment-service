@@ -15,7 +15,6 @@ class GeneratorServiceImplTest {
 
     companion object {
         const val DESC_POLICY_NUMBER = "Номера полиса №"
-        const val SEPARATOR = ", №"
         const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
     }

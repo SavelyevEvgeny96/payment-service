@@ -1,4 +1,3 @@
-
 package ru.sogaz.site.paymentService.controller
 
 import io.swagger.v3.oas.annotations.Operation
@@ -16,15 +15,16 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.AkbCallbackRequest
-import ru.sogaz.site.paymentService.dto.AkbCallbackResponse
+import ru.sogaz.site.paymentService.dto.CallbackRequest
+import ru.sogaz.site.paymentService.dto.CallbackResponse
+import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.dto.ResponseStatusPay
-import ru.sogaz.site.paymentService.service.AkbCallbackService
+import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
@@ -44,7 +44,7 @@ class PaymentController(
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val paymentRequestValidator: PaymentRequestValidator,
     private val gpbCallbackService: GpbCallbackService,
-    private val akbCallbackService: AkbCallbackService,
+    private val callbackService: CallbackService,
 ) {
     /**
      * Метод для создания заявки.
@@ -113,7 +113,7 @@ class PaymentController(
         requestWrapper.payments.forEach { paymentRequest ->
             paymentRequestValidator.isValid(paymentRequest, requestWrapper, getTraceId())
         }
-        return orderService.createOrder(requestWrapper, getTraceId())
+        return orderService.createOrder(requestWrapper)
     }
 
     /**
@@ -126,13 +126,12 @@ class PaymentController(
     ): ResponseEntity<Response<DataPay>> =
         paymentService.createPayment(
             paymentPayRequest,
-            getTraceId(),
         )
 
     @PostMapping("/paySbp")
     fun createPaySbp(
         @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest, getTraceId())
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
 
     @Operation(
         summary = "Проверить статус оплаты",
@@ -141,7 +140,12 @@ class PaymentController(
     @GetMapping("/pay/status/{payment_bank_id}")
     fun getStatusPay(
         @PathVariable payment_bank_id: String,
-    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, getTraceId())
+    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id)
+
+    @GetMapping("/order/status/{orderId}")
+    fun getOrderStatus(
+        @PathVariable orderId: String,
+    ): Response<DataGetOrderStatus> = orderService.getOrderStatus(orderId)
 
     @GetMapping("/gpb/state")
     fun stateGpbCallback(
@@ -168,7 +172,7 @@ class PaymentController(
                 trxId = trxId,
                 signature = signature,
             )
-        return gpbCallbackService.processCallback(requestParams, getTraceId())
+        return gpbCallbackService.processCallback(requestParams)
     }
 
     @PostMapping("/akb/state")
@@ -180,11 +184,41 @@ class PaymentController(
         @RequestParam(value = "pmoResultCode", required = false) pmoResultCode: String?,
         @RequestParam(value = "ridByPmo", required = false) ridByPmo: String?,
         request: HttpServletRequest,
-    ): Response<AkbCallbackResponse> {
+    ): Response<CallbackResponse> {
         val requestParams =
-            AkbCallbackRequest(
+            CallbackRequest(
                 bankId = orderId,
             )
-        return akbCallbackService.processCallback(requestParams)
+        return callbackService.processCallback(requestParams)
+    }
+
+    @GetMapping("/sbp/gpb/state")
+    fun stateSbpGpbCallback(
+        @RequestParam("transactionId") transactionId: String,
+        @RequestParam("qrcId") qrcId: String?,
+        @RequestParam("merchantId") merchantId: String?,
+        @RequestParam("amount") amount: String?,
+        @RequestParam("currency") currency: String?,
+        @RequestParam("dateTime") dateTime: String?,
+        @RequestParam("senderId") senderId: String?,
+        @RequestParam("senderTypeId") senderTypeId: String?,
+        @RequestParam("fpMessageId") fpMessageId: String?,
+        @RequestParam("recipientAccountId") recipientAccountId: String?,
+        @RequestParam("comment") comment: String?,
+        @RequestParam("recipientType") recipientType: String?,
+        @RequestParam("fpTransactionType") fpTransactionType: String?,
+        @RequestParam("fpTransactionId") fpTransactionId: String?,
+        @RequestParam("senderBic") senderBic: String?,
+        @RequestParam("recipientInn") recipientInn: String?,
+        @RequestParam("timestamp") timestamp: String?,
+        @RequestParam("operDate") operDate: String?,
+        @RequestParam("status") status: String?,
+        request: HttpServletRequest,
+    ): Response<CallbackResponse> {
+        val requestParams =
+            CallbackRequest(
+                bankId = transactionId,
+            )
+        return callbackService.processCallback(requestParams)
     }
 }

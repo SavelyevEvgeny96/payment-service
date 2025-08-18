@@ -1,12 +1,16 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_NOT_FOUND_ORDER_TO_CODE
 
 class OrderDaoImpl(
     private val orderRepository: OrderRepository,
@@ -19,22 +23,23 @@ class OrderDaoImpl(
     }
 
     override fun getOrderId(
-        traceId: String,
         orderId: String,
-    ): Order =
-        try {
+    ): Order {
+        val traceId = getTraceId()
+       return try {
             orderRepository.findByOrderId(orderId)
         } catch (e: Exception) {
             logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, traceId)
             throw InnerException(traceId, ERROR_ORDER_STATUS_NOT_FOUND)
         }
+    }
 
     override fun save(order: Order) {
         try {
             orderRepository.save(order)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_ORDER_SAVE)
-            throw InnerException(RequestInfo.getTraceId(), LOG_ERROR_ORDER_SAVE + e.message)
+            throw InnerException(getTraceId(), LOG_ERROR_ORDER_SAVE + e.message)
         }
     }
 }

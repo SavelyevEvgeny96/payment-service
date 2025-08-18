@@ -6,20 +6,13 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.siter.models.resonses.Response
 
 interface PaymentStatusCheckerService {
-    fun getStatus(
-        paymentBankId: String,
-        traceId: String,
-    ): Response<ResponseStatusPay>
+    fun getStatus(paymentBankId: String): Response<ResponseStatusPay>
 
     fun checkStatusOrder(
         orderStatus: OrderStatus?,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
-        traceId: String,
     )
 
-    fun processPaymentStatusCheck(
-        payment: Payment,
-        traceId: String,
-    )
+    fun processPaymentStatusCheck(payment: Payment)
 }

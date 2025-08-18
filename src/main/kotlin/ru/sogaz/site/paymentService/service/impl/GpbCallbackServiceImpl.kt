@@ -32,19 +32,23 @@ class GpbCallbackServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val PAYMENT_NOT_FOUND = "Not Found"
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
         const val CONST_CALLBACK = "SUCCESS"
         const val ORDER_NOT_FOUND = "Order ID не найден"
-        const val ERROR_TRX_ID = "Произошла ошибка для trx_id: "
+        const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
+        const val START_METHOD_PROCESS_CALL =
+            ">>> СТАРТ метода проверки CALLBACK от банка" +
+                " traceID: "
+        const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
+        const val UPDATE_ORDER_STATUS = "Статус заказа в таблице ЗАКАЗОВ обновлен. paymentBankId: "
+        const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
+        const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
     }
 
-    override fun processCallback(
-        request: GpbCallbackRequest,
-        traceId: String,
-    ): ResponseEntity<String> {
+    override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
+            val traceId = getTraceId()
             if (!signatureVerifier.verifySignature(request.signature)) {
                 logger.info(ERROR_TRX_ID + request.trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
@@ -55,54 +59,47 @@ class GpbCallbackServiceImpl(
 
             if (payment.orderId == null ||
                 payment.orderId?.orderId?.let {
-                    orderDao.getOrderId(traceId, it)
+                    orderDao.getOrderId(it)
                 } == null
             ) {
                 return createErrorResponse(INTERNAL_SERVER_ERROR)
             }
 
-            updatePaymentStatus(payment, traceId)
+            updatePaymentStatus(payment)
 
-            updateOrderStatus(order = payment.orderId!!, traceId)
+            updateOrderStatus(order = payment.orderId!!)
 
-            logOperation(payment, traceId)
+            logOperation(payment)
 
             createSuccessResponse()
         } catch (e: Exception) {
-            logger.info(ERROR_TRX_ID + request.trxId, e)
+            logger.error(ERROR_TRX_ID + request.trxId)
             createErrorResponse(INTERNAL_SERVER_ERROR)
         }
     }
 
-    private fun updatePaymentStatus(
-        payment: Payment,
-        traceId: String,
-    ) {
+    private fun updatePaymentStatus(payment: Payment) {
+        val traceId = getTraceId()
         val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, CONST_CALLBACK)
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentDao.save(payment)
     }
 
-    private fun updateOrderStatus(
-        order: Order,
-        traceId: String,
-    ) {
+    private fun updateOrderStatus(order: Order) {
+        val traceId = getTraceId()
         val orderStatus = getOrderStatusDao.getOrderStatus(traceId, CONST_CALLBACK)
         order.orderStatus = orderStatus
         order.updateDate = LocalDateTime.now()
         orderDao.save(order)
     }
 
-    private fun logOperation(
-        payment: Payment,
-        traceId: String,
-    ) {
+    private fun logOperation(payment: Payment) {
         try {
             val orderId = payment.orderId ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
                 orderId.orderId?.let {
-                    orderDao.getOrderId(traceId, it)
+                    orderDao.getOrderId(it)
                 }
 
             paymentOperationHistoryDao.save(
@@ -114,6 +111,7 @@ class GpbCallbackServiceImpl(
                 ),
             )
         } catch (e: Exception) {
+            logger.error(ERROR_SAVE_OPERATIONS + e.message)
             throw e
         }
     }

@@ -29,11 +29,9 @@ class GpbCallbackServiceConfig(
     ): GpbCallbackService {
         val callbackActions =
             actionTypeRepository.findByActionName("Заказ оплачен")
-                ?: throw IllegalStateException("ActionType не найден")
 
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
-                ?: throw IllegalStateException("Автор для PAY не найден")
 
         return GpbCallbackServiceImpl(
             paymentDao = paymentDao,

@@ -7,6 +7,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR_SBP
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
@@ -72,28 +73,25 @@ class PaymentServiceImpl(
             "Ошибка совершения платежа. Указанный заказ (идентификатор/code заказа) не найден"
         const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
         const val LOG_ERROR_UPDATE_ORDER_BY_CODE = "Обновление полей urlToReturn и urlToDecline в  заявке не выполненно"
-        const val ERROR_UPDATE_ORDER_BY_CODE = "Ошибка Обновления полей urlToReturn и urlToDecline для заявки с orderId: "
+        const val ERROR_UPDATE_ORDER_BY_CODE = "Ошибка Обновления полей urlToReturn и urlToDecline для заявки с code: "
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
     }
 
-    override fun createPayment(
-        paymentPayRequest: PaymentPayRequest,
-        traceId: String,
-    ): ResponseEntity<Response<DataPay>> {
+    override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+        val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION $traceId")
         val paymentContext =
             buildPaymentContext(
                 paymentPayRequest,
                 CODE_ERROR_ORDER_IS_PAID_FOR,
                 CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
-                traceId,
             )
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
         if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            val tokenGpb = gazpromService.getGPBToken(traceId, orderFindByCode, subOrder)
+            val tokenGpb = gazpromService.getGPBToken(orderFindByCode, subOrder)
             if (tokenGpb.isNotEmpty()) {
                 val actionTypeTokenSuccess = getActionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
                 val operationHistory =
@@ -105,10 +103,9 @@ class PaymentServiceImpl(
                     )
                 operationHistoryRepository.save(operationHistory)
             }
-            val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb, traceId)
+            val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
             return gazpromService.initiateGPBPayment(
                 paymentPayRequest,
-                traceId,
                 tokenGpb,
                 paymentId,
                 paymentContext.premiumAmount,
@@ -119,10 +116,8 @@ class PaymentServiceImpl(
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
     }
 
-    override fun createPaymentSbp(
-        paymentPayRequest: PaymentPayRequest,
-        traceId: String,
-    ): ResponseEntity<Response<DataPay>> {
+    override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+        val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
         var paymentId: Long? = null
         val paymentContext =
@@ -130,17 +125,15 @@ class PaymentServiceImpl(
                 paymentPayRequest,
                 CODE_ERROR_ORDER_IS_PAID_FOR_SBP,
                 CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
-                traceId,
             )
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
         if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            paymentId = createPaymentRecord(checkBank, orderFindByCode, null, traceId)
+            paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
         }
         return gazpromService.initiateGPBSBPPayment(
             paymentPayRequest,
-            traceId,
             paymentId,
             paymentContext.premiumAmount,
             orderFindByCode,
@@ -152,13 +145,13 @@ class PaymentServiceImpl(
         paymentPayRequest: PaymentPayRequest,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
-        traceId: String,
     ): PaymentContext {
-        val orderFindByOrderId = orderDao.getOrderId(traceId, paymentPayRequest.orderId)
+        val traceId = getTraceId()
+        val orderFindByOrderId = orderDao.getOrderId(paymentPayRequest.orderId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByOrderId)
         val premiumAmount = orderFindByOrderId.premiumAmount
         val orderStatus = orderFindByOrderId.orderStatus
-        paymentStatusCheckerService.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable, traceId)
+        paymentStatusCheckerService.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable)
         orderFindByOrderId.urlToReturn = paymentPayRequest.urlToReturn
         orderFindByOrderId.urlToDecline = paymentPayRequest.urlToReturnF
         try {
@@ -177,8 +170,8 @@ class PaymentServiceImpl(
         checkBank: Bank?,
         order: Order,
         tokenGpb: String?,
-        traceId: String,
     ): Long? {
+        val traceId = getTraceId()
         logger.info(LOG_START_PAYMENT_RECORD)
         val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, StatusEnum.NEW.value)
         val paymentType = getPaymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
