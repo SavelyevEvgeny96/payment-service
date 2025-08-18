@@ -154,7 +154,7 @@ class PaymentServiceImpl(
         errorCodeIsNotAvailable: Int,
         traceId: String,
     ): PaymentContext {
-        val orderFindByOrderId = orderDao.getOrderId(traceId,paymentPayRequest.orderId)
+        val orderFindByOrderId = orderDao.getOrderId(traceId, paymentPayRequest.orderId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByOrderId)
         val premiumAmount = orderFindByOrderId.premiumAmount
         val orderStatus = orderFindByOrderId.orderStatus

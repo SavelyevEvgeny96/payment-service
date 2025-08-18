@@ -8,5 +8,4 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 
 class BankValidator {
     fun isValid(value: String?): Boolean = value.isNullOrEmpty() || BankEnum.exists(value)
-
 }

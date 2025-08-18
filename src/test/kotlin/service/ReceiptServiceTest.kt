@@ -76,7 +76,7 @@ class ReceiptServiceTest {
 
         val order =
             Order().apply {
-                code = "ORDER-123"
+                orderId = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
             }
@@ -145,7 +145,7 @@ class ReceiptServiceTest {
 
         val order =
             Order().apply {
-                code = "ORDER-123"
+                orderId = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
             }
@@ -208,7 +208,7 @@ class ReceiptServiceTest {
 
         val order =
             Order().apply {
-                code = "ORDER-123"
+                orderId = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
             }

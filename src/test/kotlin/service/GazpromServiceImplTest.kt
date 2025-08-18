@@ -96,7 +96,7 @@ class GazpromServiceImplTest {
     @Test
     fun `should return payment link when GPB SBP API responds successfully`() {
         val traceId = "trace-123"
-        val order = Order(orderId = "ORD-1", code = "CODE-1", recipientEmail = "mail@test.com")
+        val order = Order(orderId = "ORD-1", recipientEmail = "mail@test.com")
         val clientSystem = ClientSystem().apply { externalSystemCode = "SYS" }
         val subOrder =
             SubOrder(

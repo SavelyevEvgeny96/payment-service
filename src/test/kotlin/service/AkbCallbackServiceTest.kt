@@ -3,7 +3,6 @@ package service
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
@@ -57,10 +56,7 @@ class AkbCallbackServiceTest {
             mock<OrderDao>().apply {
                 `when`(getOrderId("222", "1L")).thenReturn(order)
             }
-        val operationHistoryRepository =
-            mock<PaymentOperationHistoryRepository>().apply {
-                `when`(save(any())).thenAnswer { it.arguments[0] }
-            }
+
         val service =
             AkbCallbackServiceImpl(
                 paymentDao = paymentDao,

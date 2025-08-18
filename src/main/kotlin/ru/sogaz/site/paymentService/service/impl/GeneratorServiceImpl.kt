@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.impl
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.GeneratorService
-import java.util.Locale
 import java.util.UUID
 
 class GeneratorServiceImpl(
