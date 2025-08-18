@@ -26,7 +26,7 @@ class BankValidatorTest {
     }
 
     @Test
-    fun `должен вернуть true если значение ""`() {
+    fun `должен вернуть true если значение `() {
         val result = bankValidator.isValid("")
         assertTrue(result, "Значение должно быть недопустимым, если оно равно null")
     }

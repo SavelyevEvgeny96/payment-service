@@ -87,7 +87,7 @@ class GazpromServiceImplTest {
                 premiumAmount = "1000.00"
                 clientSystem = clientSystems
             }
-        val token = service.getGPBToken("trace-1", order, subOrder)
+        val token = service.getGPBToken(order, subOrder)
 
         assert(token == "abc123")
         verify(operationHistoryRepository, never()).save(any())
@@ -140,7 +140,7 @@ class GazpromServiceImplTest {
                 orderId = order,
             )
         whenever(paymentRepository.findById(1L)).thenReturn(Optional.of(payment))
-        val response = service.initiateGPBSBPPayment(paymentRequest, traceId, payment.id, "1000", order, subOrder)
+        val response = service.initiateGPBSBPPayment(paymentRequest, payment.id, "1000", order, subOrder)
 
         assert(response.body?.data?.paymentPageUrl == "http://pay-link")
         verify(operationHistoryRepository).save(any())

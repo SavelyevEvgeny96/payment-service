@@ -15,7 +15,7 @@ data class ChequeSent(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @Column(name = "payment_bank_id")
-    val paymentBankId: String,
+    val paymentBankId: String?,
     @Column(name = "status")
     val status: String,
     @Column(name = "date_create")

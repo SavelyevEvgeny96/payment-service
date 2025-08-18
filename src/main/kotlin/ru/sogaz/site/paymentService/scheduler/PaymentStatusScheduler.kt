@@ -37,7 +37,7 @@ class PaymentStatusScheduler(
 
             unpaidOrders.forEach { payment ->
                 try {
-                    paymentStatusCheckerService.processPaymentStatusCheck(payment, traceId)
+                    paymentStatusCheckerService.processPaymentStatusCheck(payment)
                     Thread.sleep(periodPay)
                 } catch (e: Exception) {
                     logger.info(LOG_PAYMENT_CHECK_ERROR.format(payment.paymentBankId, traceId), e)
