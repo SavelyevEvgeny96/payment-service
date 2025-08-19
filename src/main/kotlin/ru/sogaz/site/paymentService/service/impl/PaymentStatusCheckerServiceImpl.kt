@@ -173,7 +173,7 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_AKB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            val url = apiConfigProperty.akbUrl + payment.paymentBankId + "?password=" + payment.payment +
+            val url = apiConfigProperty.akbUrl + payment.paymentBankId + "?password=" + payment.paymentBankId +
                 "&orderDetailLevel=2&" +
                     "tranDetailLevel=2&" +
                     "actionDetailLevel=2&" +
