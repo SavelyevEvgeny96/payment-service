@@ -5,5 +5,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PaymentAkbStatusResponse(
     val status: String,
-    val prevStatus: String
+    val prevStatus: String,
 )

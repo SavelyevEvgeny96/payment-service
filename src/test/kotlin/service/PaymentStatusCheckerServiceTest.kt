@@ -10,12 +10,8 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.doNothing
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.spy
 import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.check
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
@@ -31,7 +27,6 @@ import ru.sogaz.site.paymentService.entity.PaymentType
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
@@ -132,12 +127,13 @@ class PaymentStatusCheckerServiceTest {
     @Test
     fun `getStatus should return WAIT status for REG payment state`() {
         val paymentBankId = "test-payment-id"
-        val payment = Payment(
-            paymentBankId = paymentBankId,
-            stateId = PaymentStatus(stateId = "REG", stateName = "Registered"),
-            id = 1L,
-            orderId = Order().apply { id = 1 }
-        )
+        val payment =
+            Payment(
+                paymentBankId = paymentBankId,
+                stateId = PaymentStatus(stateId = "REG", stateName = "Registered"),
+                id = 1L,
+                orderId = Order().apply { id = 1 },
+            )
         val status = PaymentStatus().apply { stateId = "REG" }
 
         `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
@@ -152,11 +148,12 @@ class PaymentStatusCheckerServiceTest {
     @Test
     fun `getStatus should throw exception for unknown payment state`() {
         val paymentBankId = "test-payment-id"
-        val payment = Payment(
-            paymentBankId = paymentBankId,
-            stateId = PaymentStatus(stateId = "UNKNOWN", stateName = "Unknown"),
-            id = 1L
-        )
+        val payment =
+            Payment(
+                paymentBankId = paymentBankId,
+                stateId = PaymentStatus(stateId = "UNKNOWN", stateName = "Unknown"),
+                id = 1L,
+            )
 
         `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
 
@@ -167,31 +164,36 @@ class PaymentStatusCheckerServiceTest {
 
     @Test
     fun `processPaymentStatusCheck should process AKB payment for akb_rus bank`() {
-        val order = Order().apply {
-            id = 1
-        }
-        val payment = Payment(
-            id = 1L,
-            typeId = PaymentType().apply { typeId = "bankCard" },
-            bank = Bank().apply { bankId = "akb_rus" },
-            paymentBankId = "test-payment",
-            stateId = PaymentStatus().apply { stateId = "REG" },
-            orderId = order
-        )
+        val order =
+            Order().apply {
+                id = 1
+            }
+        val payment =
+            Payment(
+                id = 1L,
+                typeId = PaymentType().apply { typeId = "bankCard" },
+                bank = Bank().apply { bankId = "akb_rus" },
+                paymentBankId = "test-payment",
+                stateId = PaymentStatus().apply { stateId = "REG" },
+                orderId = order,
+            )
 
-        val akbResponse = """
-        {
-            "status": "Closed",
-            "prevStatus": "FullyPaid"
-        }
-    """.trimIndent()
+        val akbResponse =
+            """
+            {
+                "status": "Closed",
+                "prevStatus": "FullyPaid"
+            }
+            """.trimIndent()
 
-        `when`(restTemplate.exchange(
-            anyString(),
-            eq(HttpMethod.POST),
-            any(),
-            eq(String::class.java)
-        )).thenReturn(ResponseEntity.ok(akbResponse))
+        `when`(
+            restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.POST),
+                any(),
+                eq(String::class.java),
+            ),
+        ).thenReturn(ResponseEntity.ok(akbResponse))
 
         `when`(objectMapper.readValue(akbResponse, PaymentAkbStatusResponse::class.java))
             .thenReturn(PaymentAkbStatusResponse(status = "Closed", prevStatus = "FullyPaid"))

@@ -195,7 +195,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(paymentId, paymentPageUrl,"")
+            paymentUpdate(paymentId, paymentPageUrl, "")
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {

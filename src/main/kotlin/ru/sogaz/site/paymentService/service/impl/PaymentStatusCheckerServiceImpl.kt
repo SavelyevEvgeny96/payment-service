@@ -24,7 +24,6 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
@@ -81,7 +80,8 @@ class PaymentStatusCheckerServiceImpl(
         const val ORDERS_NOT_FOUND = "Заказ не найден"
         const val ORDER_SUCCESS = "Заказ оплачен"
         const val CONST_PASSWORD = "?password="
-        const val CONST_URL_AKB = "&orderDetailLevel=2&" +
+        const val CONST_URL_AKB =
+            "&orderDetailLevel=2&" +
                 "tranDetailLevel=2&" +
                 "actionDetailLevel=2&" +
                 "cofpDetailLevel=2&" +
@@ -130,7 +130,7 @@ class PaymentStatusCheckerServiceImpl(
             "sbp", "bankCard" -> {
                 if (payment.bank?.bankId == "gpb") {
                     processBankCardPaymentGpb(payment, traceId)
-                } else if (payment.bank?.bankId == "akb_rus"){
+                } else if (payment.bank?.bankId == "akb_rus") {
                     processBankCardPaymentAkb(payment, traceId)
                 }
             }
@@ -177,8 +177,9 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_AKB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            val url = apiConfigProperty.akbUrl + payment.paymentBankId + CONST_PASSWORD + payment.paymentBankId +
-                CONST_URL_AKB
+            val url =
+                apiConfigProperty.akbUrl + payment.paymentBankId + CONST_PASSWORD + payment.paymentBankId +
+                    CONST_URL_AKB
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
             val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
@@ -228,10 +229,11 @@ class PaymentStatusCheckerServiceImpl(
         response: PaymentAkbStatusResponse,
         traceId: String,
     ): Payment {
-        val order = payment.orderId
-            ?.let { it.id?.let { id -> orderRepository.findById(id) } }
-            ?.orElseThrow { InnerException(ORDERS_NOT_FOUND, traceId) }
-            ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
+        val order =
+            payment.orderId
+                ?.let { it.id?.let { id -> orderRepository.findById(id) } }
+                ?.orElseThrow { InnerException(ORDERS_NOT_FOUND, traceId) }
+                ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
 
         val currentTime = LocalDateTime.now()
         payment.updateDate = currentTime
