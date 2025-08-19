@@ -80,6 +80,14 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
         const val ORDER_SUCCESS = "Заказ оплачен"
+        const val CONST_PASSWORD = "?password="
+        const val CONST_URL_AKB = "&orderDetailLevel=2&" +
+                "tranDetailLevel=2&" +
+                "actionDetailLevel=2&" +
+                "cofpDetailLevel=2&" +
+                "consumerDetailLevel=2&" +
+                "consumerTokenDetailLevel=2&" +
+                "tokenDetailLevel=2"
     }
 
     override fun getStatus(paymentBankId: String): Response<ResponseStatusPay> {
@@ -121,7 +129,6 @@ class PaymentStatusCheckerServiceImpl(
         when (payment.typeId?.typeId) {
             "sbp", "bankCard" -> {
                 if (payment.bank?.bankId == "gpb") {
-                    processBankCardPayment(payment)
                     processBankCardPaymentGpb(payment, traceId)
                 } else if (payment.bank?.bankId == "akb_rus"){
                     processBankCardPaymentAkb(payment, traceId)
@@ -162,8 +169,6 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processBankCardPayment(payment: Payment) {
-        val traceId = getTraceId()
     private fun processBankCardPaymentAkb(
         payment: Payment,
         traceId: String,
@@ -172,14 +177,8 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_AKB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            val url = apiConfigProperty.akbUrl + payment.paymentBankId + "?password=" + payment.paymentBankId +
-                "&orderDetailLevel=2&" +
-                    "tranDetailLevel=2&" +
-                    "actionDetailLevel=2&" +
-                    "cofpDetailLevel=2&" +
-                    "consumerDetailLevel=2&" +
-                    "consumerTokenDetailLevel=2&" +
-                    "tokenDetailLevel=2"
+            val url = apiConfigProperty.akbUrl + payment.paymentBankId + CONST_PASSWORD + payment.paymentBankId +
+                CONST_URL_AKB
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
             val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
@@ -256,7 +255,7 @@ class PaymentStatusCheckerServiceImpl(
                 order.updateDate = currentTime
                 orderRepository.save(order)
                 createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
-                receiptService.generateReceipt(order, traceId)
+                receiptService.generateReceipt(order)
                 sendToPaidOrdersQueue(order, traceId)
             }
             else -> {

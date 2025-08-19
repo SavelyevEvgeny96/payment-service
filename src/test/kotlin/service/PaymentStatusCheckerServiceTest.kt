@@ -144,7 +144,7 @@ class PaymentStatusCheckerServiceTest {
         `when`(paymentRepository.findById(payment.id!!)).thenReturn(Optional.of(payment))
         `when`(paymentStatusRepository.findByStateId("REG")).thenReturn(status)
 
-        val response = service.getStatus(paymentBankId, traceId)
+        val response = service.getStatus(paymentBankId)
 
         assertEquals("REG", response.data?.paymentStatus)
     }
@@ -161,7 +161,7 @@ class PaymentStatusCheckerServiceTest {
         `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
 
         assertThrows<BusinessException> {
-            service.getStatus(paymentBankId, traceId)
+            service.getStatus(paymentBankId)
         }
     }
 
@@ -169,7 +169,6 @@ class PaymentStatusCheckerServiceTest {
     fun `processPaymentStatusCheck should process AKB payment for akb_rus bank`() {
         val order = Order().apply {
             id = 1
-            code = "TEST-ORDER"
         }
         val payment = Payment(
             id = 1L,
@@ -201,7 +200,7 @@ class PaymentStatusCheckerServiceTest {
         `when`(orderStatusRepository.findByStateId("SUCCESS")).thenReturn(OrderStatus().apply { stateId = "SUCCESS" })
         `when`(paymentRepository.save(any(Payment::class.java))).thenReturn(payment)
 
-        service.processPaymentStatusCheck(payment, traceId)
+        service.processPaymentStatusCheck(payment)
 
         assertEquals("SUCCESS", payment.stateId?.stateId)
     }
