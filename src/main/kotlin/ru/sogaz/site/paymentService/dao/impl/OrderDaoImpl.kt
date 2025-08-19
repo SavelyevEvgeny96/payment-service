@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_GET_STATUS_ORDER
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
@@ -32,13 +33,14 @@ class OrderDaoImpl(
             throw BusinessException(CODE_ERROR_ORDER_NOT_FOUND, traceId)
         }
 
-    override fun getOrderId(orderId: String): Order? =
-        try {
+    override fun getOrderId(orderId: String): Order? {
+        return try {
             orderRepository.findByOrderId(orderId)
         } catch (e: Exception) {
             logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, getTraceId())
-            throw InnerException(getTraceId(), ERROR_ORDER_STATUS_NOT_FOUND)
+            null
         }
+    }
 
     override fun save(order: Order) {
         try {

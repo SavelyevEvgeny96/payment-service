@@ -2,7 +2,9 @@ package ru.sogaz.site.paymentService.service.impl
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_GET_STATUS_ORDER
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
@@ -162,7 +164,9 @@ class OrderServiceImpl(
     override fun getOrderStatus(orderId: String): Response<DataGetOrderStatus> {
         val traceId = getTraceId()
         logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
-        val orderStatusId = orderDao.getOrderId(orderId)?.orderStatus?.stateId
+        val orderEntity =
+            orderDao.getOrderId(orderId) ?: throw BusinessException(CODE_ERROR_GET_STATUS_ORDER, getTraceId())
+        val orderStatusId = orderEntity.orderStatus?.stateId
         logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")
         return getSuccessResponse(traceId, STATUS_CODE_SUCCESS_GET_ORDER_STATUS, DataGetOrderStatus(orderStatusId))
     }
