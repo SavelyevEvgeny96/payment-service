@@ -23,7 +23,6 @@ import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
 class PaymentStatusCheckerServiceConfig {
     @Bean
     open fun paymentStatusCheckerService(
-        configDataRepository: ConfigDataRepository,
         orderRepository: OrderRepository,
         subOrderRepository: SubOrderRepository,
         actionTypeRepository: ActionTypeRepository,
@@ -41,7 +40,6 @@ class PaymentStatusCheckerServiceConfig {
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
             subOrderRepository = subOrderRepository,
-            configDataRepository = configDataRepository,
             actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             paymentStatusRepository = paymentStatusRepository,

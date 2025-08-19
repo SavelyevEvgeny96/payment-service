@@ -31,7 +31,7 @@ class PaymentStatusScheduler(
         try {
             val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
 
-            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT"))
+            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
 
             logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
 

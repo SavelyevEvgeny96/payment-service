@@ -12,7 +12,6 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
@@ -25,7 +24,6 @@ import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
 class CheckStatusOrderTest {
     private val orderRepository: OrderRepository = mock()
     private val paymentRepository: PaymentRepository = mock()
-    private val configDataRepository: ConfigDataRepository = mock()
     private val paymentStatusRepository: PaymentStatusRepository = mock()
     private val operationHistoryRepository: PaymentOperationHistoryRepository = mock()
     private val actionTypeRepository: ActionTypeRepository = mock()
@@ -42,7 +40,6 @@ class CheckStatusOrderTest {
         PaymentStatusCheckerServiceImpl(
             orderRepository,
             paymentRepository,
-            configDataRepository,
             paymentStatusRepository,
             operationHistoryRepository,
             actionTypeRepository,
