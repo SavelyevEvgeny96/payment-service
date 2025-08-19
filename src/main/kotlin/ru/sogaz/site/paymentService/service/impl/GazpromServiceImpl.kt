@@ -53,6 +53,7 @@ class GazpromServiceImpl(
         const val TEMPLATE_VERSION = "01"
         const val QR_TTL = "60"
         const val QR_TYPE = "02"
+        const val QRC_ID = "qrcId"
         const val SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа по СБП ГАЗПРОМ БАНК"
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
@@ -155,7 +156,7 @@ class GazpromServiceImpl(
                 portalId = apiConfigProperty.portalId,
                 token = tokenGpb,
                 merchantId = apiConfigProperty.merchantId,
-                orderId = paymentPayRequest.code,
+                orderId = paymentPayRequest.orderId,
                 backUrlS = urlTuSuccess,
                 backUrlF = urlTuReturn,
                 amount = fixedAmount,
@@ -194,7 +195,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(paymentId, paymentPageUrl)
+            paymentUpdate(paymentId, paymentPageUrl, "")
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -267,6 +268,7 @@ class GazpromServiceImpl(
             logger.info(
                 "GPB payment SBP response [traceId=$traceId]: body=$responseBody",
             )
+            val qrcId = (responseBody?.get(DATA) as? Map<*, *>)?.get(QRC_ID) as? String ?: ""
             val paymentPageUrl =
                 (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
             val dataPay = DataPay(paymentPageUrl)
@@ -277,7 +279,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(paymentId, paymentPageUrl)
+            paymentUpdate(paymentId, paymentPageUrl, qrcId)
             logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -299,6 +301,7 @@ class GazpromServiceImpl(
     private fun paymentUpdate(
         paymentId: Long?,
         paymentPageUrl: String,
+        qtcId: String,
     ) {
         val traceId = getTraceId()
         if (paymentId != null) {
@@ -306,6 +309,7 @@ class GazpromServiceImpl(
             val paymentStatusREG = getPaymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
             getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
             getPaymentForUpdate?.stateId = paymentStatusREG
+            getPaymentForUpdate?.qrcId = qtcId
             if (getPaymentForUpdate != null) {
                 paymentRepository.save(getPaymentForUpdate)
             }

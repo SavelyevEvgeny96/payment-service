@@ -20,8 +20,6 @@ data class Order(
     var id: Long? = null,
     @Column(name = "order_id")
     var orderId: String? = "",
-    @Column(name = "code")
-    var code: String? = "",
     @ManyToOne
     @JoinColumn(name = "state_id", referencedColumnName = "state_id")
     var orderStatus: OrderStatus? = null,

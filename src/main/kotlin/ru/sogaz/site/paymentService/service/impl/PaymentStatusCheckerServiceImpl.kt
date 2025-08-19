@@ -125,7 +125,7 @@ class PaymentStatusCheckerServiceImpl(
                 logger.info(
                     LOG_UNSUPPORTED_PAYMENT_TYPE.format(
                         payment.typeId?.typeId,
-                        payment.orderId?.code,
+                        payment.orderId?.orderId,
                         traceId,
                     ),
                 )
@@ -192,7 +192,7 @@ class PaymentStatusCheckerServiceImpl(
                 ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
         val status = response.result.status
 
-        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.code, traceId))
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.orderId, traceId))
 
         when (status) {
             "SUCCESS" -> {
@@ -216,7 +216,7 @@ class PaymentStatusCheckerServiceImpl(
                 payment.stateId = paymentStatusRepository.findByStateId("DECLINED")
             }
 
-            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.code, traceId))
+            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.orderId, traceId))
         }
 
         payment.updateDate = LocalDateTime.now()
@@ -240,7 +240,7 @@ class PaymentStatusCheckerServiceImpl(
             )
 
         operationHistoryRepository.save(historyRecord)
-        logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.code, traceId))
+        logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.orderId, traceId))
     }
 
     /** начало генерации ИИ qwen2.5-coder:14b  */
@@ -290,7 +290,7 @@ class PaymentStatusCheckerServiceImpl(
                 paidOrderMessage,
             )
 
-            logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.code, traceId))
+            logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.orderId, traceId))
         } catch (e: Exception) {
             logger.info(LOG_QUEUE_MESSAGE_ERROR + e.message)
             throw InnerException(traceId, LOG_QUEUE_MESSAGE_ERROR + e.message)

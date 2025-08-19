@@ -34,6 +34,7 @@ class GpbCallbackServiceImpl(
     companion object {
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
+        const val NOT_FOUND = "Not Found"
         const val CONST_CALLBACK = "SUCCESS"
         const val ORDER_NOT_FOUND = "Order ID не найден"
         const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
@@ -62,7 +63,7 @@ class GpbCallbackServiceImpl(
                     orderDao.getOrderId(it)
                 } == null
             ) {
-                return createErrorResponse(INTERNAL_SERVER_ERROR)
+                return createErrorResponse(NOT_FOUND)
             }
 
             updatePaymentStatus(payment)
@@ -72,6 +73,9 @@ class GpbCallbackServiceImpl(
             logOperation(payment)
 
             createSuccessResponse()
+        } catch (e: InnerException) {
+            logger.error(ERROR_TRX_ID + request.trxId)
+            createErrorResponse(NOT_FOUND)
         } catch (e: Exception) {
             logger.error(ERROR_TRX_ID + request.trxId)
             createErrorResponse(INTERNAL_SERVER_ERROR)

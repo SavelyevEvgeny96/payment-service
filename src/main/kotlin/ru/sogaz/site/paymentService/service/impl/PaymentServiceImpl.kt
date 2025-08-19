@@ -147,23 +147,23 @@ class PaymentServiceImpl(
         errorCodeIsNotAvailable: Int,
     ): PaymentContext {
         val traceId = getTraceId()
-        val orderFindByCode = orderDao.getOrderByCode(paymentPayRequest.code, traceId)
-        val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByCode)
-        val premiumAmount = orderFindByCode.premiumAmount
-        val orderStatus = orderFindByCode.orderStatus
+        val orderFindByOrderId = orderDao.getOrderId(paymentPayRequest.orderId)
+        val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByOrderId)
+        val premiumAmount = orderFindByOrderId.premiumAmount
+        val orderStatus = orderFindByOrderId.orderStatus
         paymentStatusCheckerService.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable)
-        orderFindByCode.urlToReturn = paymentPayRequest.urlToReturn
-        orderFindByCode.urlToDecline = paymentPayRequest.urlToReturnF
+        orderFindByOrderId.urlToReturn = paymentPayRequest.urlToReturn
+        orderFindByOrderId.urlToDecline = paymentPayRequest.urlToReturnF
         try {
-            orderRepository.save(orderFindByCode)
+            orderRepository.save(orderFindByOrderId)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
-            throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByCode.code)
+            throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByOrderId.orderId)
         }
         val configBankPriorityCheck = bankDao.getBankPriority(traceId)
-        val bank = orderFindByCode.bankId
+        val bank = orderFindByOrderId.bankId
         val checkBank = bankDao.getBank(bank?.bankId, traceId)
-        return PaymentContext(orderFindByCode, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
+        return PaymentContext(orderFindByOrderId, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
     }
 
     private fun createPaymentRecord(

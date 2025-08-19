@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.impl
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.GeneratorService
-import java.util.Locale
 import java.util.UUID
 
 class GeneratorServiceImpl(
@@ -14,17 +13,6 @@ class GeneratorServiceImpl(
         const val SEPARATOR = ", №"
         const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
-    }
-
-    override fun generateUniquePaymentCode(traceId: String): String {
-        val codeLength = configDataService.getCodeLength(traceId)
-
-        return UUID
-            .randomUUID()
-            .toString()
-            .replace("-", "")
-            .take(codeLength)
-            .uppercase(Locale.getDefault())
     }
 
     override fun generateDescription(sabOrderList: List<SubOrder>): String {

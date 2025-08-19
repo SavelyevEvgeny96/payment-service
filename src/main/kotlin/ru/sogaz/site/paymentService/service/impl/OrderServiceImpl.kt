@@ -2,9 +2,7 @@ package ru.sogaz.site.paymentService.service.impl
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_GET_STATUS_ORDER
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
@@ -50,7 +48,7 @@ class OrderServiceImpl(
         const val LOG_END_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
         const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан и сохранен в базу с orderCode: "
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с subOrderId: "
-        const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: "
+        const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с не найден для TraceId: "
         const val LOG_ERROR_WHILE_UPDATING_ORDER = "Ошибка при обновлении суммы премии заказа"
         const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: "
         const val LOG_PAYMENT_SUB_ORDER_ID_GENERATED = "Сгенерирован subOrderId: "
@@ -74,9 +72,7 @@ class OrderServiceImpl(
         val traceId = getTraceId()
         logger.info(LOG_START_ORDER_CREATION + traceId)
         val orderId = generatorService.generateUniquePaymentId()
-        val orderCode = generatorService.generateUniquePaymentCode(traceId)
         logger.info("$LOG_PAYMENT_ID_GENERATED $orderId")
-        logger.info("$LOG_PAYMENT_CODE_GENERATED $orderCode")
 
         val requestBankId = requestWrapper.bank
         val bank = bankDao.getBank(requestBankId, traceId)
@@ -86,7 +82,6 @@ class OrderServiceImpl(
                 orderId = orderId,
                 bankId = bank,
                 orderStatus = orderStatus,
-                code = orderCode,
                 dateDelete = null,
                 paymentEndDate = requestWrapper.paymentEndDate,
                 premiumAmount = null,
@@ -97,7 +92,7 @@ class OrderServiceImpl(
 
         try {
             orderRepository.save(order)
-            logger.info("$LOG_ORDER_CREATION_SUCCESS $orderCode")
+            logger.info("$LOG_ORDER_CREATION_SUCCESS $orderId")
         } catch (e: Exception) {
             logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
             throw InnerException(traceId, ERROR_WHILE_SAVING_ORDER)
@@ -143,9 +138,9 @@ class OrderServiceImpl(
             }
         }
         val result: Response<DataOrder>
-        val paymentPageUrl = "${apiConfigProperty.paymentUrl}$orderCode"
+        val paymentPageUrl = "${apiConfigProperty.paymentUrl}$orderId"
         try {
-            val dataOrder = DataOrder(orderCode, paymentPageUrl)
+            val dataOrder = DataOrder(orderId, paymentPageUrl)
             result =
                 Response(
                     status = SUCCESS,
@@ -164,9 +159,7 @@ class OrderServiceImpl(
     override fun getOrderStatus(orderId: String): Response<DataGetOrderStatus> {
         val traceId = getTraceId()
         logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
-        val orderEntity =
-            orderDao.getOrderId(orderId) ?: throw BusinessException(CODE_ERROR_GET_STATUS_ORDER, getTraceId())
-        val orderStatusId = orderEntity.orderStatus?.stateId
+        val orderStatusId = orderDao.getOrderId(orderId).orderStatus?.stateId
         logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")
         return getSuccessResponse(traceId, STATUS_CODE_SUCCESS_GET_ORDER_STATUS, DataGetOrderStatus(orderStatusId))
     }
