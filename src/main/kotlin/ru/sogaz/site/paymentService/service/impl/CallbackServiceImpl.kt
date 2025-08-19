@@ -52,10 +52,8 @@ class CallbackServiceImpl(
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
     }
 
-    override fun processCallback(
-        request: CallbackRequest,
-        traceId: String,
-    ): Response<CallbackResponse> {
+    override fun processCallback(request: CallbackRequest): Response<CallbackResponse> {
+        val traceId = getTraceId()
         logger.info("$START_METHOD_PROCESS_CALL $traceId")
         return try {
             val payment = paymentDao.getPaymentFromBankId(request.bankId)
@@ -131,10 +129,10 @@ class CallbackServiceImpl(
         try {
             val orderId =
                 payment.orderId ?: throw InnerException(
-                    getTraceId(),
+                    traceId,
                     ORDER_NOT_FOUND,
                 )
-            val order = orderId.orderId?.let { orderDao.getOrderId(traceId, it) }
+            val order = orderId.orderId?.let { orderDao.getOrderId(it) }
 
             paymentOperationHistoryDao.save(
                 PaymentOperationHistory(

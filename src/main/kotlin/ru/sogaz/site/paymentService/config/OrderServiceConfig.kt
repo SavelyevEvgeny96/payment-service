@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
@@ -27,6 +28,7 @@ open class OrderServiceConfig {
         bankDao: BankDao,
         generatorService: GeneratorService,
         orderStatusDao: OrderStatusDao,
+        orderDao: OrderDao,
     ): OrderService =
         OrderServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -36,5 +38,6 @@ open class OrderServiceConfig {
             getClientSystemDao = getClientSystemDao,
             generatorService = generatorService,
             orderStatusDao = orderStatusDao,
+            orderDao = orderDao,
         )
 }

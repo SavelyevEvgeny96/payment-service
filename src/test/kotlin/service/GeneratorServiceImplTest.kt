@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.impl.GeneratorServiceImpl
@@ -16,7 +15,6 @@ class GeneratorServiceImplTest {
 
     companion object {
         const val DESC_POLICY_NUMBER = "Номера полиса №"
-        const val SEPARATOR = ", №"
         const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
     }
@@ -25,20 +23,6 @@ class GeneratorServiceImplTest {
     fun setUp() {
         configDataService = mock()
         service = GeneratorServiceImpl(configDataService)
-    }
-
-    @Test
-    fun `generateUniquePaymentCode returns uppercase string of correct length`() {
-        val traceId = "trace-1"
-        val expectedLength = 10
-
-        whenever(configDataService.getCodeLength(traceId)).thenReturn(expectedLength)
-
-        val code = service.generateUniquePaymentCode(traceId)
-
-        assertNotNull(code)
-        assertEquals(expectedLength, code.length)
-        assertTrue(code.all { it.isUpperCase() || it.isDigit() })
     }
 
     @Test

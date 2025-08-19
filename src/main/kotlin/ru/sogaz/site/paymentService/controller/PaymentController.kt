@@ -1,4 +1,3 @@
-
 package ru.sogaz.site.paymentService.controller
 
 import io.swagger.v3.oas.annotations.Operation
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.CallbackRequest
 import ru.sogaz.site.paymentService.dto.CallbackResponse
+import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
@@ -113,7 +113,7 @@ class PaymentController(
         requestWrapper.payments.forEach { paymentRequest ->
             paymentRequestValidator.isValid(paymentRequest, requestWrapper, getTraceId())
         }
-        return orderService.createOrder(requestWrapper, getTraceId())
+        return orderService.createOrder(requestWrapper)
     }
 
     /**
@@ -126,13 +126,12 @@ class PaymentController(
     ): ResponseEntity<Response<DataPay>> =
         paymentService.createPayment(
             paymentPayRequest,
-            getTraceId(),
         )
 
     @PostMapping("/paySbp")
     fun createPaySbp(
         @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest, getTraceId())
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
 
     @Operation(
         summary = "Проверить статус оплаты",
@@ -141,7 +140,12 @@ class PaymentController(
     @GetMapping("/pay/status/{payment_bank_id}")
     fun getStatusPay(
         @PathVariable payment_bank_id: String,
-    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id, getTraceId())
+    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id)
+
+    @GetMapping("/order/status/{orderId}")
+    fun getOrderStatus(
+        @PathVariable orderId: String,
+    ): Response<DataGetOrderStatus> = orderService.getOrderStatus(orderId)
 
     @GetMapping("/gpb/state")
     fun stateGpbCallback(
@@ -168,7 +172,7 @@ class PaymentController(
                 trxId = trxId,
                 signature = signature,
             )
-        return gpbCallbackService.processCallback(requestParams, getTraceId())
+        return gpbCallbackService.processCallback(requestParams)
     }
 
     @PostMapping("/akb/state")
@@ -185,7 +189,7 @@ class PaymentController(
             CallbackRequest(
                 bankId = orderId,
             )
-        return callbackService.processCallback(requestParams, getTraceId())
+        return callbackService.processCallback(requestParams)
     }
 
     @GetMapping("/sbp/gpb/state")
@@ -215,6 +219,6 @@ class PaymentController(
             CallbackRequest(
                 bankId = transactionId,
             )
-        return callbackService.processCallback(requestParams, getTraceId())
+        return callbackService.processCallback(requestParams)
     }
 }

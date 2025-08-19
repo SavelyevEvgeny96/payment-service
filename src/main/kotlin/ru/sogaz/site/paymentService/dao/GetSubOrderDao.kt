@@ -6,6 +6,6 @@ import ru.sogaz.site.paymentService.entity.SubOrder
 interface GetSubOrderDao {
     fun getSubOrder(
         traceId: String,
-        order: Order,
+        order: Order?,
     ): SubOrder
 }

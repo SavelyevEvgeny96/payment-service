@@ -79,7 +79,7 @@ class PaymentStatusCheckerServiceTest {
     @Test
     fun testGetStatusWithSuccessfulPayment() {
         val paymentBankId = "test-payment-id"
-        val traceId = "trace-test"
+
         val expectedStatus = "SUCCESS"
 
         val order = Order()
@@ -95,7 +95,7 @@ class PaymentStatusCheckerServiceTest {
         `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(paymentRepository.findById(payment.id!!)).thenReturn(Optional.of(payment))
 
-        val response = service.getStatus(paymentBankId, traceId)
+        val response = service.getStatus(paymentBankId)
 
         assertEquals(expectedStatus, response.data?.paymentStatus)
     }
@@ -106,10 +106,9 @@ class PaymentStatusCheckerServiceTest {
         paymentStatus.stateId = "SUCCESS"
 
         val paymentBankId = "test123"
-        val traceId = "test-trace"
         val order =
             Order().apply {
-                code = "TEST-ORDER"
+                orderId = "TEST-ORDER"
                 recipientEmail = "test@example.com"
             }
         val payment =
@@ -123,9 +122,9 @@ class PaymentStatusCheckerServiceTest {
         `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(paymentRepository.findById(payment.id!!)).thenReturn(Optional.of(payment))
 
-        doNothing().`when`(receiptService).generateReceipt(order, traceId)
+        doNothing().`when`(receiptService).generateReceipt(order)
 
-        val response = service.getStatus(paymentBankId, traceId)
+        val response = service.getStatus(paymentBankId)
 
         assertThat(response.data?.cheque).isFalse()
     }

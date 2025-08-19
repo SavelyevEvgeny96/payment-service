@@ -55,7 +55,6 @@ class CheckStatusOrderTest {
 
     private val errorCodePaidFor = 1001
     private val errorCodeNotAvailable = 2002
-    private val traceId = "trace-123"
 
     @Test
     fun `should throw BusinessException with errorCodePaidFor when status SUCCESS`() {
@@ -63,7 +62,7 @@ class CheckStatusOrderTest {
 
         val ex =
             assertThrows<BusinessException> {
-                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable, traceId)
+                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
             }
 
         assert(ex.getErrorCode() == errorCodePaidFor)
@@ -75,7 +74,7 @@ class CheckStatusOrderTest {
 
         val ex =
             assertThrows<BusinessException> {
-                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable, traceId)
+                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
             }
 
         assert(ex.getErrorCode() == errorCodeNotAvailable)
@@ -87,7 +86,7 @@ class CheckStatusOrderTest {
 
         val ex =
             assertThrows<BusinessException> {
-                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable, traceId)
+                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
             }
 
         assert(ex.getErrorCode() == errorCodeNotAvailable)
@@ -97,11 +96,11 @@ class CheckStatusOrderTest {
     fun `should not throw exception when status NEW`() {
         val orderStatus = OrderStatus().apply { stateId = StatusEnum.NEW.value }
 
-        service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable, traceId)
+        service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
     }
 
     @Test
     fun `should not throw exception when orderStatus is null`() {
-        service.checkStatusOrder(null, errorCodePaidFor, errorCodeNotAvailable, traceId)
+        service.checkStatusOrder(null, errorCodePaidFor, errorCodeNotAvailable)
     }
 }
