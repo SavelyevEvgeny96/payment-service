@@ -15,10 +15,8 @@ import ru.sogaz.siter.models.resonses.ValidationErrorData
 
 class PaymentRequestValidator(
     private val paymentEndDateValidatorFormat: PaymentEndDateValidatorFormat,
-    private val phoneValidator: PhoneValidator,
     private val emailValidator: EmailValidator,
     private val externalSystemCodeValidator: ExternalSystemCodeValidator,
-    private val policyholderValidator: PolicyholderValidator,
 ) {
     companion object {
         const val VALUE_NOT_NULL_IS_EMPTY = "Значение не должно быть пустым или null"
@@ -29,8 +27,9 @@ class PaymentRequestValidator(
     fun isValid(
         paymentRequest: PaymentRequest?,
         paymentRequestWrapper: PaymentRequestWrapper,
+        traceId: String,
     ) {
-        logger.info("Начало валидации для traceId: ${paymentRequest?.traceId}")
+        logger.info("Начало валидации для traceId: $traceId")
 
         if (paymentRequest == null) {
             logger.error("Ошибка: PaymentRequest не был передан.")
@@ -66,11 +65,6 @@ class PaymentRequestValidator(
             logger.warn("Ошибка валидации для email получателя: ${paymentRequestWrapper.recipientEmail}")
         }
 
-        if (!emailValidator.isValidManager(paymentRequest.managerEmail)) {
-            listResultError.add(validationErrors[CustomPaymentErrors.MANAGER_EMAIL])
-            logger.warn("Ошибка валидации для email менеджера: ${paymentRequest.managerEmail}")
-        }
-
         if (!externalSystemCodeValidator.isValid(paymentRequest.externalSystemCode)) {
             listResultError.add(validationErrors[CustomPaymentErrors.EXTERNAL_SYSTEM_CODE_VALIDATION])
             logger.warn("Ошибка валидации для внешнего кода системы: ${paymentRequest.externalSystemCode}")
@@ -81,41 +75,21 @@ class PaymentRequestValidator(
             logger.warn("Ошибка валидации для формата даты окончания платежа: ${paymentRequestWrapper.paymentEndDate}")
         } else if (!paymentPastDateValidator.isValid(paymentRequestWrapper.paymentEndDate)) {
             listResultError.add(validationErrors[CustomPaymentErrors.PAYMENT_END_DATE])
-            logger.warn("Ошибка: дата окончания платежа прошла для traceId: ${paymentRequest.traceId}")
-        }
-
-        if (!phoneValidator.isValid(paymentRequestWrapper.recipientPhone)) {
-            listResultError.add(validationErrors[CustomPaymentErrors.RECIPIENT_PHONE_VALIDATION])
-            logger.warn("Ошибка валидации для телефона получателя: ${paymentRequestWrapper.recipientPhone}")
-        }
-
-        if (!policyholderValidator.isValid(paymentRequestWrapper.policyHolder)) {
-            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_LENGTH])
-            logger.warn("Ошибка валидации для держателя полиса: ${paymentRequestWrapper.policyHolder}")
-        }
-
-        if (!policyholderValidator.isValidDoc(paymentRequestWrapper.policyHolderDoc)) {
-            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER_DOC])
-            logger.warn("Ошибка валидации для документа держателя полиса: ${paymentRequestWrapper.policyHolderDoc}")
-        }
-
-        if (!policyholderValidator.isValidCorrectInput(paymentRequestWrapper.policyHolder)) {
-            listResultError.add(validationErrors[CustomPaymentErrors.POLICY_HOLDER])
-            logger.warn("Ошибка валидации для корректности ввода полиса: ${paymentRequestWrapper.policyHolder}")
+            logger.warn("Ошибка: дата окончания платежа прошла для traceId: $traceId")
         }
 
         if (listResultError.isNotEmpty()) {
             logger.error(
-                "Валидация не прошла для traceId: ${paymentRequest.traceId}." +
+                "Валидация не прошла для traceId: $traceId." +
                     " Ошибки: ${listResultError.map { it?.error }}",
             )
             throw ValidationException(
                 CustomPaymentErrors.CODE_ERROR_REQUIRED_DATA,
-                paymentRequest.traceId,
+                traceId,
                 listResultError,
             )
         }
 
-        logger.info("Валидация прошла успешно для traceId: ${paymentRequest.traceId}")
+        logger.info("Валидация прошла успешно для traceId: $traceId")
     }
 }

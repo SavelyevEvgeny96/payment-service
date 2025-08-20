@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.entity
 
-import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -17,14 +16,14 @@ class PaymentOperationHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @ManyToOne(cascade = [CascadeType.ALL])
-    var action: ActionType,
+    @ManyToOne
+    var action: ActionType? = null,
     @Column(name = "action_date")
-    var actionDate: LocalDateTime?,
+    var actionDate: LocalDateTime? = null,
     @ManyToOne
     @JoinColumn(name = "action_author_id")
-    var actionAuthor: ClientSystem?,
+    var actionAuthor: ClientSystem? = null,
     @ManyToOne
     @JoinColumn(name = "order_id", referencedColumnName = "order_id")
-    var order: Order,
+    var order: Order? = null,
 )

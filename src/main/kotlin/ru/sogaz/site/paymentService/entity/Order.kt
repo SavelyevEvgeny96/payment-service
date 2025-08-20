@@ -19,43 +19,29 @@ data class Order(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(name = "order_id")
-    var orderId: String,
-    @Column(name = "code")
-    var code: String,
+    var orderId: String? = "",
     @ManyToOne
     @JoinColumn(name = "state_id", referencedColumnName = "state_id")
-    var orderStatus: OrderStatus?,
+    var orderStatus: OrderStatus? = null,
     @ManyToOne
     @JoinColumn(name = "bank_id", referencedColumnName = "bank_id")
-    var bankId: Bank?,
+    var bankId: Bank? = null,
     @Column(name = "date_delete")
-    var dateDelete: String?,
+    var dateDelete: String? = "",
     @Column(name = "premium_amount")
-    var premiumAmount: String?,
+    var premiumAmount: String? = "",
     @Column(name = "payment_end_date")
-    var paymentEndDate: String?,
+    var paymentEndDate: String? = "",
     @Column(name = "url_to_return")
-    var urlToReturn: String?,
+    var urlToReturn: String? = "",
     @Column(name = "url_to_decline")
-    var urlToDecline: String?,
-    @Column(name = "custom_url")
-    var customURL: String?,
+    var urlToDecline: String? = "",
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
     @Column(name = "recipient_email")
-    var recipientEmail: String,
-    @Column(name = "need_receipt")
-    var needReceipt: Boolean?,
-    @Column(name = "recipient_phone")
-    var recipientPhone: String?,
-    @Column(name = "policyholder")
-    var policyholder: String?,
-    @Column(name = "policyholder_doc")
-    var policyholderDoc: String?,
-    @Column(name = "recipient_user_id")
-    var recipientUserId: String?,
+    var recipientEmail: String? = "",
 ) {
     @PrePersist
     fun prePersist() {
@@ -67,27 +53,4 @@ data class Order(
     fun preUpdate() {
         updateDate = LocalDateTime.now()
     }
-
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(
-        0,
-        "",
-        "",
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        "",
-        null,
-        null,
-        null,
-        null,
-        null,
-    )
 }

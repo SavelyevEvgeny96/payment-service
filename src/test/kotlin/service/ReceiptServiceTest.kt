@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.eq
-import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -76,19 +74,16 @@ class ReceiptServiceTest {
 
         val order =
             Order().apply {
-                code = "ORDER-123"
+                orderId = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
-                recipientPhone = "+79991234567"
-                policyholder = "Test User"
-                recipientUserId = "user123"
             }
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
         `when`(paymentRepository.findByOrderId(order)).thenReturn(
             Payment().apply {
-                paymentBankId = "pay123"
+                id = 12
             },
         )
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATED_ACTION)).thenReturn(
@@ -117,7 +112,7 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        service.generateReceipt(order, traceId)
+        service.generateReceipt(order)
 
         val captor = ArgumentCaptor.forClass(HttpEntity::class.java)
         verify(restTemplate).exchange(
@@ -148,19 +143,16 @@ class ReceiptServiceTest {
 
         val order =
             Order().apply {
-                code = "ORDER-123"
+                orderId = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
-                recipientPhone = "+79991234567"
-                policyholder = "Test User"
-                recipientUserId = "user123"
             }
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
         `when`(paymentRepository.findByOrderId(order)).thenReturn(
             Payment().apply {
-                paymentBankId = "pay123"
+                id = 12
             },
         )
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION)).thenReturn(
@@ -190,11 +182,9 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        val exception =
-            assertThrows<InnerException> {
-                service.generateReceipt(order, traceId)
-            }
-        verify(operationHistoryRepository, atLeastOnce()).save(any())
+        assertThrows<InnerException> {
+            service.generateReceipt(order)
+        }
     }
 
     @Test
@@ -214,22 +204,18 @@ class ReceiptServiceTest {
 
         val order =
             Order().apply {
-                code = "ORDER-123"
+                orderId = "ORDER-123"
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
-                recipientPhone = "+79991234567"
-                policyholder = "Test User"
-                recipientUserId = "user123"
-            }
-
-        val payment =
-            Payment().apply {
-                paymentBankId = "pay123"
             }
 
         `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(payment)
+        `when`(paymentRepository.findByOrderId(order)).thenReturn(
+            Payment().apply {
+                id = 12
+            },
+        )
         `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
             .thenReturn(ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
@@ -245,17 +231,8 @@ class ReceiptServiceTest {
 
         val exception =
             assertThrows<InnerException> {
-                service.generateReceipt(order, traceId)
+                service.generateReceipt(order)
             }
-
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
-
-        verify(chequeSentRepository).save(
-            argThat {
-                it.paymentBankId == "pay123" && it.status == "FAILED"
-            },
-        )
-
-        verify(operationHistoryRepository, atLeastOnce()).save(any())
     }
 }

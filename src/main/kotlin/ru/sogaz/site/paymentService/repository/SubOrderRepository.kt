@@ -7,7 +7,7 @@ import ru.sogaz.site.paymentService.entity.SubOrder
 
 @Repository
 interface SubOrderRepository : JpaRepository<SubOrder, Long> {
-    fun findFirstByOrderId(orderId: Order): SubOrder
+    fun findFirstByOrderId(orderId: Order?): SubOrder
 
     fun findAllByOrderId(orderId: Order): List<SubOrder>
 }

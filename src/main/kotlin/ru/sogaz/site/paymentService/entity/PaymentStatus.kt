@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 data class PaymentStatus(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: String? = null,
+    var id: Long? = null,
     @Column(name = "state_id")
     @JvmField
     var stateId: String,

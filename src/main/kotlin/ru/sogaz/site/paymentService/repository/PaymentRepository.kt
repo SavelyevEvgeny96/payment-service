@@ -9,9 +9,9 @@ import ru.sogaz.site.paymentService.entity.Payment
 
 @Repository
 interface PaymentRepository : JpaRepository<Payment, Long> {
-    fun findByOrderId(orderId: Order): Payment
+    fun findByOrderId(orderId: Order): Payment?
 
-    fun findByPaymentBankId(paymentBankId: String): Payment?
+    fun findByPaymentBankId(paymentBankId: String?): Payment
 
     @Query(
         """

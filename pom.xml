@@ -10,8 +10,6 @@
 	<artifactId>payment-service</artifactId>
 	<version>1.0.0</version>
 	<name>Payment Service</name>
-	<description></description>
-
 	<properties>
 		<java.version>21</java.version>
 		<kotlin.version>1.9.25</kotlin.version>
@@ -19,6 +17,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
+		<logback-gelf.version>6.1.1</logback-gelf.version>
 		<springdoc-openapi-starter.version>2.2.0</springdoc-openapi-starter.version>
 		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
 		<spring-boot-maven-plugin.version>3.1.4</spring-boot-maven-plugin.version>
@@ -39,16 +38,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-reflect</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
 		</dependency>
-
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-amqp</artifactId>
+			<groupId>de.siegmar</groupId>
+			<artifactId>logback-gelf</artifactId>
+			<version>${logback-gelf.version}</version>
 		</dependency>
 
 		<dependency>
@@ -65,7 +60,7 @@
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>exception-starter</artifactId>
-			<version>1.0.80-dev</version>
+			<version>1.0.88</version>
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
@@ -77,6 +72,41 @@
 			<artifactId>filter-starter</artifactId>
 			<version>1.0.3</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+			<!-- JUnit 5 -->
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter</artifactId>
+				<version>5.10.2</version>
+				<scope>test</scope>
+			</dependency>
+
+			<!-- Mockito core -->
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>5.11.0</version>
+				<scope>test</scope>
+			</dependency>
+
+			<!-- Mockito-Kotlin -->
+			<dependency>
+				<groupId>org.mockito.kotlin</groupId>
+				<artifactId>mockito-kotlin</artifactId>
+				<version>5.2.1</version>
+				<scope>test</scope>
+			</dependency>
+
+			<!-- (опционально) Spring Test, если используешь RestTemplate и spring-context -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-test</artifactId>
+				<version>6.1.6</version>
+				<scope>test</scope>
+			</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -151,6 +181,7 @@
 			</resource>
 		</resources>
 		<plugins>
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
