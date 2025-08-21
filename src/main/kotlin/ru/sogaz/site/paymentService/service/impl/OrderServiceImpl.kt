@@ -8,9 +8,11 @@ import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl.Companion.BANK_RESERVE
 import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.DataOrder
 import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
@@ -75,7 +77,12 @@ class OrderServiceImpl(
         logger.info("$LOG_PAYMENT_ID_GENERATED $orderId")
 
         val requestBankId = requestWrapper.bank
-        val bank = bankDao.getBank(requestBankId, traceId)
+        val bank = if (requestBankId == null) {
+            bankDao.getBank(null, traceId, BANK_RESERVE)
+        } else {
+            bankDao.getBank(requestBankId, traceId, null)
+        }
+
         val orderStatus = orderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
         val order =
             Order(

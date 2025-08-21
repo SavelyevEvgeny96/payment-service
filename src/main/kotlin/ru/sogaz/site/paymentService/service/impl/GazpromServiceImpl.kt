@@ -60,10 +60,10 @@ class GazpromServiceImpl(
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа ГАЗПРОМ БАНК "
         const val STATUS_CODE_SUCCESS_PAY_SBP = 1101530200
         const val STATUS_CODE_SUCCESS_PAY_CARD = 1101510200
-        const val START_METHOD_PAY_BANK_CARD = ">>> СТАРТ метода оплата картой для платежа с payment_id: "
-        const val END__METHOD_PAY_BANK_CARD = "<<< КОНЕЦ  метода оплата картой для платежа с payment_id: "
-        const val START_METHOD_PAY_BANK_SBP = ">>> СТАРТ метода оплата по СБП для платежа с payment_id: "
-        const val END__METHOD_PAY_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП для платежа с payment_id: "
+        const val START_METHOD_PAY_BANK_CARD = ">>> СТАРТ метода оплата картой Газпром Банк для платежа с payment_id: "
+        const val END__METHOD_PAY_BANK_CARD = "<<< КОНЕЦ  метода оплата картой Газпром Банк для платежа с payment_id: "
+        const val START_METHOD_PAY_BANK_SBP = ">>> СТАРТ метода оплата по СБП Газпром Банк для платежа с payment_id: "
+        const val END__METHOD_PAY_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП Газпром Банк для платежа с payment_id: "
         const val START_METHOD_GET_TOKEN_GPB =
             ">>> СТАРТ метода получение токена из банка Газпром для" +
                     " инициирования оплаты по карте для order_id: "
