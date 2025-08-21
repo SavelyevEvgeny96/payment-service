@@ -78,12 +78,18 @@ class PaymentServiceImpl(
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
     }
 
-    override fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+    override fun createPayment(
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String
+    ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION $traceId")
         val paymentContext =
             buildPaymentContext(
-                paymentPayRequest,
+                urlToReturn,
+                urlToReturnF,
+                orderId,
                 CODE_ERROR_ORDER_IS_PAID_FOR,
                 CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
             )
@@ -105,7 +111,7 @@ class PaymentServiceImpl(
             }
             val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
             return gazpromService.initiateGPBPayment(
-                paymentPayRequest,
+                urlToReturn, urlToReturnF, orderId,
                 tokenGpb,
                 paymentId,
                 paymentContext.premiumAmount,
@@ -116,13 +122,18 @@ class PaymentServiceImpl(
         throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
     }
 
-    override fun createPaymentSbp(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>> {
+    override fun createPaymentSbp(
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String
+    ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
         var paymentId: Long? = null
         val paymentContext =
             buildPaymentContext(
-                paymentPayRequest,
+                urlToReturn,
+                urlToReturnF, orderId,
                 CODE_ERROR_ORDER_IS_PAID_FOR_SBP,
                 CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
             )
@@ -133,7 +144,6 @@ class PaymentServiceImpl(
             paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
         }
         return gazpromService.initiateGPBSBPPayment(
-            paymentPayRequest,
             paymentId,
             paymentContext.premiumAmount,
             orderFindByCode,
@@ -142,18 +152,18 @@ class PaymentServiceImpl(
     }
 
     override fun buildPaymentContext(
-        paymentPayRequest: PaymentPayRequest,
+        urlToReturn: String?, urlToReturnF: String?, orderId: String,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
     ): PaymentContext {
         val traceId = getTraceId()
-        val orderFindByOrderId = orderDao.getOrderId(paymentPayRequest.orderId)
+        val orderFindByOrderId = orderDao.getOrderId(orderId)
         val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByOrderId)
         val premiumAmount = orderFindByOrderId.premiumAmount
         val orderStatus = orderFindByOrderId.orderStatus
         paymentStatusCheckerService.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable)
-        orderFindByOrderId.urlToReturn = paymentPayRequest.urlToReturn
-        orderFindByOrderId.urlToDecline = paymentPayRequest.urlToReturnF
+        orderFindByOrderId.urlToReturn = urlToReturn
+        orderFindByOrderId.urlToDecline = urlToReturnF
         try {
             orderRepository.save(orderFindByOrderId)
         } catch (e: Exception) {
@@ -163,7 +173,14 @@ class PaymentServiceImpl(
         val configBankPriorityCheck = bankDao.getBankPriority(traceId)
         val bank = orderFindByOrderId.bankId
         val checkBank = bankDao.getBank(bank?.bankId, traceId)
-        return PaymentContext(orderFindByOrderId, subOrder, premiumAmount, orderStatus, configBankPriorityCheck, checkBank)
+        return PaymentContext(
+            orderFindByOrderId,
+            subOrder,
+            premiumAmount,
+            orderStatus,
+            configBankPriorityCheck,
+            checkBank
+        )
     }
 
     private fun createPaymentRecord(

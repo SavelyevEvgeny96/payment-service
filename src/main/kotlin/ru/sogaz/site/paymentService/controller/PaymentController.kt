@@ -71,7 +71,7 @@ class PaymentController(
                             Schema(
                                 example =
                                     "{\"status\": \"error\", \"code\": -1101500401," +
-                                        " \"messageError\": \"Ваш запрос не авторизован\"}",
+                                            " \"messageError\": \"Ваш запрос не авторизован\"}",
                             ),
                     ),
                 ],
@@ -85,7 +85,7 @@ class PaymentController(
                             Schema(
                                 example =
                                     "{\"status\": \"error\", \"code\": -1101500403, " +
-                                        "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}",
+                                            "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}",
                             ),
                     ),
                 ],
@@ -99,7 +99,7 @@ class PaymentController(
                             Schema(
                                 example =
                                     "{\"status\": \"error\", \"code\": -1101500422, " +
-                                        "\"messageError\": \"Не все обязательные данные указаны корректно\"}",
+                                            "\"messageError\": \"Не все обязательные данные указаны корректно\"}",
                             ),
                     ),
                 ],
@@ -116,22 +116,19 @@ class PaymentController(
         return orderService.createOrder(requestWrapper)
     }
 
-    /**
-     * Метод для создания платежа.
-     * @return Ответ с кодом состояния и данными о платеже или ошибкой
-     */
-    @PostMapping("/pay")
-    fun createPay(
-        @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> =
-        paymentService.createPayment(
-            paymentPayRequest,
-        )
-
-    @PostMapping("/paySbp")
+    @GetMapping("/paySbp/{orderId}")
     fun createPaySbp(
-        @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
+        @PathVariable orderId: String,
+        @RequestParam(required = false) urlToReturn: String?,
+        @RequestParam(required = false) urlToReturnF: String?
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(urlToReturn, urlToReturnF, orderId)
+
+    @GetMapping("/pay/{orderId}")
+    fun pay(
+        @PathVariable orderId: String,
+        @RequestParam(required = false) urlToReturn: String?,
+        @RequestParam(required = false) urlToReturnF: String?
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPayment(urlToReturn, urlToReturnF, orderId)
 
     @Operation(
         summary = "Проверить статус оплаты",

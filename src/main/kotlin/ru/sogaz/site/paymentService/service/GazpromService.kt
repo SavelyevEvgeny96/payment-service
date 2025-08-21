@@ -14,7 +14,9 @@ interface GazpromService {
     ): String
 
     fun initiateGPBPayment(
-        paymentPayRequest: PaymentPayRequest,
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String,
         tokenGpb: String,
         paymentId: Long?,
         premiumAmount: String?,
@@ -23,7 +25,6 @@ interface GazpromService {
     ): ResponseEntity<Response<DataPay>>
 
     fun initiateGPBSBPPayment(
-        paymentPayRequest: PaymentPayRequest,
         paymentId: Long?,
         premiumAmount: String?,
         order: Order,
