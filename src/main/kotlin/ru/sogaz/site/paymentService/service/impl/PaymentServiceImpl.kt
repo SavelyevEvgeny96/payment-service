@@ -9,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR_SBP
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
+import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
@@ -16,16 +17,17 @@ import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.DataPay
 import ru.sogaz.site.paymentService.dto.PaymentContext
-import ru.sogaz.site.paymentService.dto.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
+import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
@@ -47,10 +49,13 @@ class PaymentServiceImpl(
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val bankDao: BankDao,
+    private val configDataDao: ConfigDataDao,
+    private val akbBankIntegrationService: AkbBankIntegrationService
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
     companion object {
+        const val BANK_PRIORITY_CHECK = "bankPriorityCheck"
         const val PAYMENT_TYPE_PAY = "bankCard"
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val RUB = "RUB"
@@ -96,30 +101,43 @@ class PaymentServiceImpl(
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
-        if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            val tokenGpb = gazpromService.getGPBToken(orderFindByCode, subOrder)
-            if (tokenGpb.isNotEmpty()) {
-                val actionTypeTokenSuccess = getActionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
-                val operationHistory =
-                    PaymentOperationHistory(
-                        action = actionTypeTokenSuccess,
-                        order = orderFindByCode,
-                        actionAuthor = paymentContext.subOrder.clientSystem,
-                        actionDate = null,
+        if (checkBank != null) {
+            val paymentId: Long?
+            if (checkBank.bankId == BankEnum.AKB_RUS.value) {
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, "")
+                return akbBankIntegrationService.initiateAKBPayment(
+                    urlToReturn, urlToReturnF, orderId, paymentId,
+                    paymentContext.premiumAmount, orderFindByCode,
+                    subOrder,
+                )
+            } else {
+                val tokenGpb = gazpromService.getGPBToken(orderFindByCode, subOrder)
+                if (tokenGpb.isNotEmpty()) {
+                    val actionTypeTokenSuccess = getActionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
+                    val operationHistory =
+                        PaymentOperationHistory(
+                            action = actionTypeTokenSuccess,
+                            order = orderFindByCode,
+                            actionAuthor = paymentContext.subOrder.clientSystem,
+                            actionDate = null,
+                        )
+                    operationHistoryRepository.save(operationHistory)
+
+                    paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
+                    return gazpromService.initiateGPBPayment(
+                        urlToReturn, urlToReturnF, orderId,
+                        tokenGpb,
+                        paymentId,
+                        paymentContext.premiumAmount,
+                        orderFindByCode,
+                        subOrder,
                     )
-                operationHistoryRepository.save(operationHistory)
+                }
             }
-            val paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
-            return gazpromService.initiateGPBPayment(
-                urlToReturn, urlToReturnF, orderId,
-                tokenGpb,
-                paymentId,
-                paymentContext.premiumAmount,
-                orderFindByCode,
-                subOrder,
-            )
+            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
+        } else {
+            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         }
-        throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
     }
 
     override fun createPaymentSbp(
@@ -170,9 +188,9 @@ class PaymentServiceImpl(
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
             throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByOrderId.orderId)
         }
-        val configBankPriorityCheck = bankDao.getBankPriority(traceId)
+        val configBankPriorityCheck = configDataDao.getBankInfoFromConfigData(traceId, BANK_PRIORITY_CHECK)
         val bank = orderFindByOrderId.bankId
-        val checkBank = bankDao.getBank(bank?.bankId, traceId)
+        val checkBank = bankDao.getBank(bank?.bankId, traceId, configBankPriorityCheck)
         return PaymentContext(
             orderFindByOrderId,
             subOrder,
@@ -205,3 +223,4 @@ class PaymentServiceImpl(
         return saved.id
     }
 }
+
