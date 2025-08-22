@@ -40,7 +40,7 @@ class GpbCallbackServiceImpl(
         const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
         const val START_METHOD_PROCESS_CALL =
             ">>> СТАРТ метода проверки CALLBACK от банка" +
-                " traceID: "
+                    " traceID: "
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
         const val UPDATE_ORDER_STATUS = "Статус заказа в таблице ЗАКАЗОВ обновлен. paymentBankId: "
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
@@ -100,19 +100,18 @@ class GpbCallbackServiceImpl(
 
     private fun logOperation(payment: Payment) {
         try {
+            val traceId = getTraceId()
             val orderId = payment.orderId ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
                 orderId.orderId?.let {
                     orderDao.getOrderId(it)
                 }
 
-            paymentOperationHistoryDao.save(
-                PaymentOperationHistory(
-                    action = callbackAction,
-                    actionDate = LocalDateTime.now(),
-                    actionAuthor = payClientSystem,
-                    order = order,
-                ),
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                payClientSystem,
+                traceId,
+                callbackAction.actionName
             )
         } catch (e: Exception) {
             logger.error(ERROR_SAVE_OPERATIONS + e.message)
