@@ -45,7 +45,7 @@ class CallbackServiceImpl(
         const val BANK_CARD = "bankCard"
         const val START_METHOD_PROCESS_CALL =
             ">>> СТАРТ метода проверки CALLBACK" +
-                " traceID: "
+                    " traceID: "
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val OPERATION_PAYMENT_FAIL = "Запись в таблицу истории операций не добавлена. Произошла ошибка"
@@ -133,14 +133,11 @@ class CallbackServiceImpl(
                     ORDER_NOT_FOUND,
                 )
             val order = orderId.orderId?.let { orderDao.getOrderId(it) }
-
-            paymentOperationHistoryDao.save(
-                PaymentOperationHistory(
-                    action = callbackAction,
-                    actionDate = LocalDateTime.now(),
-                    actionAuthor = payClientSystem,
-                    order = order,
-                ),
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                payClientSystem,
+                traceId,
+                callbackAction.actionName
             )
         } catch (e: Exception) {
             logger.error(OPERATION_PAYMENT_FAIL)

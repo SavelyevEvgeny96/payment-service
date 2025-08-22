@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -22,7 +23,7 @@ class GazpromServiceConfig {
         objectMapper: ObjectMapper,
         restTemplate: WebConfigRestTemplate,
         subOrderRepository: SubOrderRepository,
-        operationHistoryRepository: PaymentOperationHistoryRepository,
+        paymentOperationHistoryDao:PaymentOperationHistoryDao,
         paymentRepository: PaymentRepository,
         getActionTypeDao: GetActionTypeDao,
         getPaymentStatusDao: GetPaymentStatusDao,
@@ -34,11 +35,12 @@ class GazpromServiceConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             subOrderRepository = subOrderRepository,
-            operationHistoryRepository = operationHistoryRepository,
+
             paymentRepository = paymentRepository,
             getActionTypeDao = getActionTypeDao,
             getPaymentStatusDao = getPaymentStatusDao,
             paymentDao = paymentDao,
             generatorService = generatorService,
+            paymentOperationHistoryDao = paymentOperationHistoryDao
         )
 }

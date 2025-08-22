@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
@@ -40,7 +41,7 @@ class GazpromServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
     private val objectMapper: ObjectMapper,
     private val subOrderRepository: SubOrderRepository,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository,
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val restTemplate: WebConfigRestTemplate,
     private val getPaymentStatusDao: GetPaymentStatusDao,
     private val paymentDao: PaymentDao,
@@ -70,7 +71,7 @@ class GazpromServiceImpl(
             "<<< КОНЕЦ метода получение токена из банка Газпром для" +
                     " инициирования оплаты по карте для order_id: "
         const val SAVE_OPERATION_HISTORY_START_PAY =
-            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на старт платежа"
+            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на: "
         const val ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления платежа payment_id == null"
         const val ERROR_SAVE_OPERATION_HISTORY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token "
@@ -106,15 +107,12 @@ class GazpromServiceImpl(
             logger.info("$END_METHOD_GET_TOKEN_GPB ${order.orderId}")
             return jsonResponse.get(PaymentServiceImpl.GPB_TOKEN_ROW).asText().toString()
         } catch (e: Exception) {
-            val actionTypeTokenFail = getActionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_FAIL)
-            val operationHistory =
-                PaymentOperationHistory(
-                    action = actionTypeTokenFail,
-                    order = order,
-                    actionAuthor = subOrder.clientSystem,
-                    actionDate = null,
-                )
-            operationHistoryRepository.save(operationHistory)
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                subOrder.clientSystem,
+                traceId,
+                GET_TOKEN_MASSAGE_FAIL
+            )
             logger.info(ERROR_SAVE_OPERATION_HISTORY)
         }
         logger.error("$LOG_ERROR_GET_TOKEN $traceId")
@@ -133,15 +131,8 @@ class GazpromServiceImpl(
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$START_METHOD_PAY_BANK_CARD $paymentId")
-        val actionTypeStartPay = getActionTypeDao.getActionType(traceId, SENDING_REQUEST_START_PAY)
-        val operationHistory =
-            PaymentOperationHistory(
-                action = actionTypeStartPay,
-                order = order,
-                actionAuthor = subOrder.clientSystem,
-                actionDate = null,
-            )
-        operationHistoryRepository.save(operationHistory)
+        val clientSystem = subOrder.clientSystem
+        paymentOperationHistoryDao.saveRecordOperationHistory(order, clientSystem, traceId, SENDING_REQUEST_START_PAY)
         logger.info(SAVE_OPERATION_HISTORY_START_PAY)
         val url =
             "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}${PaymentServiceImpl.START_PREFIX}"
@@ -149,9 +140,8 @@ class GazpromServiceImpl(
         headers.contentType = MediaType.APPLICATION_JSON
         val urlTuReturn = urlToReturnF ?: apiConfigProperty.backUrlF
         val urlTuSuccess = urlToReturn ?: apiConfigProperty.backUrlS
-        val fixedAmount = premiumAmount?.replace(".", "")
         val listSubOrder = subOrderRepository.findAllByOrderId(order)
-        val description = generatorService.generateDescription(listSubOrder)
+        val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
         val gpbPaymentRequest =
             GPBPaymentRequest(
                 portalId = apiConfigProperty.portalId,
@@ -160,8 +150,8 @@ class GazpromServiceImpl(
                 orderId = orderId,
                 backUrlS = urlTuSuccess,
                 backUrlF = urlTuReturn,
-                amount = fixedAmount,
-                description = description,
+                amount = descAndPremiumAmountData.premiumAmount,
+                description = descAndPremiumAmountData.description,
                 currency = RUB,
                 state =
                     State(
@@ -200,15 +190,12 @@ class GazpromServiceImpl(
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
-            val actionTypeStartPayError = getActionTypeDao.getActionType(traceId, ERROR_SENDING_REQUEST_START_PAY)
-            val operationHistoryError =
-                PaymentOperationHistory(
-                    action = actionTypeStartPayError,
-                    order = order,
-                    actionAuthor = subOrder.clientSystem,
-                    actionDate = null,
-                )
-            operationHistoryRepository.save(operationHistoryError)
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                clientSystem,
+                traceId,
+                ERROR_SENDING_REQUEST_START_PAY
+            )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
@@ -216,7 +203,6 @@ class GazpromServiceImpl(
     }
 
     override fun initiateGPBSBPPayment(
-
         paymentId: Long?,
         premiumAmount: String?,
         order: Order,
@@ -224,32 +210,24 @@ class GazpromServiceImpl(
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$START_METHOD_PAY_BANK_SBP $paymentId")
-        val actionTypeGetLinkPay = getActionTypeDao.getActionType(traceId, GET_PAYMENT_LINK)
-        val operationHistory =
-            PaymentOperationHistory(
-                action = actionTypeGetLinkPay,
-                order = order,
-                actionAuthor = subOrder.clientSystem,
-                actionDate = null,
-            )
-        operationHistoryRepository.save(operationHistory)
+        val clientSystem = subOrder.clientSystem
+        paymentOperationHistoryDao.saveRecordOperationHistory(order, clientSystem, traceId, GET_PAYMENT_LINK)
         logger.info(LOG_MESSAGE_GET_PAYMENT_LINK)
         val url = apiConfigProperty.gpbSbpUrl
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
-        val fixedAmount = premiumAmount?.replace(".", "")
         val listSubOrder = subOrderRepository.findAllByOrderId(order)
-        val description = generatorService.generateDescription(listSubOrder)
+        val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
         val gpbSbpPaymentRequest =
             GPBSBPPaymentRequest(
-                amount = fixedAmount,
+                amount = descAndPremiumAmountData.premiumAmount,
                 account = apiConfigProperty.paymentAccount,
                 merchantId = apiConfigProperty.merchantIdSbpGpb,
                 templateVersion = TEMPLATE_VERSION,
                 qrTtl = QR_TTL,
                 callbackMerchantNotifications = apiConfigProperty.callbackUrlSbp,
                 qrcType = QR_TYPE,
-                paymentPurpose = description,
+                paymentPurpose = descAndPremiumAmountData.description,
                 currency = RUB,
             )
         val requestEntity = HttpEntity(gpbSbpPaymentRequest, headers)
@@ -284,15 +262,12 @@ class GazpromServiceImpl(
             logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
-            val actionTypeStartPayError = getActionTypeDao.getActionType(traceId, ERROR_SENDING_REQUEST_START_PAY_SBP)
-            val operationHistoryError =
-                PaymentOperationHistory(
-                    action = actionTypeStartPayError,
-                    order = order,
-                    actionAuthor = subOrder.clientSystem,
-                    actionDate = null,
-                )
-            operationHistoryRepository.save(operationHistoryError)
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                clientSystem,
+                traceId,
+                ERROR_SENDING_REQUEST_START_PAY_SBP
+            )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
