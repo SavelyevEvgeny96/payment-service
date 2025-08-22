@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.impl
 
+import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.GeneratorService
@@ -51,4 +52,13 @@ class GeneratorServiceImpl(
     }
 
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
+    override fun getDescriptionAndPremiumAmount(
+        premiumAmount: String?,
+        listSubOrder: List<SubOrder>
+    ): DataDescriptionAndPremiumAmount {
+        return DataDescriptionAndPremiumAmount(
+            premiumAmount?.replace(".", ""),
+            generateDescription(listSubOrder)
+        )
+    }
 }
