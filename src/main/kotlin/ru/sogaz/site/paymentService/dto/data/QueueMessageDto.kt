@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.data
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import java.io.Serializable

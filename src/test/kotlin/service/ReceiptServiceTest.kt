@@ -17,9 +17,9 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dto.PaymentData
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
+import ru.sogaz.site.paymentService.dto.response.PaymentData
+import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
+import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order

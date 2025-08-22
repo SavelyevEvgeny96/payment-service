@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 

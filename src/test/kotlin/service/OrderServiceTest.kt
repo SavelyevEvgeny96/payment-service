@@ -10,7 +10,7 @@ import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.GetClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
-import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties

@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.data
 
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order

@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.request
 
 class GPBSBPPaymentRequest(
     val account: String?,

@@ -18,6 +18,7 @@ import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dto.request.PaymentPayRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -132,8 +133,7 @@ class GazpromServiceImplTest {
         whenever(apiConfigProperty.callbackUrlSbp).thenReturn("http://callback")
 
         val paymentRequest =
-            ru.sogaz.site.paymentService.dto
-                .PaymentPayRequest("code", null, null)
+            PaymentPayRequest("code", null, null)
         val payment =
             Payment(
                 id = 1L,

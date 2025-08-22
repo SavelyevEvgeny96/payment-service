@@ -2,8 +2,8 @@ package ru.sogaz.site.paymentService.validation
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
-import ru.sogaz.site.paymentService.dto.PaymentRequest
-import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.request.PaymentRequest
+import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.siter.models.resonses.ValidationErrorData
 

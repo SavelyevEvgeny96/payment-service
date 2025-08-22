@@ -15,8 +15,8 @@ import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
 import ru.sogaz.site.paymentService.dao.GetSubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.PaymentContext
+import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.data.PaymentContext
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment

@@ -9,11 +9,11 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.PaidOrderMessage
-import ru.sogaz.site.paymentService.dto.PaymentStatusResponse
-import ru.sogaz.site.paymentService.dto.QueueMessageDto
-import ru.sogaz.site.paymentService.dto.ResponseStatusPay
-import ru.sogaz.site.paymentService.dto.VariableDto
+import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
+import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
+import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.data.VariableDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment

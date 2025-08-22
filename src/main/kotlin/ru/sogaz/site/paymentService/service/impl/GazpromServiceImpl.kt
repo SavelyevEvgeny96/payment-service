@@ -15,11 +15,10 @@ import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.GetActionTypeDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
-import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.GPBPaymentRequest
-import ru.sogaz.site.paymentService.dto.GPBSBPPaymentRequest
-import ru.sogaz.site.paymentService.dto.PaymentPayRequest
-import ru.sogaz.site.paymentService.dto.State
+import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.State
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.SubOrder

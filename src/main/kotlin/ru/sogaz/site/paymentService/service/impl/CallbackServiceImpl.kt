@@ -8,8 +8,8 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.CallbackRequest
-import ru.sogaz.site.paymentService.dto.CallbackResponse
+import ru.sogaz.site.paymentService.dto.request.CallbackRequest
+import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.ClientSystem

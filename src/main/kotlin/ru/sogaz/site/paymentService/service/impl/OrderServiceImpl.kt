@@ -9,10 +9,9 @@ import ru.sogaz.site.paymentService.dao.GetClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl.Companion.BANK_RESERVE
-import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
-import ru.sogaz.site.paymentService.dto.DataOrder
-import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
-import ru.sogaz.site.paymentService.entity.Bank
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor

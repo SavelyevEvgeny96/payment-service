@@ -1,9 +1,9 @@
 package ru.sogaz.site.paymentService.service
 
 import org.springframework.http.ResponseEntity
-import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
-import ru.sogaz.site.paymentService.dto.DataOrder
-import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
 import ru.sogaz.siter.models.resonses.Response
 
 interface OrderService {

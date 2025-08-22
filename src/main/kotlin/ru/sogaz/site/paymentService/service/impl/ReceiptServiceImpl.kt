@@ -8,8 +8,8 @@ import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
+import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
+import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory

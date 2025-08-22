@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.request
 
 import jakarta.validation.constraints.NotNull
 

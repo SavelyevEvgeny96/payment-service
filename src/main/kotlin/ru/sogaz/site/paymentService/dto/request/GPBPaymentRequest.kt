@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.request
 
 data class GPBPaymentRequest(
     val state: State?,

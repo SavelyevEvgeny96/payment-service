@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto
+package ru.sogaz.site.paymentService.dto.response
 
 import ru.sogaz.siter.models.resonses.ValidationErrorData
 
