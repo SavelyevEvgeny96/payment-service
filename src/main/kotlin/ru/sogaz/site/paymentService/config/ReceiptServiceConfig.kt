@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
@@ -17,7 +18,6 @@ import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
 open class ReceiptServiceConfig {
     @Bean
     open fun receiptService(
-        subOrderRepository: SubOrderRepository,
         actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         receiptProperty: ReceiptProperties,
@@ -25,9 +25,9 @@ open class ReceiptServiceConfig {
         objectMapper: ObjectMapper,
         paymentRepository: PaymentRepository,
         chequeSentRepository: ChequeSentRepository,
+        subOrderDao: SubOrderDao
     ): ReceiptService =
         ReceiptServiceImpl(
-            subOrderRepository = subOrderRepository,
             actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             receiptProperty = receiptProperty,
@@ -35,5 +35,6 @@ open class ReceiptServiceConfig {
             objectMapper = objectMapper,
             paymentRepository = paymentRepository,
             chequeSentRepository = chequeSentRepository,
+            subOrderDao = subOrderDao
         )
 }

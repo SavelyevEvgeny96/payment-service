@@ -36,12 +36,10 @@ import ru.sogaz.siter.models.resonses.Response
 
 class GazpromServiceImpl(
     private val generatorService: GeneratorService,
-    private val paymentRepository: PaymentRepository,
     private val apiConfigProperty: ApiConfigProperties,
     private val objectMapper: ObjectMapper,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val restTemplate: WebConfigRestTemplate,
-    private val paymentStatusDao: PaymentStatusDao,
     private val paymentDao: PaymentDao,
     private val subOrderDao: SubOrderDao
 ) : GazpromService {
@@ -58,7 +56,7 @@ class GazpromServiceImpl(
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа ГАЗПРОМ БАНК "
         const val STATUS_CODE_SUCCESS_PAY_SBP = 1101530200
-        const val STATUS_CODE_SUCCESS_PAY_CARD = 1101510200
+        const val STATUS_CODE_SUCCESS_PAY_CARD_GAZPROM = 1101510200
         const val START_METHOD_PAY_BANK_CARD = ">>> СТАРТ метода оплата картой Газпром Банк для платежа с payment_id: "
         const val END__METHOD_PAY_BANK_CARD = "<<< КОНЕЦ  метода оплата картой Газпром Банк для платежа с payment_id: "
         const val START_METHOD_PAY_BANK_SBP = ">>> СТАРТ метода оплата по СБП Газпром Банк для платежа с payment_id: "
@@ -85,7 +83,7 @@ class GazpromServiceImpl(
         const val OPTIONS = "options"
         const val DATA = "data"
         const val LOG_ERROR_GET_TOKEN = "Ошибка получения токена доступа от GPB , система не доступна для TraceId: "
-        const val LOG_SUCCESSFUL_GPB_API = "Успешный запрос к GPB API. TraceId: "
+        const val LOG_SUCCESSFUL_GPB_API = "Успешный запрос к GPB API."
         const val LOG_SUCCESSFUL_GPB_API_SBP = "Успешный запрос к GPB API по SBP. TraceId: "
         const val PAYMENT_PAGE = "payment_page"
     }
@@ -179,11 +177,11 @@ class GazpromServiceImpl(
             val result =
                 Response(
                     status = SUCCESS,
-                    code = STATUS_CODE_SUCCESS_PAY_CARD,
+                    code = STATUS_CODE_SUCCESS_PAY_CARD_GAZPROM,
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(paymentId, paymentPageUrl, "")
+            paymentDao.paymentUpdate(paymentId, paymentPageUrl, "")
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -255,7 +253,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentUpdate(paymentId, paymentPageUrl, qrcId)
+            paymentDao.paymentUpdate(paymentId, paymentPageUrl, qrcId)
             logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
@@ -271,24 +269,5 @@ class GazpromServiceImpl(
         }
     }
 
-    private fun paymentUpdate(
-        paymentId: Long?,
-        paymentPageUrl: String,
-        qtcId: String,
-    ) {
-        val traceId = getTraceId()
-        if (paymentId != null) {
-            val getPaymentForUpdate = paymentDao.getPayment(traceId, paymentId)
-            val paymentStatusREG = paymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
-            getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
-            getPaymentForUpdate?.stateId = paymentStatusREG
-            getPaymentForUpdate?.qrcId = qtcId
-            if (getPaymentForUpdate != null) {
-                paymentRepository.save(getPaymentForUpdate)
-            }
-        } else {
-            logger.error(ERROR_UPDATE_PAYMENT_RECORD)
-            throw InnerException(traceId, ERROR_UPDATE_PAYMENT_RECORD)
-        }
-    }
+
 }

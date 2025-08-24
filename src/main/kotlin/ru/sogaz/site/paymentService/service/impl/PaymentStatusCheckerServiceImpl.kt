@@ -146,10 +146,12 @@ class PaymentStatusCheckerServiceImpl(
                     logger.error("${orderStatus?.stateId} $LOG_ORDER_STATUS_SUCCESS $traceId")
                     throw BusinessException(errorCodeIsPaidFor, traceId)
                 }
+
                 status.isNotAvailable() -> {
                     logger.error("${orderStatus?.stateId} $LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL $traceId")
                     throw BusinessException(errorCodeIsNotAvailable, traceId)
                 }
+
                 else -> {
                 }
             }
@@ -230,7 +232,7 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ) {
         val actionType = actionTypeRepository.findByActionName(action)
-        val subOrder = subOrderDao.findFirstByOrderId(order)
+        val subOrder = subOrderDao.getSubOrder(traceId, order)
 
         val historyRecord =
             PaymentOperationHistory(
@@ -250,7 +252,7 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ) {
         try {
-            val subOrders = subOrderRepository.findAllByOrderId(order)
+            val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
             val mainSubOrder =
                 subOrders.firstOrNull()
                     ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")

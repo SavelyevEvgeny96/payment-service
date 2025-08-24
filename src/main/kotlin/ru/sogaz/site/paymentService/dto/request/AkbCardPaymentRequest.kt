@@ -5,12 +5,12 @@ class AkbCardPaymentRequest(
 )
 data class OrderDto(
     val typeRid: String,
-    val amount: Int,
+    val amount: Int?,
     val currency: String,
     val description: String,
     val language: String,
     val hppRedirectUrl: String,
-    val adviceIfaceAddress: String,
+    val adviceIfaceAddress: String?,
     val descriptionHtml: String,
     val ridByMerchant: String
 )

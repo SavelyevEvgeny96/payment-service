@@ -6,6 +6,7 @@ import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
+import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
@@ -17,6 +18,7 @@ import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.CallbackPaymentDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.ActionTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.ClientSystemDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.ConfigDataDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.SubOrderDaoImpl
@@ -61,26 +63,42 @@ class DataDaoConfig {
     @Bean
     fun daoGetBankConfig(
         bankRepository: BankRepository,
-        configDataRepository: ConfigDataRepository,
+        configDataDao: ConfigDataDao
     ): BankDao =
         BankDaoImpl(
             bankRepository = bankRepository,
-            configDataRepository = configDataRepository,
+            configDataDao = configDataDao
+
         )
 
     @Bean
-    fun daoGetPaymentConfig(paymentRepository: PaymentRepository): PaymentDao = PaymentDaoImpl(paymentRepository = paymentRepository)
+    fun daoConfigData(configDataRepository: ConfigDataRepository): ConfigDataDao =
+        ConfigDataDaoImpl(configDataRepository = configDataRepository)
+
+    @Bean
+    fun daoGetPaymentConfig(paymentRepository: PaymentRepository, paymentStatusDao: PaymentStatusDao): PaymentDao =
+        PaymentDaoImpl(
+            paymentRepository = paymentRepository,
+            paymentStatusDao = paymentStatusDao
+        )
 
     @Bean
     fun callbackPaymentDaoConfig(callbackPaymentRepository: CallbackPaymentRepository): CallbackPaymentDao =
         CallbackPaymentDaoImpl(callbackPaymentRepository = callbackPaymentRepository)
 
     @Bean
-    fun paymentOperationHistoryDao(paymentOperationHistoryRepository: PaymentOperationHistoryRepository): PaymentOperationHistoryDao =
-        PaymentOperationHistoryDaoImpl(paymentOperationHistoryRepository = paymentOperationHistoryRepository)
+    fun paymentOperationHistoryDao(
+        paymentOperationHistoryRepository: PaymentOperationHistoryRepository,
+        actionTypeDao: ActionTypeDao
+    ): PaymentOperationHistoryDao =
+        PaymentOperationHistoryDaoImpl(
+            paymentOperationHistoryRepository = paymentOperationHistoryRepository,
+            actionTypeDao = actionTypeDao
+        )
 
     @Bean
-    fun orderStatusDao(orderStatusRepository: OrderStatusRepository): OrderStatusDao = OrderStatusDaoImpl(orderStatusRepository)
+    fun orderStatusDao(orderStatusRepository: OrderStatusRepository): OrderStatusDao =
+        OrderStatusDaoImpl(orderStatusRepository)
 
     @Bean
     fun daoGetClientSystemConfig(clientSystemRepository: ClientSystemRepository): ClientSystemDao =

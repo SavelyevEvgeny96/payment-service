@@ -5,6 +5,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
@@ -25,7 +26,6 @@ class PaymentStatusCheckerServiceConfig {
     open fun paymentStatusCheckerService(
         configDataRepository: ConfigDataRepository,
         orderRepository: OrderRepository,
-        subOrderRepository: SubOrderRepository,
         actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         paymentStatusRepository: PaymentStatusRepository,
@@ -37,10 +37,10 @@ class PaymentStatusCheckerServiceConfig {
         rabbitTemplate: RabbitTemplate,
         objectMapper: ObjectMapper,
         rabbitProperties: RabbitProperties,
+        subOrderDao:SubOrderDao
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
-            subOrderRepository = subOrderRepository,
             configDataRepository = configDataRepository,
             actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
@@ -53,5 +53,6 @@ class PaymentStatusCheckerServiceConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             rabbit = rabbitProperties,
+            subOrderDao = subOrderDao
         )
 }
