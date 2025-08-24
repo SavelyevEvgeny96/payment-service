@@ -31,7 +31,7 @@ class PaymentStatusCheckerServiceConfig {
         paymentStatusRepository: PaymentStatusRepository,
         paymentRepository: PaymentRepository,
         apiConfigProperty: ApiConfigProperties,
-        restTemplate: RestTemplate,
+        restTemplate: WebConfigRestTemplate,
         receiptService: ReceiptService,
         orderStatusRepository: OrderStatusRepository,
         rabbitTemplate: RabbitTemplate,

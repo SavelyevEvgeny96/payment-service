@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
@@ -26,7 +27,7 @@ import java.time.LocalDateTime
 
 class ReceiptServiceImpl(
     private val receiptProperty: ReceiptProperties,
-    private val restTemplate: RestTemplate,
+    private val restTemplate: WebConfigRestTemplate,
     private val subOrderDao: SubOrderDao,
     private val actionTypeRepository: ActionTypeRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
@@ -139,7 +140,7 @@ class ReceiptServiceImpl(
         try {
             val response =
                 restTemplate
-                    .exchange(
+                    .defaultRestTemplate().exchange(
                         url,
                         HttpMethod.POST,
                         HttpEntity(requestBody, headers),

@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.properties.SslClientProperties
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.AkbBankIntegrationServiceImpl
@@ -21,7 +22,8 @@ class AkbBankIntegrationServiceConfig {
         generatorService: GeneratorService,
         restTemplate: WebConfigRestTemplate,
         objectMapper: ObjectMapper,
-        paymentDao: PaymentDao
+        paymentDao: PaymentDao,
+        props: SslClientProperties
     ): AkbBankIntegrationService =
         AkbBankIntegrationServiceImpl(
             paymentOperationHistoryDao = paymentOperationHistoryDao,
@@ -30,6 +32,7 @@ class AkbBankIntegrationServiceConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             paymentDao = paymentDao,
-            subOrderDao = subOrderDao
+            subOrderDao = subOrderDao,
+            props = props
         )
 }

@@ -21,7 +21,7 @@ open class ReceiptServiceConfig {
         actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         receiptProperty: ReceiptProperties,
-        restTemplate: RestTemplate,
+        restTemplate: WebConfigRestTemplate,
         objectMapper: ObjectMapper,
         paymentRepository: PaymentRepository,
         chequeSentRepository: ChequeSentRepository,

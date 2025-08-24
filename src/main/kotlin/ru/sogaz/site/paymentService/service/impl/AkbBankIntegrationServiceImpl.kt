@@ -19,6 +19,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.properties.SslClientProperties
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_CARD
@@ -34,7 +35,8 @@ class AkbBankIntegrationServiceImpl(
     private val generatorService: GeneratorService,
     private val restTemplate: WebConfigRestTemplate,
     private val objectMapper: ObjectMapper,
-    private val paymentDao: PaymentDao
+    private val paymentDao: PaymentDao,
+    private val props:SslClientProperties
 ) : AkbBankIntegrationService {
     companion object {
         const val RU = "ru"
@@ -96,7 +98,7 @@ class AkbBankIntegrationServiceImpl(
                 "AKB payment Card request [traceId=$traceId]:  body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
             )
             val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.restTemplate().exchange(
+                restTemplate.xpgRestTemplate(props).exchange(
                     url,
                     HttpMethod.POST,
                     requestEntity,
@@ -118,6 +120,7 @@ class AkbBankIntegrationServiceImpl(
                 )
             paymentDao.paymentUpdate(paymentId, paymentPageUrl, "")
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
+            logger.info(MESSAGE_INFO_END_AKB_PAYMENT)
             return ResponseEntity.ok(result)
         } finally {
 

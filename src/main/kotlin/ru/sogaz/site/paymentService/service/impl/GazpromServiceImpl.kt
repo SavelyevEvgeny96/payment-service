@@ -97,7 +97,7 @@ class GazpromServiceImpl(
         val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.TOKEN_PREFIX}"
         try {
             val response: ResponseEntity<String> =
-                restTemplate.restTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
+                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java)
             val jsonResponse = objectMapper.readTree(response.body)
             logger.info("$END_METHOD_GET_TOKEN_GPB ${order.orderId}")
             return jsonResponse.get(PaymentServiceImpl.GPB_TOKEN_ROW).asText().toString()
@@ -160,7 +160,7 @@ class GazpromServiceImpl(
                 "GPB payment Card request [traceId=$traceId]:  body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
             )
             val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.restTemplate().exchange(
+                restTemplate.defaultRestTemplate().exchange(
                     url,
                     HttpMethod.POST,
                     requestEntity,
@@ -231,7 +231,7 @@ class GazpromServiceImpl(
                 "GPB payment SBP request [traceId=$traceId]: body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
             )
             val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.restTemplate().exchange(
+                restTemplate.defaultRestTemplate().exchange(
                     url,
                     HttpMethod.POST,
                     requestEntity,

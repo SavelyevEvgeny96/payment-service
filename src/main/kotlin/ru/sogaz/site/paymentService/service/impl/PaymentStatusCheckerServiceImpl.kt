@@ -9,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
@@ -48,7 +49,7 @@ class PaymentStatusCheckerServiceImpl(
     private val paymentStatusRepository: PaymentStatusRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val actionTypeRepository: ActionTypeRepository,
-    private val restTemplate: RestTemplate,
+    private val restTemplate: WebConfigRestTemplate,
     private val apiConfigProperty: ApiConfigProperties,
     private val receiptService: ReceiptService,
     private val orderStatusRepository: OrderStatusRepository,
@@ -168,7 +169,7 @@ class PaymentStatusCheckerServiceImpl(
                 "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
             logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
-            val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+            val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
             val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
 
             if (response.isNotEmpty()) {
