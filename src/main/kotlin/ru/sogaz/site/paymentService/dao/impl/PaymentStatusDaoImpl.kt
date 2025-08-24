@@ -1,15 +1,15 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_GET_PAYMENT_STATUS
 
-class GetPaymentStatusDaoImpl(
+class PaymentStatusDaoImpl(
     private val paymentStatusRepository: PaymentStatusRepository,
-) : GetPaymentStatusDao {
+) : PaymentStatusDao {
     companion object {
     }
 

@@ -1,15 +1,15 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.GetActionTypeDao
+import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_FIND_ACTION_TYPE
 
-class GetActionTypeDaoImpl(
+class ActionTypeDaoImpl(
     private val actionTypeRepository: ActionTypeRepository,
-) : GetActionTypeDao {
+) : ActionTypeDao {
     private val logger = loggerFor(javaClass)
 
     override fun getActionType(

@@ -3,10 +3,10 @@ package ru.sogaz.site.paymentService.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
-import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
-import ru.sogaz.site.paymentService.dao.GetSubOrderDao
+import ru.sogaz.site.paymentService.dao.ActionTypeDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentTypeDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -35,11 +35,11 @@ open class PaymentServiceConfig(
         paymentRepository: PaymentRepository,
         paymentTypeRepository: PaymentTypeRepository,
         orderDao: OrderDao,
-        getSubOrderDao: GetSubOrderDao,
+        subOrderDao: SubOrderDao,
         paymentStatusCheckerService: PaymentStatusCheckerService,
-        getPaymentTypeDao: GetPaymentTypeDao,
-        getPaymentStatusDao: GetPaymentStatusDao,
-        getActionTypeDao: GetActionTypeDao,
+        paymentTypeDao: PaymentTypeDao,
+        paymentStatusDao: PaymentStatusDao,
+        actionTypeDao: ActionTypeDao,
         gazpromService: GazpromService,
         bankDao: BankDao,
     ): PaymentService =
@@ -48,10 +48,10 @@ open class PaymentServiceConfig(
             operationHistoryRepository = operationHistoryRepository,
             paymentRepository = paymentRepository,
             orderDao = orderDao,
-            getSubOrderDao = getSubOrderDao,
-            getPaymentTypeDao = getPaymentTypeDao,
-            getPaymentStatusDao = getPaymentStatusDao,
-            getActionTypeDao = getActionTypeDao,
+            subOrderDao = subOrderDao,
+            paymentTypeDao = paymentTypeDao,
+            paymentStatusDao = paymentStatusDao,
+            actionTypeDao = actionTypeDao,
             gazpromService = gazpromService,
             bankDao = bankDao,
             paymentStatusCheckerService = paymentStatusCheckerService,

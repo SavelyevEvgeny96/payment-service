@@ -4,22 +4,22 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
-import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetClientSystemDao
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
-import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
-import ru.sogaz.site.paymentService.dao.GetSubOrderDao
+import ru.sogaz.site.paymentService.dao.ActionTypeDao
+import ru.sogaz.site.paymentService.dao.ClientSystemDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentTypeDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.CallbackPaymentDaoImpl
-import ru.sogaz.site.paymentService.dao.impl.GetActionTypeDaoImpl
-import ru.sogaz.site.paymentService.dao.impl.GetClientSystemDaoImpl
-import ru.sogaz.site.paymentService.dao.impl.GetPaymentStatusDaoImpl
-import ru.sogaz.site.paymentService.dao.impl.GetPaymentTypeDaoImpl
-import ru.sogaz.site.paymentService.dao.impl.GetSubOrderDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.ActionTypeDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.ClientSystemDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.PaymentStatusDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.PaymentTypeDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.SubOrderDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.OrderDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.OrderStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentDaoImpl
@@ -43,20 +43,20 @@ class DataDaoConfig {
     fun daoGetOrderConfig(orderRepository: OrderRepository): OrderDao = OrderDaoImpl(orderRepository = orderRepository)
 
     @Bean
-    fun daoGetSubOrderConfig(subOrderRepository: SubOrderRepository): GetSubOrderDao =
-        GetSubOrderDaoImpl(subOrderRepository = subOrderRepository)
+    fun daoGetSubOrderConfig(subOrderRepository: SubOrderRepository): SubOrderDao =
+        SubOrderDaoImpl(subOrderRepository = subOrderRepository)
 
     @Bean
-    fun daoGetPaymentTypeConfig(paymentTypeRepository: PaymentTypeRepository): GetPaymentTypeDao =
-        GetPaymentTypeDaoImpl(paymentTypeRepository = paymentTypeRepository)
+    fun daoGetPaymentTypeConfig(paymentTypeRepository: PaymentTypeRepository): PaymentTypeDao =
+        PaymentTypeDaoImpl(paymentTypeRepository = paymentTypeRepository)
 
     @Bean
-    fun daoGetPaymentStatusDaoConfig(paymentStatusRepository: PaymentStatusRepository): GetPaymentStatusDao =
-        GetPaymentStatusDaoImpl(paymentStatusRepository = paymentStatusRepository)
+    fun daoGetPaymentStatusDaoConfig(paymentStatusRepository: PaymentStatusRepository): PaymentStatusDao =
+        PaymentStatusDaoImpl(paymentStatusRepository = paymentStatusRepository)
 
     @Bean
-    fun daoActionTypeConfig(actionTypeRepository: ActionTypeRepository): GetActionTypeDao =
-        GetActionTypeDaoImpl(actionTypeRepository = actionTypeRepository)
+    fun daoActionTypeConfig(actionTypeRepository: ActionTypeRepository): ActionTypeDao =
+        ActionTypeDaoImpl(actionTypeRepository = actionTypeRepository)
 
     @Bean
     fun daoGetBankConfig(
@@ -83,6 +83,6 @@ class DataDaoConfig {
     fun orderStatusDao(orderStatusRepository: OrderStatusRepository): OrderStatusDao = OrderStatusDaoImpl(orderStatusRepository)
 
     @Bean
-    fun daoGetClientSystemConfig(clientSystemRepository: ClientSystemRepository): GetClientSystemDao =
-        GetClientSystemDaoImpl(clientSystemRepository = clientSystemRepository)
+    fun daoGetClientSystemConfig(clientSystemRepository: ClientSystemRepository): ClientSystemDao =
+        ClientSystemDaoImpl(clientSystemRepository = clientSystemRepository)
 }

@@ -1,15 +1,15 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
+import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.entity.PaymentType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_AND_ERROR_GET_TYPE_STATUS
 
-class GetPaymentTypeDaoImpl(
+class PaymentTypeDaoImpl(
     private val paymentTypeRepository: PaymentTypeRepository,
-) : GetPaymentTypeDao {
+) : PaymentTypeDao {
     private val logger = loggerFor(javaClass)
 
     override fun getPaymentType(

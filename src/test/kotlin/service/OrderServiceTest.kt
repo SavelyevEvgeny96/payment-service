@@ -7,7 +7,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.GetClientSystemDao
+import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
@@ -28,7 +28,7 @@ class OrderServiceTest {
     private val generatorService = mock<GeneratorService>()
     private val subOrderRepository = mock<SubOrderRepository>()
     private val bankDao = mock<BankDao>()
-    private val getClientSystemDao = mock<GetClientSystemDao>()
+    private val clientSystemDao = mock<ClientSystemDao>()
     private val orderStatusDao = mock<OrderStatusDao>()
 
     @Test
@@ -52,7 +52,7 @@ class OrderServiceTest {
                 generatorService = generatorService,
                 subOrderRepository = subOrderRepository,
                 bankDao = bankDao,
-                getClientSystemDao = getClientSystemDao,
+                clientSystemDao = clientSystemDao,
                 orderStatusDao = orderStatusDao,
             )
         val response: Response<DataGetOrderStatus> = service.getOrderStatus(orderId)
@@ -74,7 +74,7 @@ class OrderServiceTest {
                 generatorService = generatorService,
                 subOrderRepository = subOrderRepository,
                 bankDao = bankDao,
-                getClientSystemDao = getClientSystemDao,
+                clientSystemDao = clientSystemDao,
                 orderStatusDao = orderStatusDao,
             )
         assertThrows<InnerException> {

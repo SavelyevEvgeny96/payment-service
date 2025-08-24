@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -24,7 +23,7 @@ class GpbCallbackServiceImpl(
     private val orderDao: OrderDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
-    private val getPaymentStatusDao: GetPaymentStatusDao,
+    private val paymentStatusDao: PaymentStatusDao,
     private val getOrderStatusDao: OrderStatusDao,
     private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
@@ -84,7 +83,7 @@ class GpbCallbackServiceImpl(
 
     private fun updatePaymentStatus(payment: Payment) {
         val traceId = getTraceId()
-        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, CONST_CALLBACK)
+        val paymentStatus = paymentStatusDao.getPaymentStatus(traceId, CONST_CALLBACK)
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentDao.save(payment)
@@ -106,7 +105,6 @@ class GpbCallbackServiceImpl(
                 orderId.orderId?.let {
                     orderDao.getOrderId(it)
                 }
-
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
                 payClientSystem,

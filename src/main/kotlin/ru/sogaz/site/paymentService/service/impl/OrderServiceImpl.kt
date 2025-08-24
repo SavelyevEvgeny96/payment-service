@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.GetClientSystemDao
+import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl.Companion.BANK_RESERVE
@@ -27,7 +27,7 @@ import java.math.RoundingMode
 
 class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
-    private val getClientSystemDao: GetClientSystemDao,
+    private val clientSystemDao: ClientSystemDao,
     private val orderRepository: OrderRepository,
     private val subOrderRepository: SubOrderRepository,
     private val bankDao: BankDao,
@@ -107,7 +107,7 @@ class OrderServiceImpl(
         for (paymentRequest in requestWrapper.payments) {
             val subOrderId = generatorService.generateUniquePaymentId()
             logger.info("$LOG_PAYMENT_SUB_ORDER_ID_GENERATED $subOrderId")
-            val clientSystem = getClientSystemDao.getClientSystem(traceId, paymentRequest.externalSystemCode)
+            val clientSystem = clientSystemDao.getClientSystem(traceId, paymentRequest.externalSystemCode)
             val subOrders =
                 SubOrder(
                     subOrderId = subOrderId,
