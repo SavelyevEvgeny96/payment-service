@@ -20,7 +20,16 @@ class SubOrderDaoImpl(
         try {
             subOrderRepository.findFirstByOrderId(order)
         } catch (e: Exception) {
-            logger.error(LOG_AND_ERROR_FIND_SUB_ORDER)
-            throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER$order")
+            logger.error("$LOG_AND_ERROR_FIND_SUB_ORDER ${order?.orderId}")
+            throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER${order?.orderId}")
         }
+
+    override fun getAllSubOrderListByOrderId(orderId: Order, traceId: String): List<SubOrder> =
+        try {
+            subOrderRepository.findAllByOrderId(orderId)
+        } catch (ex: Exception) {
+            logger.error("$LOG_AND_ERROR_FIND_SUB_ORDER ${orderId.orderId}")
+            throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER${orderId.orderId}")
+        }
+
 }

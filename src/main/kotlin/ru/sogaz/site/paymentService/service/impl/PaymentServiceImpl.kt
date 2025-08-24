@@ -10,10 +10,10 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.dao.GetActionTypeDao
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
-import ru.sogaz.site.paymentService.dao.GetPaymentTypeDao
-import ru.sogaz.site.paymentService.dao.GetSubOrderDao
+import ru.sogaz.site.paymentService.dao.ActionTypeDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentTypeDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.PaymentContext
@@ -41,11 +41,11 @@ class PaymentServiceImpl(
     private val gazpromService: GazpromService,
     private val orderDao: OrderDao,
     private val paymentRepository: PaymentRepository,
-    private val getPaymentTypeDao: GetPaymentTypeDao,
-    private val getPaymentStatusDao: GetPaymentStatusDao,
-    private val getActionTypeDao: GetActionTypeDao,
+    private val paymentTypeDao: PaymentTypeDao,
+    private val paymentStatusDao: PaymentStatusDao,
+    private val actionTypeDao: ActionTypeDao,
     private val orderRepository: OrderRepository,
-    private val getSubOrderDao: GetSubOrderDao,
+    private val subOrderDao: SubOrderDao,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val bankDao: BankDao,
@@ -64,7 +64,7 @@ class PaymentServiceImpl(
         const val TOKEN_PREFIX = "/token"
         const val GPB_TOKEN_ROW = "token"
         const val TRUE = "true"
-        const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c code: "
+        const val LOG_AND_ERROR_FIND_SUB_ORDER = "Ошибка получения SubOrder c orderId:  "
         const val LOG_AND_ERROR_FIND_ACTION_TYPE = "Ошибка при получении action_name "
         const val LOG_START_PAYMENT_RECORD = ">>> СТАРТ метода создание записи в таблице payments "
         const val LOG_END_PAYMENT_RECORD = "<<< КОНЕЦ метода создание записи в таблице payments для payment_id: "
@@ -113,7 +113,7 @@ class PaymentServiceImpl(
             } else {
                 val tokenGpb = gazpromService.getGPBToken(orderFindByCode, subOrder)
                 if (tokenGpb.isNotEmpty()) {
-                    val actionTypeTokenSuccess = getActionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
+                    val actionTypeTokenSuccess = actionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
                     val operationHistory =
                         PaymentOperationHistory(
                             action = actionTypeTokenSuccess,
@@ -176,7 +176,7 @@ class PaymentServiceImpl(
     ): PaymentContext {
         val traceId = getTraceId()
         val orderFindByOrderId = orderDao.getOrderId(orderId)
-        val subOrder = getSubOrderDao.getSubOrder(traceId, orderFindByOrderId)
+        val subOrder = subOrderDao.getSubOrder(traceId, orderFindByOrderId)
         val premiumAmount = orderFindByOrderId.premiumAmount
         val orderStatus = orderFindByOrderId.orderStatus
         paymentStatusCheckerService.checkStatusOrder(orderStatus, errorCodeIsPaidFor, errorCodeIsNotAvailable)
@@ -208,8 +208,8 @@ class PaymentServiceImpl(
     ): Long? {
         val traceId = getTraceId()
         logger.info(LOG_START_PAYMENT_RECORD)
-        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, StatusEnum.NEW.value)
-        val paymentType = getPaymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
+        val paymentStatus = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.NEW.value)
+        val paymentType = paymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
         val paymentRecord =
             Payment(
                 bank = checkBank,

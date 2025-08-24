@@ -9,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
@@ -48,13 +49,13 @@ class PaymentStatusCheckerServiceImpl(
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val actionTypeRepository: ActionTypeRepository,
     private val restTemplate: RestTemplate,
-    private val subOrderRepository: SubOrderRepository,
     private val apiConfigProperty: ApiConfigProperties,
     private val receiptService: ReceiptService,
     private val orderStatusRepository: OrderStatusRepository,
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
     private val rabbit: RabbitProperties,
+    private val subOrderDao: SubOrderDao
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
@@ -229,7 +230,7 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ) {
         val actionType = actionTypeRepository.findByActionName(action)
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
+        val subOrder = subOrderDao.findFirstByOrderId(order)
 
         val historyRecord =
             PaymentOperationHistory(

@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ChequeSent
@@ -26,7 +27,7 @@ import java.time.LocalDateTime
 class ReceiptServiceImpl(
     private val receiptProperty: ReceiptProperties,
     private val restTemplate: RestTemplate,
-    private val subOrderRepository: SubOrderRepository,
+    private val subOrderDao: SubOrderDao,
     private val actionTypeRepository: ActionTypeRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val objectMapper: ObjectMapper,
@@ -59,7 +60,7 @@ class ReceiptServiceImpl(
 
         val payment = paymentRepository.findByOrderId(order)
 
-        val subOrders = subOrderRepository.findAllByOrderId(order)
+        val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
 
         fun String.toReceiptAmount(): Double =
             try {
@@ -216,7 +217,7 @@ class ReceiptServiceImpl(
 
     private fun saveReceiptOperationHistory(order: Order) {
         val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATED_ACTION)
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
+        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
                 action = actionType,
@@ -229,7 +230,7 @@ class ReceiptServiceImpl(
 
     private fun saveFailedReceiptOperationHistory(order: Order) {
         val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATION_ERROR_ACTION)
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
+        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
 
         operationHistoryRepository.save(
             PaymentOperationHistory(
