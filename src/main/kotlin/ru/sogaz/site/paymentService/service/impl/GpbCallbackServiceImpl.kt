@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.time.LocalDateTime
@@ -28,6 +29,7 @@ class GpbCallbackServiceImpl(
     private val getOrderStatusDao: OrderStatusDao,
     private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
+    private val apiConfigProperties: ApiConfigProperties,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -50,7 +52,29 @@ class GpbCallbackServiceImpl(
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
             val traceId = getTraceId()
-            if (!signatureVerifier.verifySignature(request.signature)) {
+            val baseUrl = "${apiConfigProperties.hostNameApp}/payment/gpb/state?"
+            val params =
+                listOf(
+                    "trx_id=${request.trxId}",
+                    "merch_id=${request.merchId}",
+                    "result_code=${request.resultCode}",
+                    "amount=${request.amount}",
+                    "account_id=${request.accountId ?: ""}",
+                    "o.order_id=${request.orderId}",
+                    "p.rrn=${request.rrn ?: ""}",
+                    "p.authcode=${request.authCode ?: ""}",
+                    "p.srcType=${request.srcType ?: ""}",
+                    "p.maskedPan=${request.maskedPan ?: ""}",
+                    "p.isFullyAuthenticated=${request.isFullyAuthenticated ?: ""}",
+                    "p.transmissionDateTime=${request.transmissionDateTime ?: ""}",
+                    "discountType=${request.discountType}",
+                    "discountAmount=${request.discountAmount}",
+                    "p.paymentSystem=${request.paymentSystem ?: ""}",
+                    "ts=${request.ts}",
+                )
+            val queryString = baseUrl + params.joinToString("&")
+
+            if (!signatureVerifier.verifySignature(request, queryString)) {
                 logger.info(ERROR_TRX_ID + request.trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
             }

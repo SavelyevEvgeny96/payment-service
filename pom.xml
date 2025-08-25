@@ -63,6 +63,16 @@
 			<version>1.0.88</version>
 		</dependency>
 		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.69</version>
+		</dependency>
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>java-jwt</artifactId>
+			<version>3.18.2</version>
+		</dependency>
+		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>models-lib</artifactId>
 			<version>1.0.4</version>

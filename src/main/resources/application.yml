@@ -54,6 +54,7 @@ api:
     merchantId: ${GPB_MERCHANT_ID:}
     backUrlS: ${BACK_URL_SUCCESS:http:}
     backUrlF: ${BACK_URL_FALSE:}
+    hostNameApp: {HOSTNAME_APP}
 
   receipt:
     receiptUrl: ${RECEIPT_URL:}
