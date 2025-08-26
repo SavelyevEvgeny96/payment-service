@@ -25,6 +25,7 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.ActionEnum
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
@@ -86,8 +87,8 @@ class ReceiptServiceTest {
                 id = 12
             },
         )
-        `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATED_ACTION)).thenReturn(
-            ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATED_ACTION),
+        `when`(actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATED_ACTION.value)).thenReturn(
+            ActionType(1, ActionEnum.RECEIPT_GENERATED_ACTION.value),
         )
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
@@ -155,8 +156,8 @@ class ReceiptServiceTest {
                 id = 12
             },
         )
-        `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION)).thenReturn(
-            ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION),
+        `when`(actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value)).thenReturn(
+            ActionType(1, ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value),
         )
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
@@ -216,8 +217,8 @@ class ReceiptServiceTest {
                 id = 12
             },
         )
-        `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
-            .thenReturn(ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
+        `when`(actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value))
+            .thenReturn(ActionType(1, ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value))
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         `when`(
