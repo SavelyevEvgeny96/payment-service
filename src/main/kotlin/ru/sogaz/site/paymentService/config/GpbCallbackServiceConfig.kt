@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.impl.GpbCallbackServiceImpl
+import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl.Companion.RECEIPT_GENERATED_ACTION
 
 @Configuration
 class GpbCallbackServiceConfig(
@@ -30,7 +31,7 @@ class GpbCallbackServiceConfig(
         apiConfigProperties: ApiConfigProperties,
     ): GpbCallbackService {
         val callbackActions =
-            actionTypeRepository.findByActionName("Заказ оплачен")
+            actionTypeRepository.findByActionName(RECEIPT_GENERATED_ACTION)
 
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
