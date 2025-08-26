@@ -77,7 +77,6 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
-        const val ORDER_SUCCESS = "Заказ оплачен"
     }
 
     override fun getStatus(paymentBankId: String): Response<ResponseStatusPay> {
@@ -201,8 +200,7 @@ class PaymentStatusCheckerServiceImpl(
             "SUCCESS" -> {
                 payment.stateId = paymentStatusRepository.findByStateId("SUCCESS")
                 payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
-                createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
-
+                createOrderHistoryRecord(order,traceId)
                 receiptService.generateReceipt(order)
                 sendToPaidOrdersQueue(order, traceId)
             }
@@ -230,12 +228,11 @@ class PaymentStatusCheckerServiceImpl(
         order: Order,
         traceId: String,
     ) {
-        val actionType = actionType.ORDER_PAID.value
         val subOrder = subOrderDao.getSubOrder(traceId, order)
 
         val historyRecord =
             PaymentOperationHistory(
-                action = actionType,
+                action = ActionType.ORDER_PAID.value,
                 order = order,
                 actionAuthor = subOrder.clientSystem,
                 actionDate = LocalDateTime.now(),

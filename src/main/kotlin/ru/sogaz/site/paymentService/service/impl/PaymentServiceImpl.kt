@@ -20,6 +20,7 @@ import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
@@ -111,10 +112,9 @@ class PaymentServiceImpl(
             } else {
                 val tokenGpb = gazpromService.getGPBToken(orderFindByCode, subOrder)
                 if (tokenGpb.isNotEmpty()) {
-                    val actionTypeTokenSuccess = actionTypeDao.getActionType(traceId, GET_TOKEN_MASSAGE_SUCCESS)
                     val operationHistory =
                         PaymentOperationHistory(
-                            action = actionTypeTokenSuccess,
+                            action =  ActionType.ACCESS_TOKEN_RECEIVED.value,
                             order = orderFindByCode,
                             actionAuthor = paymentContext.subOrder.clientSystem,
                             actionDate = null,

@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -107,7 +108,7 @@ class GpbCallbackServiceImpl(
                 order,
                 payClientSystem,
                 traceId,
-                callbackAction.actionName
+                ActionType.CALLBACK_RECEIVED.value
             )
         } catch (e: Exception) {
             logger.error(ERROR_SAVE_OPERATIONS + e.message)

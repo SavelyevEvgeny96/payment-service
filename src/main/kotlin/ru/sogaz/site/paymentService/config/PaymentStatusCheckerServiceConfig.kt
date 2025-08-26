@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -34,7 +35,8 @@ class PaymentStatusCheckerServiceConfig {
         rabbitTemplate: RabbitTemplate,
         objectMapper: ObjectMapper,
         rabbitProperties: RabbitProperties,
-        subOrderDao:SubOrderDao
+        subOrderDao:SubOrderDao,
+        actionType: ActionType
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
@@ -48,6 +50,7 @@ class PaymentStatusCheckerServiceConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             rabbit = rabbitProperties,
-            subOrderDao = subOrderDao
+            subOrderDao = subOrderDao,
+            actionType = actionType
         )
 }

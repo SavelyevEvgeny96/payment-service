@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.PaymentStatus
+import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.siter.models.resonses.Response
@@ -27,7 +28,7 @@ class CallbackServiceImpl(
     private val callbackPaymentStatus: PaymentStatus,
     private val payClientSystem: ClientSystem,
     private val callbackPaymentDao: CallbackPaymentDao,
-    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao
 ) : CallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -135,7 +136,7 @@ class CallbackServiceImpl(
                 order,
                 payClientSystem,
                 traceId,
-                callbackAction.actionName
+                ActionType.CALLBACK_RECEIVED.value
             )
         } catch (e: Exception) {
             logger.error(OPERATION_PAYMENT_FAIL)
