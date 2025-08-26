@@ -24,7 +24,7 @@ class SignatureVerifierImpl(
 
     companion object {
         const val VEREFIELD_FAIL = "Ошибка верификации подписи"
-        const val SIGNATURE_NULL = "Строга &signature= пуста"
+        const val SIGNATURE_NULL = "Строка &signature= пуста"
     }
 
     override fun verifySignature(
