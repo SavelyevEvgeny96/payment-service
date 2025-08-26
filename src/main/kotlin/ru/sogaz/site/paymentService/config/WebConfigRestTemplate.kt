@@ -76,14 +76,14 @@ class WebConfigRestTemplate {
 
         return RestTemplate(factory)
     }
-
+    //Доработать не корректно собирается trustStore(может быть дело в CA сертификате)
     private fun buildSslContext(props: SslClientProperties): SSLContext {
         val keyStore = loadPkcs12FromBase64(props.pfxBase64!!, props.pfxPassword!!.toCharArray())
-        val trustStore = buildTrustStoreFromBase64(props.caBase64!!)
+       // val trustStore = buildTrustStoreFromBase64(props.caBase64!!)
         return SSLContexts.custom()
             .loadKeyMaterial(keyStore, props.pfxPassword!!.toCharArray())
-            .loadTrustMaterial(TrustAllStrategy.INSTANCE) // доверять всем
-           // .loadTrustMaterial(trustStore, null) // доверяем явному CA/цепочке
+            //.loadTrustMaterial(trustStore, null)
+            .loadTrustMaterial(null, TrustAllStrategy.INSTANCE) // доверяет любой цепочке использую пока его
             .build()
     }
 

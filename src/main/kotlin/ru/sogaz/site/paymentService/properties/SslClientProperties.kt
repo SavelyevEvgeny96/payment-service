@@ -12,7 +12,7 @@ data class SslClientProperties(
     @field:NotBlank var pfxPassword: String? = null,
     @field:NotBlank var caBase64: String? = null,
 
-    var tlsProtocols: List<String> = listOf("TLSv1.2", "TLSv1.3"),
+    var tlsProtocols: List<String> = listOf("TLSv1.2","TLSv1.3"),
     var hostnameVerification: Boolean = true,
 
     @field:NotNull var connectTimeoutMs: Int = 5000,
