@@ -15,14 +15,7 @@ data class PaymentStatus(
     var id: Long? = null,
     @Column(name = "state_id")
     @JvmField
-    var stateId: String,
+    var stateId: String = "",
     @Column(name = "state_name")
-    var stateName: String,
-) {
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(
-        null,
-        "",
-        "",
-    )
-}
+    var stateName: String  = "",
+)
