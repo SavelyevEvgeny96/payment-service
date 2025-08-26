@@ -225,8 +225,6 @@ class PaymentStatusCheckerServiceImpl(
 
                 val requestBody = objectMapper.writeValueAsString(mapOf("qrcIds" to listOf(payment.qrcId)))
 
-//                val headers = HttpHeaders()
-//                headers["Content-Type"] = "application/json"
                 val requestEntity = HttpEntity(requestBody, null)
 
                 val response: String = restTemplate.exchange(
