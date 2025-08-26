@@ -162,15 +162,31 @@ class PaymentController(
         @RequestParam(value = "p.isFullyAuthenticated", required = false) isFullyAuthenticated: String?,
         @RequestParam(value = "p.transmissionDateTime", required = false) transmissionDateTime: String?,
         @RequestParam("discountType") discountType: String?,
-        @RequestParam(value = "p..paymentSystem", required = false) paymentSystem: String?,
+        @RequestParam("discountAmount") discountAmount: String?,
+        @RequestParam(value = "p.paymentSystem", required = false) paymentSystem: String?,
         @RequestParam("ts") ts: String?,
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
     ): ResponseEntity<String> {
         val requestParams =
             GpbCallbackRequest(
-                trxId = trxId,
-                signature = signature,
+                trxId,
+                merchId,
+                resultCode,
+                amount,
+                accountId,
+                orderId,
+                rrn,
+                authCode,
+                srcType,
+                maskedPan,
+                isFullyAuthenticated,
+                transmissionDateTime,
+                discountType,
+                discountAmount,
+                paymentSystem,
+                ts,
+                signature,
             )
         return gpbCallbackService.processCallback(requestParams)
     }
