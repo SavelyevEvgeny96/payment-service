@@ -47,6 +47,7 @@ api:
     paymentUrl: ${PAYMENT_URL:URL}
     gpbUrl: ${GPB_URL:https://lt.pga.gazprombank.ru/api/v4/}
     gpbSbpUrl: ${GPB_SBP_URL:https://testapi.sbp.gazprombank.ru:9443/merchant/qrc-data}
+    gpbSbpUrlStatus: ${GPB_SBP_URL_STATUS:https://testapi.sbp.gazprombank.ru:9443/merchant/qrc-status}
     callbackUrlSbp: ${CALLBACK_URL_SBP:https://example.com/callback}
     paymentAccount: ${PAYMENT_ACCOUNT:40701810800000030052}
     portalId: ${GPB_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}

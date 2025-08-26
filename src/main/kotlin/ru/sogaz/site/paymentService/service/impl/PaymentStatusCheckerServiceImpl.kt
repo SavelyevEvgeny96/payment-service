@@ -2,6 +2,8 @@ package ru.sogaz.site.paymentService.service.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
@@ -205,19 +207,43 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            val url =
-                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
-            logger.info(LOG_GPB_API_CALL.format(url, traceId))
-
-            val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
-            val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
-
-            if (response.isNotEmpty()) {
-                logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                updatePaymentStatus(payment, paymentResponse)
+            if (payment.typeId?.typeId == "bankCard") {
+                val url =
+                    "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
+                logger.info(LOG_GPB_API_CALL.format(url, traceId))
+                val response = restTemplate.exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                if (response.isNotEmpty()) {
+                    logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                    updatePaymentStatus(payment, paymentResponse)
             } else {
-                logger.error(LOG_GPB_API_ERROR.format(traceId))
-                throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+                    logger.error(LOG_GPB_API_ERROR.format(traceId))
+                    throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+            }
+            } else {
+                val url = apiConfigProperty.gpbSbpUrlStatus
+
+                val requestBody = objectMapper.writeValueAsString(mapOf("qrcIds" to listOf(payment.qrcId)))
+
+//                val headers = HttpHeaders()
+//                headers["Content-Type"] = "application/json"
+                val requestEntity = HttpEntity(requestBody, null)
+
+                val response: String = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    String::class.java
+                ).body ?: ""
+
+                if (response.isNotEmpty()) {
+                    logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                    updatePaymentStatusSbp(payment, paymentResponse)
+                } else {
+                    logger.error(LOG_GPB_API_ERROR.format(traceId))
+                    throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+                }
             }
         } catch (e: Exception) {
             logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
@@ -267,6 +293,45 @@ class PaymentStatusCheckerServiceImpl(
         }
 
         return paymentRepository.save(payment)
+    }
+
+    private fun updatePaymentStatusSbp(
+        payment: Payment,
+        response: PaymentStatusResponse,
+    ) {
+        val traceId = getTraceId()
+        val order =
+            payment.orderId
+                ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
+                ?.orElseThrow { InnerException(ORDERS_NOT_FOUND, traceId) }
+                ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
+        val status = response.result.status
+
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.orderId, traceId))
+
+        when (status) {
+            "ACCEPTED" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("SUCCESS")
+                payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
+                createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
+
+                receiptService.generateReceipt(order)
+                sendToPaidOrdersQueue(order, traceId)
+            }
+
+            "NOT_STARTED", "RECEIVED" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("WAIT")
+            }
+
+            "BLOCKED", "REJECTED" -> {
+                payment.stateId = paymentStatusRepository.findByStateId("FAIL")
+            }
+
+            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.orderId, traceId))
+        }
+
+        payment.updateDate = LocalDateTime.now()
+        paymentRepository.save(payment)
     }
 
     private fun updatePaymentStatus(
