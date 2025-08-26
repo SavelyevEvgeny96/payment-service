@@ -15,7 +15,6 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
-import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.request.PaymentPayRequest
@@ -109,7 +108,7 @@ class GazpromServiceImplTest {
                 clientSystem = clientSystem,
             )
 
-        val actionType = mock<ru.sogaz.site.paymentService.entity.ActionType>()
+        val actionType = mock<ru.sogaz.site.paymentService.entity.  ActionType>()
         whenever(actionTypeDao.getActionType(traceId, GET_PAYMENT_LINK)).thenReturn(actionType)
         whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         whenever(generatorService.generateDescription(anyList())).thenReturn("Test description")

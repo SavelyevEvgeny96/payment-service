@@ -10,7 +10,6 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
-import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Payment
@@ -26,7 +25,6 @@ class CallbackServiceImpl(
     private val paymentDao: PaymentDao,
     private val orderDao: OrderDao,
     private val callbackPaymentStatus: PaymentStatus,
-    private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
     private val callbackPaymentDao: CallbackPaymentDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,

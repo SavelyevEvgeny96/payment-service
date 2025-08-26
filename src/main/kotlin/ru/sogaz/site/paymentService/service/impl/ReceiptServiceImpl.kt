@@ -17,7 +17,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -29,7 +28,6 @@ class ReceiptServiceImpl(
     private val receiptProperty: ReceiptProperties,
     private val restTemplate: WebConfigRestTemplate,
     private val subOrderDao: SubOrderDao,
-    private val actionTypeRepository: ActionTypeRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val objectMapper: ObjectMapper,
     private val paymentRepository: PaymentRepository,

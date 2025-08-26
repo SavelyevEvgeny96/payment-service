@@ -7,7 +7,6 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -15,7 +14,6 @@ import ru.sogaz.site.paymentService.service.impl.GpbCallbackServiceImpl
 
 @Configuration
 class GpbCallbackServiceConfig(
-    private val actionTypeRepository: ActionTypeRepository,
     private val clientSystemRepository: ClientSystemRepository,
 ) {
     @Bean
@@ -27,8 +25,6 @@ class GpbCallbackServiceConfig(
         paymentStatusDao: PaymentStatusDao,
         getOrderStatusDao: OrderStatusDao,
     ): GpbCallbackService {
-        val callbackActions =
-            actionTypeRepository.findByActionName("Заказ оплачен")
 
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
@@ -40,7 +36,6 @@ class GpbCallbackServiceConfig(
             signatureVerifier = signatureVerifier,
             paymentStatusDao = paymentStatusDao,
             getOrderStatusDao = getOrderStatusDao,
-            callbackAction = callbackActions,
             payClientSystem = payClientSystems,
         )
     }

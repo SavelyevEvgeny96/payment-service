@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
-import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
@@ -16,7 +15,6 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.CallbackPaymentDaoImpl
-import ru.sogaz.site.paymentService.dao.impl.ActionTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.ClientSystemDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.ConfigDataDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentStatusDaoImpl
@@ -26,7 +24,6 @@ import ru.sogaz.site.paymentService.dao.impl.OrderDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.OrderStatusDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentOperationHistoryDaoImpl
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.CallbackPaymentRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
@@ -57,10 +54,6 @@ class DataDaoConfig {
         PaymentStatusDaoImpl(paymentStatusRepository = paymentStatusRepository)
 
     @Bean
-    fun daoActionTypeConfig(actionTypeRepository: ActionTypeRepository): ActionTypeDao =
-        ActionTypeDaoImpl(actionTypeRepository = actionTypeRepository)
-
-    @Bean
     fun daoGetBankConfig(
         bankRepository: BankRepository,
         configDataDao: ConfigDataDao
@@ -89,11 +82,9 @@ class DataDaoConfig {
     @Bean
     fun paymentOperationHistoryDao(
         paymentOperationHistoryRepository: PaymentOperationHistoryRepository,
-        actionTypeDao: ActionTypeDao
     ): PaymentOperationHistoryDao =
         PaymentOperationHistoryDaoImpl(
-            paymentOperationHistoryRepository = paymentOperationHistoryRepository,
-            actionTypeDao = actionTypeDao
+            paymentOperationHistoryRepository = paymentOperationHistoryRepository
         )
 
     @Bean

@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -18,7 +17,6 @@ import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
 open class ReceiptServiceConfig {
     @Bean
     open fun receiptService(
-        actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         receiptProperty: ReceiptProperties,
         restTemplate: WebConfigRestTemplate,
@@ -28,7 +26,6 @@ open class ReceiptServiceConfig {
         subOrderDao: SubOrderDao
     ): ReceiptService =
         ReceiptServiceImpl(
-            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             receiptProperty = receiptProperty,
             restTemplate = restTemplate,

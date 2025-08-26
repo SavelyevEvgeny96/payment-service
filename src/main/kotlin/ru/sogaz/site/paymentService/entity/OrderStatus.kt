@@ -14,10 +14,7 @@ data class OrderStatus(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(name = "state_id")
-    var stateId: String,
+    var stateId: String = "",
     @Column(name = "state_name")
-    var stateName: String,
-) {
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(0, "", "")
-}
+    var stateName: String = "",
+)

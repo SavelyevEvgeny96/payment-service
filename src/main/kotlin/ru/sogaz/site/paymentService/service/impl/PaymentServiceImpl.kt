@@ -10,7 +10,6 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
@@ -43,7 +42,6 @@ class PaymentServiceImpl(
     private val paymentRepository: PaymentRepository,
     private val paymentTypeDao: PaymentTypeDao,
     private val paymentStatusDao: PaymentStatusDao,
-    private val actionTypeDao: ActionTypeDao,
     private val orderRepository: OrderRepository,
     private val subOrderDao: SubOrderDao,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,

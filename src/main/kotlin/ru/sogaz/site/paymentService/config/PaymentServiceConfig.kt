@@ -3,13 +3,11 @@ package ru.sogaz.site.paymentService.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
@@ -31,7 +29,6 @@ open class PaymentServiceConfig(
     open fun paymentService(
         orderRepository: OrderRepository,
         subOrderRepository: SubOrderRepository,
-        actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         paymentStatusRepository: PaymentStatusRepository,
         paymentRepository: PaymentRepository,
@@ -41,7 +38,6 @@ open class PaymentServiceConfig(
         paymentStatusCheckerService: PaymentStatusCheckerService,
         paymentTypeDao: PaymentTypeDao,
         paymentStatusDao: PaymentStatusDao,
-        actionTypeDao: ActionTypeDao,
         gazpromService: GazpromService,
         bankDao: BankDao,
         configDataDao: ConfigDataDao,
@@ -55,7 +51,6 @@ open class PaymentServiceConfig(
             subOrderDao = subOrderDao,
             paymentTypeDao = paymentTypeDao,
             paymentStatusDao = paymentStatusDao,
-            actionTypeDao = actionTypeDao,
             gazpromService = gazpromService,
             bankDao = bankDao,
             paymentStatusCheckerService = paymentStatusCheckerService,

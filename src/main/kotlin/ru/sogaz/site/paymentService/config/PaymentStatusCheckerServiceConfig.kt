@@ -8,7 +8,6 @@ import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
@@ -24,9 +23,7 @@ import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
 class PaymentStatusCheckerServiceConfig {
     @Bean
     open fun paymentStatusCheckerService(
-        configDataRepository: ConfigDataRepository,
         orderRepository: OrderRepository,
-        actionTypeRepository: ActionTypeRepository,
         operationHistoryRepository: PaymentOperationHistoryRepository,
         paymentStatusRepository: PaymentStatusRepository,
         paymentRepository: PaymentRepository,
@@ -41,8 +38,6 @@ class PaymentStatusCheckerServiceConfig {
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
-            configDataRepository = configDataRepository,
-            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             paymentStatusRepository = paymentStatusRepository,
             paymentRepository = paymentRepository,

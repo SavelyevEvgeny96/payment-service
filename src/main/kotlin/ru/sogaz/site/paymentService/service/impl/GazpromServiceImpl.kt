@@ -12,7 +12,6 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
-import ru.sogaz.site.paymentService.dao.ActionTypeDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
@@ -77,7 +76,7 @@ class GazpromServiceImpl(
         const val GET_PAYMENT_LINK = "Получение ссылки на оплату"
         const val ERROR_SENDING_REQUEST_START_PAY = "Ошибка при отправке запроса на старт платежа"
         const val ERROR_SENDING_REQUEST_START_PAY_SBP = "Ошибка при отправке запроса для получения платежной ссылки"
-        const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB для TraceId: "
+        const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB "
         const val PAYMENT_PAGE_URL = "paymentPageUrl"
         const val PAYLOAD = "payload"
         const val OPTIONS = "options"
@@ -192,7 +191,7 @@ class GazpromServiceImpl(
                 ERROR_SENDING_REQUEST_START_PAY
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
-            logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
+            logger.error("$ERROR_GPB_PAYMENT_PROCESSING ${e.message}")
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING)
         }
     }

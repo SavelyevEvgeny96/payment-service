@@ -20,11 +20,11 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
@@ -45,10 +45,8 @@ import java.time.format.DateTimeFormatter
 class PaymentStatusCheckerServiceImpl(
     private val orderRepository: OrderRepository,
     private val paymentRepository: PaymentRepository,
-    private val configDataRepository: ConfigDataRepository,
     private val paymentStatusRepository: PaymentStatusRepository,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
-    private val actionTypeRepository: ActionTypeRepository,
     private val restTemplate: WebConfigRestTemplate,
     private val apiConfigProperty: ApiConfigProperties,
     private val receiptService: ReceiptService,
@@ -56,7 +54,8 @@ class PaymentStatusCheckerServiceImpl(
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
     private val rabbit: RabbitProperties,
-    private val subOrderDao: SubOrderDao
+    private val subOrderDao: SubOrderDao,
+    private val actionType: ActionType
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
@@ -229,10 +228,9 @@ class PaymentStatusCheckerServiceImpl(
 
     private fun createOrderHistoryRecord(
         order: Order,
-        action: String,
         traceId: String,
     ) {
-        val actionType = actionTypeRepository.findByActionName(action)
+        val actionType = actionType.ORDER_PAID.value
         val subOrder = subOrderDao.getSubOrder(traceId, order)
 
         val historyRecord =

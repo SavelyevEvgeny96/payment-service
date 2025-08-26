@@ -20,13 +20,11 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dto.response.PaymentData
 import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
-import ru.sogaz.site.paymentService.entity.ActionType
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository

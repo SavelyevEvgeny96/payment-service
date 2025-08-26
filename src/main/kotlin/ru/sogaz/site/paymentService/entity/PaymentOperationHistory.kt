@@ -17,8 +17,8 @@ class PaymentOperationHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @ManyToOne
-    var action: ActionType? = null,
+    @Column
+    var action: String? = null,
     @Column(name = "action_date", updatable = false)
     var actionDate: LocalDateTime? = null,
     @ManyToOne
