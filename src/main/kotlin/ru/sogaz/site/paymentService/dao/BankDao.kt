@@ -6,7 +6,6 @@ interface BankDao {
     fun getBank(
         bankId: String?,
         traceId: String,
-        checkBankPriority: String?
+        checkBankPriority: String?,
     ): Bank?
-
 }

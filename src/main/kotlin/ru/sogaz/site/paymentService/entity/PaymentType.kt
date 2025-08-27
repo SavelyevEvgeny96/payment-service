@@ -16,6 +16,5 @@ data class PaymentType(
     @Column(name = "type_id")
     var typeId: String = "",
     @Column(name = "type_name")
-    var typeName: String =  "",
+    var typeName: String = "",
 )
-

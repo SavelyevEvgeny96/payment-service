@@ -12,7 +12,7 @@ interface AkbBankIntegrationService {
         urlToReturnF: String?,
         orderId: String,
         paymentId: Long?,
-        premiumAmount: String?,
+        premiumAmount: String,
         order: Order,
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>>

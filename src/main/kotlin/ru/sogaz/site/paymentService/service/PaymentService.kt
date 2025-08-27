@@ -10,12 +10,22 @@ import ru.sogaz.siter.models.resonses.Response
  * Определяет контракт для работы с платежами.
  */
 interface PaymentService {
-    fun createPayment(urlToReturn: String?, urlToReturnF: String?, orderId: String): ResponseEntity<Response<DataPay>>
+    fun createPayment(
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String,
+    ): ResponseEntity<Response<DataPay>>
 
-    fun createPaymentSbp(urlToReturn: String?, urlToReturnF: String?, orderId: String): ResponseEntity<Response<DataPay>>
+    fun createPaymentSbp(
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String,
+    ): ResponseEntity<Response<DataPay>>
 
     fun buildPaymentContext(
-        urlToReturn: String?, urlToReturnF: String?, orderId: String,
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
     ): PaymentContext

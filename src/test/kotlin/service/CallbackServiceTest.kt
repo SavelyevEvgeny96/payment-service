@@ -1,4 +1,5 @@
 package service
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -20,7 +21,6 @@ class CallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
     private val callbackPaymentStatus = PaymentStatus().apply { stateId = "CALLBACK_AKB" }
-    private val callbackAction = ActionType(1, "Получение CALLBACK от АКБ Россия")
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val testRequest =
@@ -56,7 +56,6 @@ class CallbackServiceTest {
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
                 callbackPaymentStatus = callbackPaymentStatus,
-                callbackAction = callbackAction,
                 payClientSystem = payClientSystem,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
@@ -93,7 +92,6 @@ class CallbackServiceTest {
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
                 callbackPaymentStatus = callbackPaymentStatus,
-                callbackAction = callbackAction,
                 payClientSystem = payClientSystem,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )

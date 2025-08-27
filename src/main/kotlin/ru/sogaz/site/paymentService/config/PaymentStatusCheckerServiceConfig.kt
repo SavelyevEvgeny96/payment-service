@@ -4,18 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
@@ -35,7 +31,7 @@ class PaymentStatusCheckerServiceConfig {
         rabbitTemplate: RabbitTemplate,
         objectMapper: ObjectMapper,
         rabbitProperties: RabbitProperties,
-        subOrderDao:SubOrderDao
+        subOrderDao: SubOrderDao,
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
@@ -49,6 +45,6 @@ class PaymentStatusCheckerServiceConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             rabbit = rabbitProperties,
-            subOrderDao = subOrderDao
+            subOrderDao = subOrderDao,
         )
 }

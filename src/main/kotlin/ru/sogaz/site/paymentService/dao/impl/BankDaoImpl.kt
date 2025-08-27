@@ -1,17 +1,15 @@
 package ru.sogaz.site.paymentService.dao.impl
 
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.BankRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.TRUE
 
 class BankDaoImpl(
     private val bankRepository: BankRepository,
-    private val configDataDao: ConfigDataDao
+    private val configDataDao: ConfigDataDao,
 ) : BankDao {
     private val logger = loggerFor(javaClass)
 
@@ -19,7 +17,8 @@ class BankDaoImpl(
         const val BANK_PRIORITY = "bankPriority"
         const val BANK_RESERVE = "bankReserve"
 
-        const val LOG_INFO_BANK_PRIORITY_TRUE = "Выставлен параметр bankPriority \"true\"." +
+        const val LOG_INFO_BANK_PRIORITY_TRUE =
+            "Выставлен параметр bankPriority \"true\"." +
                 "Все операции будут проводиться по банку:  "
         const val LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE = "Параметр bank_id = null оплата по резервному банку: "
     }
@@ -27,7 +26,7 @@ class BankDaoImpl(
     override fun getBank(
         bankId: String?,
         traceId: String,
-        checkBankPriority: String?
+        checkBankPriority: String?,
     ): Bank {
         val bank: Bank?
         if (checkBankPriority == TRUE) {
@@ -43,6 +42,4 @@ class BankDaoImpl(
         }
         return bank
     }
-
-
 }

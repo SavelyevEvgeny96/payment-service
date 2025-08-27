@@ -20,7 +20,7 @@ class ApiConfigProperties {
     lateinit var merchantId: String
     lateinit var backUrlF: String
     lateinit var backUrlS: String
-    lateinit var akbUrl:String
+    lateinit var akbUrl: String
 
     @PostConstruct
     fun postConstruct() {

@@ -8,19 +8,18 @@ import org.mockito.Mockito.doNothing
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.web.client.RestTemplate
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
 import java.util.Optional
@@ -29,10 +28,7 @@ class PaymentStatusCheckerServiceTest {
     private val paymentRepository = mock<PaymentRepository>()
     private val receiptService = mock<ReceiptService>()
     private val orderRepository = mock<OrderRepository>()
-    private val restTemplate = mock<RestTemplate>()
-    private val subOrderRepository = mock<SubOrderRepository>()
-    private val configDataRepository = mock<ConfigDataRepository>()
-    private val actionTypeRepository = mock<ActionTypeRepository>()
+    private val restTemplate = mock<WebConfigRestTemplate>()
     private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
     private val paymentStatusRepository = mock<PaymentStatusRepository>()
     private val apiConfigProperty = mock<ApiConfigProperties>()
@@ -40,13 +36,10 @@ class PaymentStatusCheckerServiceTest {
     private val rabbitTemplate = mock<RabbitTemplate>()
     private val objectMapper = mock<ObjectMapper>()
     private val rabbitProperties = mock<RabbitProperties>()
-
+    private val subOrderDao = mock<SubOrderDao>()
     private val service =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
-            subOrderRepository = subOrderRepository,
-            configDataRepository = configDataRepository,
-            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             paymentStatusRepository = paymentStatusRepository,
             paymentRepository = paymentRepository,
@@ -57,6 +50,7 @@ class PaymentStatusCheckerServiceTest {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             rabbit = rabbitProperties,
+            subOrderDao = subOrderDao,
         )
 
     private val traceId = "test-trace-id"

@@ -18,14 +18,14 @@ interface GazpromService {
         orderId: String,
         tokenGpb: String,
         paymentId: Long?,
-        premiumAmount: String?,
+        premiumAmount: String,
         order: Order,
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>>
 
     fun initiateGPBSBPPayment(
         paymentId: Long?,
-        premiumAmount: String?,
+        premiumAmount: String,
         order: Order,
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>>

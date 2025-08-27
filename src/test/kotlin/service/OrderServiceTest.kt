@@ -10,11 +10,11 @@ import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
@@ -23,7 +23,7 @@ import ru.sogaz.siter.models.resonses.Response
 class OrderServiceTest {
     private val traceId = "trace-123"
     private val orderId = "order-456"
-    private val orderRepository = mock<OrderRepository>()
+    private val subOrderDao = mock<SubOrderDao>()
     private val apiConfigProperty = mock<ApiConfigProperties>()
     private val generatorService = mock<GeneratorService>()
     private val subOrderRepository = mock<SubOrderRepository>()
@@ -47,13 +47,12 @@ class OrderServiceTest {
         val service =
             OrderServiceImpl(
                 orderDao = orderDao,
-                orderRepository = orderRepository,
                 apiConfigProperty = apiConfigProperty,
                 generatorService = generatorService,
-                subOrderRepository = subOrderRepository,
                 bankDao = bankDao,
                 clientSystemDao = clientSystemDao,
                 orderStatusDao = orderStatusDao,
+                subOrderDao = subOrderDao,
             )
         val response: Response<DataGetOrderStatus> = service.getOrderStatus(orderId)
         assertThat(response.data?.orderStatus).isEqualTo("NEW")
@@ -65,17 +64,16 @@ class OrderServiceTest {
         val orderDao = mock<OrderDao>()
         `when`(orderDao.getOrderId(orderId))
             .thenThrow(InnerException(traceId, "DB error"))
-        val orderRepository = mock<OrderRepository>()
+        val subOrderDao = mock<SubOrderDao>()
         val service =
             OrderServiceImpl(
                 orderDao = orderDao,
-                orderRepository = orderRepository,
                 apiConfigProperty = apiConfigProperty,
                 generatorService = generatorService,
-                subOrderRepository = subOrderRepository,
                 bankDao = bankDao,
                 clientSystemDao = clientSystemDao,
                 orderStatusDao = orderStatusDao,
+                subOrderDao = subOrderDao,
             )
         assertThrows<InnerException> {
             service.getOrderStatus(orderId)

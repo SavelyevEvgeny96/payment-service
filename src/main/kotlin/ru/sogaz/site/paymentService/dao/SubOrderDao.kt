@@ -8,6 +8,11 @@ interface SubOrderDao {
         traceId: String,
         order: Order?,
     ): SubOrder
+
     fun save(subOrder: SubOrder)
-    fun getAllSubOrderListByOrderId(orderId: Order, traceId: String): List<SubOrder>
+
+    fun getAllSubOrderListByOrderId(
+        orderId: Order,
+        traceId: String,
+    ): List<SubOrder>
 }

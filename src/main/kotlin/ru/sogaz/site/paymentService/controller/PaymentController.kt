@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.request.CallbackRequest
-import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
@@ -70,7 +70,7 @@ class PaymentController(
                             Schema(
                                 example =
                                     "{\"status\": \"error\", \"code\": -1101500401," +
-                                            " \"messageError\": \"Ваш запрос не авторизован\"}",
+                                        " \"messageError\": \"Ваш запрос не авторизован\"}",
                             ),
                     ),
                 ],
@@ -84,7 +84,7 @@ class PaymentController(
                             Schema(
                                 example =
                                     "{\"status\": \"error\", \"code\": -1101500403, " +
-                                            "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}",
+                                        "\"messageError\": \"Вам запрещен доступ к запрашиваемому ресурсу\"}",
                             ),
                     ),
                 ],
@@ -98,7 +98,7 @@ class PaymentController(
                             Schema(
                                 example =
                                     "{\"status\": \"error\", \"code\": -1101500422, " +
-                                            "\"messageError\": \"Не все обязательные данные указаны корректно\"}",
+                                        "\"messageError\": \"Не все обязательные данные указаны корректно\"}",
                             ),
                     ),
                 ],
@@ -119,14 +119,14 @@ class PaymentController(
     fun createPaySbp(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
-        @RequestParam(required = false) urlToReturnF: String?
+        @RequestParam(required = false) urlToReturnF: String?,
     ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(urlToReturn, urlToReturnF, orderId)
 
     @GetMapping("/pay/{orderId}")
     fun pay(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
-        @RequestParam(required = false) urlToReturnF: String?
+        @RequestParam(required = false) urlToReturnF: String?,
     ): ResponseEntity<Response<DataPay>> = paymentService.createPayment(urlToReturn, urlToReturnF, orderId)
 
     @Operation(

@@ -15,7 +15,7 @@ data class ConfigData(
     @Column(name = "param_name")
     var paramName: String = "",
     @Column(name = "param_value")
-    var paramValue: String  = "",
+    var paramValue: String = "",
     @Column(name = "param_description")
-    var paramDescription: String  = "",
+    var paramDescription: String = "",
 )

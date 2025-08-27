@@ -12,22 +12,18 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
-import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
-import ru.sogaz.site.paymentService.dto.request.OrderDto
 import ru.sogaz.site.paymentService.dto.request.State
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.SUCCESS
@@ -41,7 +37,7 @@ class GazpromServiceImpl(
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val restTemplate: WebConfigRestTemplate,
     private val paymentDao: PaymentDao,
-    private val subOrderDao: SubOrderDao
+    private val subOrderDao: SubOrderDao,
 ) : GazpromService {
     private val logger = loggerFor(javaClass)
 
@@ -63,10 +59,10 @@ class GazpromServiceImpl(
         const val END__METHOD_PAY_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП Газпром Банк для платежа с payment_id: "
         const val START_METHOD_GET_TOKEN_GPB =
             ">>> СТАРТ метода получение токена из банка Газпром для" +
-                    " инициирования оплаты по карте для order_id: "
+                " инициирования оплаты по карте для order_id: "
         const val END_METHOD_GET_TOKEN_GPB =
             "<<< КОНЕЦ метода получение токена из банка Газпром для" +
-                    " инициирования оплаты по карте для order_id: "
+                " инициирования оплаты по карте для order_id: "
         const val SAVE_OPERATION_HISTORY_START_PAY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на: "
         const val ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления платежа payment_id == null"
@@ -101,7 +97,7 @@ class GazpromServiceImpl(
                 order,
                 subOrder.clientSystem,
                 traceId,
-                ActionType.GET_ACCESS_TOKEN_ERROR.value
+                ActionType.GET_ACCESS_TOKEN_ERROR.value,
             )
             logger.info(ERROR_SAVE_OPERATION_HISTORY)
         }
@@ -115,7 +111,7 @@ class GazpromServiceImpl(
         orderId: String,
         tokenGpb: String,
         paymentId: Long?,
-        premiumAmount: String?,
+        premiumAmount: String,
         order: Order,
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>> {
@@ -126,7 +122,7 @@ class GazpromServiceImpl(
             order,
             clientSystem,
             traceId,
-            ActionType.SEND_PAYMENT_START_REQUEST.value
+            ActionType.SEND_PAYMENT_START_REQUEST.value,
         )
         logger.info("$SAVE_OPERATION_HISTORY_START_PAY ${ActionType.SEND_PAYMENT_START_REQUEST.value}")
         val url =
@@ -189,7 +185,7 @@ class GazpromServiceImpl(
                 order,
                 clientSystem,
                 traceId,
-                ActionType.PAYMENT_START_REQUEST_ERROR.value
+                ActionType.PAYMENT_START_REQUEST_ERROR.value,
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
             logger.error("$ERROR_GPB_PAYMENT_PROCESSING ${e.message}")
@@ -199,7 +195,7 @@ class GazpromServiceImpl(
 
     override fun initiateGPBSBPPayment(
         paymentId: Long?,
-        premiumAmount: String?,
+        premiumAmount: String,
         order: Order,
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>> {
@@ -210,7 +206,7 @@ class GazpromServiceImpl(
             order,
             clientSystem,
             traceId,
-            ActionType.GET_PAYMENT_LINK.value
+            ActionType.GET_PAYMENT_LINK.value,
         )
         logger.info("$SAVE_OPERATION_HISTORY_START_PAY ${ActionType.GET_PAYMENT_LINK.value}")
         val url = apiConfigProperty.gpbSbpUrl
@@ -266,13 +262,11 @@ class GazpromServiceImpl(
                 order,
                 clientSystem,
                 traceId,
-                ActionType.PAYMENT_LINK_REQUEST_ERROR.value
+                ActionType.PAYMENT_LINK_REQUEST_ERROR.value,
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
         }
     }
-
-
 }

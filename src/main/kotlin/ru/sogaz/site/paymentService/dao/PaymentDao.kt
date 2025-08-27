@@ -10,9 +10,10 @@ interface PaymentDao {
 
     fun getPaymentFromBankId(bankId: String): Payment
 
-    fun save(payment: Payment):Long?
+    fun save(payment: Payment): Long?
 
     fun findByPaymentBankId(paymentId: String): Payment
+
     fun paymentUpdate(
         paymentId: Long?,
         paymentPageUrl: String,

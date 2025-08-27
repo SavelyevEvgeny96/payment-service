@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.loggerFor
@@ -28,7 +27,7 @@ class CallbackServiceImpl(
     private val callbackPaymentStatus: PaymentStatus,
     private val payClientSystem: ClientSystem,
     private val callbackPaymentDao: CallbackPaymentDao,
-    private val paymentOperationHistoryDao: PaymentOperationHistoryDao
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
 ) : CallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -44,7 +43,7 @@ class CallbackServiceImpl(
         const val BANK_CARD = "bankCard"
         const val START_METHOD_PROCESS_CALL =
             ">>> СТАРТ метода проверки CALLBACK" +
-                    " traceID: "
+                " traceID: "
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val OPERATION_PAYMENT_FAIL = "Запись в таблицу истории операций не добавлена. Произошла ошибка"
@@ -136,7 +135,7 @@ class CallbackServiceImpl(
                 order,
                 payClientSystem,
                 traceId,
-                ActionType.CALLBACK_RECEIVED.value
+                ActionType.CALLBACK_RECEIVED.value,
             )
         } catch (e: Exception) {
             logger.error(OPERATION_PAYMENT_FAIL)

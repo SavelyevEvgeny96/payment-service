@@ -44,50 +44,63 @@ class WebConfigRestTemplate {
         val hostnameVerifier =
             if (props.hostnameVerification) DefaultHostnameVerifier() else NoopHostnameVerifier.INSTANCE
 
-        val sslSocketFactory = SSLConnectionSocketFactory(
-            sslContext,
-            props.tlsProtocols.toTypedArray(),
-            null,
-            hostnameVerifier
-        )
+        val sslSocketFactory =
+            SSLConnectionSocketFactory(
+                sslContext,
+                props.tlsProtocols.toTypedArray(),
+                null,
+                hostnameVerifier,
+            )
 
         val cm: PoolingHttpClientConnectionManager =
-            PoolingHttpClientConnectionManagerBuilder.create()
+            PoolingHttpClientConnectionManagerBuilder
+                .create()
                 .setSSLSocketFactory(sslSocketFactory)
-                .build().apply {
+                .build()
+                .apply {
                     maxTotal = props.pool.maxTotal
                     defaultMaxPerRoute = props.pool.defaultMaxPerRoute
                 }
 
-        val requestConfig = RequestConfig.custom()
-            .setConnectTimeout(Timeout.ofMilliseconds(props.connectTimeoutMs.toLong()))
-            .setResponseTimeout(Timeout.ofMilliseconds(props.readTimeoutMs.toLong()))
-            .build()
+        val requestConfig =
+            RequestConfig
+                .custom()
+                .setConnectTimeout(Timeout.ofMilliseconds(props.connectTimeoutMs.toLong()))
+                .setResponseTimeout(Timeout.ofMilliseconds(props.readTimeoutMs.toLong()))
+                .build()
 
-        val httpClient: CloseableHttpClient = HttpClients.custom()
-            .setConnectionManager(cm)
-            .setDefaultRequestConfig(requestConfig)
-            .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy())
-            .build()
+        val httpClient: CloseableHttpClient =
+            HttpClients
+                .custom()
+                .setConnectionManager(cm)
+                .setDefaultRequestConfig(requestConfig)
+                .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy())
+                .build()
 
-        val factory = HttpComponentsClientHttpRequestFactory(httpClient).apply {
-            setConnectTimeout((props.connectTimeoutMs))
-        }
+        val factory =
+            HttpComponentsClientHttpRequestFactory(httpClient).apply {
+                setConnectTimeout((props.connectTimeoutMs))
+            }
 
         return RestTemplate(factory)
     }
-    //Доработать не корректно собирается trustStore(может быть дело в CA сертификате)
+
+    // Доработать не корректно собирается trustStore(может быть дело в CA сертификате)
     private fun buildSslContext(props: SslClientProperties): SSLContext {
         val keyStore = loadPkcs12FromBase64(props.pfxBase64!!, props.pfxPassword!!.toCharArray())
-       // val trustStore = buildTrustStoreFromBase64(props.caBase64!!)
-        return SSLContexts.custom()
+        // val trustStore = buildTrustStoreFromBase64(props.caBase64!!)
+        return SSLContexts
+            .custom()
             .loadKeyMaterial(keyStore, props.pfxPassword!!.toCharArray())
-            //.loadTrustMaterial(trustStore, null)
+            // .loadTrustMaterial(trustStore, null)
             .loadTrustMaterial(null, TrustAllStrategy.INSTANCE) // доверяет любой цепочке использую пока его
             .build()
     }
 
-    private fun loadPkcs12FromBase64(b64: String, password: CharArray): KeyStore {
+    private fun loadPkcs12FromBase64(
+        b64: String,
+        password: CharArray,
+    ): KeyStore {
         val decoded = base64Decode(b64)
         val ks = KeyStore.getInstance("PKCS12")
         ByteArrayInputStream(decoded).use { ks.load(it, password) }
@@ -108,12 +121,16 @@ class WebConfigRestTemplate {
         return trust
     }
 
-    private fun parseCertificates(bytes: ByteArray, cf: CertificateFactory): List<X509Certificate> {
-        val text = try {
-            String(bytes, Charsets.UTF_8)
-        } catch (_: Exception) {
-            ""
-        }
+    private fun parseCertificates(
+        bytes: ByteArray,
+        cf: CertificateFactory,
+    ): List<X509Certificate> {
+        val text =
+            try {
+                String(bytes, Charsets.UTF_8)
+            } catch (_: Exception) {
+                ""
+            }
         if (text.contains("-----BEGIN CERTIFICATE-----")) {
             val regex = Regex("-----BEGIN CERTIFICATE-----([\\s\\S]+?)-----END CERTIFICATE-----")
             val matches = regex.findAll(text).toList()
@@ -135,8 +152,7 @@ class WebConfigRestTemplate {
     private fun base64Decode(b64: String): ByteArray =
         try {
             Base64.getDecoder().decode(b64)
-        }
-        catch (_: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             Base64.getMimeDecoder().decode(b64)
         }
 }

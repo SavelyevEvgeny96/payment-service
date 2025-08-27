@@ -23,7 +23,7 @@ class AkbBankIntegrationServiceConfig {
         restTemplate: WebConfigRestTemplate,
         objectMapper: ObjectMapper,
         paymentDao: PaymentDao,
-        props: SslClientProperties
+        props: SslClientProperties,
     ): AkbBankIntegrationService =
         AkbBankIntegrationServiceImpl(
             paymentOperationHistoryDao = paymentOperationHistoryDao,
@@ -33,6 +33,6 @@ class AkbBankIntegrationServiceConfig {
             objectMapper = objectMapper,
             paymentDao = paymentDao,
             subOrderDao = subOrderDao,
-            props = props
+            props = props,
         )
 }

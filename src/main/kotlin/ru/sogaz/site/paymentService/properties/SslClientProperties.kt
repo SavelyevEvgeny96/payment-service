@@ -11,17 +11,14 @@ data class SslClientProperties(
     @field:NotBlank var pfxBase64: String? = null,
     @field:NotBlank var pfxPassword: String? = null,
     @field:NotBlank var caBase64: String? = null,
-
-    var tlsProtocols: List<String> = listOf("TLSv1.2","TLSv1.3"),
+    var tlsProtocols: List<String> = listOf("TLSv1.3"),
     var hostnameVerification: Boolean = true,
-
     @field:NotNull var connectTimeoutMs: Int = 5000,
     @field:NotNull var readTimeoutMs: Int = 35000,
-
-    var pool: Pool = Pool()
+    var pool: Pool = Pool(),
 ) {
     data class Pool(
         var maxTotal: Int = 200,
-        var defaultMaxPerRoute: Int = 50
+        var defaultMaxPerRoute: Int = 50,
     )
 }

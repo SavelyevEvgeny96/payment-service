@@ -7,9 +7,11 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq
+import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.mockito.kotlin.whenever
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -17,8 +19,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dto.response.PaymentData
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
+import ru.sogaz.site.paymentService.dto.response.PaymentData
 import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
@@ -34,24 +38,23 @@ import java.util.UUID
 
 class ReceiptServiceTest {
     private val receiptProperty = mock<ReceiptProperties>()
-    private val restTemplate = mock<RestTemplate>()
+    private val restTemplate = mock<WebConfigRestTemplate>()
     private val subOrderRepository = mock<SubOrderRepository>()
-    private val actionTypeRepository = mock<ActionTypeRepository>()
     private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
     private val objectMapper = mock<ObjectMapper>()
     private val paymentRepository = mock<PaymentRepository>()
     private val chequeSentRepository = mock<ChequeSentRepository>()
+    private val subOrderDao = mock<SubOrderDao>()
 
     private val service =
         ReceiptServiceImpl(
-            subOrderRepository = subOrderRepository,
-            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             receiptProperty = receiptProperty,
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             paymentRepository = paymentRepository,
             chequeSentRepository = chequeSentRepository,
+            subOrderDao = subOrderDao,
         )
 
     private val traceId = "test-trace-id"
@@ -84,9 +87,6 @@ class ReceiptServiceTest {
                 id = 12
             },
         )
-        `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATED_ACTION)).thenReturn(
-            ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATED_ACTION),
-        )
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse =
@@ -100,9 +100,10 @@ class ReceiptServiceTest {
                 null,
                 PaymentData("222", "222"),
             )
-
+        val mockSpringRestTemplate = mock<RestTemplate>()
+        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
         `when`(
-            restTemplate.exchange(
+            restTemplate.defaultRestTemplate().exchange(
                 any(String::class.java),
                 any(HttpMethod::class.java),
                 any(HttpEntity::class.java),
@@ -110,10 +111,16 @@ class ReceiptServiceTest {
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
+        verify(mockSpringRestTemplate, atLeastOnce()).exchange(
+            eq(receiptProperty.receiptUrl),
+            eq(HttpMethod.POST),
+            ArgumentCaptor.forClass(HttpEntity::class.java).capture(),
+            eq(PaymentReceiptCreateResponse::class.java),
+        )
         service.generateReceipt(order)
 
         val captor = ArgumentCaptor.forClass(HttpEntity::class.java)
-        verify(restTemplate).exchange(
+        verify(restTemplate).defaultRestTemplate().exchange(
             eq(receiptProperty.receiptUrl),
             eq(HttpMethod.POST),
             captor.capture(),
@@ -153,9 +160,6 @@ class ReceiptServiceTest {
                 id = 12
             },
         )
-        `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION)).thenReturn(
-            ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION),
-        )
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse = """{"status":"FAILED"}"""
@@ -172,7 +176,7 @@ class ReceiptServiceTest {
             )
 
         `when`(
-            restTemplate.exchange(
+            restTemplate.defaultRestTemplate().exchange(
                 any(String::class.java),
                 any(HttpMethod::class.java),
                 any(HttpEntity::class.java),
@@ -214,12 +218,10 @@ class ReceiptServiceTest {
                 id = 12
             },
         )
-        `when`(actionTypeRepository.findByActionName(ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
-            .thenReturn(ActionType(1, ReceiptServiceImpl.RECEIPT_GENERATION_ERROR_ACTION))
         `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         `when`(
-            restTemplate.exchange(
+            restTemplate.defaultRestTemplate().exchange(
                 any(String::class.java),
                 any(HttpMethod::class.java),
                 any(HttpEntity::class.java),

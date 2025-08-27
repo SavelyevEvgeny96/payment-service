@@ -10,25 +10,21 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.dao.PaymentStatusDao
-import ru.sogaz.site.paymentService.dao.PaymentTypeDao
-import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentTypeDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.PaymentContext
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.PaymentService
@@ -50,7 +46,7 @@ class PaymentServiceImpl(
     private val bankDao: BankDao,
     private val configDataDao: ConfigDataDao,
     private val akbBankIntegrationService: AkbBankIntegrationService,
-    private val paymentOperationHistoryDao: PaymentOperationHistoryDao
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
@@ -86,7 +82,7 @@ class PaymentServiceImpl(
     override fun createPayment(
         urlToReturn: String?,
         urlToReturnF: String?,
-        orderId: String
+        orderId: String,
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION $traceId")
@@ -106,8 +102,12 @@ class PaymentServiceImpl(
             if (checkBank.bankId == BankEnum.AKB_RUS.value) {
                 paymentId = createPaymentRecord(checkBank, orderFindByCode, "")
                 return akbBankIntegrationService.initiateAKBPayment(
-                    urlToReturn, urlToReturnF, orderId, paymentId,
-                    paymentContext.premiumAmount, orderFindByCode,
+                    urlToReturn,
+                    urlToReturnF,
+                    orderId,
+                    paymentId,
+                    paymentContext.premiumAmount,
+                    orderFindByCode,
                     subOrder,
                 )
             } else {
@@ -117,11 +117,13 @@ class PaymentServiceImpl(
                         orderFindByCode,
                         paymentContext.subOrder.clientSystem,
                         traceId,
-                        ActionType.SEND_PAYMENT_START_REQUEST.value
+                        ActionType.SEND_PAYMENT_START_REQUEST.value,
                     )
                     paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
                     return gazpromService.initiateGPBPayment(
-                        urlToReturn, urlToReturnF, orderId,
+                        urlToReturn,
+                        urlToReturnF,
+                        orderId,
                         tokenGpb,
                         paymentId,
                         paymentContext.premiumAmount,
@@ -139,7 +141,7 @@ class PaymentServiceImpl(
     override fun createPaymentSbp(
         urlToReturn: String?,
         urlToReturnF: String?,
-        orderId: String
+        orderId: String,
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
@@ -147,7 +149,8 @@ class PaymentServiceImpl(
         val paymentContext =
             buildPaymentContext(
                 urlToReturn,
-                urlToReturnF, orderId,
+                urlToReturnF,
+                orderId,
                 CODE_ERROR_ORDER_IS_PAID_FOR_SBP,
                 CODE_ERROR_ORDER_IS_NOT_AVAILABLE,
             )
@@ -166,7 +169,9 @@ class PaymentServiceImpl(
     }
 
     override fun buildPaymentContext(
-        urlToReturn: String?, urlToReturnF: String?, orderId: String,
+        urlToReturn: String?,
+        urlToReturnF: String?,
+        orderId: String,
         errorCodeIsPaidFor: Int,
         errorCodeIsNotAvailable: Int,
     ): PaymentContext {
@@ -193,7 +198,7 @@ class PaymentServiceImpl(
             premiumAmount,
             orderStatus,
             configBankPriorityCheck,
-            checkBank
+            checkBank,
         )
     }
 
@@ -219,4 +224,3 @@ class PaymentServiceImpl(
         return saved
     }
 }
-

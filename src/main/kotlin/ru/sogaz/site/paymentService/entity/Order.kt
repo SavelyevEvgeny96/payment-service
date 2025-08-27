@@ -29,7 +29,7 @@ data class Order(
     @Column(name = "date_delete")
     var dateDelete: String? = "",
     @Column(name = "premium_amount")
-    var premiumAmount: String? = "",
+    var premiumAmount: String = "",
     @Column(name = "payment_end_date")
     var paymentEndDate: String? = "",
     @Column(name = "url_to_return")

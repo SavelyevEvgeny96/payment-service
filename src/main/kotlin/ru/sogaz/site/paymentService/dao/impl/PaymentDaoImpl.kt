@@ -12,7 +12,7 @@ import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PA
 
 class PaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
-    private val paymentStatusDao: PaymentStatusDao
+    private val paymentStatusDao: PaymentStatusDao,
 ) : PaymentDao {
     companion object {
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
@@ -44,12 +44,13 @@ class PaymentDaoImpl(
         }
 
     override fun save(payment: Payment): Long? {
-        val saved = try {
-            paymentRepository.save(payment)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
-            throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
-        }
+        val saved =
+            try {
+                paymentRepository.save(payment)
+            } catch (e: Exception) {
+                logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
+                throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
+            }
         return saved.id
     }
 

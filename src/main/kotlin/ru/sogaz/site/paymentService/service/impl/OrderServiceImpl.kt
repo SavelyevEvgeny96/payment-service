@@ -17,8 +17,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
@@ -33,7 +31,7 @@ class OrderServiceImpl(
     private val generatorService: GeneratorService,
     private val orderStatusDao: OrderStatusDao,
     private val orderDao: OrderDao,
-    private val subOrderDao: SubOrderDao
+    private val subOrderDao: SubOrderDao,
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -76,11 +74,12 @@ class OrderServiceImpl(
         logger.info("$LOG_PAYMENT_ID_GENERATED $orderId")
 
         val requestBankId = requestWrapper.bank
-        val bank = if (requestBankId == null) {
-            bankDao.getBank(null, traceId, BANK_RESERVE)
-        } else {
-            bankDao.getBank(requestBankId, traceId, null)
-        }
+        val bank =
+            if (requestBankId == null) {
+                bankDao.getBank(null, traceId, BANK_RESERVE)
+            } else {
+                bankDao.getBank(requestBankId, traceId, null)
+            }
 
         val orderStatus = orderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
         val order =
@@ -90,7 +89,7 @@ class OrderServiceImpl(
                 orderStatus = orderStatus,
                 dateDelete = null,
                 paymentEndDate = requestWrapper.paymentEndDate,
-                premiumAmount = null,
+                premiumAmount = "",
                 urlToDecline = requestWrapper.urlToDecline,
                 urlToReturn = requestWrapper.urlToReturn,
                 recipientEmail = requestWrapper.recipientEmail,

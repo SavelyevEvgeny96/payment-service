@@ -6,7 +6,6 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.repository.CallbackPaymentRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
@@ -16,7 +15,7 @@ import ru.sogaz.site.paymentService.service.impl.CallbackServiceImpl
 @Configuration
 class CallbackServiceConfig(
     private val paymentStatusRepository: PaymentStatusRepository,
-    private val clientSystemRepository: ClientSystemRepository
+    private val clientSystemRepository: ClientSystemRepository,
 ) {
     @Bean
     fun akbCallbackService(

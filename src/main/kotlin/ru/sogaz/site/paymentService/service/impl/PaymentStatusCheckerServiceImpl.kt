@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.http.HttpMethod
-import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS
@@ -12,10 +11,10 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
-import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
-import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.dto.data.VariableDto
+import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
@@ -25,13 +24,11 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.OrderStatusRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
@@ -54,7 +51,7 @@ class PaymentStatusCheckerServiceImpl(
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
     private val rabbit: RabbitProperties,
-    private val subOrderDao: SubOrderDao
+    private val subOrderDao: SubOrderDao,
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
@@ -199,7 +196,7 @@ class PaymentStatusCheckerServiceImpl(
             "SUCCESS" -> {
                 payment.stateId = paymentStatusRepository.findByStateId("SUCCESS")
                 payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
-                createOrderHistoryRecord(order,traceId)
+                createOrderHistoryRecord(order, traceId)
                 receiptService.generateReceipt(order)
                 sendToPaidOrdersQueue(order, traceId)
             }

@@ -5,7 +5,6 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
-import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
@@ -21,7 +20,6 @@ import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import java.time.LocalDateTime
 
@@ -105,10 +103,10 @@ class ReceiptServiceImpl(
                 }
             }
 
-        val totalAmount = order.premiumAmount?.toReceiptAmount()
+        val totalAmount = order.premiumAmount.toReceiptAmount()
 
         val requestBody =
-            totalAmount?.let { it ->
+            totalAmount.let { it ->
                 PaymentReceiptCreateRequest(
                     client =
                         PaymentReceiptCreateRequest.ClientInfo(
@@ -139,7 +137,8 @@ class ReceiptServiceImpl(
         try {
             val response =
                 restTemplate
-                    .defaultRestTemplate().exchange(
+                    .defaultRestTemplate()
+                    .exchange(
                         url,
                         HttpMethod.POST,
                         HttpEntity(requestBody, headers),

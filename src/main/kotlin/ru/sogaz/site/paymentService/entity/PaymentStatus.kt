@@ -17,5 +17,5 @@ data class PaymentStatus(
     @JvmField
     var stateId: String = "",
     @Column(name = "state_name")
-    var stateName: String  = "",
+    var stateName: String = "",
 )

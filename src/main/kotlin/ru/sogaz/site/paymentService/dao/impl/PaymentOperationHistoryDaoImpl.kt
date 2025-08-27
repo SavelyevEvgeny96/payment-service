@@ -10,7 +10,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 
 class PaymentOperationHistoryDaoImpl(
-    private val paymentOperationHistoryRepository: PaymentOperationHistoryRepository
+    private val paymentOperationHistoryRepository: PaymentOperationHistoryRepository,
 ) : PaymentOperationHistoryDao {
     companion object {
         const val LOG_ERROR_PAYMENT_HISTORY_SAVE = "Не удалось сохранить историю "
@@ -18,13 +18,18 @@ class PaymentOperationHistoryDaoImpl(
 
     private val logger = loggerFor(javaClass)
 
-    override fun saveRecordOperationHistory(order:Order?, clientSystem: ClientSystem?, traceId:String, actionTypeName:String) {
+    override fun saveRecordOperationHistory(
+        order: Order?,
+        clientSystem: ClientSystem?,
+        traceId: String,
+        actionTypeName: String,
+    ) {
         try {
             val operationHistory =
                 PaymentOperationHistory(
                     action = actionTypeName,
                     order = order,
-                    actionAuthor = clientSystem
+                    actionAuthor = clientSystem,
                 )
             paymentOperationHistoryRepository.save(operationHistory)
         } catch (e: Exception) {

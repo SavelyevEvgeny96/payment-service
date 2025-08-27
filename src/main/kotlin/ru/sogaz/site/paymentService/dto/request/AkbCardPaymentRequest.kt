@@ -1,8 +1,9 @@
 package ru.sogaz.site.paymentService.dto.request
 
 class AkbCardPaymentRequest(
-    val order: OrderDto
+    val order: OrderDto,
 )
+
 data class OrderDto(
     val typeRid: String,
     val amount: Int?,
@@ -12,5 +13,5 @@ data class OrderDto(
     val hppRedirectUrl: String,
     val adviceIfaceAddress: String?,
     val descriptionHtml: String,
-    val ridByMerchant: String
+    val ridByMerchant: String,
 )

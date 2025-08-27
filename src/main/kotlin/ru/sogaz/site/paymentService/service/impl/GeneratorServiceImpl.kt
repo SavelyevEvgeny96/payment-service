@@ -16,31 +16,31 @@ class GeneratorServiceImpl(
         const val DESC = "Оплата: "
     }
 
-    override fun generateDescription(sabOrderList: List<SubOrder>): String {
+    override fun generateDescription(sabOrderList: List<SubOrder>?): String {
         val policyNumbers =
             sabOrderList
-                .mapNotNull { it.policyNumber }
-                .filter { it.isNotBlank() && it != "0" }
+                ?.mapNotNull { it.policyNumber }
+                ?.filter { it.isNotBlank() && it != "0" }
 
         val contractIds =
             sabOrderList
-                .map { it.contractId }
-                .filter { it?.isNotBlank() == true && it != "0" }
+                ?.map { it.contractId }
+                ?.filter { it?.isNotBlank() == true && it != "0" }
 
         val description =
             buildString {
                 append(DESC)
 
-                if (policyNumbers.isNotEmpty() || contractIds.isNotEmpty()) {
+                if (policyNumbers?.isNotEmpty() == true || contractIds?.isNotEmpty() == true) {
                     append(" (")
 
-                    if (policyNumbers.isNotEmpty()) {
+                    if (policyNumbers?.isNotEmpty() == true) {
                         append(DESC_POLICY_NUMBER)
                         append(policyNumbers.joinToString(SEPARATOR))
                     }
 
-                    if (contractIds.isNotEmpty()) {
-                        if (policyNumbers.isNotEmpty()) append("; ")
+                    if (contractIds?.isNotEmpty() == true) {
+                        if (policyNumbers?.isNotEmpty() == true) append("; ")
                         append(DESC_INSURANCE_CONTRACT)
                         append(contractIds.joinToString(SEPARATOR))
                     }
@@ -51,14 +51,14 @@ class GeneratorServiceImpl(
         return description
     }
 
-    override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
     override fun getDescriptionAndPremiumAmount(
         premiumAmount: String?,
-        listSubOrder: List<SubOrder>
-    ): DataDescriptionAndPremiumAmount {
-        return DataDescriptionAndPremiumAmount(
+        listSubOrder: List<SubOrder>?,
+    ): DataDescriptionAndPremiumAmount =
+        DataDescriptionAndPremiumAmount(
             premiumAmount?.replace(".", ""),
-            generateDescription(listSubOrder)
+            generateDescription(listSubOrder),
         )
-    }
+
+    override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
 }

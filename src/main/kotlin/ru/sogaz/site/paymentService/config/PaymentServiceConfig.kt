@@ -4,17 +4,13 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
-import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
-import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.PaymentService
@@ -27,12 +23,6 @@ open class PaymentServiceConfig(
 ) {
     @Bean
     open fun paymentService(
-        orderRepository: OrderRepository,
-        subOrderRepository: SubOrderRepository,
-        operationHistoryRepository: PaymentOperationHistoryRepository,
-        paymentStatusRepository: PaymentStatusRepository,
-        paymentRepository: PaymentRepository,
-        paymentTypeRepository: PaymentTypeRepository,
         orderDao: OrderDao,
         subOrderDao: SubOrderDao,
         paymentStatusCheckerService: PaymentStatusCheckerService,
@@ -41,12 +31,11 @@ open class PaymentServiceConfig(
         gazpromService: GazpromService,
         bankDao: BankDao,
         configDataDao: ConfigDataDao,
-        akbBankIntegrationService: AkbBankIntegrationService
+        akbBankIntegrationService: AkbBankIntegrationService,
+        paymentDao: PaymentDao,
+        paymentOperationHistoryDao: PaymentOperationHistoryDao,
     ): PaymentService =
         PaymentServiceImpl(
-            orderRepository = orderRepository,
-            operationHistoryRepository = operationHistoryRepository,
-            paymentRepository = paymentRepository,
             orderDao = orderDao,
             subOrderDao = subOrderDao,
             paymentTypeDao = paymentTypeDao,
@@ -55,6 +44,8 @@ open class PaymentServiceConfig(
             bankDao = bankDao,
             paymentStatusCheckerService = paymentStatusCheckerService,
             configDataDao = configDataDao,
-            akbBankIntegrationService = akbBankIntegrationService
+            akbBankIntegrationService = akbBankIntegrationService,
+            paymentDao = paymentDao,
+            paymentOperationHistoryDao = paymentOperationHistoryDao,
         )
 }

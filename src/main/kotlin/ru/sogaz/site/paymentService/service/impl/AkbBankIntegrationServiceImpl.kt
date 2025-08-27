@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -36,14 +37,15 @@ class AkbBankIntegrationServiceImpl(
     private val restTemplate: WebConfigRestTemplate,
     private val objectMapper: ObjectMapper,
     private val paymentDao: PaymentDao,
-    private val props:SslClientProperties
+    private val props: SslClientProperties,
 ) : AkbBankIntegrationService {
     companion object {
         const val RU = "ru"
         const val ORDER = "order"
         const val HPP_URL = "hppUrl"
         const val WITH_3DS = "WITH_3DS"
-        //нет кода 200 для AKB
+
+        // нет кода 200 для AKB
         const val STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK = 200
         const val LOG_SUCCESSFUL_AKB_API = "Успешный запрос к AKB API."
         const val MESSAGE_INFO_START_AKB_PAYMENT =
@@ -53,14 +55,15 @@ class AkbBankIntegrationServiceImpl(
     }
 
     private val logger = loggerFor(javaClass)
+
     override fun initiateAKBPayment(
         urlToReturn: String?,
         urlToReturnF: String?,
         orderId: String,
         paymentId: Long?,
-        premiumAmount: String?,
+        premiumAmount: String,
         order: Order,
-        subOrder: SubOrder
+        subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>> {
         logger.info("$MESSAGE_INFO_START_AKB_PAYMENT $paymentId")
         val traceId = getTraceId()
@@ -69,27 +72,28 @@ class AkbBankIntegrationServiceImpl(
             order,
             clientSystem,
             traceId,
-            ACTION_TYPE_START_PAYMENT_AKB
+            ACTION_TYPE_START_PAYMENT_AKB,
         )
         logger.info("$SAVE_OPERATION_HISTORY_START_PAY $ACTION_TYPE_START_PAYMENT_AKB")
         val url = apiConfigProperty.akbUrl
         val urlTuSuccess = urlToReturn ?: apiConfigProperty.backUrlS
         val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
         val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
-        val akbCardPaymentRequest = AkbCardPaymentRequest(
-            OrderDto(
-                typeRid = WITH_3DS,
-                amount = descAndPremiumAmountData.premiumAmount?.toInt(),
-                currency = RUB,
-                hppRedirectUrl = urlTuSuccess,
-                ridByMerchant = paymentId.toString(),
-                //Уточнить что сюда ложить
-                adviceIfaceAddress = urlTuSuccess,
-                description = descAndPremiumAmountData.description,
-                descriptionHtml = descAndPremiumAmountData.description,
-                language = RU
+        val akbCardPaymentRequest =
+            AkbCardPaymentRequest(
+                OrderDto(
+                    typeRid = WITH_3DS,
+                    amount = descAndPremiumAmountData.premiumAmount?.toInt(),
+                    currency = RUB,
+                    hppRedirectUrl = urlTuSuccess,
+                    ridByMerchant = paymentId.toString(),
+                    // Уточнить что сюда ложить
+                    adviceIfaceAddress = urlTuSuccess,
+                    description = descAndPremiumAmountData.description,
+                    descriptionHtml = descAndPremiumAmountData.description,
+                    language = RU,
+                ),
             )
-        )
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         val requestEntity = HttpEntity(akbCardPaymentRequest, headers)
@@ -122,8 +126,10 @@ class AkbBankIntegrationServiceImpl(
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             logger.info(MESSAGE_INFO_END_AKB_PAYMENT)
             return ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            println(e.message)
+            throw InnerException(traceId, e.message)
         } finally {
-
         }
     }
 }

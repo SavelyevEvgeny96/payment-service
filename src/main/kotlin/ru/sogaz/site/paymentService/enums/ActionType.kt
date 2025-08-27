@@ -1,5 +1,8 @@
 package ru.sogaz.site.paymentService.enums
-enum class ActionType(val value: String) {
+
+enum class ActionType(
+    val value: String,
+) {
     SAVE_ORDER("Сохранение заказа"),
     UPDATE_ORDER("Обновление заказа"),
     REDIRECT_TO_BANK("Пользователь перенаправлен на страницу банка"),
@@ -16,5 +19,5 @@ enum class ActionType(val value: String) {
     GET_PAYMENT_LINK("Получение ссылки на оплату"),
     PAYMENT_LINK_REQUEST_ERROR("Ошибка при отправке запроса для получения платежной ссылки"),
     CALLBACK_RECEIVED("Получение CALLBACK от банка"),
-    REGISTER_ORDER_AKB("Отправка запроса для регистрации заказа в АКБ Россия")
+    REGISTER_ORDER_AKB("Отправка запроса для регистрации заказа в АКБ Россия"),
 }

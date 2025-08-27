@@ -13,7 +13,7 @@ data class ClientSystem(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(name = "external_system_code")
-    var externalSystemCode: String  = "",
+    var externalSystemCode: String = "",
     @Column(name = "external_system_name")
-    var externalSystemName: String  = "",
+    var externalSystemName: String = "",
 )
