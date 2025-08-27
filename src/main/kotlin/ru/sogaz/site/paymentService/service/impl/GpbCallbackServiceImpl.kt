@@ -75,7 +75,7 @@ class GpbCallbackServiceImpl(
 
             val queryString = baseUrl + params.joinToString("&")
 
-            if (!signatureVerifier.verifySignature(request, queryString)) {
+            if (signatureVerifier.verifySignature(request, queryString) == true) {
                 logger.info(ERROR_TRX_ID + request.trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
             }
