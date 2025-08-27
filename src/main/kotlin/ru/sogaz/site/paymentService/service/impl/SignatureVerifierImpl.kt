@@ -55,7 +55,7 @@ class SignatureVerifierImpl(
 
     private fun getCertificateFromString(certificateStr: String): X509Certificate {
         val keyBytes =
-            gpbConfigProperties.gpb
+            certificateStr
                 .replace("\"", "")
                 .replace("\\n", "\n")
                 .replace("-----BEGIN CERTIFICATE-----", "")
