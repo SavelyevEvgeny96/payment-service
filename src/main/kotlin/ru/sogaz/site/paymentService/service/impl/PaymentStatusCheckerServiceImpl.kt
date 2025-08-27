@@ -54,8 +54,7 @@ class PaymentStatusCheckerServiceImpl(
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
     private val rabbit: RabbitProperties,
-    private val subOrderDao: SubOrderDao,
-    private val actionType: ActionType
+    private val subOrderDao: SubOrderDao
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 

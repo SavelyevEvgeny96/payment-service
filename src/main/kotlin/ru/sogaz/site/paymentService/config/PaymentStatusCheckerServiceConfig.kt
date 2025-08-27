@@ -35,8 +35,7 @@ class PaymentStatusCheckerServiceConfig {
         rabbitTemplate: RabbitTemplate,
         objectMapper: ObjectMapper,
         rabbitProperties: RabbitProperties,
-        subOrderDao:SubOrderDao,
-        actionType: ActionType
+        subOrderDao:SubOrderDao
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
@@ -50,7 +49,6 @@ class PaymentStatusCheckerServiceConfig {
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             rabbit = rabbitProperties,
-            subOrderDao = subOrderDao,
-            actionType = actionType
+            subOrderDao = subOrderDao
         )
 }

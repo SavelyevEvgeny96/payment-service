@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.PaymentContext
 import ru.sogaz.site.paymentService.entity.Bank
@@ -49,7 +50,8 @@ class PaymentServiceImpl(
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val bankDao: BankDao,
     private val configDataDao: ConfigDataDao,
-    private val akbBankIntegrationService: AkbBankIntegrationService
+    private val akbBankIntegrationService: AkbBankIntegrationService,
+    private val paymentOperationHistoryDao: PaymentOperationHistoryDao
 ) : PaymentService {
     private val logger = loggerFor(javaClass)
 
@@ -112,15 +114,12 @@ class PaymentServiceImpl(
             } else {
                 val tokenGpb = gazpromService.getGPBToken(orderFindByCode, subOrder)
                 if (tokenGpb.isNotEmpty()) {
-                    val operationHistory =
-                        PaymentOperationHistory(
-                            action =  ActionType.ACCESS_TOKEN_RECEIVED.value,
-                            order = orderFindByCode,
-                            actionAuthor = paymentContext.subOrder.clientSystem,
-                            actionDate = null,
-                        )
-                    operationHistoryRepository.save(operationHistory)
-
+                    paymentOperationHistoryDao.saveRecordOperationHistory(
+                        orderFindByCode,
+                        paymentContext.subOrder.clientSystem,
+                        traceId,
+                        ActionType.SEND_PAYMENT_START_REQUEST.value
+                    )
                     paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
                     return gazpromService.initiateGPBPayment(
                         urlToReturn, urlToReturnF, orderId,
