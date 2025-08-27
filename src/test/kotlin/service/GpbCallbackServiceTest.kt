@@ -67,7 +67,7 @@ class GpbCallbackServiceTest {
                     "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
         )
 
-    val baseUrl = "${apiConfigProperties.hostNameApp}/payment/gpb/state?"
+    val baseUrl = "${apiConfigProperties.hostNameApp}?"
     val params =
         listOf(
             "trx_id=${testRequest.trxId}",
@@ -87,6 +87,7 @@ class GpbCallbackServiceTest {
             "p.paymentSystem=${testRequest.paymentSystem ?: ""}",
             "ts=${testRequest.ts}",
         )
+
     val queryString = baseUrl + params.joinToString("&")
 
     @Test
