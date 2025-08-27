@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.PaymentContext
@@ -41,12 +42,10 @@ import ru.sogaz.siter.models.resonses.Response
 class PaymentServiceImpl(
     private val gazpromService: GazpromService,
     private val orderDao: OrderDao,
-    private val paymentRepository: PaymentRepository,
     private val paymentTypeDao: PaymentTypeDao,
     private val paymentStatusDao: PaymentStatusDao,
-    private val orderRepository: OrderRepository,
+    private val paymentDao: PaymentDao,
     private val subOrderDao: SubOrderDao,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val bankDao: BankDao,
     private val configDataDao: ConfigDataDao,
@@ -180,7 +179,7 @@ class PaymentServiceImpl(
         orderFindByOrderId.urlToReturn = urlToReturn
         orderFindByOrderId.urlToDecline = urlToReturnF
         try {
-            orderRepository.save(orderFindByOrderId)
+            orderDao.save(orderFindByOrderId)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_UPDATE_ORDER_BY_CODE, traceId)
             throw InnerException(traceId, ERROR_UPDATE_ORDER_BY_CODE + orderFindByOrderId.orderId)
@@ -215,9 +214,9 @@ class PaymentServiceImpl(
                 typeId = paymentType,
                 paymentBankId = tokenGpb,
             )
-        val saved = paymentRepository.save(paymentRecord)
-        logger.info("$LOG_END_PAYMENT_RECORD ${saved.id}")
-        return saved.id
+        val saved = paymentDao.save(paymentRecord)
+        logger.info("$LOG_END_PAYMENT_RECORD $saved")
+        return saved
     }
 }
 

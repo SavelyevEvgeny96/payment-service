@@ -43,13 +43,14 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$PAYMENT_NOT_FOUND ${e.message}")
         }
 
-    override fun save(payment: Payment) {
-        try {
+    override fun save(payment: Payment): Long? {
+        val saved = try {
             paymentRepository.save(payment)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
             throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
         }
+        return saved.id
     }
 
     override fun findByPaymentBankId(paymentId: String): Payment =
@@ -60,7 +61,7 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
 
-    override  fun paymentUpdate(
+    override fun paymentUpdate(
         paymentId: Long?,
         paymentPageUrl: String,
         qtcId: String,

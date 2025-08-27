@@ -8,6 +8,7 @@ import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl.Companion.BANK_RESERVE
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
@@ -28,12 +29,11 @@ import java.math.RoundingMode
 class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
     private val clientSystemDao: ClientSystemDao,
-    private val orderRepository: OrderRepository,
-    private val subOrderRepository: SubOrderRepository,
     private val bankDao: BankDao,
     private val generatorService: GeneratorService,
     private val orderStatusDao: OrderStatusDao,
     private val orderDao: OrderDao,
+    private val subOrderDao: SubOrderDao
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
@@ -97,7 +97,7 @@ class OrderServiceImpl(
             )
 
         try {
-            orderRepository.save(order)
+            orderDao.save(order)
             logger.info("$LOG_ORDER_CREATION_SUCCESS $orderId")
         } catch (e: Exception) {
             logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
@@ -128,7 +128,7 @@ class OrderServiceImpl(
             }
 
             try {
-                subOrderRepository.save(subOrders)
+                subOrderDao.save(subOrders)
                 logger.info("$LOG_SUB_ORDER_CREATION_SUCCESS $subOrderId")
             } catch (e: Exception) {
                 logger.error(e, LOG_ERROR_WHILE_CREATING_SUB_ORDER, traceId)
@@ -136,7 +136,7 @@ class OrderServiceImpl(
             }
             order.premiumAmount = totalPremiumAmount.setScale(2, RoundingMode.HALF_UP).toString()
             try {
-                orderRepository.save(order)
+                orderDao.save(order)
                 logger.info(LOG_ORDER_UPDATED_WITH_PREMIUM)
             } catch (e: Exception) {
                 logger.error(e, LOG_ERROR_WHILE_UPDATING_ORDER, traceId)
