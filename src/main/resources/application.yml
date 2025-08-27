@@ -5,36 +5,36 @@ app:
     description: ${PROJECT_DESCRIPTION:Payment Service}
     artifact_Id: ${PROJECT_ARTIFACTID:payment-service}
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
-    app_profile: ${ENVIRONMENT:dev}
+    app_profile: ${ENVIRONMENT:local}
     java-version: ${JAVA_VERSION:21}
   certs:
     gpb: ${GPB_CERT}
 
 server:
-  port: ${SERVER_PORT:}
+  port: ${SERVER_PORT:8080}
   use-forward-headers: true
   forward-headers-strategy: framework
   main.allow-bean-definition-overriding: true
 
 spring:
   rabbitmq:
-    host: ${RABBIT_HOST:}
-    port: ${RABBIT_PORT:}
-    username: ${RABBIT_USERNAME:}
-    password: ${RABBIT_PASSWORD:}
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
     template:
-      routing-key: ${RABBIT_QUEUE:}
+      routing-key: ${RABBIT_QUEUE:payment.queue}
     queue:
-      name: ${RABBIT_QUEUE:}
+      name: ${RABBIT_QUEUE:payment.queue}
   application:
     name: payment-service
   profiles:
-    active: ${ENVIRONMENT:}
+    active: ${ENVIRONMENT:local}
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL:}
-    username: ${DB_USERNAME:}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1234}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -54,7 +54,7 @@ api:
     merchantId: ${GPB_MERCHANT_ID:}
     backUrlS: ${BACK_URL_SUCCESS:http:}
     backUrlF: ${BACK_URL_FALSE:}
-    hostNameApp: {HOSTNAME_APP}
+    hostNameApp: ${HOSTNAME_APP:https://stage-pay.sogaz.ru}
 
   receipt:
     receiptUrl: ${RECEIPT_URL:}
@@ -66,24 +66,24 @@ management:
         include: "*"
   metrics:
     tags:
-      application: ${HOSTNAME:}
+      application: ${HOSTNAME:localhost}
   endpoint:
     health:
       show-details: always
       probes:
         enabled: true
   server:
-    port: ${MANAGEMENT_SERVICE_PORT:}
+    port: ${MANAGEMENT_SERVICE_PORT:8091}
   health:
     livenessState:
       enable: true
     readinessState:
       enable: true
 logstash:
-  host: ${LOG_SERVER_HOST:}
-  port: ${LOG_SERVER_PORT:}
-  level: ${LOG_LEVEL:}
-  level_local: ${LOG_LEVEL_LOCAL:}
+  host: ${LOG_SERVER_HOST:localhost}
+  port: ${LOG_SERVER_PORT:12201}
+  level: ${LOG_LEVEL:INFO}
+  level_local: ${LOG_LEVEL_LOCAL:INFO}
 
 logging:
   level:

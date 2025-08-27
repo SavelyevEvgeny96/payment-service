@@ -5,10 +5,13 @@ import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
+import java.io.ByteArrayInputStream
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.Security
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
 import javax.crypto.Cipher
@@ -32,17 +35,12 @@ class SignatureVerifierImpl(
         queryString: String,
     ): Boolean {
         try {
-            val endIndex = queryString.indexOf("&signature=")
-            if (endIndex == -1) {
-                throw IllegalArgumentException(SIGNATURE_NULL)
-            }
-            val dataToHash = queryString.substring(0, endIndex)
 
-            val hashBytes = MessageDigest.getInstance("SHA-256").digest(dataToHash.toByteArray())
+            val hashBytes = MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray())
             val hashBase64 = Base64.getEncoder().encodeToString(hashBytes)
 
             val decodedSignature = Base64.getDecoder().decode(request.signature)
-            val privateKeyObj = getPrivateKeyFromString(gpbConfigProperties.gpb)
+            val privateKeyObj = getCertificateFromString(gpbConfigProperties.gpb)
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(Cipher.DECRYPT_MODE, privateKeyObj)
             val decryptedData = String(cipher.doFinal(decodedSignature))
@@ -54,10 +52,10 @@ class SignatureVerifierImpl(
         }
     }
 
-    private fun getPrivateKeyFromString(privateKeyStr: String): PrivateKey {
-        val cleanedKey =
-            privateKeyStr
-                .trim()
+
+    private fun getCertificateFromString(certificateStr: String): X509Certificate {
+        val keyBytes =
+            gpbConfigProperties.gpb
                 .replace("\"", "")
                 .replace("\\n", "\n")
                 .replace("-----BEGIN CERTIFICATE-----", "")
@@ -68,9 +66,12 @@ class SignatureVerifierImpl(
                 .trim()
                 .let { Base64.getDecoder().decode(it) }
 
-        val decodedBytes = Base64.getDecoder().decode(cleanedKey)
-        val keySpec = PKCS8EncodedKeySpec(decodedBytes)
-        val keyFactory = KeyFactory.getInstance("RSA")
-        return keyFactory.generatePrivate(keySpec)
+        try {
+            val inputStream = ByteArrayInputStream(keyBytes)
+            val cf = CertificateFactory.getInstance("X.509")
+            return cf.generateCertificate(inputStream) as X509Certificate
+        } catch (e: Exception) {
+            throw e
+        }
     }
 }
