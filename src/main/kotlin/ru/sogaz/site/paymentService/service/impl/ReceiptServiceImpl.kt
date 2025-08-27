@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.ActionEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ActionTypeRepository
@@ -36,8 +37,6 @@ class ReceiptServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val RECEIPT_GENERATED_ACTION = "Заказ оплачен"
-        const val RECEIPT_GENERATION_ERROR_ACTION = "Ошибка при совершени платежа"
         const val ITEM_NAME_PREFIX = "Страховая премия"
         const val POLICY_NUMBER_PREFIX = " по страховому полису № "
         const val CONTRACT_ID_PREFIX = " по страховому договору № "
@@ -215,7 +214,7 @@ class ReceiptServiceImpl(
     }
 
     private fun saveReceiptOperationHistory(order: Order) {
-        val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATED_ACTION)
+        val actionType = actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATED_ACTION.value)
         val subOrder = subOrderRepository.findFirstByOrderId(order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
@@ -228,7 +227,7 @@ class ReceiptServiceImpl(
     }
 
     private fun saveFailedReceiptOperationHistory(order: Order) {
-        val actionType = actionTypeRepository.findByActionName(RECEIPT_GENERATION_ERROR_ACTION)
+        val actionType = actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value)
         val subOrder = subOrderRepository.findFirstByOrderId(order)
 
         operationHistoryRepository.save(

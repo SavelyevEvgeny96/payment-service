@@ -48,7 +48,7 @@ class OrderServiceImpl(
         const val LOG_END_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
         const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан и сохранен в базу с orderCode: "
         const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с subOrderId: "
-        const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с stateId 0 не найден для TraceId: "
+        const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с не найден для TraceId: "
         const val LOG_ERROR_WHILE_UPDATING_ORDER = "Ошибка при обновлении суммы премии заказа"
         const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: "
         const val LOG_PAYMENT_SUB_ORDER_ID_GENERATED = "Сгенерирован subOrderId: "
@@ -159,7 +159,7 @@ class OrderServiceImpl(
     override fun getOrderStatus(orderId: String): Response<DataGetOrderStatus> {
         val traceId = getTraceId()
         logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
-        val orderStatusId = orderDao.getOrderId(orderId)?.orderStatus?.stateId
+        val orderStatusId = orderDao.getOrderId(orderId).orderStatus?.stateId
         logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")
         return getSuccessResponse(traceId, STATUS_CODE_SUCCESS_GET_ORDER_STATUS, DataGetOrderStatus(orderStatusId))
     }

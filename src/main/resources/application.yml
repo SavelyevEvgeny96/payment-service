@@ -11,30 +11,30 @@ app:
     gpb: ${GPB_CERT}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:}
   use-forward-headers: true
   forward-headers-strategy: framework
   main.allow-bean-definition-overriding: true
 
 spring:
   rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: ${RABBIT_PORT:5672}
-    username: ${RABBIT_USERNAME:guest}
-    password: ${RABBIT_PASSWORD:guest}
+    host: ${RABBIT_HOST:}
+    port: ${RABBIT_PORT:}
+    username: ${RABBIT_USERNAME:}
+    password: ${RABBIT_PASSWORD:}
     template:
-      routing-key: ${RABBIT_QUEUE:payment.queue}
+      routing-key: ${RABBIT_QUEUE:}
     queue:
-      name: ${RABBIT_QUEUE:payment.queue}
+      name: ${RABBIT_QUEUE:}
   application:
     name: payment-service
   profiles:
-    active: ${ENVIRONMENT:local}
+    active: ${ENVIRONMENT:}
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
+    url: ${DB_URL:}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -44,6 +44,18 @@ spring:
 
 api:
   payment:
+    paymentUrl: ${PAYMENT_URL:}
+    gpbUrl: ${GPB_URL:}
+    gpbSbpUrl: ${GPB_SBP_URL:}
+    callbackUrlSbp: ${CALLBACK_URL_SBP:}
+    paymentAccount: ${PAYMENT_ACCOUNT:}
+    portalId: ${GPB_PORTAL_ID:}
+    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:}
+    merchantId: ${GPB_MERCHANT_ID:}
+    backUrlS: ${BACK_URL_SUCCESS:http:}
+    backUrlF: ${BACK_URL_FALSE:}
+    hostNameApp: {HOSTNAME_APP}
+
     paymentUrl: ${PAYMENT_URL:URL}
     gpbUrl: ${GPB_URL:https://lt.pga.gazprombank.ru/api/v4/}
     gpbSbpUrl: ${GPB_SBP_URL:https://testapi.sbp.gazprombank.ru:9443/merchant/qrc-data}
@@ -57,8 +69,8 @@ api:
     backUrlF: ${BACK_URL_FALSE:https:http://test.k835.sogaz.ru/realty/flat/}
     akbUrl: ${AKB_PAYMENT_URL:https://xpgtest.abr.ru:6443/order/}
   receipt:
-    receiptUrl: ${RECEIPT_URL:http://s00-0000-k835.sogaz.ru/test/payment-receipt-service/paymentCheck/create}
-    receiptPath: ${RECEIPT_PATH:/paymentCheck/create}
+    receiptUrl: ${RECEIPT_URL:}
+    receiptPath: ${RECEIPT_PATH:}
 management:
   endpoints:
     web:
@@ -66,28 +78,28 @@ management:
         include: "*"
   metrics:
     tags:
-      application: ${HOSTNAME:localhost}
+      application: ${HOSTNAME:}
   endpoint:
     health:
       show-details: always
       probes:
         enabled: true
   server:
-    port: ${MANAGEMENT_SERVICE_PORT:8091}
+    port: ${MANAGEMENT_SERVICE_PORT:}
   health:
     livenessState:
       enable: true
     readinessState:
       enable: true
 logstash:
-  host: ${LOG_SERVER_HOST:localhost}
-  port: ${LOG_SERVER_PORT:12201}
-  level: ${LOG_LEVEL:INFO}
-  level_local: ${LOG_LEVEL_LOCAL:INFO}
+  host: ${LOG_SERVER_HOST:}
+  port: ${LOG_SERVER_PORT:}
+  level: ${LOG_LEVEL:}
+  level_local: ${LOG_LEVEL_LOCAL:}
 
 logging:
   level:
     ru:
       sogaz:
         site:
-          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
+          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
