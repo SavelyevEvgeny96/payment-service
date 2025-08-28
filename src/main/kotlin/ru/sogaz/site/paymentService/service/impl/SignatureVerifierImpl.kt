@@ -6,6 +6,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.PublicKey
 import java.security.Security
@@ -16,6 +17,7 @@ import java.util.Base64
 
 class SignatureVerifierImpl(
     private val gpbConfigProperties: GpbConfigProperties,
+    private val preconfiguredSignature: Signature
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
@@ -33,42 +35,17 @@ class SignatureVerifierImpl(
         queryString: String,
     ): Boolean =
         try {
-            val hashBytes = MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray())
+            val signature = preconfiguredSignature
+            val hashBytes =
+                MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray(StandardCharsets.UTF_8))
 
-            val decodedSignature = Base64.getDecoder().decode(request.signature)
-
-            val publicKey: PublicKey = getCertificateFromString(gpbConfigProperties.gpb)
-
-            val signature = Signature.getInstance("SHA1withRSA")
-            signature.initVerify(publicKey)
             signature.update(hashBytes)
 
-            signature.verify(decodedSignature)
+            val isVerified = signature.verify(Base64.getDecoder().decode(request.signature))
+
+            isVerified
         } catch (e: Exception) {
             logger.error(VEREFIELD_FAIL)
             false
         }
-
-    private fun getCertificateFromString(certificateStr: String): PublicKey {
-        val keyBytes =
-            certificateStr
-                .replace("\"", "")
-                .replace("\\n", "\n")
-                .replace("-----BEGIN CERTIFICATE-----", "")
-                .replace("-----END CERTIFICATE-----", "")
-                .replace("\n", "")
-                .replace("\r", "")
-                .replace(" ", "")
-                .trim()
-                .let { Base64.getDecoder().decode(it) }
-
-        try {
-            val inputStream = ByteArrayInputStream(keyBytes)
-            val cf = CertificateFactory.getInstance("X.509")
-            val cert = cf.generateCertificate(inputStream) as X509Certificate
-            return cert.publicKey
-        } catch (e: Exception) {
-            throw e
-        }
-    }
 }
