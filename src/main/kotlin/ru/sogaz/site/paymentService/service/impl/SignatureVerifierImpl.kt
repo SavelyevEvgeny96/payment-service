@@ -5,18 +5,13 @@ import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import java.security.PublicKey
 import java.security.Security
 import java.security.Signature
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
 import java.util.Base64
 
 class SignatureVerifierImpl(
-    private val gpbConfigProperties: GpbConfigProperties,
     private val preconfiguredSignature: Signature
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)

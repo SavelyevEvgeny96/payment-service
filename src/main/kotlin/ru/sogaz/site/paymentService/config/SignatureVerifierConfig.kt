@@ -49,5 +49,5 @@ class SignatureVerifierConfig {
 
     @Bean
     fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier =
-        SignatureVerifierImpl(gpbConfigProperties, preconfiguredSignature(gpbConfigProperties))
+        SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties))
 }
