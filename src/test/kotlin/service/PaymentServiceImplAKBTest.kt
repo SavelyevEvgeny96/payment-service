@@ -1,15 +1,18 @@
 package service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.kotlin.*
-import org.springframework.http.*
+import org.mockito.Mockito.eq
+import org.mockito.Mockito.mock
+import org.mockito.kotlin.any
+import org.mockito.kotlin.whenever
+import org.springframework.http.HttpMethod
+import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
@@ -24,10 +27,9 @@ import ru.sogaz.site.paymentService.properties.SslClientProperties
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.AkbBankIntegrationServiceImpl
-import java.util.*
+import java.util.Optional
 
 class PaymentServiceImplAKBTest {
-
     private val restTemplate: WebConfigRestTemplate = mock()
     private val generatorService: GeneratorService = mock()
     private val paymentRepository: PaymentRepository = mock()
@@ -38,20 +40,25 @@ class PaymentServiceImplAKBTest {
     private val objectMapper: ObjectMapper = mock()
     private val sslClientProperties: SslClientProperties = mock()
 
-    private val service = AkbBankIntegrationServiceImpl(
-        paymentOperationHistoryDao,
-        apiConfigProperty,
-        subOrderDao,
-        generatorService,
-        restTemplate,
-        objectMapper,
-        paymentDao,
-        sslClientProperties,
-    )
+    private val service =
+        AkbBankIntegrationServiceImpl(
+            paymentOperationHistoryDao,
+            apiConfigProperty,
+            subOrderDao,
+            generatorService,
+            restTemplate,
+            objectMapper,
+            paymentDao,
+            sslClientProperties,
+        )
 
     @Test
     fun shouldReturnPaymentLinkWhenAKBAPIRespondsSuccessfully() {
-        val order = Order().apply { orderId = "ORD-1"; recipientEmail = "mail@test.com" }
+        val order =
+            Order().apply {
+                orderId = "ORD-1"
+                recipientEmail = "mail@test.com"
+            }
         val clientSystem = ClientSystem().apply { externalSystemCode = "SYS" }
         val subOrder =
             SubOrder(
@@ -70,7 +77,6 @@ class PaymentServiceImplAKBTest {
             )
         whenever(generatorService.getDescriptionAndPremiumAmount(any(), any<List<SubOrder>>()))
             .thenReturn(descAndPremiumAmountData)
-
 
         val mockRestTemplate = mock<RestTemplate>()
         whenever(restTemplate.xpgRestTemplate(any())).thenReturn(mockRestTemplate)
@@ -98,15 +104,16 @@ class PaymentServiceImplAKBTest {
             )
         whenever(paymentRepository.findById(1L)).thenReturn(Optional.of(payment))
 
-        val response = service.initiateAKBPayment(
-            urlToReturn = null,
-            urlToReturnF = null,
-            orderId = "ORD-1",
-            paymentId = payment.id,
-            premiumAmount = "1000",
-            order = order,
-            subOrder = subOrder,
-        )
+        val response =
+            service.initiateAKBPayment(
+                urlToReturn = null,
+                urlToReturnF = null,
+                orderId = "ORD-1",
+                paymentId = payment.id,
+                premiumAmount = "1000",
+                order = order,
+                subOrder = subOrder,
+            )
 
         assertEquals("http://akb-pay-link", response.body?.data?.paymentPageUrl)
     }
@@ -155,17 +162,18 @@ class PaymentServiceImplAKBTest {
             )
         whenever(paymentRepository.findById(1L)).thenReturn(Optional.of(payment))
 
-        val ex = assertThrows<BusinessException> {
-            service.initiateAKBPayment(
-                urlToReturn = null,
-                urlToReturnF = null,
-                orderId = "ORD-1",
-                paymentId = payment.id,
-                premiumAmount = "1000",
-                order = order,
-                subOrder = subOrder,
-            )
-        }
+        val ex =
+            assertThrows<BusinessException> {
+                service.initiateAKBPayment(
+                    urlToReturn = null,
+                    urlToReturnF = null,
+                    orderId = "ORD-1",
+                    paymentId = payment.id,
+                    premiumAmount = "1000",
+                    order = order,
+                    subOrder = subOrder,
+                )
+            }
 
         assertEquals(-1101100504, ex.getErrorCode())
     }

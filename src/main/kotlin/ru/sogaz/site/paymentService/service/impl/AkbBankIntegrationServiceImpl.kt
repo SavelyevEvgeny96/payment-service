@@ -28,9 +28,7 @@ import ru.sogaz.site.paymentService.properties.SslClientProperties
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_CARD
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.ERROR_GPB_PAYMENT_PROCESSING
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY_ERROR
 import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.SUCCESS
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
@@ -53,6 +51,7 @@ class AkbBankIntegrationServiceImpl(
         const val ERROR_AKB_PAYMENT_PROCESSING = "Ошибка обработки платежа AKB BANK "
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа  БАНК РОССИЯ "
+
         // нет кода 200 для AKB
         const val STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK = 200
         const val LOG_SUCCESSFUL_AKB_API = "Успешный запрос к AKB API."
@@ -143,7 +142,7 @@ class AkbBankIntegrationServiceImpl(
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
             logger.error("$ERROR_AKB_PAYMENT_PROCESSING ${erst.message}")
-            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE,traceId)
+            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         } catch (e: Exception) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
