@@ -30,6 +30,7 @@ class SignatureVerifierImpl(
         const val SIGNATURE_NULL = "Строка &signature= пуста"
     }
 
+    // вариант видения Вали
     override fun verifySignature(
         request: GpbCallbackRequest,
         queryString: String,
@@ -48,4 +49,20 @@ class SignatureVerifierImpl(
             logger.error(VEREFIELD_FAIL)
             false
         }
+
+// рабочий вариант с сертом
+//    override fun verifySignature(signatureBase64: String): Boolean =
+//        try {
+//            val signatureBytes = Base64.getDecoder().decode(signatureBase64)
+//            synchronized(preconfiguredSignature) {
+//                preconfiguredSignature.apply {
+//                    update(signatureBytes)
+//                    verify(signatureBytes)
+//                }
+//            }
+//            true
+//        } catch (e: Exception) {
+//            logger.info(VEREFIELD_FAIL, e)
+//            false
+//        }
 }
