@@ -10,7 +10,6 @@ import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
 import org.mockito.kotlin.whenever
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
@@ -80,14 +79,12 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                id = 12
-            },
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
+        whenever(paymentRepository.findByOrderId(order)).thenReturn(
+            Payment().apply { id = 12 },
         )
-        `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
+        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse =
             PaymentReceiptCreateResponse(
@@ -100,27 +97,23 @@ class ReceiptServiceTest {
                 null,
                 PaymentData("222", "222"),
             )
+
         val mockSpringRestTemplate = mock<RestTemplate>()
         whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
-        `when`(
-            restTemplate.defaultRestTemplate().exchange(
-                any(String::class.java),
-                any(HttpMethod::class.java),
-                any(HttpEntity::class.java),
+
+        whenever(
+            mockSpringRestTemplate.exchange(
+                any<String>(),
+                any(),
+                any<HttpEntity<*>>(),
                 eq(PaymentReceiptCreateResponse::class.java),
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
 
-        verify(mockSpringRestTemplate, atLeastOnce()).exchange(
-            eq(receiptProperty.receiptUrl),
-            eq(HttpMethod.POST),
-            ArgumentCaptor.forClass(HttpEntity::class.java).capture(),
-            eq(PaymentReceiptCreateResponse::class.java),
-        )
         service.generateReceipt(order)
 
         val captor = ArgumentCaptor.forClass(HttpEntity::class.java)
-        verify(restTemplate).defaultRestTemplate().exchange(
+        verify(mockSpringRestTemplate, atLeastOnce()).exchange(
             eq(receiptProperty.receiptUrl),
             eq(HttpMethod.POST),
             captor.capture(),
@@ -153,33 +146,33 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                id = 12
-            },
-        )
-        `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
+        whenever(paymentRepository.findByOrderId(order)).thenReturn(Payment().apply { id = 12 })
+        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse = """{"status":"FAILED"}"""
-        `when`(objectMapper.readValue(mockResponse, PaymentReceiptCreateResponse::class.java))
+        whenever(objectMapper.readValue(mockResponse, PaymentReceiptCreateResponse::class.java))
             .thenReturn(
                 PaymentReceiptCreateResponse(
                     "FAILED",
                     500,
-                    traceId,
+                    "trace-123",
                     null,
                     null,
                     UUID.randomUUID().toString(),
                 ),
             )
 
-        `when`(
-            restTemplate.defaultRestTemplate().exchange(
-                any(String::class.java),
-                any(HttpMethod::class.java),
-                any(HttpEntity::class.java),
+        // 👇 создаём мокнутый RestTemplate
+        val mockSpringRestTemplate = mock<RestTemplate>()
+        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
+
+        whenever(
+            mockSpringRestTemplate.exchange(
+                any<String>(),
+                any<HttpMethod>(),
+                any<HttpEntity<*>>(),
                 eq(String::class.java),
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
@@ -211,20 +204,20 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                id = 12
-            },
-        )
-        `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
+        whenever(paymentRepository.findByOrderId(order)).thenReturn(Payment().apply { id = 12 })
+        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
-        `when`(
-            restTemplate.defaultRestTemplate().exchange(
-                any(String::class.java),
-                any(HttpMethod::class.java),
-                any(HttpEntity::class.java),
+        // 👇 создаём мокнутый RestTemplate
+        val mockSpringRestTemplate = mock<RestTemplate>()
+        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
+
+        whenever(
+            mockSpringRestTemplate.exchange(
+                any<String>(),
+                any<HttpMethod>(),
+                any<HttpEntity<*>>(),
                 eq(String::class.java),
             ),
         ).thenThrow(RestClientException("API error"))
@@ -233,6 +226,7 @@ class ReceiptServiceTest {
             assertThrows<InnerException> {
                 service.generateReceipt(order)
             }
+
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
     }
 }

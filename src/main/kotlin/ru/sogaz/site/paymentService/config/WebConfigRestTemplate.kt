@@ -23,7 +23,7 @@ import java.io.ByteArrayInputStream
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Base64
 import javax.net.ssl.SSLContext
 
 @Configuration
