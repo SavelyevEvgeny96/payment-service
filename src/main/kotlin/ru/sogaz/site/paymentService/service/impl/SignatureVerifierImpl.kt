@@ -28,22 +28,20 @@ class SignatureVerifierImpl(
         request: GpbCallbackRequest,
         queryString: String,
     ): Boolean {
-        try {
+        return try {
             val hashBytes =
                 MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray(StandardCharsets.UTF_8))
             val decodedSignature = Base64.getDecoder().decode(request.signature)
 
 
-            return if (verifySignatureCert(decodedSignature, hashBytes)) {
-                hashBytes.contentEquals(
-                    MessageDigest.getInstance("SHA-256").digest(decodedSignature)
-                )
+            if (verifySignatureCert(decodedSignature, hashBytes)) {
+                decodedSignature.containsSubArray(hashBytes)
             } else {
                 false
             }
         } catch (e: Exception) {
             logger.error(VEREFIELD_FAIL)
-            return false
+            false
         }
     }
 
@@ -63,4 +61,19 @@ class SignatureVerifierImpl(
             logger.info(VEREFIELD_FAIL, e)
             false
         }
+
+    fun ByteArray.containsSubArray(subArray: ByteArray): Boolean {
+        if (subArray.isEmpty()) return true
+        if (size < subArray.size) return false
+
+        val lastIndex = size - subArray.size + 1
+        for (i in 0 until lastIndex) {
+            var j = 0
+            while (j < subArray.size && this[i + j] == subArray[j]) {
+                j++
+            }
+            if (j == subArray.size) return true
+        }
+        return false
+    }
 }
