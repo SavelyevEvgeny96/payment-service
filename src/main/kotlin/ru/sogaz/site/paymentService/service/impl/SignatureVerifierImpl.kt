@@ -33,9 +33,10 @@ class SignatureVerifierImpl(
                 MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray(StandardCharsets.UTF_8))
             val decodedSignature = Base64.getDecoder().decode(request.signature)
 
+
             return if (verifySignatureCert(decodedSignature, hashBytes)) {
                 hashBytes.contentEquals(
-                    MessageDigest.getInstance("SHA-256").digest(decodedSignature),
+                    MessageDigest.getInstance("SHA-256").digest(decodedSignature)
                 )
             } else {
                 false
@@ -48,7 +49,7 @@ class SignatureVerifierImpl(
 
     private fun verifySignatureCert(
         signature: ByteArray,
-        hash: ByteArray,
+        hash: ByteArray
     ): Boolean =
         try {
             synchronized(preconfiguredSignature) {
