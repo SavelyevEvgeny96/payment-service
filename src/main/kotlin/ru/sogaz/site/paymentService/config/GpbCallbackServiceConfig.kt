@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -24,6 +25,7 @@ class GpbCallbackServiceConfig(
         signatureVerifier: SignatureVerifier,
         paymentStatusDao: PaymentStatusDao,
         getOrderStatusDao: OrderStatusDao,
+        apiConfigProperties: ApiConfigProperties,
     ): GpbCallbackService {
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
@@ -36,6 +38,7 @@ class GpbCallbackServiceConfig(
             paymentStatusDao = paymentStatusDao,
             getOrderStatusDao = getOrderStatusDao,
             payClientSystem = payClientSystems,
+            apiConfigProperties = apiConfigProperties,
         )
     }
 }

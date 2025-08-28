@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.time.LocalDateTime
@@ -26,6 +27,7 @@ class GpbCallbackServiceImpl(
     private val paymentStatusDao: PaymentStatusDao,
     private val getOrderStatusDao: OrderStatusDao,
     private val payClientSystem: ClientSystem,
+    private val apiConfigProperties: ApiConfigProperties,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
@@ -48,7 +50,30 @@ class GpbCallbackServiceImpl(
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
             val traceId = getTraceId()
-            if (!signatureVerifier.verifySignature(request.signature)) {
+            logger.info(START_METHOD_PROCESS_CALL + traceId)
+            val baseUrl = "${apiConfigProperties.hostNameApp}?"
+            val params = mutableListOf<String>()
+
+            params.add("trx_id=${request.trxId}")
+            if (request.merchId != null) params.add("merch_id=${request.merchId}")
+            if (request.resultCode != null) params.add("result_code=${request.resultCode}")
+            if (request.amount != null) params.add("amount=${request.amount}")
+            request.accountId?.let { if (it.isNotEmpty()) params.add("account_id=$it") }
+            if (request.orderId != null) params.add("o.order_id=${request.orderId}")
+            request.rrn?.let { if (it.isNotEmpty()) params.add("p.rrn=$it") }
+            request.authCode?.let { if (it.isNotEmpty()) params.add("p.authcode=$it") }
+            request.srcType?.let { if (it.isNotEmpty()) params.add("p.srcType=$it") }
+            request.maskedPan?.let { if (it.isNotEmpty()) params.add("p.maskedPan=$it") }
+            request.isFullyAuthenticated?.let { if (it.isNotEmpty()) params.add("p.isFullyAuthenticated=$it") }
+            request.transmissionDateTime?.let { if (it.isNotEmpty()) params.add("p.transmissionDateTime=$it") }
+            if (request.discountType != null) params.add("discountType=${request.discountType}")
+            if (request.discountAmount != null) params.add("discountAmount=${request.discountAmount}")
+            request.paymentSystem?.let { if (it.isNotEmpty()) params.add("p.paymentSystem=$it") }
+            if (request.ts != null) params.add("ts=${request.ts}")
+
+            val queryString = baseUrl + params.joinToString("&")
+
+            if (!signatureVerifier.verifySignature(request, queryString)) {
                 logger.info(ERROR_TRX_ID + request.trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
             }
@@ -65,10 +90,13 @@ class GpbCallbackServiceImpl(
             }
 
             updatePaymentStatus(payment)
+            logger.info(UPDATE_PAYMENT_STATUS)
 
             updateOrderStatus(order = payment.orderId!!)
+            logger.info(UPDATE_ORDER_STATUS)
 
             logOperation(payment)
+            logger.info(OPERATION_PAYMENT_SUCCESS)
 
             createSuccessResponse()
         } catch (e: InnerException) {

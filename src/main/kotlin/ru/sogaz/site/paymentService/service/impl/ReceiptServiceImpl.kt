@@ -35,8 +35,6 @@ class ReceiptServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val RECEIPT_GENERATED_ACTION = "Заказ оплачен"
-        const val RECEIPT_GENERATION_ERROR_ACTION = "Ошибка при совершении платежа"
         const val ITEM_NAME_PREFIX = "Страховая премия"
         const val POLICY_NUMBER_PREFIX = " по страховому полису № "
         const val CONTRACT_ID_PREFIX = " по страховому договору № "
