@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.client.RestClientException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
@@ -59,10 +60,10 @@ class GazpromServiceImpl(
         const val END__METHOD_PAY_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП Газпром Банк для платежа с payment_id: "
         const val START_METHOD_GET_TOKEN_GPB =
             ">>> СТАРТ метода получение токена из банка Газпром для" +
-                " инициирования оплаты по карте для order_id: "
+                    " инициирования оплаты по карте для order_id: "
         const val END_METHOD_GET_TOKEN_GPB =
             "<<< КОНЕЦ метода получение токена из банка Газпром для" +
-                " инициирования оплаты по карте для order_id: "
+                    " инициирования оплаты по карте для order_id: "
         const val SAVE_OPERATION_HISTORY_START_PAY =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на: "
         const val ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления платежа payment_id == null"
@@ -180,6 +181,16 @@ class GazpromServiceImpl(
             paymentDao.paymentUpdate(paymentId, paymentPageUrl, "")
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             return ResponseEntity.ok(result)
+        } catch (erst: RestClientException) {
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                clientSystem,
+                traceId,
+                ActionType.PAYMENT_START_REQUEST_ERROR.value,
+            )
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
+            logger.error("$ERROR_GPB_PAYMENT_PROCESSING ${erst.message}")
+            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE,traceId)
         } catch (e: Exception) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
