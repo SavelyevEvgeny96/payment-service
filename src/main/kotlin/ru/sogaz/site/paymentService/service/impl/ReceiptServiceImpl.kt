@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
@@ -144,12 +145,12 @@ class ReceiptServiceImpl(
                     )
 
             when (response.body?.status) {
-                "SUCCESS" -> {
+                StatusEnum.SUCCESS.value -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.orderId, traceId))
                     payment?.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
 
-                "FAILED" -> {
+                StatusEnum.FAILED.value -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
                     payment?.paymentBankId?.let { handleReceiptError(order, it) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
@@ -205,7 +206,7 @@ class ReceiptServiceImpl(
         chequeSentRepository.save(
             ChequeSent(
                 paymentBankId = paymentBankId,
-                status = if (success) "SUCCESS" else "FAILED",
+                status = if (success) StatusEnum.SUCCESS.value else StatusEnum.FAILED.value,
                 dateCreate = LocalDateTime.now(),
                 dateUpdate = LocalDateTime.now(),
             ),

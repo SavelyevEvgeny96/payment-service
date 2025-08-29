@@ -9,6 +9,10 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -16,10 +20,7 @@ import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.OrderStatusRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
 import java.util.Optional
@@ -29,28 +30,30 @@ class PaymentStatusCheckerServiceTest {
     private val receiptService = mock<ReceiptService>()
     private val orderRepository = mock<OrderRepository>()
     private val restTemplate = mock<WebConfigRestTemplate>()
-    private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
-    private val paymentStatusRepository = mock<PaymentStatusRepository>()
     private val apiConfigProperty = mock<ApiConfigProperties>()
-    private val orderStatusRepository = mock<OrderStatusRepository>()
     private val rabbitTemplate = mock<RabbitTemplate>()
     private val objectMapper = mock<ObjectMapper>()
     private val rabbitProperties = mock<RabbitProperties>()
     private val subOrderDao = mock<SubOrderDao>()
+    private val paymentDao: PaymentDao = org.mockito.kotlin.mock()
+    private val paymentStatusDao: PaymentStatusDao = org.mockito.kotlin.mock()
+    private val orderStatusDao: OrderStatusDao = org.mockito.kotlin.mock()
+    private val operationHistoryDao: PaymentOperationHistoryDao = org.mockito.kotlin.mock()
     private val service =
         PaymentStatusCheckerServiceImpl(
             orderRepository = orderRepository,
-            operationHistoryRepository = operationHistoryRepository,
-            paymentStatusRepository = paymentStatusRepository,
             paymentRepository = paymentRepository,
             apiConfigProperty = apiConfigProperty,
-            orderStatusRepository = orderStatusRepository,
             rabbitTemplate = rabbitTemplate,
             receiptService = receiptService,
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             rabbit = rabbitProperties,
             subOrderDao = subOrderDao,
+            paymentDao = paymentDao,
+            paymentStatusDao = paymentStatusDao,
+            orderStatusDao = orderStatusDao,
+            operationHistoryDao = operationHistoryDao,
         )
 
     private val traceId = "test-trace-id"
@@ -71,7 +74,7 @@ class PaymentStatusCheckerServiceTest {
                 orderId = order,
             )
 
-        `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
+        `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(paymentRepository.findById(payment.id!!)).thenReturn(Optional.of(payment))
 
         val response = service.getStatus(paymentBankId)
@@ -98,7 +101,7 @@ class PaymentStatusCheckerServiceTest {
                 this.id = 1L
             }
 
-        `when`(paymentRepository.findByPaymentBankId(paymentBankId)).thenReturn(payment)
+        `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(paymentRepository.findById(payment.id!!)).thenReturn(Optional.of(payment))
 
         doNothing().`when`(receiptService).generateReceipt(order)

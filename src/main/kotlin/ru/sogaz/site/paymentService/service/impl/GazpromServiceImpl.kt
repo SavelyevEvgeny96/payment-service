@@ -23,11 +23,11 @@ import ru.sogaz.site.paymentService.dto.request.State
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.GeneratorService
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.SUCCESS
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
 
@@ -173,7 +173,7 @@ class GazpromServiceImpl(
             val dataPay = DataPay(paymentPageUrl)
             val result =
                 Response(
-                    status = SUCCESS,
+                    status = StatusEnum.SUCCESS.value,
                     code = STATUS_CODE_SUCCESS_PAY_CARD_GAZPROM,
                     traceId = traceId,
                     data = dataPay,
@@ -260,7 +260,7 @@ class GazpromServiceImpl(
             val dataPay = DataPay(paymentPageUrl)
             val result =
                 Response(
-                    status = SUCCESS,
+                    status = StatusEnum.SUCCESS.value,
                     code = STATUS_CODE_SUCCESS_PAY_SBP,
                     traceId = traceId,
                     data = dataPay,

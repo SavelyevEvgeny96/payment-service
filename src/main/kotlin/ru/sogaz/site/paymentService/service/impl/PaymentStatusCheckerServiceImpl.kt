@@ -9,6 +9,10 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
@@ -18,17 +22,13 @@ import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.OrderStatusRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
@@ -40,18 +40,19 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class PaymentStatusCheckerServiceImpl(
-    private val orderRepository: OrderRepository,
-    private val paymentRepository: PaymentRepository,
-    private val paymentStatusRepository: PaymentStatusRepository,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository,
+    private val paymentDao: PaymentDao,
     private val restTemplate: WebConfigRestTemplate,
     private val apiConfigProperty: ApiConfigProperties,
     private val receiptService: ReceiptService,
-    private val orderStatusRepository: OrderStatusRepository,
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
     private val rabbit: RabbitProperties,
     private val subOrderDao: SubOrderDao,
+    private val paymentStatusDao: PaymentStatusDao,
+    private val orderStatusDao: OrderStatusDao,
+    private val orderRepository: OrderRepository,
+    private val operationHistoryDao: PaymentOperationHistoryDao,
+    private val paymentRepository: PaymentRepository,
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
@@ -79,9 +80,9 @@ class PaymentStatusCheckerServiceImpl(
         val traceId = getTraceId()
         logger.info(LOG_START_STATUS_CHECK.format(paymentBankId, traceId))
         val payment =
-            paymentRepository.findByPaymentBankId(paymentBankId)
+            paymentDao.findByPaymentBankId(paymentBankId)
         return when (payment.stateId?.stateId) {
-            "NEW", "SUCCESS", "FAIL", "REFUND", "DECLINED" -> {
+            StatusEnum.NEW.value, StatusEnum.SUCCESS.value, StatusEnum.FAIL.value, StatusEnum.REFUND.value, StatusEnum.DECLINED.value -> {
                 getSuccessResponse(
                     traceId,
                     1101520200,
@@ -92,7 +93,7 @@ class PaymentStatusCheckerServiceImpl(
                 )
             }
 
-            "REG", "WAIT", "CALLBACK" -> {
+            StatusEnum.REG.value, StatusEnum.WAIT.value, StatusEnum.CALLBACK.value -> {
                 processPaymentStatusCheck(payment)
                 getSuccessResponse(
                     traceId,
@@ -163,7 +164,8 @@ class PaymentStatusCheckerServiceImpl(
                 "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
             logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
-            val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+            val response =
+                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
             val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
 
             if (response.isNotEmpty()) {
@@ -185,6 +187,7 @@ class PaymentStatusCheckerServiceImpl(
         val traceId = getTraceId()
         val order =
             payment.orderId
+                // не менял на дао так как не ясна логика верна или нет попросил рому после протестировать это место
                 ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
                 ?.orElseThrow { InnerException(ORDERS_NOT_FOUND, traceId) }
                 ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
@@ -193,49 +196,37 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.orderId, traceId))
 
         when (status) {
-            "SUCCESS" -> {
-                payment.stateId = paymentStatusRepository.findByStateId("SUCCESS")
-                payment.orderId?.orderStatus = orderStatusRepository.findByStateId("SUCCESS")
-                createOrderHistoryRecord(order, traceId)
+            StatusEnum.SUCCESS.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
+                payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
+                val subOrder = subOrderDao.getSubOrder(traceId, order)
+                operationHistoryDao.saveRecordOperationHistory(
+                    order,
+                    subOrder.clientSystem,
+                    traceId,
+                    ActionType.ORDER_PAID.value,
+                )
                 receiptService.generateReceipt(order)
                 sendToPaidOrdersQueue(order, traceId)
             }
 
-            "UNKNOWN", "INTERIM_SUCCESS", "REFUND" -> {
-                payment.stateId = paymentStatusRepository.findByStateId("WAIT")
+            StatusEnum.UNKNOWN.value, StatusEnum.INTERIM_SUCCESS.value, StatusEnum.REFUND.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            "FAILED" -> {
-                payment.stateId = paymentStatusRepository.findByStateId("FAIL")
+            StatusEnum.FAILED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
-            "DECLINED" -> {
-                payment.stateId = paymentStatusRepository.findByStateId("DECLINED")
+            StatusEnum.DECLINED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.DECLINED.value)
             }
 
             else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.orderId, traceId))
         }
 
         payment.updateDate = LocalDateTime.now()
-        paymentRepository.save(payment)
-    }
-
-    private fun createOrderHistoryRecord(
-        order: Order,
-        traceId: String,
-    ) {
-        val subOrder = subOrderDao.getSubOrder(traceId, order)
-
-        val historyRecord =
-            PaymentOperationHistory(
-                action = ActionType.ORDER_PAID.value,
-                order = order,
-                actionAuthor = subOrder.clientSystem,
-                actionDate = LocalDateTime.now(),
-            )
-
-        operationHistoryRepository.save(historyRecord)
-        logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.orderId, traceId))
+        paymentDao.save(payment)
     }
 
     /** начало генерации ИИ qwen2.5-coder:14b  */
@@ -299,6 +290,7 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ): Boolean {
         val freshPayment =
+            // тоже не трогал просьба глянуть роме
             paymentRepository
                 .findById(payment.id!!)
                 .orElseThrow { BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId) }

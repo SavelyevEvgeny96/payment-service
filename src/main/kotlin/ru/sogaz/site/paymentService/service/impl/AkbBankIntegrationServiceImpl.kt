@@ -22,6 +22,7 @@ import ru.sogaz.site.paymentService.dto.request.OrderDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.SslClientProperties
@@ -29,7 +30,6 @@ import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_CARD
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.SUCCESS
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
 
@@ -124,7 +124,7 @@ class AkbBankIntegrationServiceImpl(
                 (responseBody?.get(ORDER) as? Map<*, *>)?.get(HPP_URL) as? String ?: ""
             val result =
                 Response(
-                    status = SUCCESS,
+                    status = StatusEnum.SUCCESS.value,
                     code = STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK,
                     traceId = traceId,
                     data = DataPay(paymentPageUrl),

@@ -8,8 +8,8 @@ import org.springframework.validation.annotation.Validated
 @Validated
 @ConfigurationProperties(prefix = "ssl.client")
 data class SslClientProperties(
-    @field:NotBlank var pfxBase64: String? = null,
-    @field:NotBlank var pfxPassword: String? = null,
+    @field:NotBlank var pfxBase64: String,
+    @field:NotBlank var pfxPassword: String,
     @field:NotBlank var caBase64: String? = null,
     var tlsProtocols: List<String> = listOf("TLSv1.3"),
     var hostnameVerification: Boolean = true,

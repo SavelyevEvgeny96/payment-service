@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
@@ -35,7 +36,6 @@ class GpbCallbackServiceImpl(
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
         const val NOT_FOUND = "Not Found"
-        const val CONST_CALLBACK = "SUCCESS"
         const val ORDER_NOT_FOUND = "Order ID не найден"
         const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
         const val START_METHOD_PROCESS_CALL =
@@ -110,7 +110,7 @@ class GpbCallbackServiceImpl(
 
     private fun updatePaymentStatus(payment: Payment) {
         val traceId = getTraceId()
-        val paymentStatus = paymentStatusDao.getPaymentStatus(traceId, CONST_CALLBACK)
+        val paymentStatus = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentDao.save(payment)
@@ -118,7 +118,7 @@ class GpbCallbackServiceImpl(
 
     private fun updateOrderStatus(order: Order) {
         val traceId = getTraceId()
-        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, CONST_CALLBACK)
+        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
         order.orderStatus = orderStatus
         order.updateDate = LocalDateTime.now()
         orderDao.save(order)

@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GeneratorService
@@ -36,11 +37,9 @@ class OrderServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val STATE_ID_NEW = "NEW"
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
         const val STATUS_CODE_SUCCESS_GET_ORDER_STATUS = 1201503200
-        const val SUCCESS = "SUCCESS"
         const val LOG_START_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки для orderId: "
         const val LOG_END_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки  stateId =  "
         const val LOG_START_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
@@ -81,7 +80,7 @@ class OrderServiceImpl(
                 bankDao.getBank(requestBankId, traceId, null)
             }
 
-        val orderStatus = orderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
+        val orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.NEW.value)
         val order =
             Order(
                 orderId = orderId,
@@ -148,7 +147,7 @@ class OrderServiceImpl(
             val dataOrder = DataOrder(orderId, paymentPageUrl)
             result =
                 Response(
-                    status = SUCCESS,
+                    status = StatusEnum.SUCCESS.value,
                     code = STATUS_CODE_SUCCESS,
                     traceId = traceId,
                     data = dataOrder,

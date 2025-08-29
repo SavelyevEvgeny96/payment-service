@@ -7,6 +7,10 @@ import org.mockito.kotlin.mock
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.OrderStatusDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.enums.StatusEnum
@@ -34,23 +38,27 @@ class CheckStatusOrderTest {
     private val rabbitTemplate: RabbitTemplate = mock()
     private val objectMapper: ObjectMapper = mock()
     private val rabbit: RabbitProperties = mock()
+    private val paymentDao: PaymentDao = mock()
+    private val paymentStatusDao: PaymentStatusDao = mock()
+    private val orderStatusDao: OrderStatusDao = mock()
+    private val operationHistoryDao: PaymentOperationHistoryDao = mock()
 
     private val service =
         PaymentStatusCheckerServiceImpl(
-            orderRepository,
-            paymentRepository,
-            paymentStatusRepository,
-            operationHistoryRepository,
+            paymentDao,
             restTemplate,
             apiConfigProperty,
             receiptService,
-            orderStatusRepository,
             rabbitTemplate,
             objectMapper,
             rabbit,
             subOrderDao,
+            paymentStatusDao,
+            orderStatusDao,
+            orderRepository,
+            operationHistoryDao,
+            paymentRepository,
         )
-
     private val errorCodePaidFor = 1001
     private val errorCodeNotAvailable = 2002
 
