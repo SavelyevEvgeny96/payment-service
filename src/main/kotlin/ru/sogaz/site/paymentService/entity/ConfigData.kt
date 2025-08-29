@@ -11,14 +11,11 @@ import jakarta.persistence.Table
 data class ConfigData(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long,
+    var id: Long = 0,
     @Column(name = "param_name")
-    var paramName: String,
+    var paramName: String = "",
     @Column(name = "param_value")
-    var paramValue: String,
+    var paramValue: String = "",
     @Column(name = "param_description")
-    var paramDescription: String,
-) {
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(0, "", "", "")
-}
+    var paramDescription: String = "",
+)

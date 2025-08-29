@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.service.impl
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier

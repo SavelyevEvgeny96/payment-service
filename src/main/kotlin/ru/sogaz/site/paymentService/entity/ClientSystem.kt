@@ -11,12 +11,9 @@ import jakarta.persistence.Table
 data class ClientSystem(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long?,
+    var id: Long? = null,
     @Column(name = "external_system_code")
-    var externalSystemCode: String,
+    var externalSystemCode: String = "",
     @Column(name = "external_system_name")
-    var externalSystemName: String,
-) {
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(0, "", "")
-}
+    var externalSystemName: String = "",
+)

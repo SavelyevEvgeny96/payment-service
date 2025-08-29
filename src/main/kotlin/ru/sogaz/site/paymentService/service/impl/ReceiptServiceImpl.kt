@@ -5,30 +5,29 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
-import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
+import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
-import ru.sogaz.site.paymentService.enums.ActionEnum
+import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import java.time.LocalDateTime
 
 class ReceiptServiceImpl(
     private val receiptProperty: ReceiptProperties,
-    private val restTemplate: RestTemplate,
-    private val subOrderRepository: SubOrderRepository,
-    private val actionTypeRepository: ActionTypeRepository,
+    private val restTemplate: WebConfigRestTemplate,
+    private val subOrderDao: SubOrderDao,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
     private val objectMapper: ObjectMapper,
     private val paymentRepository: PaymentRepository,
@@ -58,7 +57,7 @@ class ReceiptServiceImpl(
 
         val payment = paymentRepository.findByOrderId(order)
 
-        val subOrders = subOrderRepository.findAllByOrderId(order)
+        val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
 
         fun String.toReceiptAmount(): Double =
             try {
@@ -103,10 +102,10 @@ class ReceiptServiceImpl(
                 }
             }
 
-        val totalAmount = order.premiumAmount?.toReceiptAmount()
+        val totalAmount = order.premiumAmount.toReceiptAmount()
 
         val requestBody =
-            totalAmount?.let { it ->
+            totalAmount.let { it ->
                 PaymentReceiptCreateRequest(
                     client =
                         PaymentReceiptCreateRequest.ClientInfo(
@@ -137,6 +136,7 @@ class ReceiptServiceImpl(
         try {
             val response =
                 restTemplate
+                    .defaultRestTemplate()
                     .exchange(
                         url,
                         HttpMethod.POST,
@@ -145,12 +145,12 @@ class ReceiptServiceImpl(
                     )
 
             when (response.body?.status) {
-                "SUCCESS" -> {
+                StatusEnum.SUCCESS.value -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.orderId, traceId))
                     payment?.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
 
-                "FAILED" -> {
+                StatusEnum.FAILED.value -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
                     payment?.paymentBankId?.let { handleReceiptError(order, it) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
@@ -206,7 +206,7 @@ class ReceiptServiceImpl(
         chequeSentRepository.save(
             ChequeSent(
                 paymentBankId = paymentBankId,
-                status = if (success) "SUCCESS" else "FAILED",
+                status = if (success) StatusEnum.SUCCESS.value else StatusEnum.FAILED.value,
                 dateCreate = LocalDateTime.now(),
                 dateUpdate = LocalDateTime.now(),
             ),
@@ -214,11 +214,10 @@ class ReceiptServiceImpl(
     }
 
     private fun saveReceiptOperationHistory(order: Order) {
-        val actionType = actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATED_ACTION.value)
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
+        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
-                action = actionType,
+                action = ActionType.ORDER_PAID.value,
                 order = order,
                 actionAuthor = subOrder.clientSystem,
                 actionDate = LocalDateTime.now(),
@@ -227,12 +226,10 @@ class ReceiptServiceImpl(
     }
 
     private fun saveFailedReceiptOperationHistory(order: Order) {
-        val actionType = actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value)
-        val subOrder = subOrderRepository.findFirstByOrderId(order)
-
+        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
-                action = actionType,
+                action = ActionType.PAYMENT_ERROR.value,
                 order = order,
                 actionAuthor = subOrder.clientSystem,
                 actionDate = LocalDateTime.now(),

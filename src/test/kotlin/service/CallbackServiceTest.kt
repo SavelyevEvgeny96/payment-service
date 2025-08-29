@@ -1,4 +1,5 @@
 package service
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -9,8 +10,7 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.CallbackRequest
-import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -21,7 +21,6 @@ class CallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
     private val callbackPaymentStatus = PaymentStatus().apply { stateId = "CALLBACK_AKB" }
-    private val callbackAction = ActionType(1, "Получение CALLBACK от АКБ Россия")
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val testRequest =
@@ -57,7 +56,6 @@ class CallbackServiceTest {
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
                 callbackPaymentStatus = callbackPaymentStatus,
-                callbackAction = callbackAction,
                 payClientSystem = payClientSystem,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
@@ -94,7 +92,6 @@ class CallbackServiceTest {
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
                 callbackPaymentStatus = callbackPaymentStatus,
-                callbackAction = callbackAction,
                 payClientSystem = payClientSystem,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )

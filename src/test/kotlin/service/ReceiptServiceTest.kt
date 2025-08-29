@@ -7,9 +7,10 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq
+import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.kotlin.whenever
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -17,17 +18,16 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dto.PaymentData
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentService.dto.PaymentReceiptCreateResponse
-import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
+import ru.sogaz.site.paymentService.dto.response.PaymentData
+import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.enums.ActionEnum
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -37,24 +37,23 @@ import java.util.UUID
 
 class ReceiptServiceTest {
     private val receiptProperty = mock<ReceiptProperties>()
-    private val restTemplate = mock<RestTemplate>()
+    private val restTemplate = mock<WebConfigRestTemplate>()
     private val subOrderRepository = mock<SubOrderRepository>()
-    private val actionTypeRepository = mock<ActionTypeRepository>()
     private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
     private val objectMapper = mock<ObjectMapper>()
     private val paymentRepository = mock<PaymentRepository>()
     private val chequeSentRepository = mock<ChequeSentRepository>()
+    private val subOrderDao = mock<SubOrderDao>()
 
     private val service =
         ReceiptServiceImpl(
-            subOrderRepository = subOrderRepository,
-            actionTypeRepository = actionTypeRepository,
             operationHistoryRepository = operationHistoryRepository,
             receiptProperty = receiptProperty,
             restTemplate = restTemplate,
             objectMapper = objectMapper,
             paymentRepository = paymentRepository,
             chequeSentRepository = chequeSentRepository,
+            subOrderDao = subOrderDao,
         )
 
     private val traceId = "test-trace-id"
@@ -80,17 +79,12 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                id = 12
-            },
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
+        whenever(paymentRepository.findByOrderId(order)).thenReturn(
+            Payment().apply { id = 12 },
         )
-        `when`(actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATED_ACTION.value)).thenReturn(
-            ActionType(1, ActionEnum.RECEIPT_GENERATED_ACTION.value),
-        )
-        `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
+        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse =
             PaymentReceiptCreateResponse(
@@ -104,11 +98,14 @@ class ReceiptServiceTest {
                 PaymentData("222", "222"),
             )
 
-        `when`(
-            restTemplate.exchange(
-                any(String::class.java),
-                any(HttpMethod::class.java),
-                any(HttpEntity::class.java),
+        val mockSpringRestTemplate = mock<RestTemplate>()
+        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
+
+        whenever(
+            mockSpringRestTemplate.exchange(
+                any<String>(),
+                any(),
+                any<HttpEntity<*>>(),
                 eq(PaymentReceiptCreateResponse::class.java),
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
@@ -116,7 +113,7 @@ class ReceiptServiceTest {
         service.generateReceipt(order)
 
         val captor = ArgumentCaptor.forClass(HttpEntity::class.java)
-        verify(restTemplate).exchange(
+        verify(mockSpringRestTemplate, atLeastOnce()).exchange(
             eq(receiptProperty.receiptUrl),
             eq(HttpMethod.POST),
             captor.capture(),
@@ -149,36 +146,33 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                id = 12
-            },
-        )
-        `when`(actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value)).thenReturn(
-            ActionType(1, ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value),
-        )
-        `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
+        whenever(paymentRepository.findByOrderId(order)).thenReturn(Payment().apply { id = 12 })
+        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse = """{"status":"FAILED"}"""
-        `when`(objectMapper.readValue(mockResponse, PaymentReceiptCreateResponse::class.java))
+        whenever(objectMapper.readValue(mockResponse, PaymentReceiptCreateResponse::class.java))
             .thenReturn(
                 PaymentReceiptCreateResponse(
                     "FAILED",
                     500,
-                    traceId,
+                    "trace-123",
                     null,
                     null,
                     UUID.randomUUID().toString(),
                 ),
             )
 
-        `when`(
-            restTemplate.exchange(
-                any(String::class.java),
-                any(HttpMethod::class.java),
-                any(HttpEntity::class.java),
+        // 👇 создаём мокнутый RestTemplate
+        val mockSpringRestTemplate = mock<RestTemplate>()
+        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
+
+        whenever(
+            mockSpringRestTemplate.exchange(
+                any<String>(),
+                any<HttpMethod>(),
+                any<HttpEntity<*>>(),
                 eq(String::class.java),
             ),
         ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
@@ -210,22 +204,20 @@ class ReceiptServiceTest {
                 recipientEmail = "test@example.com"
             }
 
-        `when`(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        `when`(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        `when`(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply {
-                id = 12
-            },
-        )
-        `when`(actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value))
-            .thenReturn(ActionType(1, ActionEnum.RECEIPT_GENERATION_ERROR_ACTION.value))
-        `when`(receiptProperty.receiptUrl).thenReturn("http://test.url")
+        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
+        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
+        whenever(paymentRepository.findByOrderId(order)).thenReturn(Payment().apply { id = 12 })
+        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
-        `when`(
-            restTemplate.exchange(
-                any(String::class.java),
-                any(HttpMethod::class.java),
-                any(HttpEntity::class.java),
+        // 👇 создаём мокнутый RestTemplate
+        val mockSpringRestTemplate = mock<RestTemplate>()
+        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
+
+        whenever(
+            mockSpringRestTemplate.exchange(
+                any<String>(),
+                any<HttpMethod>(),
+                any<HttpEntity<*>>(),
                 eq(String::class.java),
             ),
         ).thenThrow(RestClientException("API error"))
@@ -234,6 +226,7 @@ class ReceiptServiceTest {
             assertThrows<InnerException> {
                 service.generateReceipt(order)
             }
+
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
     }
 }

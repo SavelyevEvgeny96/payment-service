@@ -15,15 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.CallbackRequest
-import ru.sogaz.site.paymentService.dto.CallbackResponse
-import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
-import ru.sogaz.site.paymentService.dto.DataOrder
-import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
-import ru.sogaz.site.paymentService.dto.PaymentPayRequest
-import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
-import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.request.CallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.response.CallbackResponse
+import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
@@ -116,22 +115,19 @@ class PaymentController(
         return orderService.createOrder(requestWrapper)
     }
 
-    /**
-     * Метод для создания платежа.
-     * @return Ответ с кодом состояния и данными о платеже или ошибкой
-     */
-    @PostMapping("/pay")
-    fun createPay(
-        @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> =
-        paymentService.createPayment(
-            paymentPayRequest,
-        )
-
-    @PostMapping("/paySbp")
+    @GetMapping("/paySbp/{orderId}")
     fun createPaySbp(
-        @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
+        @PathVariable orderId: String,
+        @RequestParam(required = false) urlToReturn: String?,
+        @RequestParam(required = false) urlToReturnF: String?,
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(urlToReturn, urlToReturnF, orderId)
+
+    @GetMapping("/pay/{orderId}")
+    fun pay(
+        @PathVariable orderId: String,
+        @RequestParam(required = false) urlToReturn: String?,
+        @RequestParam(required = false) urlToReturnF: String?,
+    ): ResponseEntity<Response<DataPay>> = paymentService.createPayment(urlToReturn, urlToReturnF, orderId)
 
     @Operation(
         summary = "Проверить статус оплаты",

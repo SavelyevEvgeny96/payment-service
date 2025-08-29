@@ -3,17 +3,17 @@ package ru.sogaz.site.paymentService.service.impl
 import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
-import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
@@ -25,9 +25,8 @@ class GpbCallbackServiceImpl(
     private val orderDao: OrderDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
-    private val getPaymentStatusDao: GetPaymentStatusDao,
+    private val paymentStatusDao: PaymentStatusDao,
     private val getOrderStatusDao: OrderStatusDao,
-    private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
     private val apiConfigProperties: ApiConfigProperties,
 ) : GpbCallbackService {
@@ -37,7 +36,6 @@ class GpbCallbackServiceImpl(
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
         const val NOT_FOUND = "Not Found"
-        const val CONST_CALLBACK = "SUCCESS"
         const val ORDER_NOT_FOUND = "Order ID не найден"
         const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
         const val START_METHOD_PROCESS_CALL =
@@ -112,7 +110,7 @@ class GpbCallbackServiceImpl(
 
     private fun updatePaymentStatus(payment: Payment) {
         val traceId = getTraceId()
-        val paymentStatus = getPaymentStatusDao.getPaymentStatus(traceId, CONST_CALLBACK)
+        val paymentStatus = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
         payment.stateId = paymentStatus
         payment.updateDate = LocalDateTime.now()
         paymentDao.save(payment)
@@ -120,7 +118,7 @@ class GpbCallbackServiceImpl(
 
     private fun updateOrderStatus(order: Order) {
         val traceId = getTraceId()
-        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, CONST_CALLBACK)
+        val orderStatus = getOrderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
         order.orderStatus = orderStatus
         order.updateDate = LocalDateTime.now()
         orderDao.save(order)
@@ -128,19 +126,17 @@ class GpbCallbackServiceImpl(
 
     private fun logOperation(payment: Payment) {
         try {
+            val traceId = getTraceId()
             val orderId = payment.orderId ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
                 orderId.orderId?.let {
                     orderDao.getOrderId(it)
                 }
-
-            paymentOperationHistoryDao.save(
-                PaymentOperationHistory(
-                    action = callbackAction,
-                    actionDate = LocalDateTime.now(),
-                    actionAuthor = payClientSystem,
-                    order = order,
-                ),
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                payClientSystem,
+                traceId,
+                ActionType.CALLBACK_RECEIVED.value,
             )
         } catch (e: Exception) {
             logger.error(ERROR_SAVE_OPERATIONS + e.message)
