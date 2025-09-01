@@ -23,6 +23,7 @@ class ApiConfigProperties {
     lateinit var backUrlS: String
     lateinit var akbUrl: String
     lateinit var hostNameApp: String
+    lateinit var akbUrlStatus: String
 
     @PostConstruct
     fun postConstruct() {
@@ -37,5 +38,6 @@ class ApiConfigProperties {
         logger.info("backUrlF = $backUrlF")
         logger.info("backUrlS = $backUrlS")
         logger.info("akbUrl = $akbUrl")
+        logger.info("akbUrlStatus = $akbUrlStatus")
     }
 }
