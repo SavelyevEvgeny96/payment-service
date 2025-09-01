@@ -14,10 +14,7 @@ data class Bank(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(name = "bank_id")
-    var bankId: String,
+    var bankId: String = "",
     @Column(name = "bank_name")
-    var bankName: String,
-) {
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(0, "", "")
-}
+    var bankName: String = "",
+)

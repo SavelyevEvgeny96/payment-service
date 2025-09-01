@@ -41,10 +41,16 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+ssl:
+  client:
+    pfxBase64: ${PFX_BASE64:}
+    pfxPassword: ${PFX_PASSWORD:}
+    caBase64: ${CA_BASE64:}
 
 api:
   payment:
     paymentUrl: ${PAYMENT_URL:}
+    akbUrl: ${AKB_URL:}
     gpbUrl: ${GPB_URL:}
     gpbSbpUrl: ${GPB_SBP_URL:}
     callbackUrlSbp: ${CALLBACK_URL_SBP:}

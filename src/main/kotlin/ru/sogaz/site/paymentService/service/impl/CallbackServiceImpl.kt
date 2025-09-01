@@ -8,14 +8,13 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.CallbackRequest
-import ru.sogaz.site.paymentService.dto.CallbackResponse
-import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.dto.request.CallbackRequest
+import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.entity.PaymentStatus
+import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.siter.models.resonses.Response
@@ -26,7 +25,6 @@ class CallbackServiceImpl(
     private val paymentDao: PaymentDao,
     private val orderDao: OrderDao,
     private val callbackPaymentStatus: PaymentStatus,
-    private val callbackAction: ActionType,
     private val payClientSystem: ClientSystem,
     private val callbackPaymentDao: CallbackPaymentDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
@@ -133,14 +131,11 @@ class CallbackServiceImpl(
                     ORDER_NOT_FOUND,
                 )
             val order = orderId.orderId?.let { orderDao.getOrderId(it) }
-
-            paymentOperationHistoryDao.save(
-                PaymentOperationHistory(
-                    action = callbackAction,
-                    actionDate = LocalDateTime.now(),
-                    actionAuthor = payClientSystem,
-                    order = order,
-                ),
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                payClientSystem,
+                traceId,
+                ActionType.CALLBACK_RECEIVED.value,
             )
         } catch (e: Exception) {
             logger.error(OPERATION_PAYMENT_FAIL)

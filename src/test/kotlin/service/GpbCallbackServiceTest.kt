@@ -5,13 +5,12 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
-import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -24,11 +23,10 @@ class GpbCallbackServiceTest {
     private val paymentDao = mock<PaymentDao>()
     private val orderDao = mock<OrderDao>()
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
-    private val getPaymentStatusDao = mock<GetPaymentStatusDao>()
+    private val paymentStatusDao = mock<PaymentStatusDao>()
     private val getOrderStatusDao = mock<OrderStatusDao>()
     private val apiConfigProperties = mock<ApiConfigProperties>()
 
-    private val callbackAction = ActionType(1, "Заказ оплачен")
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val service =
@@ -37,9 +35,8 @@ class GpbCallbackServiceTest {
             orderDao,
             paymentOperationHistoryDao,
             signatureVerifier,
-            getPaymentStatusDao,
+            paymentStatusDao,
             getOrderStatusDao,
-            callbackAction,
             payClientSystem,
             apiConfigProperties,
         )
@@ -67,7 +64,7 @@ class GpbCallbackServiceTest {
                     "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
         )
 
-    val baseUrl = "${apiConfigProperties.hostNameApp}/payment/gpb/state?"
+    val baseUrl = "${apiConfigProperties.hostNameApp}?"
     val params =
         listOf(
             "trx_id=${testRequest.trxId}",
@@ -87,6 +84,7 @@ class GpbCallbackServiceTest {
             "p.paymentSystem=${testRequest.paymentSystem ?: ""}",
             "ts=${testRequest.ts}",
         )
+
     val queryString = baseUrl + params.joinToString("&")
 
     @Test
