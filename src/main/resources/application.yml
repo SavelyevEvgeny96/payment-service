@@ -1,6 +1,6 @@
 app:
   info:
-    application_name: ${PROJECT_NAME:app service}
+    application_name: ${PROJECT_NAME:payment service}
     version: ${PROJECT_VERSION:1.0.0}
     description: ${PROJECT_DESCRIPTION:Payment Service}
     artifact_Id: ${PROJECT_ARTIFACTID:payment-service}
@@ -54,7 +54,7 @@ api:
     merchantId: ${GPB_MERCHANT_ID:}
     backUrlS: ${BACK_URL_SUCCESS:http:}
     backUrlF: ${BACK_URL_FALSE:}
-    hostNameApp: ${HOSTNAME_APP:https://stage-pay.sogaz.ru}
+    hostNameApp: ${HOSTNAME_APP:https://stage-pay.sogaz.ru/}
 
   receipt:
     receiptUrl: ${RECEIPT_URL:}
