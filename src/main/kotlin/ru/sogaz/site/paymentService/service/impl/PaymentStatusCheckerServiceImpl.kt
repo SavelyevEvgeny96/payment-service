@@ -185,7 +185,7 @@ class PaymentStatusCheckerServiceImpl(
 
         try {
             val url =
-                apiConfigProperty.akbUrlStatus + payment.paymentBankId + CONST_PASSWORD + payment.paymentPass +
+                apiConfigProperty.akbUrl + "/" + payment.paymentBankId + CONST_PASSWORD + payment.paymentPass +
                     CONST_URL_AKB
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
