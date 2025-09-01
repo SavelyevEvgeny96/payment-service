@@ -104,7 +104,6 @@ class PaymentServiceImpl(
                 return akbBankIntegrationService.initiateAKBPayment(
                     urlToReturn,
                     urlToReturnF,
-                    orderId,
                     paymentId,
                     paymentContext.premiumAmount,
                     orderFindByCode,
@@ -157,15 +156,27 @@ class PaymentServiceImpl(
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
-        if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+        if (checkBank != null) {
+            if (checkBank.bankId == BankEnum.GPB.value) {
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+                return gazpromService.initiateGPBSBPPayment(
+                    paymentId,
+                    paymentContext.premiumAmount,
+                    orderFindByCode,
+                    subOrder,
+                )
+            } else {
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+                return akbBankIntegrationService.initiateAKBSbpPayment(
+                    paymentId,
+                    paymentContext.premiumAmount,
+                    orderFindByCode,
+                    subOrder
+                )
+            }
+        } else {
+            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         }
-        return gazpromService.initiateGPBSBPPayment(
-            paymentId,
-            paymentContext.premiumAmount,
-            orderFindByCode,
-            subOrder,
-        )
     }
 
     override fun buildPaymentContext(

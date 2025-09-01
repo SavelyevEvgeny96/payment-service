@@ -18,6 +18,7 @@ import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.AkbCardPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
@@ -28,8 +29,20 @@ import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.SslClientProperties
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GeneratorService
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.DATA
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_CARD
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_SBP
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.ERROR_GPB_PAYMENT_PROCESSING
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.LOG_SUCCESSFUL_GPB_API_SBP
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYLOAD
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.QRC_ID
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.QR_TTL
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.QR_TYPE
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.START_METHOD_PAY_BANK_SBP
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.STATUS_CODE_SUCCESS_PAY_SBP
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.TEMPLATE_VERSION
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
 
@@ -52,7 +65,8 @@ class AkbBankIntegrationServiceImpl(
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа  БАНК РОССИЯ "
 
-        // нет кода 200 для AKB
+        const val START_METHOD_PAY_AKB_BANK_SBP = ">>> СТАРТ метода оплата по СБП  Банк Россия для платежа с payment_id: "
+        const val END__METHOD_PAY_AKB_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП  Банк Россия для платежа с payment_id: "
         const val STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK = 200
         const val LOG_SUCCESSFUL_AKB_API = "Успешный запрос к AKB API."
         const val MESSAGE_INFO_START_AKB_PAYMENT =
@@ -66,7 +80,6 @@ class AkbBankIntegrationServiceImpl(
     override fun initiateAKBPayment(
         urlToReturn: String?,
         urlToReturnF: String?,
-        orderId: String,
         paymentId: Long?,
         premiumAmount: String,
         order: Order,
@@ -153,6 +166,76 @@ class AkbBankIntegrationServiceImpl(
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
             logger.error("$ERROR_AKB_PAYMENT_PROCESSING ${e.message}")
             throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING)
+        }
+    }
+
+    override fun initiateAKBSbpPayment(
+        paymentId: Long?,
+        premiumAmount: String,
+        order: Order,
+        subOrder: SubOrder
+    ): ResponseEntity<Response<DataPay>> {
+        val traceId = getTraceId()
+        logger.info("$START_METHOD_PAY_AKB_BANK_SBP $paymentId")
+        val clientSystem = subOrder.clientSystem
+        val url = apiConfigProperty.ф
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+        val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
+        val gpbSbpPaymentRequest =
+            GPBSBPPaymentRequest(
+                amount = descAndPremiumAmountData.premiumAmount,
+                account = apiConfigProperty.paymentAccount,
+                merchantId = apiConfigProperty.merchantIdSbpGpb,
+                templateVersion = TEMPLATE_VERSION,
+                qrTtl = QR_TTL,
+                callbackMerchantNotifications = apiConfigProperty.callbackUrlSbp,
+                qrcType = QR_TYPE,
+                paymentPurpose = descAndPremiumAmountData.description,
+                currency = RUB,
+            )
+        val requestEntity = HttpEntity(gpbSbpPaymentRequest, headers)
+        try {
+            logger.info(
+                "GPB payment SBP request [traceId=$traceId]: body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
+            )
+            val responseEntity: ResponseEntity<Map<String, Any>> =
+                restTemplate.defaultRestTemplate().exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    object : ParameterizedTypeReference<Map<String, Any>>() {},
+                )
+            logger.info(LOG_SUCCESSFUL_GPB_API_SBP, traceId)
+            val responseBody = responseEntity.body
+            logger.info(
+                "GPB payment SBP response [traceId=$traceId]: body=$responseBody",
+            )
+            val qrcId = (responseBody?.get(DATA) as? Map<*, *>)?.get(QRC_ID) as? String ?: ""
+            val paymentPageUrl =
+                (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
+            val dataPay = DataPay(paymentPageUrl)
+            val result =
+                Response(
+                    status = StatusEnum.SUCCESS.value,
+                    code = STATUS_CODE_SUCCESS_PAY_SBP,
+                    traceId = traceId,
+                    data = dataPay,
+                )
+            paymentDao.paymentUpdate(paymentId, paymentPageUrl, qrcId)
+            logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
+            return ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                clientSystem,
+                traceId,
+                ActionType.PAYMENT_LINK_REQUEST_ERROR.value,
+            )
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR)
+            logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
+            throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
         }
     }
 }

@@ -10,7 +10,12 @@ interface AkbBankIntegrationService {
     fun initiateAKBPayment(
         urlToReturn: String?,
         urlToReturnF: String?,
-        orderId: String,
+        paymentId: Long?,
+        premiumAmount: String,
+        order: Order,
+        subOrder: SubOrder,
+    ): ResponseEntity<Response<DataPay>>
+    fun initiateAKBSbpPayment(
         paymentId: Long?,
         premiumAmount: String,
         order: Order,
