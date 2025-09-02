@@ -17,6 +17,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.data.DataPaymentUpdate
 import ru.sogaz.site.paymentService.dto.request.AkbCardPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -60,13 +61,16 @@ class AkbBankIntegrationServiceImpl(
         const val RU = "ru"
         const val ORDER = "order"
         const val HPP_URL = "hppUrl"
+        const val ID = "id"
         const val WITH_3DS = "WITH_3DS"
         const val ERROR_AKB_PAYMENT_PROCESSING = "Ошибка обработки платежа AKB BANK "
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа  БАНК РОССИЯ "
 
-        const val START_METHOD_PAY_AKB_BANK_SBP = ">>> СТАРТ метода оплата по СБП  Банк Россия для платежа с payment_id: "
-        const val END__METHOD_PAY_AKB_BANK_SBP = "<<< КОНЕЦ  метода оплата по СБП  Банк Россия для платежа с payment_id: "
+        const val START_METHOD_PAY_AKB_BANK_SBP =
+            ">>> СТАРТ метода оплата по СБП  Банк Россия для платежа с payment_id: "
+        const val END__METHOD_PAY_AKB_BANK_SBP =
+            "<<< КОНЕЦ  метода оплата по СБП  Банк Россия для платежа с payment_id: "
         const val STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK = 200
         const val LOG_SUCCESSFUL_AKB_API = "Успешный запрос к AKB API."
         const val MESSAGE_INFO_START_AKB_PAYMENT =
@@ -133,6 +137,8 @@ class AkbBankIntegrationServiceImpl(
             logger.info(
                 "AKB payment Card response [traceId=$traceId]: body=$responseBody",
             )
+            val paymentBankId =
+                (responseBody?.get(ORDER) as? Map<*, *>)?.get(ID) as? Int ?: 0
             val paymentPageUrl =
                 (responseBody?.get(ORDER) as? Map<*, *>)?.get(HPP_URL) as? String ?: ""
             val result =
@@ -142,7 +148,13 @@ class AkbBankIntegrationServiceImpl(
                     traceId = traceId,
                     data = DataPay(paymentPageUrl),
                 )
-            paymentDao.paymentUpdate(paymentId, paymentPageUrl, "")
+            val dataPaymentUpdate = DataPaymentUpdate(
+                paymentId,
+                paymentPageUrl,
+                "",
+                paymentBankId.toString()
+            )
+            paymentDao.paymentUpdate(dataPaymentUpdate)
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             logger.info(MESSAGE_INFO_END_AKB_PAYMENT)
             return ResponseEntity.ok(result)
@@ -178,7 +190,7 @@ class AkbBankIntegrationServiceImpl(
         val traceId = getTraceId()
         logger.info("$START_METHOD_PAY_AKB_BANK_SBP $paymentId")
         val clientSystem = subOrder.clientSystem
-        val url = apiConfigProperty.ф
+        val url = apiConfigProperty.akbSbpUrl
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
@@ -212,10 +224,20 @@ class AkbBankIntegrationServiceImpl(
             logger.info(
                 "GPB payment SBP response [traceId=$traceId]: body=$responseBody",
             )
+            val paymentBankId =
+                (responseBody?.get(ORDER) as? Map<*, *>)?.get(ID) as? Int ?: 0
             val qrcId = (responseBody?.get(DATA) as? Map<*, *>)?.get(QRC_ID) as? String ?: ""
             val paymentPageUrl =
                 (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
             val dataPay = DataPay(paymentPageUrl)
+            val dataPaymentUpdate = DataPaymentUpdate(
+                paymentId,
+                paymentPageUrl,
+                qrcId,
+                paymentBankId.toString()
+            )
+            paymentDao.paymentUpdate(dataPaymentUpdate)
+            logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
             val result =
                 Response(
                     status = StatusEnum.SUCCESS.value,
@@ -223,8 +245,6 @@ class AkbBankIntegrationServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            paymentDao.paymentUpdate(paymentId, paymentPageUrl, qrcId)
-            logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
             return ResponseEntity.ok(result)
         } catch (e: Exception) {
             paymentOperationHistoryDao.saveRecordOperationHistory(

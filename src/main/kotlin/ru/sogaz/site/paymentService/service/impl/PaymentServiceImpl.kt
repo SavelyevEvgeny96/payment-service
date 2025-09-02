@@ -144,7 +144,7 @@ class PaymentServiceImpl(
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
-        var paymentId: Long? = null
+        var paymentId: Long?
         val paymentContext =
             buildPaymentContext(
                 urlToReturn,
