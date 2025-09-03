@@ -6,7 +6,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
-import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -68,29 +67,6 @@ class GpbCallbackServiceTest {
                 "Q6WBwrZr%2BW%2BcBlZ1pBgdRcOgr2aAh8cognmOjK7iqmcl5VWIQb0x%2Br8M9COnvaNsQlbuWkc62e2EdxfHqr" +
                     "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
         )
-
-    val baseUrl = "${apiConfigProperties.hostNameApp}?"
-    val params =
-        listOf(
-            "trx_id=${testRequest.trxId}",
-            "merch_id=${testRequest.merchId}",
-            "result_code=${testRequest.resultCode}",
-            "amount=${testRequest.amount}",
-            "account_id=${testRequest.accountId ?: ""}",
-            "o.order_id=${testRequest.orderId}",
-            "p.rrn=${testRequest.rrn ?: ""}",
-            "p.authcode=${testRequest.authCode ?: ""}",
-            "p.srcType=${testRequest.srcType ?: ""}",
-            "p.maskedPan=${testRequest.maskedPan ?: ""}",
-            "p.isFullyAuthenticated=${testRequest.isFullyAuthenticated ?: ""}",
-            "p.transmissionDateTime=${testRequest.transmissionDateTime ?: ""}",
-            "discountType=${testRequest.discountType}",
-            "discountAmount=${testRequest.discountAmount}",
-            "p.paymentSystem=${testRequest.paymentSystem ?: ""}",
-            "ts=${testRequest.ts}",
-        )
-
-    val queryString = baseUrl + params.joinToString("&")
 
     @Test
     fun `processCallback should return success response when all steps are successful`() {
