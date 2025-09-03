@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.service
 
 import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
 import ru.sogaz.site.paymentService.entity.SubOrder
+import java.time.LocalDateTime
 
 interface GeneratorService {
     fun generateDescription(sabOrderList: List<SubOrder>?): String
@@ -12,4 +13,5 @@ interface GeneratorService {
         premiumAmount: String?,
         listSubOrder: List<SubOrder>?,
     ): DataDescriptionAndPremiumAmount
+    fun nowPlusFormatted(days: Long = 0, minutes: Long = 0): String
 }

@@ -4,6 +4,8 @@ import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.GeneratorService
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class GeneratorServiceImpl(
@@ -14,6 +16,8 @@ class GeneratorServiceImpl(
         const val SEPARATOR = ", №"
         const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
+        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
     }
 
     override fun generateDescription(sabOrderList: List<SubOrder>?): String {
@@ -59,6 +63,9 @@ class GeneratorServiceImpl(
             premiumAmount?.replace(".", ""),
             generateDescription(listSubOrder),
         )
+
+    override fun nowPlusFormatted(days: Long, minutes: Long): String =
+        LocalDateTime.now().plusDays(days).plusMinutes(minutes).format(formatter)
 
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
 }
