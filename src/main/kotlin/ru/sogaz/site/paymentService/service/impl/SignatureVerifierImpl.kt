@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.Security
 import java.security.Signature
-import java.util.Base64
+import java.util.*
 
 class SignatureVerifierImpl(
     private val preconfiguredSignature: Signature,
@@ -29,18 +29,12 @@ class SignatureVerifierImpl(
         queryString: String,
     ): Boolean {
         return try {
-            val hashBytes =
-                MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray(StandardCharsets.UTF_8))
 
             val decodedQueryString = java.net.URLDecoder.decode(request.signature, StandardCharsets.UTF_8)
 
             val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
-            if (verifySignatureCert(decodedSignature, hashBytes)) {
-                decodedSignature.containsSubArray(hashBytes)
-            } else {
-                false
-            }
+            verifySignatureCert(decodedSignature, queryString.toByteArray(StandardCharsets.UTF_8))
         } catch (e: Exception) {
             logger.error(VEREFIELD_FAIL)
             false
@@ -63,19 +57,4 @@ class SignatureVerifierImpl(
             logger.info(VEREFIELD_FAIL, e)
             false
         }
-
-    fun ByteArray.containsSubArray(subArray: ByteArray): Boolean {
-        if (subArray.isEmpty()) return true
-        if (size < subArray.size) return false
-
-        val lastIndex = size - subArray.size + 1
-        for (i in 0 until lastIndex) {
-            var j = 0
-            while (j < subArray.size && this[i + j] == subArray[j]) {
-                j++
-            }
-            if (j == subArray.size) return true
-        }
-        return false
-    }
 }
