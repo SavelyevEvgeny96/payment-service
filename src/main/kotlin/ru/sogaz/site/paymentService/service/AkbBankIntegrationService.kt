@@ -16,6 +16,7 @@ interface AkbBankIntegrationService {
         subOrder: SubOrder,
     ): ResponseEntity<Response<DataPay>>
     fun initiateAKBSbpPayment(
+        urlToReturn:String?,
         paymentId: Long?,
         premiumAmount: String,
         order: Order,

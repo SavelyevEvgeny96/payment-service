@@ -168,6 +168,7 @@ class PaymentServiceImpl(
             } else {
                 paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
                 return akbBankIntegrationService.initiateAKBSbpPayment(
+                    urlToReturn,
                     paymentId,
                     paymentContext.premiumAmount,
                     orderFindByCode,

@@ -18,8 +18,7 @@ import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.DataPaymentUpdate
-import ru.sogaz.site.paymentService.dto.request.AkbCardPaymentRequest
-import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
@@ -32,20 +31,15 @@ import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.DATA
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_CARD
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.END__METHOD_PAY_BANK_SBP
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.ERROR_GPB_PAYMENT_PROCESSING
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.LOG_SUCCESSFUL_GPB_API_SBP
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYLOAD
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.QRC_ID
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.QR_TTL
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.QR_TYPE
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.START_METHOD_PAY_BANK_SBP
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.STATUS_CODE_SUCCESS_PAY_SBP
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.TEMPLATE_VERSION
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
+import java.time.LocalDateTime
 
 class AkbBankIntegrationServiceImpl(
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
@@ -63,6 +57,7 @@ class AkbBankIntegrationServiceImpl(
         const val HPP_URL = "hppUrl"
         const val ID = "id"
         const val WITH_3DS = "WITH_3DS"
+        const val ERROR_AKB_PAYMENT_PROCESSING_SBP =  "Ошибка при отправке запроса для получения платежной ссылки"
         const val ERROR_AKB_PAYMENT_PROCESSING = "Ошибка обработки платежа AKB BANK "
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа  БАНК РОССИЯ "
@@ -104,7 +99,7 @@ class AkbBankIntegrationServiceImpl(
         val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
         val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
         val akbCardPaymentRequest =
-            AkbCardPaymentRequest(
+            AkbCardAndSbpPaymentRequest(
                 OrderDto(
                     typeRid = WITH_3DS,
                     amount = descAndPremiumAmountData.premiumAmount?.toInt(),
@@ -176,12 +171,13 @@ class AkbBankIntegrationServiceImpl(
                 ActionType.PAYMENT_START_REQUEST_ERROR_AKB_BANK.value,
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
-            logger.error("$ERROR_AKB_PAYMENT_PROCESSING ${e.message}")
-            throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING)
+            logger.error("$ERROR_AKB_PAYMENT_PROCESSING_SBP ${e.message}")
+            throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING_SBP)
         }
     }
 
     override fun initiateAKBSbpPayment(
+        urlToReturn: String?,
         paymentId: Long?,
         premiumAmount: String,
         order: Order,
@@ -191,29 +187,33 @@ class AkbBankIntegrationServiceImpl(
         logger.info("$START_METHOD_PAY_AKB_BANK_SBP $paymentId")
         val clientSystem = subOrder.clientSystem
         val url = apiConfigProperty.akbSbpUrl
+        val urlTuSuccess = urlToReturn ?: apiConfigProperty.backUrlS
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
         val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
-        val gpbSbpPaymentRequest =
-            GPBSBPPaymentRequest(
-                amount = descAndPremiumAmountData.premiumAmount,
-                account = apiConfigProperty.paymentAccount,
-                merchantId = apiConfigProperty.merchantIdSbpGpb,
-                templateVersion = TEMPLATE_VERSION,
-                qrTtl = QR_TTL,
-                callbackMerchantNotifications = apiConfigProperty.callbackUrlSbp,
-                qrcType = QR_TYPE,
-                paymentPurpose = descAndPremiumAmountData.description,
-                currency = RUB,
+        val akbCardPaymentRequest =
+            AkbCardAndSbpPaymentRequest(
+                OrderDto(
+                    typeRid = WITH_3DS,
+                    amount = descAndPremiumAmountData.premiumAmount?.toInt(),
+                    currency = RUB,
+                    hppRedirectUrl = urlTuSuccess,
+                    ridByMerchant = paymentId.toString(),
+                    adviceIfaceAddress = urlTuSuccess,
+                    description = descAndPremiumAmountData.description,
+                    descriptionHtml = descAndPremiumAmountData.description,
+                    language = RU,
+                    expTime = LocalDateTime.now().plusMinutes(15).toString()
+                ),
             )
-        val requestEntity = HttpEntity(gpbSbpPaymentRequest, headers)
+        val requestEntity = HttpEntity(akbCardPaymentRequest, headers)
         try {
             logger.info(
-                "GPB payment SBP request [traceId=$traceId]: body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
+                "AKB payment SBP request [traceId=$traceId]: body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
             )
             val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.defaultRestTemplate().exchange(
+                restTemplate.xpgRestTemplate(props).exchange(
                     url,
                     HttpMethod.POST,
                     requestEntity,
@@ -222,7 +222,7 @@ class AkbBankIntegrationServiceImpl(
             logger.info(LOG_SUCCESSFUL_GPB_API_SBP, traceId)
             val responseBody = responseEntity.body
             logger.info(
-                "GPB payment SBP response [traceId=$traceId]: body=$responseBody",
+                "AKB payment SBP response [traceId=$traceId]: body=$responseBody",
             )
             val paymentBankId =
                 (responseBody?.get(ORDER) as? Map<*, *>)?.get(ID) as? Int ?: 0
@@ -237,11 +237,11 @@ class AkbBankIntegrationServiceImpl(
                 paymentBankId.toString()
             )
             paymentDao.paymentUpdate(dataPaymentUpdate)
-            logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
+            logger.info("$END__METHOD_PAY_AKB_BANK_SBP $paymentId")
             val result =
                 Response(
                     status = StatusEnum.SUCCESS.value,
-                    code = STATUS_CODE_SUCCESS_PAY_SBP,
+                    code = 200,
                     traceId = traceId,
                     data = dataPay,
                 )
@@ -253,7 +253,7 @@ class AkbBankIntegrationServiceImpl(
                 traceId,
                 ActionType.PAYMENT_LINK_REQUEST_ERROR.value,
             )
-            logger.info(SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR)
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
         }
