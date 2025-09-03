@@ -164,6 +164,7 @@ class PaymentController(
         @RequestParam("discountType") discountType: String?,
         @RequestParam("discountAmount") discountAmount: String?,
         @RequestParam(value = "p.paymentSystem", required = false) paymentSystem: String?,
+        @RequestParam(value = "p.issuerName", required = false) issuerName: String?,
         @RequestParam("ts") ts: String?,
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
@@ -185,6 +186,7 @@ class PaymentController(
                 discountType,
                 discountAmount,
                 paymentSystem,
+                issuerName,
                 ts,
                 signature,
             )

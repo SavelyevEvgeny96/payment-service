@@ -71,6 +71,7 @@ class GpbCallbackServiceImpl(
             if (request.discountType != null) params.add("discountType=${request.discountType}")
             if (request.discountAmount != null) params.add("discountAmount=${request.discountAmount}")
             request.paymentSystem?.let { if (it.isNotEmpty()) params.add("p.paymentSystem=$it") }
+            request.issuerName?.let { if (it.isNotEmpty()) params.add("p.issuerName=$it") }
             if (request.ts != null) params.add("ts=${request.ts}")
 
             val queryString = baseUrl + params.joinToString("&")
