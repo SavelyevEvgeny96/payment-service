@@ -31,8 +31,10 @@ class SignatureVerifierImpl(
         return try {
             val hashBytes =
                 MessageDigest.getInstance("SHA-256").digest(queryString.toByteArray(StandardCharsets.UTF_8))
-            val decodedSignature = Base64.getDecoder().decode(request.signature)
 
+            val decodedQueryString = java.net.URLDecoder.decode(request.signature, StandardCharsets.UTF_8)
+
+            val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
             if (verifySignatureCert(decodedSignature, hashBytes)) {
                 decodedSignature.containsSubArray(hashBytes)
