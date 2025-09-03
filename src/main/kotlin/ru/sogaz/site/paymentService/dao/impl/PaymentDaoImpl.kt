@@ -3,12 +3,16 @@ package ru.sogaz.site.paymentService.dao.impl
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.ERROR_UPDATE_PAYMENT_RECORD
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYMENT_STATUS_REG
 
 class PaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
+    private val paymentStatusDao: PaymentStatusDao,
 ) : PaymentDao {
     companion object {
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
@@ -39,13 +43,15 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$PAYMENT_NOT_FOUND ${e.message}")
         }
 
-    override fun save(payment: Payment) {
-        try {
-            paymentRepository.save(payment)
-        } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
-            throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
-        }
+    override fun save(payment: Payment): Long? {
+        val saved =
+            try {
+                paymentRepository.save(payment)
+            } catch (e: Exception) {
+                logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
+                throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
+            }
+        return saved.id
     }
 
     override fun findByPaymentBankId(paymentId: String): Payment =
@@ -55,4 +61,25 @@ class PaymentDaoImpl(
             logger.error(e, LOG_ERROR_PAYMENT_FIND)
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
+
+    override fun paymentUpdate(
+        paymentId: Long?,
+        paymentPageUrl: String,
+        qtcId: String,
+    ) {
+        val traceId = getTraceId()
+        if (paymentId != null) {
+            val getPaymentForUpdate = getPayment(traceId, paymentId)
+            val paymentStatusREG = paymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
+            getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
+            getPaymentForUpdate?.stateId = paymentStatusREG
+            getPaymentForUpdate?.qrcId = qtcId
+            if (getPaymentForUpdate != null) {
+                paymentRepository.save(getPaymentForUpdate)
+            }
+        } else {
+            logger.error(ERROR_UPDATE_PAYMENT_RECORD)
+            throw InnerException(traceId, ERROR_UPDATE_PAYMENT_RECORD)
+        }
+    }
 }

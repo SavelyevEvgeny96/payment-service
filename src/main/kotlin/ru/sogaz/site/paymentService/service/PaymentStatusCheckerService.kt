@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.service
 
-import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.siter.models.resonses.Response

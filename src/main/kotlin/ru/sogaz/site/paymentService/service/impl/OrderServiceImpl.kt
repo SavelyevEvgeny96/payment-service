@@ -5,18 +5,19 @@ import org.springframework.http.ResponseEntity
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.GetClientSystemDao
+import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
-import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
-import ru.sogaz.site.paymentService.dto.DataOrder
-import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl.Companion.BANK_RESERVE
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
@@ -26,22 +27,19 @@ import java.math.RoundingMode
 
 class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
-    private val getClientSystemDao: GetClientSystemDao,
-    private val orderRepository: OrderRepository,
-    private val subOrderRepository: SubOrderRepository,
+    private val clientSystemDao: ClientSystemDao,
     private val bankDao: BankDao,
     private val generatorService: GeneratorService,
     private val orderStatusDao: OrderStatusDao,
     private val orderDao: OrderDao,
+    private val subOrderDao: SubOrderDao,
 ) : OrderService {
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val STATE_ID_NEW = "NEW"
         const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
         const val STATUS_CODE_SUCCESS_GET_ORDER_STATUS = 1201503200
-        const val SUCCESS = "SUCCESS"
         const val LOG_START_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки для orderId: "
         const val LOG_END_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки  stateId =  "
         const val LOG_START_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
@@ -75,8 +73,14 @@ class OrderServiceImpl(
         logger.info("$LOG_PAYMENT_ID_GENERATED $orderId")
 
         val requestBankId = requestWrapper.bank
-        val bank = bankDao.getBank(requestBankId, traceId)
-        val orderStatus = orderStatusDao.getOrderStatus(traceId, STATE_ID_NEW)
+        val bank =
+            if (requestBankId == null) {
+                bankDao.getBank(null, traceId, BANK_RESERVE)
+            } else {
+                bankDao.getBank(requestBankId, traceId, null)
+            }
+
+        val orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.NEW.value)
         val order =
             Order(
                 orderId = orderId,
@@ -84,14 +88,14 @@ class OrderServiceImpl(
                 orderStatus = orderStatus,
                 dateDelete = null,
                 paymentEndDate = requestWrapper.paymentEndDate,
-                premiumAmount = null,
+                premiumAmount = "",
                 urlToDecline = requestWrapper.urlToDecline,
                 urlToReturn = requestWrapper.urlToReturn,
                 recipientEmail = requestWrapper.recipientEmail,
             )
 
         try {
-            orderRepository.save(order)
+            orderDao.save(order)
             logger.info("$LOG_ORDER_CREATION_SUCCESS $orderId")
         } catch (e: Exception) {
             logger.error(e, "$LOG_ERROR_WHILE_CREATING_ORDER $traceId")
@@ -101,7 +105,7 @@ class OrderServiceImpl(
         for (paymentRequest in requestWrapper.payments) {
             val subOrderId = generatorService.generateUniquePaymentId()
             logger.info("$LOG_PAYMENT_SUB_ORDER_ID_GENERATED $subOrderId")
-            val clientSystem = getClientSystemDao.getClientSystem(traceId, paymentRequest.externalSystemCode)
+            val clientSystem = clientSystemDao.getClientSystem(traceId, paymentRequest.externalSystemCode)
             val subOrders =
                 SubOrder(
                     subOrderId = subOrderId,
@@ -122,7 +126,7 @@ class OrderServiceImpl(
             }
 
             try {
-                subOrderRepository.save(subOrders)
+                subOrderDao.save(subOrders)
                 logger.info("$LOG_SUB_ORDER_CREATION_SUCCESS $subOrderId")
             } catch (e: Exception) {
                 logger.error(e, LOG_ERROR_WHILE_CREATING_SUB_ORDER, traceId)
@@ -130,7 +134,7 @@ class OrderServiceImpl(
             }
             order.premiumAmount = totalPremiumAmount.setScale(2, RoundingMode.HALF_UP).toString()
             try {
-                orderRepository.save(order)
+                orderDao.save(order)
                 logger.info(LOG_ORDER_UPDATED_WITH_PREMIUM)
             } catch (e: Exception) {
                 logger.error(e, LOG_ERROR_WHILE_UPDATING_ORDER, traceId)
@@ -143,7 +147,7 @@ class OrderServiceImpl(
             val dataOrder = DataOrder(orderId, paymentPageUrl)
             result =
                 Response(
-                    status = SUCCESS,
+                    status = StatusEnum.SUCCESS.value,
                     code = STATUS_CODE_SUCCESS,
                     traceId = traceId,
                     data = dataOrder,

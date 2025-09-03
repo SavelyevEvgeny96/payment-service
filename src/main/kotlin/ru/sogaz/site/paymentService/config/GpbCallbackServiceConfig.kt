@@ -8,9 +8,8 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.enums.ActionEnum
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -27,14 +26,11 @@ class GpbCallbackServiceConfig(
         orderDao: OrderDao,
         paymentOperationHistoryDao: PaymentOperationHistoryDao,
         signatureVerifier: SignatureVerifier,
-        getPaymentStatusDao: GetPaymentStatusDao,
+        paymentStatusDao: PaymentStatusDao,
         getOrderStatusDao: OrderStatusDao,
         apiConfigProperties: ApiConfigProperties,
         callbackPaymentDao: CallbackPaymentDao,
     ): GpbCallbackService {
-        val callbackActions =
-            actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATED_ACTION.value)
-
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
 
@@ -43,9 +39,8 @@ class GpbCallbackServiceConfig(
             orderDao = orderDao,
             paymentOperationHistoryDao = paymentOperationHistoryDao,
             signatureVerifier = signatureVerifier,
-            getPaymentStatusDao = getPaymentStatusDao,
+            paymentStatusDao = paymentStatusDao,
             getOrderStatusDao = getOrderStatusDao,
-            callbackAction = callbackActions,
             payClientSystem = payClientSystems,
             apiConfigProperties = apiConfigProperties,
             callbackPaymentDao = callbackPaymentDao,

@@ -15,11 +15,11 @@ data class ChequeSent(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @Column(name = "payment_bank_id")
-    val paymentBankId: String?,
+    val paymentBankId: String? = null,
     @Column(name = "status")
-    val status: String,
+    val status: String = "",
     @Column(name = "date_create")
-    val dateCreate: LocalDateTime,
+    val dateCreate: LocalDateTime = LocalDateTime.now(),
     @Column(name = "date_update")
-    val dateUpdate: LocalDateTime,
+    val dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

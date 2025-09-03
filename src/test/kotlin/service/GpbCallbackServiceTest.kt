@@ -11,8 +11,8 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
-import ru.sogaz.site.paymentService.entity.ActionType
+import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -25,12 +25,11 @@ class GpbCallbackServiceTest {
     private val paymentDao = mock<PaymentDao>()
     private val orderDao = mock<OrderDao>()
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
-    private val getPaymentStatusDao = mock<GetPaymentStatusDao>()
+    private val paymentStatusDao = mock<PaymentStatusDao>()
     private val getOrderStatusDao = mock<OrderStatusDao>()
     private val apiConfigProperties = mock<ApiConfigProperties>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
 
-    private val callbackAction = ActionType(1, "Заказ оплачен")
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val service =
@@ -39,9 +38,8 @@ class GpbCallbackServiceTest {
             orderDao,
             paymentOperationHistoryDao,
             signatureVerifier,
-            getPaymentStatusDao,
+            paymentStatusDao,
             getOrderStatusDao,
-            callbackAction,
             payClientSystem,
             apiConfigProperties,
             callbackPaymentDao,
@@ -70,6 +68,29 @@ class GpbCallbackServiceTest {
                 "Q6WBwrZr%2BW%2BcBlZ1pBgdRcOgr2aAh8cognmOjK7iqmcl5VWIQb0x%2Br8M9COnvaNsQlbuWkc62e2EdxfHqr" +
                     "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
         )
+
+    val baseUrl = "${apiConfigProperties.hostNameApp}?"
+    val params =
+        listOf(
+            "trx_id=${testRequest.trxId}",
+            "merch_id=${testRequest.merchId}",
+            "result_code=${testRequest.resultCode}",
+            "amount=${testRequest.amount}",
+            "account_id=${testRequest.accountId ?: ""}",
+            "o.order_id=${testRequest.orderId}",
+            "p.rrn=${testRequest.rrn ?: ""}",
+            "p.authcode=${testRequest.authCode ?: ""}",
+            "p.srcType=${testRequest.srcType ?: ""}",
+            "p.maskedPan=${testRequest.maskedPan ?: ""}",
+            "p.isFullyAuthenticated=${testRequest.isFullyAuthenticated ?: ""}",
+            "p.transmissionDateTime=${testRequest.transmissionDateTime ?: ""}",
+            "discountType=${testRequest.discountType}",
+            "discountAmount=${testRequest.discountAmount}",
+            "p.paymentSystem=${testRequest.paymentSystem ?: ""}",
+            "ts=${testRequest.ts}",
+        )
+
+    val queryString = baseUrl + params.joinToString("&")
 
     @Test
     fun `processCallback should return success response when all steps are successful`() {

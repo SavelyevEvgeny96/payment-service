@@ -1,45 +1,45 @@
 package ru.sogaz.site.paymentService.dao.impl
 
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.BankDao
+import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.entity.Bank
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.BankRepository
-import ru.sogaz.site.paymentService.repository.ConfigDataRepository
+import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.TRUE
 
 class BankDaoImpl(
     private val bankRepository: BankRepository,
-    private val configDataRepository: ConfigDataRepository,
+    private val configDataDao: ConfigDataDao,
 ) : BankDao {
     private val logger = loggerFor(javaClass)
 
     companion object {
         const val BANK_PRIORITY = "bankPriority"
-        const val LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND = "Не найдено значение bankPriority"
+        const val BANK_RESERVE = "bankReserve"
+
+        const val LOG_INFO_BANK_PRIORITY_TRUE =
+            "Выставлен параметр bankPriority \"true\"." +
+                "Все операции будут проводиться по банку:  "
+        const val LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE = "Параметр bank_id = null оплата по резервному банку: "
     }
 
     override fun getBank(
         bankId: String?,
         traceId: String,
+        checkBankPriority: String?,
     ): Bank {
-        val bank =
-            if (bankId.isNullOrBlank()) {
-                val reserveConfigBank = getBankPriority(traceId)
-                bankRepository.findByBankId(reserveConfigBank)
-            } else {
-                bankRepository.findByBankId(bankId)
-            }
+        val bank: Bank?
+        if (checkBankPriority == TRUE) {
+            val priorityBankName = configDataDao.getBankInfoFromConfigData(traceId, BANK_PRIORITY)
+            bank = bankRepository.findByBankId(priorityBankName)
+            logger.info("$LOG_INFO_BANK_PRIORITY_TRUE ${bank.bankName}")
+        } else if (bankId.isNullOrBlank()) {
+            val reserveBankName = configDataDao.getBankInfoFromConfigData(traceId, BANK_RESERVE)
+            bank = bankRepository.findByBankId(reserveBankName)
+            logger.info("$LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE ${bank.bankName}")
+        } else {
+            bank = bankRepository.findByBankId(bankId)
+        }
         return bank
-    }
-
-    override fun getBankPriority(traceId: String): String {
-        val config =
-            try {
-                configDataRepository.findByParamName(BANK_PRIORITY)
-            } catch (e: Exception) {
-                logger.error(e, LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND)
-                throw InnerException(traceId, LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND)
-            }
-        return config.paramValue
     }
 }
