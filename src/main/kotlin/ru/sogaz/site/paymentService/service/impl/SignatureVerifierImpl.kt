@@ -5,10 +5,9 @@ import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 import java.security.Security
 import java.security.Signature
-import java.util.*
+import java.util.Base64
 
 class SignatureVerifierImpl(
     private val preconfiguredSignature: Signature,
@@ -24,31 +23,23 @@ class SignatureVerifierImpl(
         const val SIGNATURE_NULL = "Строка &signature= пуста"
     }
 
-    override fun verifySignature(
-        request: GpbCallbackRequest,
-        queryString: String,
-    ): Boolean {
-        return try {
-
+    override fun verifySignature(request: GpbCallbackRequest): Boolean =
+        try {
             val decodedQueryString = java.net.URLDecoder.decode(request.signature, StandardCharsets.UTF_8)
 
             val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
-            verifySignatureCert(decodedSignature, queryString.toByteArray(StandardCharsets.UTF_8))
+            verifySignatureCert(decodedSignature)
         } catch (e: Exception) {
             logger.error(VEREFIELD_FAIL)
             false
         }
-    }
 
-    private fun verifySignatureCert(
-        signature: ByteArray,
-        hash: ByteArray
-    ): Boolean =
+    private fun verifySignatureCert(signature: ByteArray): Boolean =
         try {
             synchronized(preconfiguredSignature) {
                 preconfiguredSignature.apply {
-                    update(hash)
+                    update(signature)
                     verify(signature)
                 }
             }

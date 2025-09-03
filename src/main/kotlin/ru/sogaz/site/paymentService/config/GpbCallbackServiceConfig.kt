@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.GetPaymentStatusDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
@@ -29,6 +30,7 @@ class GpbCallbackServiceConfig(
         getPaymentStatusDao: GetPaymentStatusDao,
         getOrderStatusDao: OrderStatusDao,
         apiConfigProperties: ApiConfigProperties,
+        callbackPaymentDao: CallbackPaymentDao,
     ): GpbCallbackService {
         val callbackActions =
             actionTypeRepository.findByActionName(ActionEnum.RECEIPT_GENERATED_ACTION.value)
@@ -46,6 +48,7 @@ class GpbCallbackServiceConfig(
             callbackAction = callbackActions,
             payClientSystem = payClientSystems,
             apiConfigProperties = apiConfigProperties,
+            callbackPaymentDao = callbackPaymentDao,
         )
     }
 }

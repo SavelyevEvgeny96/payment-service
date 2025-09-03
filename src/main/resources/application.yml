@@ -54,7 +54,6 @@ api:
     merchantId: ${GPB_MERCHANT_ID:}
     backUrlS: ${BACK_URL_SUCCESS:http:}
     backUrlF: ${BACK_URL_FALSE:}
-    hostNameApp: ${HOSTNAME_APP:https://test-pay.sogaz.ru/payment/gpb/state}
 
   receipt:
     receiptUrl: ${RECEIPT_URL:}
