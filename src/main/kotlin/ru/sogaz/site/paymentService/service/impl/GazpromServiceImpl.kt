@@ -31,6 +31,8 @@ import ru.sogaz.site.paymentService.service.GazpromService
 import ru.sogaz.site.paymentService.service.GeneratorService
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
+import java.time.Duration
+import java.time.Instant
 
 class GazpromServiceImpl(
     private val generatorService: GeneratorService,
@@ -116,95 +118,60 @@ class GazpromServiceImpl(
         paymentId: Long?,
         premiumAmount: String,
         order: Order,
-        subOrder: SubOrder,
+        subOrder: SubOrder
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$START_METHOD_PAY_BANK_CARD $paymentId")
         val clientSystem = subOrder.clientSystem
+
         paymentOperationHistoryDao.saveRecordOperationHistory(
-            order,
-            clientSystem,
-            traceId,
-            ActionType.SEND_PAYMENT_START_REQUEST.value,
+            order, clientSystem, traceId, ActionType.SEND_PAYMENT_START_REQUEST.value
         )
-        logger.info("$SAVE_OPERATION_HISTORY_START_PAY ${ActionType.SEND_PAYMENT_START_REQUEST.value}")
-        val url =
-            "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${tokenGpb}${PaymentServiceImpl.START_PREFIX}"
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.APPLICATION_JSON
-        val urlTuReturn = urlToReturnF ?: apiConfigProperty.backUrlF
-        val urlTuSuccess = urlToReturn ?: apiConfigProperty.backUrlS
+
+        val url = "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}$tokenGpb${PaymentServiceImpl.START_PREFIX}"
+
+        val urlSuccess = urlToReturn ?: apiConfigProperty.backUrlS
+        val urlFail = urlToReturnF ?: apiConfigProperty.backUrlF
+
         val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
         val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
-        val gpbPaymentRequest =
-            GPBPaymentRequest(
-                portalId = apiConfigProperty.portalId,
-                token = tokenGpb,
-                merchantId = apiConfigProperty.merchantId,
-                orderId = orderId,
-                backUrlS = urlTuSuccess,
-                backUrlF = urlTuReturn,
-                amount = descAndPremiumAmountData.premiumAmount,
-                description = descAndPremiumAmountData.description,
-                currency = RUB,
-                state =
-                    State(
-                        redirect = PAYMENT_PAGE,
-                    ),
-            )
 
-        val requestEntity = HttpEntity(gpbPaymentRequest, headers)
-        try {
-            logger.info(
-                "GPB payment Card request [traceId=$traceId]:  body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
-            )
-            val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.defaultRestTemplate().exchange(
-                    url,
-                    HttpMethod.POST,
-                    requestEntity,
-                    object : ParameterizedTypeReference<Map<String, Any>>() {},
-                )
+        val gpbPaymentRequest = buildGpbCardOrderDto(
+            urlToReturn = urlSuccess,
+            urlToReturnF = urlFail,
+            orderId = orderId,
+            tokenGpb = tokenGpb,
+            description = descAndPremiumAmountData.description,
+            amount = descAndPremiumAmountData.premiumAmount
+        )
+        return try {
+            val response = postJsonGpb<Map<String, Any>>(url, gpbPaymentRequest)
             logger.info(LOG_SUCCESSFUL_GPB_API, traceId)
-            val responseBody = responseEntity.body
-            logger.info(
-                "GPB payment Card response [traceId=$traceId]: body=$responseBody",
-            )
-            val paymentPageUrl =
-                (responseBody?.get(OPTIONS) as? Map<*, *>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
+
+            val responseBody = response.body
+            val paymentPageUrl = (responseBody?.get(OPTIONS) as? Map<*, *>)?.get(PAYMENT_PAGE_URL) as? String ?: ""
+
             val dataPay = DataPay(paymentPageUrl)
-            val result =
-                Response(
-                    status = StatusEnum.SUCCESS.value,
-                    code = STATUS_CODE_SUCCESS_PAY_CARD_GAZPROM,
-                    traceId = traceId,
-                    data = dataPay,
-                )
-            val dataPaymentUpdate = DataPaymentUpdate(
-                paymentId,
-                paymentPageUrl,
-                "",
-                tokenGpb
+            val result = Response(
+                status = StatusEnum.SUCCESS.value,
+                code = STATUS_CODE_SUCCESS_PAY_CARD_GAZPROM,
+                traceId = traceId,
+                data = dataPay
             )
+            val dataPaymentUpdate = DataPaymentUpdate(paymentId, paymentPageUrl, "", tokenGpb)
             paymentDao.paymentUpdate(dataPaymentUpdate)
-            logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
-            return ResponseEntity.ok(result)
+
+            ResponseEntity.ok(result)
         } catch (erst: RestClientException) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
-                order,
-                clientSystem,
-                traceId,
-                ActionType.PAYMENT_START_REQUEST_ERROR.value,
+                order, clientSystem, traceId, ActionType.PAYMENT_START_REQUEST_ERROR.value
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
             logger.error("$ERROR_GPB_PAYMENT_PROCESSING ${erst.message}")
             throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         } catch (e: Exception) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
-                order,
-                clientSystem,
-                traceId,
-                ActionType.PAYMENT_START_REQUEST_ERROR.value,
+                order, clientSystem, traceId, ActionType.PAYMENT_START_REQUEST_ERROR.value
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR)
             logger.error("$ERROR_GPB_PAYMENT_PROCESSING ${e.message}")
@@ -216,83 +183,106 @@ class GazpromServiceImpl(
         paymentId: Long?,
         premiumAmount: String,
         order: Order,
-        subOrder: SubOrder,
+        subOrder: SubOrder
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$START_METHOD_PAY_BANK_SBP $paymentId")
         val clientSystem = subOrder.clientSystem
+
         paymentOperationHistoryDao.saveRecordOperationHistory(
-            order,
-            clientSystem,
-            traceId,
-            ActionType.GET_PAYMENT_LINK.value,
+            order, clientSystem, traceId, ActionType.GET_PAYMENT_LINK.value
         )
-        logger.info("$SAVE_OPERATION_HISTORY_START_PAY ${ActionType.GET_PAYMENT_LINK.value}")
-        val url = apiConfigProperty.gpbSbpUrl
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.APPLICATION_JSON
+
         val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
         val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
-        val gpbSbpPaymentRequest =
-            GPBSBPPaymentRequest(
-                amount = descAndPremiumAmountData.premiumAmount,
-                account = apiConfigProperty.paymentAccount,
-                merchantId = apiConfigProperty.merchantIdSbpGpb,
-                templateVersion = TEMPLATE_VERSION,
-                qrTtl = QR_TTL,
-                callbackMerchantNotifications = apiConfigProperty.callbackUrlSbp,
-                qrcType = QR_TYPE,
-                paymentPurpose = descAndPremiumAmountData.description,
-                currency = RUB,
-            )
-        val requestEntity = HttpEntity(gpbSbpPaymentRequest, headers)
-        try {
-            logger.info(
-                "GPB payment SBP request [traceId=$traceId]: body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
-            )
-            val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.defaultRestTemplate().exchange(
-                    url,
-                    HttpMethod.POST,
-                    requestEntity,
-                    object : ParameterizedTypeReference<Map<String, Any>>() {},
-                )
+
+        val gpbSbpPaymentRequest = buildGpbSbpOrderDto(
+            description = descAndPremiumAmountData.description,
+            amount = descAndPremiumAmountData.premiumAmount
+        )
+
+        return try {
+            val response = postJsonGpb<Map<String, Any>>(apiConfigProperty.gpbSbpUrl, gpbSbpPaymentRequest)
             logger.info(LOG_SUCCESSFUL_GPB_API_SBP, traceId)
-            val responseBody = responseEntity.body
-            logger.info(
-                "GPB payment SBP response [traceId=$traceId]: body=$responseBody",
-            )
-            val transactionId = (responseBody?.get(TRANSACTION_ID) as? Map<*, *>).toString()
+
+            val responseBody = response.body
             val qrcId = (responseBody?.get(DATA) as? Map<*, *>)?.get(QRC_ID) as? String ?: ""
-            val paymentPageUrl =
-                (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
+            val paymentPageUrl = (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
+            val transactionId = (responseBody?.get(TRANSACTION_ID) as? Map<*, *>)?.toString() ?: ""
+
             val dataPay = DataPay(paymentPageUrl)
-            val result =
-                Response(
-                    status = StatusEnum.SUCCESS.value,
-                    code = STATUS_CODE_SUCCESS_PAY_SBP,
-                    traceId = traceId,
-                    data = dataPay,
-                )
-            val dataPaymentUpdate = DataPaymentUpdate(
-                paymentId,
-                paymentPageUrl,
-                qrcId,
-                transactionId
+            val result = Response(
+                status = StatusEnum.SUCCESS.value,
+                code = STATUS_CODE_SUCCESS_PAY_SBP,
+                traceId = traceId,
+                data = dataPay
             )
+            val dataPaymentUpdate = DataPaymentUpdate(paymentId, paymentPageUrl, qrcId, transactionId)
             paymentDao.paymentUpdate(dataPaymentUpdate)
-            logger.info("$END__METHOD_PAY_BANK_SBP $paymentId")
-            return ResponseEntity.ok(result)
+
+            ResponseEntity.ok(result)
         } catch (e: Exception) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
-                order,
-                clientSystem,
-                traceId,
-                ActionType.PAYMENT_LINK_REQUEST_ERROR.value,
+                order, clientSystem, traceId, ActionType.PAYMENT_LINK_REQUEST_ERROR.value
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR)
             logger.error(e, ERROR_GPB_PAYMENT_PROCESSING + traceId)
             throw InnerException(traceId, ERROR_GPB_PAYMENT_PROCESSING + e.message)
         }
     }
+
+    private inline fun <reified T> postJsonGpb(
+        url: String,
+        body: Any
+    ): ResponseEntity<T> {
+        val entity = HttpEntity(body, generatorService.jsonHeaders())
+
+        logger.info("GPB request url=$url: body=${objectMapper.writeValueAsString(body)}")
+
+        val start = Instant.now()
+        val response = restTemplate
+            .defaultRestTemplate()
+            .exchange(url, HttpMethod.POST, entity, object : ParameterizedTypeReference<T>() {})
+        val duration = Duration.between(start, Instant.now())
+
+        logger.info(
+            "GPB response url=$url: status=${response.statusCode}, body=${response.body}, took=${generatorService.formatDuration(duration)}"
+        )
+
+        return response
+    }
+    private fun buildGpbCardOrderDto(
+        urlToReturn: String,
+        urlToReturnF: String,
+        orderId: String,
+        tokenGpb: String,
+        description: String,
+        amount: String?
+    ) = GPBPaymentRequest(
+        portalId = apiConfigProperty.portalId,
+        token = tokenGpb,
+        merchantId = apiConfigProperty.merchantId,
+        orderId = orderId,
+        backUrlS = urlToReturn,
+        backUrlF = urlToReturnF,
+        amount = amount,
+        description = description,
+        currency = RUB,
+        state = State(redirect = PAYMENT_PAGE)
+    )
+
+    private fun buildGpbSbpOrderDto(
+        description: String,
+        amount: String?
+    ) = GPBSBPPaymentRequest(
+        amount = amount,
+        account = apiConfigProperty.paymentAccount,
+        merchantId = apiConfigProperty.merchantIdSbpGpb,
+        templateVersion = TEMPLATE_VERSION,
+        qrTtl = QR_TTL,
+        callbackMerchantNotifications = apiConfigProperty.callbackUrlSbp,
+        qrcType = QR_TYPE,
+        paymentPurpose = description,
+        currency = RUB
+    )
 }

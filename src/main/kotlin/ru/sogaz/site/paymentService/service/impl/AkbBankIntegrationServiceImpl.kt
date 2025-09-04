@@ -241,7 +241,7 @@ class AkbBankIntegrationServiceImpl(
         url: String,
         body: Any
     ): ResponseEntity<T> {
-        val entity = HttpEntity(body, jsonHeaders())
+        val entity = HttpEntity(body, generatorService.jsonHeaders())
 
         logger.info("AKB request url=$url: body=${objectMapper.writeValueAsString(body)}")
 
@@ -252,7 +252,7 @@ class AkbBankIntegrationServiceImpl(
         val duration = Duration.between(start, Instant.now())
 
         logger.info(
-            "AKB response url=$url: status=${response.statusCode}, body=${response.body}, took=${formatDuration(duration)}"
+            "AKB response url=$url: status=${response.statusCode}, body=${response.body}, took=${generatorService.formatDuration(duration)}"
         )
 
         return response
@@ -310,12 +310,12 @@ class AkbBankIntegrationServiceImpl(
             val response: ResponseEntity<Map<String, Any>> = postJson(url, body)
             val duration = Duration.between(start, Instant.now())
             logger.info(
-                "setSrcToken success (took ${formatDuration(duration)}): ${response.body}"
+                "setSrcToken success (took ${generatorService.formatDuration(duration)}): ${response.body}"
             )
         } catch (e: Exception) {
             val duration = Duration.between(start, Instant.now())
             logger.info(
-                "Ошибка setSrcToken (after ${formatDuration(duration)}): ${e.message}"
+                "Ошибка setSrcToken (after ${generatorService.formatDuration(duration)}): ${e.message}"
             )
             throw InnerException(traceId, "Ошибка при установке SRC-токена: ${e.message}")
         }
@@ -341,7 +341,7 @@ class AkbBankIntegrationServiceImpl(
             response = postJson(url, body)
             val duration = Duration.between(start, Instant.now())
             logger.info(
-                "preparePushTran success (took ${formatDuration(duration)}): ${response.body}"
+                "preparePushTran success (took ${generatorService.formatDuration(duration)}): ${response.body}"
             )
             response.body
                 ?.specificByPm
@@ -350,24 +350,12 @@ class AkbBankIntegrationServiceImpl(
         } catch (e: Exception) {
             val duration = Duration.between(start, Instant.now())
             logger.error(
-                "Ошибка получения qrcPayload (after ${formatDuration(duration)}): ${e.message}"
+                "Ошибка получения qrcPayload (after ${generatorService.formatDuration(duration)}): ${e.message}"
             )
             throw InnerException(traceId, "Ошибка при подготовке push-транзакции: ${e.message}")
         }
     }
 
-    private fun formatDuration(duration: Duration): String {
-        val totalSeconds = duration.toMillis() / 1000.0
-        val minutes = (totalSeconds / 60).toInt()
-        val seconds = totalSeconds % 60
-        return if (minutes > 0) {
-            "${minutes}m${"%.1f".format(seconds)}s"
-        } else {
-            "%.1fs".format(seconds)
-        }
-    }
 
-    private fun jsonHeaders(): HttpHeaders = HttpHeaders().apply {
-        contentType = MediaType.APPLICATION_JSON
-    }
+
 }
