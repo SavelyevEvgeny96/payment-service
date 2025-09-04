@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -26,6 +27,7 @@ class GpbCallbackServiceConfig(
         paymentStatusDao: PaymentStatusDao,
         getOrderStatusDao: OrderStatusDao,
         apiConfigProperties: ApiConfigProperties,
+        callbackPaymentDao: CallbackPaymentDao,
     ): GpbCallbackService {
         val payClientSystems =
             clientSystemRepository.findByExternalSystemCode("PAY")
@@ -39,6 +41,7 @@ class GpbCallbackServiceConfig(
             getOrderStatusDao = getOrderStatusDao,
             payClientSystem = payClientSystems,
             apiConfigProperties = apiConfigProperties,
+            callbackPaymentDao = callbackPaymentDao,
         )
     }
 }

@@ -16,6 +16,7 @@ data class GpbCallbackRequest(
     val discountType: String?,
     val discountAmount: String?,
     val paymentSystem: String?,
+    val issuerName: String?,
     val ts: String?,
     val signature: String,
 )
