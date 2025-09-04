@@ -55,8 +55,6 @@ class PaymentServiceImpl(
         const val PAYMENT_TYPE_PAY = "bankCard"
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val RUB = "RUB"
-        const val PAYMENT_PREFIX = "/payment/"
-        const val START_PREFIX = "/start"
         const val TOKEN_PREFIX = "/token"
         const val GPB_TOKEN_ROW = "token"
         const val TRUE = "true"
@@ -172,7 +170,7 @@ class PaymentServiceImpl(
                     paymentId,
                     paymentContext.premiumAmount,
                     orderFindByCode,
-                    subOrder
+                    subOrder,
                 )
             }
         } else {

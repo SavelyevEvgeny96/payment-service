@@ -16,5 +16,5 @@ data class OrderDto(
     val ridByMerchant: String,
     val srcSubjectKind: String? = null,
     val expTime: String? = null,
-    val remittanceMessage:String? = null
+    val remittanceMessage: String? = null,
 )

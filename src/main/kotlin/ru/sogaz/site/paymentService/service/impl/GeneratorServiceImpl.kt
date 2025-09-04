@@ -20,7 +20,6 @@ class GeneratorServiceImpl(
         const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
     }
 
     override fun generateDescription(sabOrderList: List<SubOrder>?): String {
@@ -67,8 +66,15 @@ class GeneratorServiceImpl(
             generateDescription(listSubOrder),
         )
 
-    override fun nowPlusFormatted(days: Long, minutes: Long): String =
-        LocalDateTime.now().plusDays(days).plusMinutes(minutes).format(formatter)
+    override fun nowPlusFormatted(
+        days: Long,
+        minutes: Long,
+    ): String =
+        LocalDateTime
+            .now()
+            .plusDays(days)
+            .plusMinutes(minutes)
+            .format(formatter)
 
     override fun formatDuration(duration: Duration): String {
         val totalSeconds = duration.toMillis() / 1000.0
@@ -81,9 +87,10 @@ class GeneratorServiceImpl(
         }
     }
 
-    override fun jsonHeaders(): HttpHeaders = HttpHeaders().apply {
-        contentType = MediaType.APPLICATION_JSON
-    }
+    override fun jsonHeaders(): HttpHeaders =
+        HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+        }
 
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
 }

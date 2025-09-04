@@ -5,9 +5,11 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import org.springframework.http.MediaType
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.impl.GeneratorServiceImpl
+import java.time.Duration
 
 class GeneratorServiceImplTest {
     private lateinit var configDataService: ConfigDataService
@@ -68,5 +70,38 @@ class GeneratorServiceImplTest {
         val id = service.generateUniquePaymentId()
         assertNotNull(id)
         assertTrue(id.isNotEmpty())
+    }
+
+    @Test
+    fun `formatDuration returns seconds only if less than 1 minute`() {
+        val duration = Duration.ofMillis(12_345) // 12.345s
+        val formatted = service.formatDuration(duration)
+        assertEquals("12,3s", formatted)
+    }
+
+    @Test
+    fun `formatDuration returns minutes and seconds if more than 1 minute`() {
+        val duration = Duration.ofMillis(83_700) // 1m23.7s
+        val formatted = service.formatDuration(duration)
+        assertEquals("1m23,7s", formatted)
+    }
+
+    @Test
+    fun `formatDuration returns exactly 0s for zero duration`() {
+        val duration = Duration.ZERO
+        val formatted = service.formatDuration(duration)
+        assertEquals("0,0s", formatted)
+    }
+
+    @Test
+    fun `jsonHeaders sets content type to application json`() {
+        val headers = service.jsonHeaders()
+        assertEquals(MediaType.APPLICATION_JSON, headers.contentType)
+    }
+
+    @Test
+    fun `jsonHeaders returns non null HttpHeaders`() {
+        val headers = service.jsonHeaders()
+        assertEquals(false, headers.isEmpty())
     }
 }
