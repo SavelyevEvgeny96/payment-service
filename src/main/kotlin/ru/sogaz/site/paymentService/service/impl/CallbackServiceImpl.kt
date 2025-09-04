@@ -95,7 +95,7 @@ class CallbackServiceImpl(
             existingPayment.apply {
                 bankId =
                     when (payment.bank?.bankId) {
-                        "akb" -> AKB_RUS
+                        "akb_rus" -> AKB_RUS
                         else -> SBP_GPB
                     }
                 typeId = BANK_CARD

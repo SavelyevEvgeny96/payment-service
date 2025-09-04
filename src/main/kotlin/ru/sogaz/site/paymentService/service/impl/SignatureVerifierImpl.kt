@@ -3,18 +3,14 @@ package ru.sogaz.site.paymentService.service.impl
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import java.security.KeyFactory
-import java.security.MessageDigest
-import java.security.PrivateKey
+import java.nio.charset.StandardCharsets
 import java.security.Security
-import java.security.spec.PKCS8EncodedKeySpec
+import java.security.Signature
 import java.util.Base64
-import javax.crypto.Cipher
 
 class SignatureVerifierImpl(
-    private val gpbConfigProperties: GpbConfigProperties,
+    private val preconfiguredSignature: Signature,
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
@@ -27,50 +23,29 @@ class SignatureVerifierImpl(
         const val SIGNATURE_NULL = "Строка &signature= пуста"
     }
 
-    override fun verifySignature(
-        request: GpbCallbackRequest,
-        queryString: String,
-    ): Boolean {
+    override fun verifySignature(request: GpbCallbackRequest): Boolean =
         try {
-            val endIndex = queryString.indexOf("&signature=")
-            if (endIndex == -1) {
-                throw IllegalArgumentException(SIGNATURE_NULL)
-            }
-            val dataToHash = queryString.substring(0, endIndex)
+            val decodedQueryString = java.net.URLDecoder.decode(request.signature, StandardCharsets.UTF_8)
 
-            val hashBytes = MessageDigest.getInstance("SHA-256").digest(dataToHash.toByteArray())
-            val hashBase64 = Base64.getEncoder().encodeToString(hashBytes)
+            val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
-            val decodedSignature = Base64.getDecoder().decode(request.signature)
-            val privateKeyObj = getPrivateKeyFromString(gpbConfigProperties.gpb)
-            val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
-            cipher.init(Cipher.DECRYPT_MODE, privateKeyObj)
-            val decryptedData = String(cipher.doFinal(decodedSignature))
-
-            return decryptedData == hashBase64
+            verifySignatureCert(decodedSignature)
         } catch (e: Exception) {
             logger.error(VEREFIELD_FAIL)
-            return false
+            false
         }
-    }
 
-    private fun getPrivateKeyFromString(privateKeyStr: String): PrivateKey {
-        val cleanedKey =
-            privateKeyStr
-                .trim()
-                .replace("\"", "")
-                .replace("\\n", "\n")
-                .replace("-----BEGIN CERTIFICATE-----", "")
-                .replace("-----END CERTIFICATE-----", "")
-                .replace("\n", "")
-                .replace("\r", "")
-                .replace(" ", "")
-                .trim()
-                .let { Base64.getDecoder().decode(it) }
-
-        val decodedBytes = Base64.getDecoder().decode(cleanedKey)
-        val keySpec = PKCS8EncodedKeySpec(decodedBytes)
-        val keyFactory = KeyFactory.getInstance("RSA")
-        return keyFactory.generatePrivate(keySpec)
-    }
+    private fun verifySignatureCert(signature: ByteArray): Boolean =
+        try {
+            synchronized(preconfiguredSignature) {
+                preconfiguredSignature.apply {
+                    update(signature)
+                    verify(signature)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            logger.info(VEREFIELD_FAIL, e)
+            false
+        }
 }
