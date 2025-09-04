@@ -43,6 +43,8 @@ import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SA
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY_SBP_ERROR
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
 
 class AkbBankIntegrationServiceImpl(
@@ -241,13 +243,17 @@ class AkbBankIntegrationServiceImpl(
     ): ResponseEntity<T> {
         val entity = HttpEntity(body, jsonHeaders())
 
-        logger.info("AKB request url=$url]: body=${objectMapper.writeValueAsString(body)}")
+        logger.info("AKB request url=$url: body=${objectMapper.writeValueAsString(body)}")
 
+        val start = Instant.now()
         val response = restTemplate
             .xpgRestTemplate(props)
             .exchange(url, HttpMethod.POST, entity, object : ParameterizedTypeReference<T>() {})
+        val duration = Duration.between(start, Instant.now())
 
-        logger.info("AKB response url=$url]: status=${response.statusCode}, body=${response.body}")
+        logger.info(
+            "AKB response url=$url: status=${response.statusCode}, body=${response.body}, took=${formatDuration(duration)}"
+        )
 
         return response
     }
@@ -299,11 +305,18 @@ class AkbBankIntegrationServiceImpl(
         val url = "${apiConfigProperty.akbSbpUrl}/$orderId/$SET_SRC_TOKEN_SUFFIX$password"
         val body = SetSrcTokenRequest(token = mapOf(IPS_RU to true))
 
+        val start = Instant.now()
         try {
             val response: ResponseEntity<Map<String, Any>> = postJson(url, body)
-            logger.info("setSrcToken response.body: ${response.body}")
+            val duration = Duration.between(start, Instant.now())
+            logger.info(
+                "setSrcToken success (took ${formatDuration(duration)}): ${response.body}"
+            )
         } catch (e: Exception) {
-            logger.error("Ошибка setSrcToken")
+            val duration = Duration.between(start, Instant.now())
+            logger.info(
+                "Ошибка setSrcToken (after ${formatDuration(duration)}): ${e.message}"
+            )
             throw InnerException(traceId, "Ошибка при установке SRC-токена: ${e.message}")
         }
     }
@@ -322,17 +335,35 @@ class AkbBankIntegrationServiceImpl(
                 IPS_RU to mapOf(REDIRECT_URL to apiConfigProperty.backUrlS)
             )
         )
+        val start = Instant.now()
         val response: ResponseEntity<PreparePushTranResponse>?
         return try {
             response = postJson(url, body)
-            logger.info("preparePushTran success ${response.body}")
+            val duration = Duration.between(start, Instant.now())
+            logger.info(
+                "preparePushTran success (took ${formatDuration(duration)}): ${response.body}"
+            )
             response.body
                 ?.specificByPm
                 ?.get(IPS_RU)
                 ?.qrcPayload
         } catch (e: Exception) {
-            logger.error("Ошибка получения qrcPayload:  ${e.message}")
+            val duration = Duration.between(start, Instant.now())
+            logger.error(
+                "Ошибка получения qrcPayload (after ${formatDuration(duration)}): ${e.message}"
+            )
             throw InnerException(traceId, "Ошибка при подготовке push-транзакции: ${e.message}")
+        }
+    }
+
+    private fun formatDuration(duration: Duration): String {
+        val totalSeconds = duration.toMillis() / 1000.0
+        val minutes = (totalSeconds / 60).toInt()
+        val seconds = totalSeconds % 60
+        return if (minutes > 0) {
+            "${minutes}m${"%.1f".format(seconds)}s"
+        } else {
+            "%.1fs".format(seconds)
         }
     }
 
