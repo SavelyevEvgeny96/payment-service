@@ -322,17 +322,10 @@ class AkbBankIntegrationServiceImpl(
                 IPS_RU to mapOf(REDIRECT_URL to apiConfigProperty.backUrlS)
             )
         )
+        val response: ResponseEntity<PreparePushTranResponse>?
         return try {
-            val response: ResponseEntity<PreparePushTranResponse> =
-                restTemplate.xpgRestTemplate(props).exchange(
-                    url,
-                    HttpMethod.POST,
-                    HttpEntity(body),
-                    object : ParameterizedTypeReference<PreparePushTranResponse>() {}
-                )
-
-            logger.info("preparePushTran response.body: ${response.body}")
-
+            response = postJson(url, body)
+            logger.info("preparePushTran success ${response.body}")
             response.body
                 ?.specificByPm
                 ?.get(IPS_RU)
