@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -26,6 +27,7 @@ class GpbCallbackServiceTest {
     private val paymentStatusDao = mock<PaymentStatusDao>()
     private val getOrderStatusDao = mock<OrderStatusDao>()
     private val apiConfigProperties = mock<ApiConfigProperties>()
+    private val callbackPaymentDao = mock<CallbackPaymentDao>()
 
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
@@ -39,6 +41,7 @@ class GpbCallbackServiceTest {
             getOrderStatusDao,
             payClientSystem,
             apiConfigProperties,
+            callbackPaymentDao,
         )
 
     private val testRequest =
@@ -58,34 +61,12 @@ class GpbCallbackServiceTest {
             discountType = "CREDIT",
             discountAmount = "10000",
             paymentSystem = "VISA",
+            issuerName = "Sber",
             ts = "20240524 14:16:50",
             signature =
                 "Q6WBwrZr%2BW%2BcBlZ1pBgdRcOgr2aAh8cognmOjK7iqmcl5VWIQb0x%2Br8M9COnvaNsQlbuWkc62e2EdxfHqr" +
                     "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
         )
-
-    val baseUrl = "${apiConfigProperties.hostNameApp}?"
-    val params =
-        listOf(
-            "trx_id=${testRequest.trxId}",
-            "merch_id=${testRequest.merchId}",
-            "result_code=${testRequest.resultCode}",
-            "amount=${testRequest.amount}",
-            "account_id=${testRequest.accountId ?: ""}",
-            "o.order_id=${testRequest.orderId}",
-            "p.rrn=${testRequest.rrn ?: ""}",
-            "p.authcode=${testRequest.authCode ?: ""}",
-            "p.srcType=${testRequest.srcType ?: ""}",
-            "p.maskedPan=${testRequest.maskedPan ?: ""}",
-            "p.isFullyAuthenticated=${testRequest.isFullyAuthenticated ?: ""}",
-            "p.transmissionDateTime=${testRequest.transmissionDateTime ?: ""}",
-            "discountType=${testRequest.discountType}",
-            "discountAmount=${testRequest.discountAmount}",
-            "p.paymentSystem=${testRequest.paymentSystem ?: ""}",
-            "ts=${testRequest.ts}",
-        )
-
-    val queryString = baseUrl + params.joinToString("&")
 
     @Test
     fun `processCallback should return success response when all steps are successful`() {
@@ -102,8 +83,7 @@ class GpbCallbackServiceTest {
                 paymentBankId = testRequest.trxId
                 orderId = order
             }
-
-        `when`(signatureVerifier.verifySignature(testRequest, queryString)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(orderDao.getOrderId(ordersId)).thenReturn(order)
 
@@ -121,7 +101,7 @@ class GpbCallbackServiceTest {
                 orderId = null
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest, queryString)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
 
         val response = service.processCallback(testRequest)
@@ -137,7 +117,7 @@ class GpbCallbackServiceTest {
                 orderId = Order().apply { id = 999L }
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest, queryString)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(payment.orderId?.orderId?.let { orderDao.getOrderId(it) }).thenReturn(null)
 
