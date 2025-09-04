@@ -23,6 +23,7 @@ import ru.sogaz.site.paymentService.dto.request.OrderDto
 import ru.sogaz.site.paymentService.dto.request.PreparePushTranRequest
 import ru.sogaz.site.paymentService.dto.request.SetSrcTokenRequest
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
+import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
@@ -56,8 +57,12 @@ class AkbBankIntegrationServiceImpl(
 ) : AkbBankIntegrationService {
     companion object {
         const val RU = "ru"
+        const val SET_SRC_TOKEN_SUFFIX = "set-src-token?password="
+        const val PUSH_TRAN_SUFFIX = "prepare-push-tran?password="
         const val PAYMENT_ID_IS_REQUIRED = "paymentId is required"
         const val ID = "id"
+        const val REDIRECT_URL = "afterPayRedirectUrl"
+        const val IPS_RU = "ipsRu"
         const val EMPTY_HPP_URL_RESPONSE = "Пустой HPP URL в ответе Банка Россия"
         const val EMPTY_ORDER_RESPONSE = "Пустой 'order' в ответе Банка Россия"
         const val QRC_PAY = "QRC_PAY"
@@ -187,13 +192,16 @@ class AkbBankIntegrationServiceImpl(
             val orderInfo = responseEntity.body?.order
                 ?: throw InnerException(traceId, EMPTY_ORDER_RESPONSE)
             val paymentBankId = orderInfo.id ?: 0
-            val paymentPageUrl = orderInfo.hppUrl.orEmpty()
-            val password = paymentPageUrl.substringAfter("password=")
-            if (paymentPageUrl.isBlank()) {
+            val paymentPageUrlToSrcTokenRequest = orderInfo.hppUrl.orEmpty()
+            val password = paymentPageUrlToSrcTokenRequest.substringAfter("password=")
+            if (paymentPageUrlToSrcTokenRequest.isBlank()) {
                 logger.error("$EMPTY_HPP_URL_RESPONSE [traceId=$traceId, orderId=$paymentBankId]")
                 throw InnerException(traceId, EMPTY_HPP_URL_RESPONSE)
             }
-            val dataPay = DataPay(paymentPageUrl)
+
+
+            setSrcToken(paymentBankId, password, traceId)
+            val paymentPageUrl = preparePushTran(paymentBankId, password, traceId)
             val dataPaymentUpdate = DataPaymentUpdate(
                 pid,
                 paymentPageUrl,
@@ -201,8 +209,7 @@ class AkbBankIntegrationServiceImpl(
                 paymentBankId.toString()
             )
             paymentDao.paymentUpdate(dataPaymentUpdate)
-            setSrcToken(paymentBankId, password, traceId)
-            preparePushTran(paymentBankId, password, traceId)
+            val dataPay = DataPay(paymentPageUrl)
             logger.info("$END__METHOD_PAY_AKB_BANK_SBP $paymentId")
             val result = Response(
                 status = StatusEnum.SUCCESS.value,
@@ -282,46 +289,56 @@ class AkbBankIntegrationServiceImpl(
     )
 
     /**
-     * Шаг 2: Установить SRC-токен для конкретного заказа
+     * Установить SRC-токен для конкретного заказа
      */
     private fun setSrcToken(
         orderId: Int,
         password: String,
         traceId: String
     ) {
-        val url = "${apiConfigProperty.akbSbpUrl}/$orderId/set-src-token?password=$password"
-        val body = SetSrcTokenRequest(token = mapOf("ipsRu" to true))
+        val url = "${apiConfigProperty.akbSbpUrl}/$orderId/$SET_SRC_TOKEN_SUFFIX$password"
+        val body = SetSrcTokenRequest(token = mapOf(IPS_RU to true))
 
         try {
             val response: ResponseEntity<Map<String, Any>> = postJson(url, body)
-            logger.info("setSrcToken success [traceId=$traceId, orderId=$orderId]: ${response.body}")
+            logger.info("setSrcToken response.body: ${response.body}")
         } catch (e: Exception) {
-            logger.error("Error in setSrcToken orderId=$orderId]")
+            logger.error("Ошибка setSrcToken")
             throw InnerException(traceId, "Ошибка при установке SRC-токена: ${e.message}")
         }
     }
 
     /**
-     * Шаг 3: Подготовить push-транзакцию для конкретного заказа
+     * Подготовить push-транзакцию для конкретного заказа
      */
     private fun preparePushTran(
         orderId: Int,
         password: String,
         traceId: String
-
-    ) {
-        val url = "${apiConfigProperty.akbSbpUrl}/$orderId/prepare-push-tran?password=$password"
+    ): String? {
+        val url = "${apiConfigProperty.akbSbpUrl}/$orderId/$PUSH_TRAN_SUFFIX$password"
         val body = PreparePushTranRequest(
             specificByPm = mapOf(
-                "ipsRu" to mapOf("afterPayRedirectUrl" to apiConfigProperty.backUrlS)
+                IPS_RU to mapOf(REDIRECT_URL to apiConfigProperty.backUrlS)
             )
         )
-        var response: ResponseEntity<Map<String, Any>>? = null
-        try {
-            response = postJson(url, body)
-            logger.info("preparePushTran success ${response.body}")
+        return try {
+            val response: ResponseEntity<PreparePushTranResponse> =
+                restTemplate.xpgRestTemplate(props).exchange(
+                    url,
+                    HttpMethod.POST,
+                    HttpEntity(body),
+                    object : ParameterizedTypeReference<PreparePushTranResponse>() {}
+                )
+
+            logger.info("preparePushTran response.body: ${response.body}")
+
+            response.body
+                ?.specificByPm
+                ?.get(IPS_RU)
+                ?.qrcPayload
         } catch (e: Exception) {
-            logger.error("Error in preparePushTran  ${response?.body} ")
+            logger.error("Ошибка получения qrcPayload:  ${e.message}")
             throw InnerException(traceId, "Ошибка при подготовке push-транзакции: ${e.message}")
         }
     }
