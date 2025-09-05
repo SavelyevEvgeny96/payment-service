@@ -74,23 +74,23 @@ class GeneratorServiceImplTest {
 
     @Test
     fun `formatDuration returns seconds only if less than 1 minute`() {
-        val duration = Duration.ofMillis(12_345) // 12.345s
+        val duration = Duration.ofMillis(12_345)
         val formatted = service.formatDuration(duration)
-        assertEquals("12,3s", formatted)
+        assertEquals("12.3s", formatted)
     }
 
     @Test
     fun `formatDuration returns minutes and seconds if more than 1 minute`() {
-        val duration = Duration.ofMillis(83_700) // 1m23.7s
+        val duration = Duration.ofMillis(83_700)
         val formatted = service.formatDuration(duration)
-        assertEquals("1m23,7s", formatted)
+        assertEquals("1m23.7s", formatted)
     }
 
     @Test
     fun `formatDuration returns exactly 0s for zero duration`() {
         val duration = Duration.ZERO
         val formatted = service.formatDuration(duration)
-        assertEquals("0,0s", formatted)
+        assertEquals("0.0s", formatted)
     }
 
     @Test
