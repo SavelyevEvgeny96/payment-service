@@ -31,6 +31,7 @@ import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYMENT_PREFIX
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
@@ -129,6 +130,7 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
+
     override fun checkStatusOrder(
         orderStatus: OrderStatus?,
         errorCodeIsPaidFor: Int,
@@ -161,7 +163,7 @@ class PaymentStatusCheckerServiceImpl(
 
         try {
             val url =
-                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
+                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PAYMENT_PREFIX}${payment.paymentBankId}"
             logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
             val response =

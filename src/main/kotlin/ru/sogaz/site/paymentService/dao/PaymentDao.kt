@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao
 
+import ru.sogaz.site.paymentService.dto.data.DataPaymentUpdate
 import ru.sogaz.site.paymentService.entity.Payment
 
 interface PaymentDao {
@@ -14,9 +15,5 @@ interface PaymentDao {
 
     fun findByPaymentBankId(paymentId: String): Payment
 
-    fun paymentUpdate(
-        paymentId: Long?,
-        paymentPageUrl: String,
-        qtcId: String,
-    )
+    fun paymentUpdate(dataPaymentUpdate: DataPaymentUpdate)
 }

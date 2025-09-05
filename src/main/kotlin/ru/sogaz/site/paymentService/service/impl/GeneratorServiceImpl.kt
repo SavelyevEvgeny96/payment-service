@@ -1,9 +1,14 @@
 package ru.sogaz.site.paymentService.service.impl
 
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.service.ConfigDataService
 import ru.sogaz.site.paymentService.service.GeneratorService
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class GeneratorServiceImpl(
@@ -14,6 +19,7 @@ class GeneratorServiceImpl(
         const val SEPARATOR = ", №"
         const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
         const val DESC = "Оплата: "
+        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     }
 
     override fun generateDescription(sabOrderList: List<SubOrder>?): String {
@@ -59,6 +65,32 @@ class GeneratorServiceImpl(
             premiumAmount?.replace(".", ""),
             generateDescription(listSubOrder),
         )
+
+    override fun nowPlusFormatted(
+        days: Long,
+        minutes: Long,
+    ): String =
+        LocalDateTime
+            .now()
+            .plusDays(days)
+            .plusMinutes(minutes)
+            .format(formatter)
+
+    override fun formatDuration(duration: Duration): String {
+        val totalSeconds = duration.toMillis() / 1000.0
+        val minutes = (totalSeconds / 60).toInt()
+        val seconds = totalSeconds % 60
+        return if (minutes > 0) {
+            "${minutes}m${"%.1f".format(seconds)}s"
+        } else {
+            "%.1fs".format(seconds)
+        }
+    }
+
+    override fun jsonHeaders(): HttpHeaders =
+        HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+        }
 
     override fun generateUniquePaymentId(): String = UUID.randomUUID().toString()
 }
