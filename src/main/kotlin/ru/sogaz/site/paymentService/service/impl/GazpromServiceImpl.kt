@@ -71,7 +71,7 @@ class GazpromServiceImpl(
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY запрос на: "
         const val ERROR_UPDATE_PAYMENT_RECORD = "Ошибка обновления платежа payment_id == null"
         const val ERROR_SAVE_OPERATION_HISTORY =
-            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token "
+            "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY при не удачном получении GPB Token причина(  "
         const val ERROR_GPB_PAYMENT_PROCESSING = "Ошибка обработки платежа GPB "
         const val PAYMENT_PAGE_URL = "paymentPageUrl"
         const val PAYLOAD = "payload"
@@ -104,7 +104,7 @@ class GazpromServiceImpl(
                 traceId,
                 ActionType.GET_ACCESS_TOKEN_ERROR.value,
             )
-            logger.info(ERROR_SAVE_OPERATION_HISTORY)
+            logger.info("$ERROR_SAVE_OPERATION_HISTORY ${e.message}")
         }
         logger.error("$LOG_ERROR_GET_TOKEN $traceId")
         throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
