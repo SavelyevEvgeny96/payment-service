@@ -80,6 +80,7 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
         const val ORDER_SUCCESS = "Заказ оплачен"
+        const val PAYMENT_PREFIX = "/payment/"
         const val CONST_PASSWORD = "?password="
         const val CONST_URL_AKB =
             "&orderDetailLevel=2&" +
@@ -152,7 +153,6 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-
     override fun checkStatusOrder(
         orderStatus: OrderStatus?,
         errorCodeIsPaidFor: Int,
@@ -216,7 +216,7 @@ class PaymentStatusCheckerServiceImpl(
         try {
             if (payment.typeId?.typeId == "bankCard") {
                 val url =
-                    "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PaymentServiceImpl.PAYMENT_PREFIX}${payment.paymentBankId}"
+                    "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PAYMENT_PREFIX}${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
                 val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
                 val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
