@@ -18,6 +18,8 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
+import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
+import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -81,18 +83,22 @@ class PaymentServiceImplAKBTest {
         val mockRestTemplate = mock<RestTemplate>()
         whenever(restTemplate.xpgRestTemplate(any())).thenReturn(mockRestTemplate)
 
-        val apiResponse =
-            mapOf(
-                "order" to mapOf("hppUrl" to "http://akb-pay-link"),
+        val akbOrderResponse =
+            AkbOrderResponse(
+                order =
+                    AkbOrderInfo(
+                        id = 12345,
+                        hppUrl = "http://akb-pay-link",
+                    ),
             )
         whenever(
             mockRestTemplate.exchange(
                 any<String>(),
                 eq(HttpMethod.POST),
                 any(),
-                any<org.springframework.core.ParameterizedTypeReference<Map<String, Any>>>(),
+                any<org.springframework.core.ParameterizedTypeReference<AkbOrderResponse>>(),
             ),
-        ).thenReturn(ResponseEntity.ok(apiResponse))
+        ).thenReturn(ResponseEntity.ok(akbOrderResponse))
 
         whenever(apiConfigProperty.akbUrl).thenReturn("http://fake-akb")
         whenever(apiConfigProperty.backUrlS).thenReturn("http://back-success")
@@ -108,7 +114,6 @@ class PaymentServiceImplAKBTest {
             service.initiateAKBPayment(
                 urlToReturn = null,
                 urlToReturnF = null,
-                orderId = "ORD-1",
                 paymentId = payment.id,
                 premiumAmount = "1000",
                 order = order,
@@ -167,7 +172,6 @@ class PaymentServiceImplAKBTest {
                 service.initiateAKBPayment(
                     urlToReturn = null,
                     urlToReturnF = null,
-                    orderId = "ORD-1",
                     paymentId = payment.id,
                     premiumAmount = "1000",
                     order = order,

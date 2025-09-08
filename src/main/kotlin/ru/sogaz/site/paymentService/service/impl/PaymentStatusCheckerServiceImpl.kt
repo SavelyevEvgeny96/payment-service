@@ -33,6 +33,7 @@ import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
+import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYMENT_PREFIX
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
@@ -150,6 +151,7 @@ class PaymentStatusCheckerServiceImpl(
                 )
         }
     }
+
 
     override fun checkStatusOrder(
         orderStatus: OrderStatus?,

@@ -22,6 +22,7 @@ class ApiConfigProperties {
     lateinit var backUrlF: String
     lateinit var backUrlS: String
     lateinit var akbUrl: String
+    lateinit var akbSbpUrl: String
     lateinit var hostNameApp: String
 
     @PostConstruct
@@ -36,6 +37,7 @@ class ApiConfigProperties {
         logger.info("merchantId = $merchantId")
         logger.info("backUrlF = $backUrlF")
         logger.info("backUrlS = $backUrlS")
+        logger.info("akbSbpUrl = $akbSbpUrl")
         logger.info("akbUrl = $akbUrl")
     }
 }

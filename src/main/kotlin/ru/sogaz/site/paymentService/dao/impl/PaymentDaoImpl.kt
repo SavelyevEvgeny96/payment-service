@@ -4,6 +4,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
+import ru.sogaz.site.paymentService.dto.data.DataPaymentUpdate
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -62,18 +63,15 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
 
-    override fun paymentUpdate(
-        paymentId: Long?,
-        paymentPageUrl: String,
-        qtcId: String,
-    ) {
+    override fun paymentUpdate(dataPaymentUpdate: DataPaymentUpdate) {
         val traceId = getTraceId()
-        if (paymentId != null) {
-            val getPaymentForUpdate = getPayment(traceId, paymentId)
+        if (dataPaymentUpdate.paymentId != null) {
+            val getPaymentForUpdate = getPayment(traceId, dataPaymentUpdate.paymentId)
             val paymentStatusREG = paymentStatusDao.getPaymentStatus(traceId, PAYMENT_STATUS_REG)
-            getPaymentForUpdate?.paymentPageUrl = paymentPageUrl
+            getPaymentForUpdate?.paymentPageUrl = dataPaymentUpdate.paymentPageUrl
             getPaymentForUpdate?.stateId = paymentStatusREG
-            getPaymentForUpdate?.qrcId = qtcId
+            getPaymentForUpdate?.qrcId = dataPaymentUpdate.qtcId
+            getPaymentForUpdate?.paymentBankId = dataPaymentUpdate.paymentBankId
             if (getPaymentForUpdate != null) {
                 paymentRepository.save(getPaymentForUpdate)
             }

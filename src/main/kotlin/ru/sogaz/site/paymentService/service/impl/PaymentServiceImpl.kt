@@ -55,8 +55,6 @@ class PaymentServiceImpl(
         const val PAYMENT_TYPE_PAY = "bankCard"
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val RUB = "RUB"
-        const val PAYMENT_PREFIX = "/payment/"
-        const val START_PREFIX = "/start"
         const val TOKEN_PREFIX = "/token"
         const val GPB_TOKEN_ROW = "token"
         const val TRUE = "true"
@@ -104,7 +102,6 @@ class PaymentServiceImpl(
                 return akbBankIntegrationService.initiateAKBPayment(
                     urlToReturn,
                     urlToReturnF,
-                    orderId,
                     paymentId,
                     paymentContext.premiumAmount,
                     orderFindByCode,
@@ -145,7 +142,7 @@ class PaymentServiceImpl(
     ): ResponseEntity<Response<DataPay>> {
         val traceId = getTraceId()
         logger.info("$LOG_START_PAYMENT_CREATION_SBP + $traceId")
-        var paymentId: Long? = null
+        var paymentId: Long?
         val paymentContext =
             buildPaymentContext(
                 urlToReturn,
@@ -157,15 +154,28 @@ class PaymentServiceImpl(
         val checkBank = paymentContext.checkBank
         val orderFindByCode = paymentContext.order
         val subOrder = paymentContext.subOrder
-        if (paymentContext.configBankPriorityCheck == TRUE || checkBank != null) {
-            paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+        if (checkBank != null) {
+            if (checkBank.bankId == BankEnum.GPB.value) {
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+                return gazpromService.initiateGPBSBPPayment(
+                    paymentId,
+                    paymentContext.premiumAmount,
+                    orderFindByCode,
+                    subOrder,
+                )
+            } else {
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+                return akbBankIntegrationService.initiateAKBSbpPayment(
+                    urlToReturn,
+                    paymentId,
+                    paymentContext.premiumAmount,
+                    orderFindByCode,
+                    subOrder,
+                )
+            }
+        } else {
+            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         }
-        return gazpromService.initiateGPBSBPPayment(
-            paymentId,
-            paymentContext.premiumAmount,
-            orderFindByCode,
-            subOrder,
-        )
     }
 
     override fun buildPaymentContext(

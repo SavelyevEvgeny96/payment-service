@@ -3,9 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClientException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
@@ -17,8 +15,13 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataPay
-import ru.sogaz.site.paymentService.dto.request.AkbCardPaymentRequest
+import ru.sogaz.site.paymentService.dto.data.DataPaymentUpdate
+import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
+import ru.sogaz.site.paymentService.dto.request.PreparePushTranRequest
+import ru.sogaz.site.paymentService.dto.request.SetSrcTokenRequest
+import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
+import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
@@ -32,6 +35,8 @@ import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.EN
 import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.SAVE_OPERATION_HISTORY_START_PAY
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.RUB
 import ru.sogaz.siter.models.resonses.Response
+import java.time.Duration
+import java.time.Instant
 
 class AkbBankIntegrationServiceImpl(
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
@@ -45,16 +50,26 @@ class AkbBankIntegrationServiceImpl(
 ) : AkbBankIntegrationService {
     companion object {
         const val RU = "ru"
-        const val ORDER = "order"
-        const val HPP_URL = "hppUrl"
+        const val SET_SRC_TOKEN_SUFFIX = "set-src-token?password="
+        const val PUSH_TRAN_SUFFIX = "prepare-push-tran?password="
+        const val PAYMENT_ID_IS_REQUIRED = "paymentId is required"
+        const val ID = "id"
+        const val REDIRECT_URL = "afterPayRedirectUrl"
+        const val IPS_RU = "ipsRu"
+        const val EMPTY_HPP_URL_RESPONSE = "Пустой HPP URL в ответе Банка Россия"
+        const val EMPTY_ORDER_RESPONSE = "Пустой 'order' в ответе Банка Россия"
+        const val QRC_PAY = "QRC_PAY"
         const val WITH_3DS = "WITH_3DS"
+        const val ERROR_AKB_PAYMENT_PROCESSING_SBP = "Ошибка при отправке запроса для получения платежной ссылки"
         const val ERROR_AKB_PAYMENT_PROCESSING = "Ошибка обработки платежа AKB BANK "
         const val SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK =
             "Добавлена запись в таблицу PAYMENT_OPERATION_HISTORY ошибка запроса на старт платежа  БАНК РОССИЯ "
 
-        // нет кода 200 для AKB
+        const val START_METHOD_PAY_AKB_BANK_SBP =
+            ">>> СТАРТ метода оплата по СБП  Банк Россия для платежа с payment_id: "
+        const val END__METHOD_PAY_AKB_BANK_SBP =
+            "<<< КОНЕЦ  метода оплата по СБП  Банк Россия для платежа с payment_id: "
         const val STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK = 200
-        const val LOG_SUCCESSFUL_AKB_API = "Успешный запрос к AKB API."
         const val MESSAGE_INFO_START_AKB_PAYMENT =
             ">>> СТАРТ метода оплата картой Банк Россия для платежа с payment_id: "
         const val ACTION_TYPE_START_PAYMENT_AKB = "Отправка запроса для регистрации заказа в АКБ Россия"
@@ -66,7 +81,6 @@ class AkbBankIntegrationServiceImpl(
     override fun initiateAKBPayment(
         urlToReturn: String?,
         urlToReturnF: String?,
-        orderId: String,
         paymentId: Long?,
         premiumAmount: String,
         order: Order,
@@ -83,45 +97,32 @@ class AkbBankIntegrationServiceImpl(
         )
         logger.info("$SAVE_OPERATION_HISTORY_START_PAY $ACTION_TYPE_START_PAYMENT_AKB")
         val url = apiConfigProperty.akbUrl
+        val pid = requireNotNull(paymentId) { PAYMENT_ID_IS_REQUIRED }
         val urlTuSuccess = urlToReturn ?: apiConfigProperty.backUrlS
-        val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
-        val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
-        val akbCardPaymentRequest =
-            AkbCardPaymentRequest(
-                OrderDto(
-                    typeRid = WITH_3DS,
-                    amount = descAndPremiumAmountData.premiumAmount?.toInt(),
-                    currency = RUB,
-                    hppRedirectUrl = urlTuSuccess,
-                    ridByMerchant = paymentId.toString(),
-                    // Уточнить что сюда ложить
-                    adviceIfaceAddress = urlTuSuccess,
-                    description = descAndPremiumAmountData.description,
-                    descriptionHtml = descAndPremiumAmountData.description,
-                    language = RU,
-                ),
-            )
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.APPLICATION_JSON
-        val requestEntity = HttpEntity(akbCardPaymentRequest, headers)
         try {
-            logger.info(
-                "AKB payment Card request [traceId=$traceId]:  body=\n${objectMapper.writeValueAsString(requestEntity.body)}",
-            )
-            val responseEntity: ResponseEntity<Map<String, Any>> =
-                restTemplate.xpgRestTemplate(props).exchange(
-                    url,
-                    HttpMethod.POST,
-                    requestEntity,
-                    object : ParameterizedTypeReference<Map<String, Any>>() {},
+            val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+            val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
+            val akbRequest =
+                AkbCardAndSbpPaymentRequest(
+                    buildCardOrderDto(
+                        urlToReturn = urlTuSuccess,
+                        paymentId = pid,
+                        description = descAndPremiumAmountData.description,
+                        amount = descAndPremiumAmountData.premiumAmount?.toInt(),
+                    ),
                 )
-            logger.info(LOG_SUCCESSFUL_AKB_API)
-            val responseBody = responseEntity.body
-            logger.info(
-                "AKB payment Card response [traceId=$traceId]: body=$responseBody",
-            )
-            val paymentPageUrl =
-                (responseBody?.get(ORDER) as? Map<*, *>)?.get(HPP_URL) as? String ?: ""
+            val responseEntity: ResponseEntity<AkbOrderResponse> =
+                postJson(url, akbRequest)
+            val orderInfo =
+                responseEntity.body?.order
+                    ?: throw InnerException(traceId, EMPTY_ORDER_RESPONSE)
+
+            val paymentBankId = orderInfo.id ?: 0
+            val paymentPageUrl = orderInfo.hppUrl.orEmpty()
+            if (paymentPageUrl.isBlank()) {
+                logger.error("$EMPTY_HPP_URL_RESPONSE [traceId=$traceId, orderId=$paymentBankId]")
+                throw InnerException(traceId, EMPTY_HPP_URL_RESPONSE)
+            }
             val result =
                 Response(
                     status = StatusEnum.SUCCESS.value,
@@ -129,11 +130,18 @@ class AkbBankIntegrationServiceImpl(
                     traceId = traceId,
                     data = DataPay(paymentPageUrl),
                 )
-            paymentDao.paymentUpdate(paymentId, paymentPageUrl, "")
+            val dataPaymentUpdate =
+                DataPaymentUpdate(
+                    pid,
+                    paymentPageUrl,
+                    "",
+                    paymentBankId.toString(),
+                )
+            paymentDao.paymentUpdate(dataPaymentUpdate)
             logger.info("$END__METHOD_PAY_BANK_CARD $paymentId")
             logger.info(MESSAGE_INFO_END_AKB_PAYMENT)
             return ResponseEntity.ok(result)
-        } catch (erst: RestClientException) {
+        } catch (e: RestClientException) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
                 clientSystem,
@@ -141,7 +149,7 @@ class AkbBankIntegrationServiceImpl(
                 ActionType.PAYMENT_START_REQUEST_ERROR_AKB_BANK.value,
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
-            logger.error("$ERROR_AKB_PAYMENT_PROCESSING ${erst.message}")
+            logger.error("$ERROR_AKB_PAYMENT_PROCESSING  ${e.message}")
             throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, traceId)
         } catch (e: Exception) {
             paymentOperationHistoryDao.saveRecordOperationHistory(
@@ -152,7 +160,214 @@ class AkbBankIntegrationServiceImpl(
             )
             logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
             logger.error("$ERROR_AKB_PAYMENT_PROCESSING ${e.message}")
-            throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING)
+            throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING_SBP)
+        }
+    }
+
+    override fun initiateAKBSbpPayment(
+        urlToReturn: String?,
+        paymentId: Long?,
+        premiumAmount: String,
+        order: Order,
+        subOrder: SubOrder,
+    ): ResponseEntity<Response<DataPay>> {
+        val traceId = getTraceId()
+        logger.info("$START_METHOD_PAY_AKB_BANK_SBP $paymentId")
+        val clientSystem = subOrder.clientSystem
+        val url = apiConfigProperty.akbSbpUrl
+        val pid = requireNotNull(paymentId) { PAYMENT_ID_IS_REQUIRED }
+        val urlTuSuccess = urlToReturn ?: apiConfigProperty.backUrlS
+        try {
+            val listSubOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+            val descAndPremiumAmountData = generatorService.getDescriptionAndPremiumAmount(premiumAmount, listSubOrder)
+            val expTime = generatorService.nowPlusFormatted(0, 15)
+            val akbRequest =
+                AkbCardAndSbpPaymentRequest(
+                    buildSbpOrderDto(
+                        urlToReturn = urlTuSuccess,
+                        paymentId = pid,
+                        description = descAndPremiumAmountData.description,
+                        amount = descAndPremiumAmountData.premiumAmount?.toInt(),
+                        expTime = expTime,
+                    ),
+                )
+            val responseEntity: ResponseEntity<AkbOrderResponse> =
+                postJson(url, akbRequest)
+            val orderInfo =
+                responseEntity.body?.order
+                    ?: throw InnerException(traceId, EMPTY_ORDER_RESPONSE)
+            val paymentBankId = orderInfo.id ?: 0
+            val paymentPageUrlToSrcTokenRequest = orderInfo.hppUrl.orEmpty()
+            val password = paymentPageUrlToSrcTokenRequest.substringAfter("password=")
+            if (paymentPageUrlToSrcTokenRequest.isBlank()) {
+                logger.error("$EMPTY_HPP_URL_RESPONSE [traceId=$traceId, orderId=$paymentBankId]")
+                throw InnerException(traceId, EMPTY_HPP_URL_RESPONSE)
+            }
+
+            setSrcToken(paymentBankId, password, traceId)
+            val paymentPageUrl = preparePushTran(paymentBankId, password, traceId)
+            val dataPaymentUpdate =
+                DataPaymentUpdate(
+                    pid,
+                    paymentPageUrl,
+                    "",
+                    paymentBankId.toString(),
+                )
+            paymentDao.paymentUpdate(dataPaymentUpdate)
+            val dataPay = DataPay(paymentPageUrl)
+            logger.info("$END__METHOD_PAY_AKB_BANK_SBP $paymentId")
+            val result =
+                Response(
+                    status = StatusEnum.SUCCESS.value,
+                    code = STATUS_CODE_SUCCESS_PAY_CARD_AKB_BANK,
+                    traceId = traceId,
+                    data = dataPay,
+                )
+            return ResponseEntity.ok(result)
+        } catch (e: RestClientException) {
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                clientSystem,
+                traceId,
+                ActionType.PAYMENT_LINK_REQUEST_ERROR.value,
+            )
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
+            logger.error("$ERROR_AKB_PAYMENT_PROCESSING  ${e.message}")
+            throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING + (e.message ?: ""))
+        } catch (e: Exception) {
+            paymentOperationHistoryDao.saveRecordOperationHistory(
+                order,
+                clientSystem,
+                traceId,
+                ActionType.PAYMENT_LINK_REQUEST_ERROR.value,
+            )
+            logger.info(SAVE_OPERATION_HISTORY_START_PAY_ERROR_AKB_BANK)
+            logger.error("$ERROR_AKB_PAYMENT_PROCESSING_SBP ${e.message}")
+            throw InnerException(traceId, ERROR_AKB_PAYMENT_PROCESSING_SBP + e.message)
+        }
+    }
+
+    private inline fun <reified T> postJson(
+        url: String,
+        body: Any,
+    ): ResponseEntity<T> {
+        val entity = HttpEntity(body, generatorService.jsonHeaders())
+
+        logger.info("AKB request url=$url: body=${objectMapper.writeValueAsString(body)}")
+
+        val start = Instant.now()
+        val response =
+            restTemplate
+                .xpgRestTemplate(props)
+                .exchange(url, HttpMethod.POST, entity, object : ParameterizedTypeReference<T>() {})
+        val duration = Duration.between(start, Instant.now())
+
+        logger.info(
+            "AKB response url=$url: status=${response.statusCode}, body=${response.body}, took=${generatorService.formatDuration(
+                duration,
+            )}",
+        )
+
+        return response
+    }
+
+    private fun buildCardOrderDto(
+        urlToReturn: String,
+        paymentId: Long,
+        description: String,
+        amount: Int?,
+    ) = OrderDto(
+        typeRid = WITH_3DS,
+        amount = amount,
+        currency = RUB,
+        hppRedirectUrl = urlToReturn,
+        ridByMerchant = paymentId.toString(),
+        adviceIfaceAddress = urlToReturn,
+        description = description,
+        descriptionHtml = description,
+        language = RU,
+    )
+
+    private fun buildSbpOrderDto(
+        urlToReturn: String,
+        paymentId: Long,
+        description: String,
+        amount: Int?,
+        expTime: String,
+    ) = OrderDto(
+        typeRid = QRC_PAY,
+        amount = amount,
+        currency = RUB,
+        hppRedirectUrl = urlToReturn,
+        ridByMerchant = paymentId.toString(),
+        adviceIfaceAddress = urlToReturn,
+        description = description,
+        descriptionHtml = description,
+        language = RU,
+        expTime = expTime,
+    )
+
+    /**
+     * Установить SRC-токен для конкретного заказа
+     */
+    private fun setSrcToken(
+        orderId: Int,
+        password: String,
+        traceId: String,
+    ) {
+        val url = "${apiConfigProperty.akbSbpUrl}/$orderId/$SET_SRC_TOKEN_SUFFIX$password"
+        val body = SetSrcTokenRequest(token = mapOf(IPS_RU to true))
+
+        val start = Instant.now()
+        try {
+            val response: ResponseEntity<Map<String, Any>> = postJson(url, body)
+            val duration = Duration.between(start, Instant.now())
+            logger.info(
+                "setSrcToken success (took ${generatorService.formatDuration(duration)}): ${response.body}",
+            )
+        } catch (e: Exception) {
+            val duration = Duration.between(start, Instant.now())
+            logger.info(
+                "Ошибка setSrcToken (after ${generatorService.formatDuration(duration)}): ${e.message}",
+            )
+            throw InnerException(traceId, "Ошибка при установке SRC-токена: ${e.message}")
+        }
+    }
+
+    /**
+     * Подготовить push-транзакцию для конкретного заказа
+     */
+    private fun preparePushTran(
+        orderId: Int,
+        password: String,
+        traceId: String,
+    ): String? {
+        val url = "${apiConfigProperty.akbSbpUrl}/$orderId/$PUSH_TRAN_SUFFIX$password"
+        val body =
+            PreparePushTranRequest(
+                specificByPm =
+                    mapOf(
+                        IPS_RU to mapOf(REDIRECT_URL to apiConfigProperty.backUrlS),
+                    ),
+            )
+        val start = Instant.now()
+        val response: ResponseEntity<PreparePushTranResponse>?
+        return try {
+            response = postJson(url, body)
+            val duration = Duration.between(start, Instant.now())
+            logger.info(
+                "preparePushTran success (took ${generatorService.formatDuration(duration)}): ${response.body}",
+            )
+            response.body
+                ?.specificByPm
+                ?.get(IPS_RU)
+                ?.qrcPayload
+        } catch (e: Exception) {
+            val duration = Duration.between(start, Instant.now())
+            logger.error(
+                "Ошибка получения qrcPayload (after ${generatorService.formatDuration(duration)}): ${e.message}",
+            )
+            throw InnerException(traceId, "Ошибка при подготовке push-транзакции: ${e.message}")
         }
     }
 }
