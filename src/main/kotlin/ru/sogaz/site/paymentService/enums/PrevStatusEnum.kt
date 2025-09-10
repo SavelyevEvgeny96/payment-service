@@ -1,7 +1,9 @@
 package ru.sogaz.site.paymentService.enums
 
+import com.fasterxml.jackson.annotation.JsonValue
+
 enum class PrevStatusEnum(
-    val value: String,
+    @JsonValue val value: String,
 ) {
     PREPARING("Preparing"),
     WAITPUSHTRAN("WaitPushTran"),

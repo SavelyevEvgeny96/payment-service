@@ -1,6 +1,7 @@
 package service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.json.JsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -243,5 +244,17 @@ class PaymentStatusCheckerServiceTest {
         `when`(rabbitTemplate.convertAndSend(anyString(), anyString(), any(PaidOrderMessage::class.java))).thenAnswer { }
         val response = service.getStatus(paymentBankId)
         assertEquals(1101520200, response.code)
+    }
+
+    @Test
+    fun `test read json file AkbStatus object`() {
+        val objectMapper = ObjectMapper()
+        val paymentAkbStatusResponse: PaymentAkbStatusResponse =
+            objectMapper.readValue(
+                javaClass.classLoader.getResourceAsStream("AkbStatus_response.json"),
+                PaymentAkbStatusResponse::class.java
+            )
+        assertEquals("Status", paymentAkbStatusResponse.status)
+        assertEquals(PrevStatusEnum.PREPARING, paymentAkbStatusResponse.prevStatus)
     }
 }
