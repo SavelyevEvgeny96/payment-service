@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.service.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -9,11 +10,13 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.dto.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
 import ru.sogaz.site.paymentService.dto.data.VariableDto
@@ -23,15 +26,15 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
+import ru.sogaz.site.paymentService.service.HistoryService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYMENT_PREFIX
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
@@ -51,30 +54,44 @@ class PaymentStatusCheckerServiceImpl(
     private val subOrderDao: SubOrderDao,
     private val paymentStatusDao: PaymentStatusDao,
     private val orderStatusDao: OrderStatusDao,
-    private val orderRepository: OrderRepository,
     private val operationHistoryDao: PaymentOperationHistoryDao,
-    private val paymentRepository: PaymentRepository,
+    private val orderDao: OrderDao,
+    private val historyService: HistoryService,
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
     private companion object {
         const val LOG_START_STATUS_CHECK = "Начало проверки статуса платежа. PaymentBankId: %s. TraceId: %s"
+        const val LOG_AKB_API_CALL = "Отправка запроса статуса платежа в АКБ. URL: %s. ID операции: %s"
         const val LOG_UNSUPPORTED_PAYMENT_TYPE = "Неподдерживаемый тип платежа %s для заказа %s. TraceId: %s"
-        const val LOG_OPERATION_HISTORY_ADDED =
-            "Запись о проверке статуса добавлена в историю для заказа %s. TraceId: %s"
         const val LOG_PAYMENT_STATUS_RECEIVED = "Получен статус платежа '%s' для заказа %s. TraceId: %s"
         const val LOG_UNKNOWN_PAYMENT_STATUS = "Неизвестный статус платежа: %s для заказа %s. TraceId: %s"
-
+        const val LOG_AKB_PAYMENT_PROCESSING = "Обработка платежа АКБ для %s. ID операции: %s"
         const val LOG_CARD_PAYMENT_PROCESSING = "Обработка платежа по банковской карте для платежа %s. ID операции: %s"
         const val LOG_GPB_PAYMENT_PROCESSING = "Обработка платежа ГПБ для %s. ID операции: %s"
         const val LOG_GPB_API_CALL = "Отправка запроса статуса платежа в ГПБ. URL: %s. ID операции: %s"
         const val LOG_GPB_API_SUCCESS = "Успешный ответ от API ГПБ для платежа %s. ID операции: %s"
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции: %s"
         const val LOG_GPB_API_CALL_ERROR = "Произошла ошибка на одном из шагов операции, история сохранена."
-
+        const val LOG_AKB_API_SUCCESS = "Успешный ответ от API АКБ для платежа %s. ID операции: %s"
+        const val LOG_AKB_API_ERROR = "Ошибка при запросе статуса в АКБ. ID операции: %s"
+        const val LOG_AKB_API_CALL_ERROR = "Произошла ошибка на одном из шагов операции, история сохранена."
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
+        const val ORDER_SUCCESS = "Заказ оплачен"
+        const val PAYMENT_PREFIX = "/payment/"
+        const val CONST_PASSWORD = "?password="
+        const val BANK_CARD = "bankCard"
+        const val SBP = "sbp"
+        const val CONST_URL_AKB =
+            "&orderDetailLevel=2&" +
+                "tranDetailLevel=2&" +
+                "actionDetailLevel=2&" +
+                "cofpDetailLevel=2&" +
+                "consumerDetailLevel=2&" +
+                "consumerTokenDetailLevel=2&" +
+                "tokenDetailLevel=2"
     }
 
     override fun getStatus(paymentBankId: String): Response<ResponseStatusPay> {
@@ -87,10 +104,7 @@ class PaymentStatusCheckerServiceImpl(
                 getSuccessResponse(
                     traceId,
                     1101520200,
-                    ResponseStatusPay(
-                        paymentStatus = payment.stateId!!.stateId,
-                        cheque = checkChequeStatus(payment, traceId),
-                    ),
+                    responseStatusPay(payment, traceId),
                 )
             }
 
@@ -99,10 +113,7 @@ class PaymentStatusCheckerServiceImpl(
                 getSuccessResponse(
                     traceId,
                     1101520200,
-                    ResponseStatusPay(
-                        paymentStatus = payment.stateId!!.stateId,
-                        cheque = checkChequeStatus(payment, traceId),
-                    ),
+                    responseStatusPay(payment, traceId),
                 )
             }
 
@@ -110,12 +121,26 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
+    private fun responseStatusPay(
+        payment: Payment,
+        traceId: String,
+    ): ResponseStatusPay {
+        val payments =
+            payment.paymentBankId?.let { paymentDao.findByPaymentBankId(it) }
+        return ResponseStatusPay(
+            paymentStatus = payments?.stateId!!.stateId,
+            cheque = checkChequeStatus(payments, traceId),
+        )
+    }
+
     override fun processPaymentStatusCheck(payment: Payment) {
         val traceId = getTraceId()
         when (payment.typeId?.typeId) {
-            "sbp", "bankCard" -> {
-                if (payment.bank?.bankId == "gpb") {
-                    processBankCardPayment(payment)
+            SBP, BANK_CARD -> {
+                if (payment.bank?.bankId == BankEnum.GPB.value) {
+                    getStatusBankCardPaymentGpb(payment, traceId)
+                } else if (payment.bank?.bankId == BankEnum.AKB_RUS.value) {
+                    getStatusBankCardPaymentAkb(payment, traceId)
                 }
             }
 
@@ -129,7 +154,6 @@ class PaymentStatusCheckerServiceImpl(
                 )
         }
     }
-
 
     override fun checkStatusOrder(
         orderStatus: OrderStatus?,
@@ -156,30 +180,186 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processBankCardPayment(payment: Payment) {
-        val traceId = getTraceId()
+    private fun getStatusBankCardPaymentAkb(
+        payment: Payment,
+        traceId: String,
+    ) {
+        logger.info(LOG_CARD_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
+        logger.info(LOG_AKB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
+
+        try {
+            val url =
+                apiConfigProperty.akbUrl + "/" + payment.paymentBankId + CONST_PASSWORD + payment.paymentPass +
+                    CONST_URL_AKB
+            logger.info(LOG_AKB_API_CALL.format(url, traceId))
+
+            val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+            val paymentResponse = objectMapper.readValue(response, PaymentAkbStatusResponse::class.java)
+
+            if (paymentResponse.status == "Closed") {
+                logger.info(LOG_AKB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                updateAkbPaymentStatus(payment, paymentResponse, traceId)
+            } else {
+                logger.error(LOG_AKB_API_ERROR.format(traceId))
+                throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+            }
+        } catch (e: Exception) {
+            logger.info(LOG_AKB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
+        }
+    }
+
+    private fun getStatusBankCardPaymentGpb(
+        payment: Payment,
+        traceId: String,
+    ) {
         logger.info(LOG_CARD_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
         logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            val url =
-                "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PAYMENT_PREFIX}${payment.paymentBankId}"
-            logger.info(LOG_GPB_API_CALL.format(url, traceId))
-
-            val response =
-                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
-            val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
-
-            if (response.isNotEmpty()) {
-                logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                updatePaymentStatus(payment, paymentResponse)
+            if (payment.typeId?.typeId == BANK_CARD) {
+                val url =
+                    "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PAYMENT_PREFIX}${payment.paymentBankId}"
+                logger.info(LOG_GPB_API_CALL.format(url, traceId))
+                val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                if (response.isNotEmpty()) {
+                    logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                    updatePaymentStatus(payment, paymentResponse)
+                } else {
+                    logger.error(LOG_GPB_API_ERROR.format(traceId))
+                    throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+                }
             } else {
-                logger.error(LOG_GPB_API_ERROR.format(traceId))
-                throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+                val url = apiConfigProperty.gpbSbpUrlStatus
+
+                val requestBody = objectMapper.writeValueAsString(mapOf("qrcIds" to listOf(payment.qrcId)))
+
+                val requestEntity = HttpEntity(requestBody, null)
+
+                val response: String =
+                    restTemplate
+                        .defaultRestTemplate()
+                        .exchange(
+                            url,
+                            HttpMethod.POST,
+                            requestEntity,
+                            String::class.java,
+                        ).body ?: ""
+
+                if (response.isNotEmpty()) {
+                    logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                    updatePaymentStatusSbp(payment, paymentResponse)
+                } else {
+                    logger.error(LOG_GPB_API_ERROR.format(traceId))
+                    throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
+                }
             }
         } catch (e: Exception) {
             logger.info(LOG_GPB_API_CALL_ERROR.format(payment.paymentBankId, traceId), e)
         }
+    }
+
+    private fun updateAkbPaymentStatus(
+        payment: Payment,
+        response: PaymentAkbStatusResponse,
+        traceId: String,
+    ) {
+        val order =
+            payment.orderId
+                ?.orderId
+                ?.let { it.let { id -> orderDao.getOrderId(id) } }
+
+        val currentTime = LocalDateTime.now()
+        payment.updateDate = currentTime
+
+        when (response.prevStatus) {
+            PrevStatusEnum.PREPARING, PrevStatusEnum.WAITPUSHTRAN, PrevStatusEnum.AUTHORIZED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
+            }
+
+            PrevStatusEnum.PARTPAID, PrevStatusEnum.REFUNDED, PrevStatusEnum.VOIDED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.REFUND.value)
+            }
+
+            PrevStatusEnum.DECLINED, PrevStatusEnum.EXPIRED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
+            }
+
+            PrevStatusEnum.REFUSED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.DECLINED.value)
+            }
+
+            PrevStatusEnum.FULLYPAID -> {
+                payment.stateId?.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value).stateId
+                order?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
+                order?.updateDate = currentTime
+                if (order != null) {
+                    orderDao.save(order)
+                }
+                if (order != null) {
+                    historyService.createOrderHistoryRecord(order, traceId)
+                }
+                if (order != null) {
+                    receiptService.generateReceipt(order)
+                }
+                if (order != null) {
+                    sendToPaidOrdersQueue(order, traceId)
+                }
+            }
+
+            else -> {
+                logger.warn("Unknown prevStatus: ${response.prevStatus}")
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
+            }
+        }
+
+        paymentDao.save(payment)
+    }
+
+    private fun updatePaymentStatusSbp(
+        payment: Payment,
+        response: PaymentStatusResponse,
+    ) {
+        val traceId = getTraceId()
+        val order =
+            payment.orderId
+                ?.orderId
+                ?.let { it.let { it1 -> orderDao.getOrderId(it1) } }
+
+        val status = response.result.status
+
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
+
+        when (status) {
+            StatusEnum.ACCEPTED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
+                payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
+                if (order != null) {
+                    historyService.createOrderHistoryRecord(order, traceId)
+                }
+
+                if (order != null) {
+                    receiptService.generateReceipt(order)
+                }
+                if (order != null) {
+                    sendToPaidOrdersQueue(order, traceId)
+                }
+            }
+
+            StatusEnum.NOTSTARTED, StatusEnum.RECEIVED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
+            }
+
+            StatusEnum.BLOCKED, StatusEnum.REJECTED -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
+            }
+
+            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order?.orderId, traceId))
+        }
+
+        payment.updateDate = LocalDateTime.now()
+        paymentDao.save(payment)
     }
 
     private fun updatePaymentStatus(
@@ -189,16 +369,14 @@ class PaymentStatusCheckerServiceImpl(
         val traceId = getTraceId()
         val order =
             payment.orderId
-                // не менял на дао так как не ясна логика верна или нет попросил рому после протестировать это место
-                ?.let { it.id?.let { it1 -> orderRepository.findById(it1) } }
-                ?.orElseThrow { InnerException(ORDERS_NOT_FOUND, traceId) }
-                ?: throw InnerException(ORDERS_NOT_FOUND, traceId)
+                ?.orderId
+                ?.let { it.let { it1 -> orderDao.getOrderId(it1) } }
         val status = response.result.status
 
-        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.orderId, traceId))
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
 
         when (status) {
-            StatusEnum.SUCCESS.value -> {
+            StatusEnum.SUCCESS -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
                 payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
                 val subOrder = subOrderDao.getSubOrder(traceId, order)
@@ -208,23 +386,27 @@ class PaymentStatusCheckerServiceImpl(
                     traceId,
                     ActionType.ORDER_PAID.value,
                 )
-                receiptService.generateReceipt(order)
-                sendToPaidOrdersQueue(order, traceId)
+                if (order != null) {
+                    receiptService.generateReceipt(order)
+                }
+                if (order != null) {
+                    sendToPaidOrdersQueue(order, traceId)
+                }
             }
 
-            StatusEnum.UNKNOWN.value, StatusEnum.INTERIM_SUCCESS.value, StatusEnum.REFUND.value -> {
+            StatusEnum.UNKNOWN, StatusEnum.INTERIM_SUCCESS, StatusEnum.REFUND -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            StatusEnum.FAILED.value -> {
+            StatusEnum.FAILED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
-            StatusEnum.DECLINED.value -> {
+            StatusEnum.DECLINED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.DECLINED.value)
             }
 
-            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.orderId, traceId))
+            else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order?.orderId, traceId))
         }
 
         payment.updateDate = LocalDateTime.now()
@@ -267,7 +449,7 @@ class PaymentStatusCheckerServiceImpl(
                             VariableDto("flowCode", "ResultPay"),
                             VariableDto(
                                 "requestBody",
-                                objectMapper.writeValueAsString(requestBody),
+                                objectMapper.writeValueAsString(requestBody.toString()),
                             ),
                         ),
                 )
@@ -292,11 +474,12 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ): Boolean {
         val freshPayment =
-            // тоже не трогал просьба глянуть роме
-            paymentRepository
-                .findById(payment.id!!)
-                .orElseThrow { BusinessException(CODE_ERROR_PAYMENT_STATUS, traceId) }
-        if (freshPayment.chequeName == "SENT") {
+            payment.paymentBankId?.let {
+                paymentDao
+                    .findByPaymentBankId(it)
+            }
+
+        if (freshPayment?.chequeName == "SENT") {
             return true
         }
         return false

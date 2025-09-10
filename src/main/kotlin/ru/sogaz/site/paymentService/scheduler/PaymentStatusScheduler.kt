@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.scheduler
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.loggerFor
@@ -24,17 +25,14 @@ class PaymentStatusScheduler(
     }
 
     @Scheduled(fixedDelayString = "60000")
+    @SchedulerLock(name = "checkUnpaidPayments", lockAtMostFor = "PT1M")
     fun checkUnpaidPayments() {
         val traceId = UUID.randomUUID().toString()
         logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
-
         try {
             val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
-
-            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT"))
-
+            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
             logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
-
             unpaidOrders.forEach { payment ->
                 try {
                     paymentStatusCheckerService.processPaymentStatusCheck(payment)
