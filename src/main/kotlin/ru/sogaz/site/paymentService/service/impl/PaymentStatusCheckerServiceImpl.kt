@@ -25,7 +25,6 @@ import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PrevStatusEnum
@@ -33,9 +32,9 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.service.HistoryService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.impl.GazpromServiceImpl.Companion.PAYMENT_PREFIX
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL
 import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl.Companion.LOG_ORDER_STATUS_SUCCESS
 import ru.sogaz.siter.models.resonses.Response
@@ -57,6 +56,7 @@ class PaymentStatusCheckerServiceImpl(
     private val orderStatusDao: OrderStatusDao,
     private val operationHistoryDao: PaymentOperationHistoryDao,
     private val orderDao: OrderDao,
+    private val historyService: HistoryService,
 ) : PaymentStatusCheckerService {
     private val logger = loggerFor(javaClass)
 
@@ -64,8 +64,6 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_START_STATUS_CHECK = "Начало проверки статуса платежа. PaymentBankId: %s. TraceId: %s"
         const val LOG_AKB_API_CALL = "Отправка запроса статуса платежа в АКБ. URL: %s. ID операции: %s"
         const val LOG_UNSUPPORTED_PAYMENT_TYPE = "Неподдерживаемый тип платежа %s для заказа %s. TraceId: %s"
-        const val LOG_OPERATION_HISTORY_ADDED =
-            "Запись о проверке статуса добавлена в историю для заказа %s. TraceId: %s"
         const val LOG_PAYMENT_STATUS_RECEIVED = "Получен статус платежа '%s' для заказа %s. TraceId: %s"
         const val LOG_UNKNOWN_PAYMENT_STATUS = "Неизвестный статус платежа: %s для заказа %s. TraceId: %s"
         const val LOG_AKB_PAYMENT_PROCESSING = "Обработка платежа АКБ для %s. ID операции: %s"
@@ -276,23 +274,23 @@ class PaymentStatusCheckerServiceImpl(
         payment.updateDate = currentTime
 
         when (response.prevStatus) {
-            PrevStatusEnum.PREPARING.value, PrevStatusEnum.WAITPUSHTRAN.value, PrevStatusEnum.AUTHORIZED.value -> {
+            PrevStatusEnum.PREPARING, PrevStatusEnum.WAITPUSHTRAN, PrevStatusEnum.AUTHORIZED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            PrevStatusEnum.PARTPAID.value, PrevStatusEnum.REFUNDED.value, PrevStatusEnum.VOIDED.value -> {
+            PrevStatusEnum.PARTPAID, PrevStatusEnum.REFUNDED, PrevStatusEnum.VOIDED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.REFUND.value)
             }
 
-            PrevStatusEnum.DECLINED.value, PrevStatusEnum.EXPIRED.value -> {
+            PrevStatusEnum.DECLINED, PrevStatusEnum.EXPIRED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
-            PrevStatusEnum.REFUSED.value -> {
+            PrevStatusEnum.REFUSED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.DECLINED.value)
             }
 
-            PrevStatusEnum.FULLYPAID.value -> {
+            PrevStatusEnum.FULLYPAID -> {
                 payment.stateId?.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value).stateId
                 order?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
                 order?.updateDate = currentTime
@@ -300,7 +298,7 @@ class PaymentStatusCheckerServiceImpl(
                     orderDao.save(order)
                 }
                 if (order != null) {
-                    createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
+                    historyService.createOrderHistoryRecord(order, traceId)
                 }
                 if (order != null) {
                     receiptService.generateReceipt(order)
@@ -334,11 +332,11 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
 
         when (status) {
-            StatusEnum.ACCEPTED.value -> {
+            StatusEnum.ACCEPTED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
                 payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
                 if (order != null) {
-                    createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
+                    historyService.createOrderHistoryRecord(order, traceId)
                 }
 
                 if (order != null) {
@@ -349,11 +347,11 @@ class PaymentStatusCheckerServiceImpl(
                 }
             }
 
-            StatusEnum.NOTSTARTED.value, StatusEnum.RECEIVED.value -> {
+            StatusEnum.NOTSTARTED, StatusEnum.RECEIVED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            StatusEnum.BLOCKED.value, StatusEnum.REJECTED.value -> {
+            StatusEnum.BLOCKED, StatusEnum.REJECTED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
@@ -362,33 +360,6 @@ class PaymentStatusCheckerServiceImpl(
 
         payment.updateDate = LocalDateTime.now()
         paymentDao.save(payment)
-    }
-
-    private fun createOrderHistoryRecord(
-        order: Order,
-        action: String,
-        traceId: String,
-    ) {
-        val actionType = ActionType.ORDER_PAID.value
-        val subOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
-
-        val historyRecord =
-            PaymentOperationHistory(
-                action = actionType,
-                order = order,
-                actionAuthor = subOrder.first().clientSystem,
-                actionDate = LocalDateTime.now(),
-            )
-
-        historyRecord.action?.let {
-            operationHistoryDao.saveRecordOperationHistory(
-                historyRecord.order,
-                historyRecord.actionAuthor,
-                traceId,
-                it,
-            )
-        }
-        logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.orderId, traceId))
     }
 
     private fun updatePaymentStatus(
@@ -405,7 +376,7 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
 
         when (status) {
-            StatusEnum.SUCCESS.value -> {
+            StatusEnum.SUCCESS -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
                 payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
                 val subOrder = subOrderDao.getSubOrder(traceId, order)
@@ -423,15 +394,15 @@ class PaymentStatusCheckerServiceImpl(
                 }
             }
 
-            StatusEnum.UNKNOWN.value, StatusEnum.INTERIM_SUCCESS.value, StatusEnum.REFUND.value -> {
+            StatusEnum.UNKNOWN, StatusEnum.INTERIM_SUCCESS, StatusEnum.REFUND -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            StatusEnum.FAILED.value -> {
+            StatusEnum.FAILED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
-            StatusEnum.DECLINED.value -> {
+            StatusEnum.DECLINED -> {
                 payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.DECLINED.value)
             }
 

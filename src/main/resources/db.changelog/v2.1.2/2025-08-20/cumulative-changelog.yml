@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db.changelog\v2.1.2\2025-08-20\DATA\refactor_table.sql
   - include:
       file: db.changelog\v2.1.2\2025-08-20\DATA\delete_action_type.sql
+  - include:
+      file: db.changelog\v2.1.2\2025-08-20\DATA\create_table_shedlock.sql

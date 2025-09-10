@@ -34,8 +34,10 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentStatus
 import ru.sogaz.site.paymentService.entity.PaymentType
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.service.HistoryService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
 import java.time.LocalDateTime
@@ -54,6 +56,7 @@ class PaymentStatusCheckerServiceTest {
     private val orderStatusDao = mock<OrderStatusDao>()
     private val operationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val orderDao = mock<OrderDao>()
+    private val historyService = mock<HistoryService>()
     private val service =
         PaymentStatusCheckerServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -68,6 +71,7 @@ class PaymentStatusCheckerServiceTest {
             orderStatusDao = orderStatusDao,
             operationHistoryDao = operationHistoryDao,
             orderDao = orderDao,
+            historyService = historyService,
         )
 
     private val traceId = getTraceId().apply { "test-trace-id" }
@@ -222,7 +226,7 @@ class PaymentStatusCheckerServiceTest {
         ).thenReturn(ResponseEntity.ok(akbResponse))
 
         `when`(objectMapper.readValue(akbResponse, PaymentAkbStatusResponse::class.java))
-            .thenReturn(PaymentAkbStatusResponse(status = "Closed", prevStatus = "FullyPaid"))
+            .thenReturn(PaymentAkbStatusResponse(status = "Closed", prevStatus = PrevStatusEnum.FULLYPAID))
         `when`(order.orderId?.let { orderDao.getOrderId(it) }).thenReturn(order)
         `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(paymentStatusDao.getPaymentStatus(traceId, "SUCCESS")).thenReturn(PaymentStatus(stateId = "SUCCESS"))

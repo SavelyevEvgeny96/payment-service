@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.service.HistoryService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
@@ -32,6 +33,7 @@ class PaymentStatusCheckerServiceConfig {
         orderStatusDao: OrderStatusDao,
         operationHistoryDao: PaymentOperationHistoryDao,
         orderDao: OrderDao,
+        historyService: HistoryService,
     ): PaymentStatusCheckerService =
         PaymentStatusCheckerServiceImpl(
             apiConfigProperty = apiConfigProperty,
@@ -46,5 +48,6 @@ class PaymentStatusCheckerServiceConfig {
             orderStatusDao = orderStatusDao,
             operationHistoryDao = operationHistoryDao,
             orderDao = orderDao,
+            historyService = historyService,
         )
 }
