@@ -16,6 +16,11 @@ enum class StatusEnum(
     REG("REG"),
     WAIT("WAIT"),
     CALLBACK("CALLBACK"),
+    ACCEPTED("ACCEPTED"),
+    NOTSTARTED("NOT_STARTED"),
+    RECEIVED("RECEIVED"),
+    BLOCKED("BLOCKED"),
+    REJECTED("REJECTED"),
     ;
 
     companion object {

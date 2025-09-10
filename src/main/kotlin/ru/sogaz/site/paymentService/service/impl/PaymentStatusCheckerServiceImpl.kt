@@ -27,6 +27,8 @@ import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
@@ -82,6 +84,8 @@ class PaymentStatusCheckerServiceImpl(
         const val ORDER_SUCCESS = "Заказ оплачен"
         const val PAYMENT_PREFIX = "/payment/"
         const val CONST_PASSWORD = "?password="
+        const val BANK_CARD = "bankCard"
+        const val SBP = "sbp"
         const val CONST_URL_AKB =
             "&orderDetailLevel=2&" +
                 "tranDetailLevel=2&" +
@@ -134,11 +138,11 @@ class PaymentStatusCheckerServiceImpl(
     override fun processPaymentStatusCheck(payment: Payment) {
         val traceId = getTraceId()
         when (payment.typeId?.typeId) {
-            "sbp", "bankCard" -> {
-                if (payment.bank?.bankId == "gpb") {
-                    processBankCardPaymentGpb(payment, traceId)
-                } else if (payment.bank?.bankId == "akb_rus") {
-                    processBankCardPaymentAkb(payment, traceId)
+            SBP, BANK_CARD -> {
+                if (payment.bank?.bankId == BankEnum.GPB.value) {
+                    getStatusBankCardPaymentGpb(payment, traceId)
+                } else if (payment.bank?.bankId == BankEnum.AKB_RUS.value) {
+                    getStatusBankCardPaymentAkb(payment, traceId)
                 }
             }
 
@@ -178,7 +182,7 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processBankCardPaymentAkb(
+    private fun getStatusBankCardPaymentAkb(
         payment: Payment,
         traceId: String,
     ) {
@@ -206,7 +210,7 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun processBankCardPaymentGpb(
+    private fun getStatusBankCardPaymentGpb(
         payment: Payment,
         traceId: String,
     ) {
@@ -214,7 +218,7 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            if (payment.typeId?.typeId == "bankCard") {
+            if (payment.typeId?.typeId == BANK_CARD) {
                 val url =
                     "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PAYMENT_PREFIX}${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
@@ -272,25 +276,25 @@ class PaymentStatusCheckerServiceImpl(
         payment.updateDate = currentTime
 
         when (response.prevStatus) {
-            "Preparing", "WaitPushTran", "Authorized" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "WAIT")
+            PrevStatusEnum.PREPARING.value, PrevStatusEnum.WAITPUSHTRAN.value, PrevStatusEnum.AUTHORIZED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            "PartPaid", "Refunded", "Voided" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "REFUND")
+            PrevStatusEnum.PARTPAID.value, PrevStatusEnum.REFUNDED.value, PrevStatusEnum.VOIDED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.REFUND.value)
             }
 
-            "Declined", "Expired" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "FAIL")
+            PrevStatusEnum.DECLINED.value, PrevStatusEnum.EXPIRED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
-            "Refused" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "DECLINED")
+            PrevStatusEnum.REFUSED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.DECLINED.value)
             }
 
-            "FullyPaid" -> {
-                payment.stateId?.stateId = paymentStatusDao.getPaymentStatus(traceId, "SUCCESS").stateId
-                order?.orderStatus = orderStatusDao.getOrderStatus(traceId, "SUCCESS")
+            PrevStatusEnum.FULLYPAID.value -> {
+                payment.stateId?.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value).stateId
+                order?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
                 order?.updateDate = currentTime
                 if (order != null) {
                     orderDao.save(order)
@@ -308,7 +312,7 @@ class PaymentStatusCheckerServiceImpl(
 
             else -> {
                 logger.warn("Unknown prevStatus: ${response.prevStatus}")
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "FAIL")
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
         }
 
@@ -330,9 +334,9 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
 
         when (status) {
-            "ACCEPTED" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "SUCCESS")
-                payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, "SUCCESS")
+            StatusEnum.ACCEPTED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.SUCCESS.value)
+                payment.orderId?.orderStatus = orderStatusDao.getOrderStatus(traceId, StatusEnum.SUCCESS.value)
                 if (order != null) {
                     createOrderHistoryRecord(order, ORDER_SUCCESS, traceId)
                 }
@@ -345,12 +349,12 @@ class PaymentStatusCheckerServiceImpl(
                 }
             }
 
-            "NOT_STARTED", "RECEIVED" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "WAIT")
+            StatusEnum.NOTSTARTED.value, StatusEnum.RECEIVED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.WAIT.value)
             }
 
-            "BLOCKED", "REJECTED" -> {
-                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, "FAIL")
+            StatusEnum.BLOCKED.value, StatusEnum.REJECTED.value -> {
+                payment.stateId = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.FAIL.value)
             }
 
             else -> logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order?.orderId, traceId))

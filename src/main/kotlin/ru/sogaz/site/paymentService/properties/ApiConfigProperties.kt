@@ -23,7 +23,6 @@ class ApiConfigProperties {
     lateinit var backUrlS: String
     lateinit var akbUrl: String
     lateinit var akbSbpUrl: String
-    lateinit var hostNameApp: String
 
     @PostConstruct
     fun postConstruct() {
