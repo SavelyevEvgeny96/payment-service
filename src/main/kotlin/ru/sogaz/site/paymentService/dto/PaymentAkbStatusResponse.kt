@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class PaymentAkbStatusResponse @JsonCreator constructor(
-    @JsonProperty("status") val status: String,
-    @JsonProperty("prevStatus") val prevStatus: PrevStatusEnum
-)
+data class PaymentAkbStatusResponse
+    @JsonCreator
+    constructor(
+        @JsonProperty("status") val status: String,
+        @JsonProperty("prevStatus") val prevStatus: PrevStatusEnum,
+    )

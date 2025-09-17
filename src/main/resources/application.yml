@@ -89,6 +89,7 @@ api:
     akbUrl: ${AKB_URL:}
     gpbUrl: ${GPB_URL:}
     gpbSbpUrl: ${GPB_SBP_URL:}
+    gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL:}
     callbackUrlSbp: ${CALLBACK_URL_SBP:}
     paymentAccount: ${PAYMENT_ACCOUNT:}
     portalId: ${GPB_PORTAL_ID:}

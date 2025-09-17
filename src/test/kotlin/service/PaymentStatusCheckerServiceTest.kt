@@ -1,7 +1,6 @@
 package service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -252,7 +251,7 @@ class PaymentStatusCheckerServiceTest {
         val paymentAkbStatusResponse: PaymentAkbStatusResponse =
             objectMapper.readValue(
                 javaClass.classLoader.getResourceAsStream("AkbStatus_response.json"),
-                PaymentAkbStatusResponse::class.java
+                PaymentAkbStatusResponse::class.java,
             )
         assertEquals("Status", paymentAkbStatusResponse.status)
         assertEquals(PrevStatusEnum.PREPARING, paymentAkbStatusResponse.prevStatus)

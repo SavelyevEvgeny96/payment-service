@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -27,6 +28,7 @@ import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.BankPayTypeEnum
 import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
@@ -82,8 +84,7 @@ class PaymentStatusCheckerServiceImpl(
         const val ORDER_SUCCESS = "Заказ оплачен"
         const val PAYMENT_PREFIX = "/payment/"
         const val CONST_PASSWORD = "?password="
-        const val BANK_CARD = "bankCard"
-        const val SBP = "sbp"
+
         const val CONST_URL_AKB =
             "&orderDetailLevel=2&" +
                 "tranDetailLevel=2&" +
@@ -136,7 +137,7 @@ class PaymentStatusCheckerServiceImpl(
     override fun processPaymentStatusCheck(payment: Payment) {
         val traceId = getTraceId()
         when (payment.typeId?.typeId) {
-            SBP, BANK_CARD -> {
+            BankPayTypeEnum.PAYMENT_BANK_TYPE_SBP.value, BankPayTypeEnum.PAYMENT_TYPE_PAY.value -> {
                 if (payment.bank?.bankId == BankEnum.GPB.value) {
                     getStatusBankCardPaymentGpb(payment, traceId)
                 } else if (payment.bank?.bankId == BankEnum.AKB_RUS.value) {
@@ -216,7 +217,7 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_GPB_PAYMENT_PROCESSING.format(payment.paymentBankId, traceId))
 
         try {
-            if (payment.typeId?.typeId == BANK_CARD) {
+            if (payment.typeId?.typeId == BankPayTypeEnum.PAYMENT_TYPE_PAY.value) {
                 val url =
                     "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}${PAYMENT_PREFIX}${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
@@ -234,9 +235,11 @@ class PaymentStatusCheckerServiceImpl(
 
                 val requestBody = objectMapper.writeValueAsString(mapOf("qrcIds" to listOf(payment.qrcId)))
 
-                val requestEntity = HttpEntity(requestBody, null)
+                val headers = HttpHeaders()
+                headers.contentType = org.springframework.http.MediaType.APPLICATION_JSON
+                val requestEntity = HttpEntity(requestBody, headers)
 
-                val response: String =
+                val response =
                     restTemplate
                         .defaultRestTemplate()
                         .exchange(
@@ -245,7 +248,6 @@ class PaymentStatusCheckerServiceImpl(
                             requestEntity,
                             String::class.java,
                         ).body ?: ""
-
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
                     val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
@@ -327,7 +329,7 @@ class PaymentStatusCheckerServiceImpl(
                 ?.orderId
                 ?.let { it.let { it1 -> orderDao.getOrderId(it1) } }
 
-        val status = response.result.status
+        val status = response.result.first().status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
 
@@ -371,7 +373,7 @@ class PaymentStatusCheckerServiceImpl(
             payment.orderId
                 ?.orderId
                 ?.let { it.let { it1 -> orderDao.getOrderId(it1) } }
-        val status = response.result.status
+        val status = response.result.first().status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.orderId, traceId))
 

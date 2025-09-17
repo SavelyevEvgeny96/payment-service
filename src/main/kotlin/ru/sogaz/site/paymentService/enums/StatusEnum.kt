@@ -1,7 +1,9 @@
 package ru.sogaz.site.paymentService.enums
 
+import com.fasterxml.jackson.annotation.JsonValue
+
 enum class StatusEnum(
-    val value: String,
+    @JsonValue val value: String,
 ) {
     NEW("NEW"),
     FAILED("FAILED"),
