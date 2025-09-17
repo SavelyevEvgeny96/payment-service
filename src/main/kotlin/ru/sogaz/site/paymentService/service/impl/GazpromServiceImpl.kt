@@ -223,7 +223,7 @@ class GazpromServiceImpl(
             val responseBody = response.body
             val qrcId = (responseBody?.get(DATA) as? Map<*, *>)?.get(QRC_ID) as? String ?: ""
             val paymentPageUrl = (responseBody?.get(DATA) as? Map<*, *>)?.get(PAYLOAD) as? String ?: ""
-            val transactionId = (responseBody?.get(TRANSACTION_ID) as? Map<*, *>)?.toString() ?: ""
+            val transactionId = (responseBody?.get(TRANSACTION_ID)) ?: ""
 
             val dataPay = DataPay(paymentPageUrl)
             val result =
@@ -233,7 +233,7 @@ class GazpromServiceImpl(
                     traceId = traceId,
                     data = dataPay,
                 )
-            val dataPaymentUpdate = DataPaymentUpdate(paymentId, paymentPageUrl, qrcId, transactionId)
+            val dataPaymentUpdate = DataPaymentUpdate(paymentId, paymentPageUrl, qrcId, transactionId.toString())
             paymentDao.paymentUpdate(dataPaymentUpdate)
 
             ResponseEntity.ok(result)

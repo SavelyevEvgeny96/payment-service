@@ -23,6 +23,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.BankPayTypeEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.AkbBankIntegrationService
@@ -52,7 +53,6 @@ class PaymentServiceImpl(
 
     companion object {
         const val BANK_PRIORITY_CHECK = "bankPriorityCheck"
-        const val PAYMENT_TYPE_PAY = "bankCard"
         const val GET_TOKEN_MASSAGE_SUCCESS = "Получен токен доступа"
         const val RUB = "RUB"
         const val TOKEN_PREFIX = "/token"
@@ -98,7 +98,7 @@ class PaymentServiceImpl(
         if (checkBank != null) {
             val paymentId: Long?
             if (checkBank.bankId == BankEnum.AKB_RUS.value) {
-                paymentId = createPaymentRecord(checkBank, orderFindByCode, "")
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, "", BankPayTypeEnum.PAYMENT_TYPE_PAY.value)
                 return akbBankIntegrationService.initiateAKBPayment(
                     urlToReturn,
                     urlToReturnF,
@@ -116,7 +116,7 @@ class PaymentServiceImpl(
                         traceId,
                         ActionType.SEND_PAYMENT_START_REQUEST.value,
                     )
-                    paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb)
+                    paymentId = createPaymentRecord(checkBank, orderFindByCode, tokenGpb, BankPayTypeEnum.PAYMENT_TYPE_PAY.value)
                     return gazpromService.initiateGPBPayment(
                         urlToReturn,
                         urlToReturnF,
@@ -156,7 +156,7 @@ class PaymentServiceImpl(
         val subOrder = paymentContext.subOrder
         if (checkBank != null) {
             if (checkBank.bankId == BankEnum.GPB.value) {
-                paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, null, BankPayTypeEnum.PAYMENT_BANK_TYPE_SBP.value)
                 return gazpromService.initiateGPBSBPPayment(
                     paymentId,
                     paymentContext.premiumAmount,
@@ -164,7 +164,7 @@ class PaymentServiceImpl(
                     subOrder,
                 )
             } else {
-                paymentId = createPaymentRecord(checkBank, orderFindByCode, null)
+                paymentId = createPaymentRecord(checkBank, orderFindByCode, null, BankPayTypeEnum.PAYMENT_BANK_TYPE_SBP.value)
                 return akbBankIntegrationService.initiateAKBSbpPayment(
                     urlToReturn,
                     paymentId,
@@ -216,11 +216,12 @@ class PaymentServiceImpl(
         checkBank: Bank?,
         order: Order,
         tokenGpb: String?,
+        paymentsType: String,
     ): Long? {
         val traceId = getTraceId()
         logger.info(LOG_START_PAYMENT_RECORD)
         val paymentStatus = paymentStatusDao.getPaymentStatus(traceId, StatusEnum.NEW.value)
-        val paymentType = paymentTypeDao.getPaymentType(traceId, PAYMENT_TYPE_PAY)
+        val paymentType = paymentTypeDao.getPaymentType(traceId, paymentsType)
         val paymentRecord =
             Payment(
                 bank = checkBank,
