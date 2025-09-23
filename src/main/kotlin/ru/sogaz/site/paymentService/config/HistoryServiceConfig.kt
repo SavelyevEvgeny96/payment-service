@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.service.HistoryService
-import ru.sogaz.site.paymentService.service.impl.HistoryServiceImpl
+import ru.sogaz.site.paymentService.service.order.HistoryServiceImpl
 
 @Configuration
 open class HistoryServiceConfig {

@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.service
 
-import org.springframework.http.ResponseEntity
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
@@ -13,7 +12,7 @@ interface OrderService {
      * @param requestWrapper Данные о заказе(содержит внутри лист PaymentRequest)
      * @return Объект Response с информацией о платеже
      */
-    fun createOrder(requestWrapper: PaymentRequestWrapper): ResponseEntity<Response<DataOrder>>
+    fun createOrder(requestWrapper: PaymentRequestWrapper): Response<DataOrder>
 
     fun getOrderStatus(orderId: String): Response<DataGetOrderStatus>
 }

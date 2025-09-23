@@ -1,82 +1,81 @@
 package service
 
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.junit5.MockKExtension
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.junit.jupiter.api.extension.ExtendWith
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.entity.Order
-import ru.sogaz.site.paymentService.entity.OrderStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.GeneratorService
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
+import ru.sogaz.site.paymentService.service.OrderService
+import ru.sogaz.site.paymentService.service.order.OrderServiceImpl
+import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.STATUS_CODE_SUCCESS_GET_ORDER_STATUS
 import ru.sogaz.siter.models.resonses.Response
 
+@ExtendWith(MockKExtension::class)
 class OrderServiceTest {
-    private val traceId = "trace-123"
-    private val orderId = "order-456"
-    private val subOrderDao = mock<SubOrderDao>()
-    private val apiConfigProperty = mock<ApiConfigProperties>()
-    private val generatorService = mock<GeneratorService>()
-    private val subOrderRepository = mock<SubOrderRepository>()
-    private val bankDao = mock<BankDao>()
-    private val clientSystemDao = mock<ClientSystemDao>()
-    private val orderStatusDao = mock<OrderStatusDao>()
+    companion object {
+        const val TRACE_ID = "trace-123"
+        const val VALID_ORDER_ID = "order-456"
+        const val INVALID_ORDER_ID = "invalid"
+    }
+
+    @MockK
+    private lateinit var subOrderDao: SubOrderDao
+
+    @RelaxedMockK
+    private lateinit var apiConfigProperty: ApiConfigProperties
+
+    @MockK
+    private lateinit var generatorService: GeneratorService
+
+    @MockK
+    private lateinit var bankDao: BankDao
+
+    @MockK
+    private lateinit var clientSystemDao: ClientSystemDao
+
+    @MockK
+    private lateinit var orderDao: OrderDao
+
+    private lateinit var orderService: OrderService
+
+    @BeforeEach
+    fun beforeEach() {
+        every { orderDao.getOrderId(VALID_ORDER_ID) }.answers { Order() }
+        every { orderDao.getOrderId(INVALID_ORDER_ID) }.throws(InnerException(TRACE_ID, "DB error"))
+
+        orderService = initOrderService()
+    }
 
     @Test
     fun `getOrderStatus should return success when order exists`() {
-        val orderDao =
-            mock<OrderDao>().apply {
-                `when`(getOrderId(orderId)).thenReturn(
-                    Order().apply {
-                        orderStatus =
-                            OrderStatus().apply {
-                                stateId = "NEW"
-                            }
-                    },
-                )
-            }
-        val service =
-            OrderServiceImpl(
-                orderDao = orderDao,
-                apiConfigProperty = apiConfigProperty,
-                generatorService = generatorService,
-                bankDao = bankDao,
-                clientSystemDao = clientSystemDao,
-                orderStatusDao = orderStatusDao,
-                subOrderDao = subOrderDao,
-            )
-        val response: Response<DataGetOrderStatus> = service.getOrderStatus(orderId)
-        assertThat(response.data?.orderStatus).isEqualTo("NEW")
-        assertThat(response.code).isEqualTo(1201503200)
+        assertThat(orderService.getOrderStatus(VALID_ORDER_ID))
+            .returns(STATUS_CODE_SUCCESS_GET_ORDER_STATUS, Response<DataGetOrderStatus>::code)
+            .returns("NEW") { res -> res.data?.orderStatus }
     }
 
     @Test
     fun `getOrderStatus should throw InnerException when repository fails`() {
-        val orderDao = mock<OrderDao>()
-        `when`(orderDao.getOrderId(orderId))
-            .thenThrow(InnerException(traceId, "DB error"))
-        val subOrderDao = mock<SubOrderDao>()
-        val service =
-            OrderServiceImpl(
-                orderDao = orderDao,
-                apiConfigProperty = apiConfigProperty,
-                generatorService = generatorService,
-                bankDao = bankDao,
-                clientSystemDao = clientSystemDao,
-                orderStatusDao = orderStatusDao,
-                subOrderDao = subOrderDao,
-            )
         assertThrows<InnerException> {
-            service.getOrderStatus(orderId)
+            orderService.getOrderStatus(INVALID_ORDER_ID)
         }
     }
+
+    private fun initOrderService(): OrderServiceImpl =
+        OrderServiceImpl(
+            orderDao = orderDao,
+            apiConfigProperty = apiConfigProperty,
+        )
 }

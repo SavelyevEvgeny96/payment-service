@@ -8,19 +8,16 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
-import ru.sogaz.site.paymentService.entity.OrderStatus
-import ru.sogaz.site.paymentService.enums.StatusEnum
+import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.HistoryService
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
+import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
 
 class CheckStatusOrderTest {
     private val paymentRepository: PaymentRepository = mock()
@@ -34,8 +31,6 @@ class CheckStatusOrderTest {
     private val objectMapper: ObjectMapper = mock()
     private val rabbit: RabbitProperties = mock()
     private val paymentDao: PaymentDao = mock()
-    private val paymentStatusDao: PaymentStatusDao = mock()
-    private val orderStatusDao: OrderStatusDao = mock()
     private val operationHistoryDao: PaymentOperationHistoryDao = mock()
     private val historyService: HistoryService = mock()
 
@@ -49,8 +44,6 @@ class CheckStatusOrderTest {
             objectMapper,
             rabbit,
             subOrderDao,
-            paymentStatusDao,
-            orderStatusDao,
             operationHistoryDao,
             orderDao,
             historyService,
@@ -60,11 +53,9 @@ class CheckStatusOrderTest {
 
     @Test
     fun `should throw BusinessException with errorCodePaidFor when status SUCCESS`() {
-        val orderStatus = OrderStatus().apply { stateId = StatusEnum.SUCCESS.value }
-
         val ex =
             assertThrows<BusinessException> {
-                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
+                service.checkStatusOrder(OrderStatus.SUCCESS, errorCodePaidFor, errorCodeNotAvailable)
             }
 
         assert(ex.getErrorCode() == errorCodePaidFor)
@@ -72,11 +63,9 @@ class CheckStatusOrderTest {
 
     @Test
     fun `should throw BusinessException with errorCodeNotAvailable when status OVERDUE`() {
-        val orderStatus = OrderStatus().apply { stateId = StatusEnum.OVERDUE.value }
-
         val ex =
             assertThrows<BusinessException> {
-                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
+                service.checkStatusOrder(OrderStatus.OVERDUE, errorCodePaidFor, errorCodeNotAvailable)
             }
 
         assert(ex.getErrorCode() == errorCodeNotAvailable)
@@ -84,11 +73,9 @@ class CheckStatusOrderTest {
 
     @Test
     fun `should throw BusinessException with errorCodeNotAvailable when status MARKEDDEL`() {
-        val orderStatus = OrderStatus().apply { stateId = StatusEnum.MARKEDDEL.value }
-
         val ex =
             assertThrows<BusinessException> {
-                service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
+                service.checkStatusOrder(OrderStatus.MARKEDDEL, errorCodePaidFor, errorCodeNotAvailable)
             }
 
         assert(ex.getErrorCode() == errorCodeNotAvailable)
@@ -96,13 +83,6 @@ class CheckStatusOrderTest {
 
     @Test
     fun `should not throw exception when status NEW`() {
-        val orderStatus = OrderStatus().apply { stateId = StatusEnum.NEW.value }
-
-        service.checkStatusOrder(orderStatus, errorCodePaidFor, errorCodeNotAvailable)
-    }
-
-    @Test
-    fun `should not throw exception when orderStatus is null`() {
-        service.checkStatusOrder(null, errorCodePaidFor, errorCodeNotAvailable)
+        service.checkStatusOrder(OrderStatus.NEW, errorCodePaidFor, errorCodeNotAvailable)
     }
 }

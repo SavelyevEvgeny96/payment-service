@@ -23,16 +23,16 @@ import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.dto.response.PaymentData
 import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
-import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
-import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
+import ru.sogaz.site.paymentService.service.payment.ReceiptServiceImpl
 import java.util.UUID
 
 class ReceiptServiceTest {
@@ -60,29 +60,25 @@ class ReceiptServiceTest {
 
     @Test
     fun `generateReceipt should create valid request`() {
-        val clientSystems =
-            ClientSystem().apply {
-                externalSystemCode = "TEST_SYSTEM"
-            }
         val subOrder =
             SubOrder().apply {
                 policyNumber = "POL123"
                 contractId = "CONT123"
                 premiumAmount = "1000.00"
-                clientSystem = clientSystems
+                externalSystemCode = ExternalSystemCodeEnum.LK
             }
 
         val order =
             Order().apply {
-                orderId = "ORDER-123"
+                id = UUID.randomUUID()
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
             }
 
         whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        whenever(paymentRepository.findByOrderId(order)).thenReturn(
-            Payment().apply { id = 12 },
+        whenever(paymentRepository.findByOrder(order)).thenReturn(
+            Payment().apply { id = UUID.randomUUID() },
         )
         whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
@@ -127,28 +123,24 @@ class ReceiptServiceTest {
 
     @Test
     fun `generateReceipt should handle API failure response`() {
-        val clientSystems =
-            ClientSystem().apply {
-                externalSystemCode = "TEST_SYSTEM"
-            }
         val subOrder =
             SubOrder().apply {
                 policyNumber = "POL123"
                 contractId = "CONT123"
                 premiumAmount = "1000.00"
-                clientSystem = clientSystems
+                externalSystemCode = ExternalSystemCodeEnum.LK
             }
 
         val order =
             Order().apply {
-                orderId = "ORDER-123"
+                id = UUID.randomUUID()
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
             }
 
         whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        whenever(paymentRepository.findByOrderId(order)).thenReturn(Payment().apply { id = 12 })
+        whenever(paymentRepository.findByOrder(order)).thenReturn(Payment().apply { id = UUID.randomUUID() })
         whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         val mockResponse = """{"status":"FAILED"}"""
@@ -184,29 +176,24 @@ class ReceiptServiceTest {
 
     @Test
     fun `generateReceipt should handle REST client exception`() {
-        val clientSystems =
-            ClientSystem().apply {
-                externalSystemCode = "TEST_SYSTEM"
-            }
-
         val subOrder =
             SubOrder().apply {
                 policyNumber = "POL123"
                 contractId = "CONT123"
                 premiumAmount = "1000.00"
-                clientSystem = clientSystems
+                externalSystemCode = ExternalSystemCodeEnum.LK
             }
 
         val order =
             Order().apply {
-                orderId = "ORDER-123"
+                id = UUID.randomUUID()
                 premiumAmount = "1000.00"
                 recipientEmail = "test@example.com"
             }
 
         whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
         whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        whenever(paymentRepository.findByOrderId(order)).thenReturn(Payment().apply { id = 12 })
+        whenever(paymentRepository.findByOrder(order)).thenReturn(Payment().apply { id = UUID.randomUUID() })
         whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
 
         // 👇 создаём мокнутый RestTemplate

@@ -87,9 +87,12 @@ api:
   payment:
     paymentUrl: ${PAYMENT_URL:}
     akbUrl: ${AKB_URL:}
+    akbSbpUrl: ${AKB_SBP_URL:}
+    akbUrlStatus: ${AKB_PAYMENT_URL:}
     gpbUrl: ${GPB_URL:}
     gpbSbpUrl: ${GPB_SBP_URL:}
     gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL:}
+    gpbSbpQRImageUrl: ${GPB_SBP_QR_IMAGE_URL:}
     callbackUrlSbp: ${CALLBACK_URL_SBP:}
     paymentAccount: ${PAYMENT_ACCOUNT:}
     portalId: ${GPB_PORTAL_ID:}
@@ -97,11 +100,12 @@ api:
     merchantId: ${GPB_MERCHANT_ID:}
     backUrlS: ${BACK_URL_SUCCESS:}
     backUrlF: ${BACK_URL_FALSE:}
-    akbSbpUrl: ${AKB_SBP_URL:}
-    akbUrlStatus: ${AKB_PAYMENT_URL:}
+    qrUrlForCardPayment: ${QR_CARD_PAYMENT_URL:}
+    qrUrlForSbpPayment: ${QR_SBP_PAYMENT_URL:}
   receipt:
     receiptUrl: ${RECEIPT_URL:}
     receiptPath: ${RECEIPT_PATH:}
+
 management:
   endpoints:
     web:

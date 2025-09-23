@@ -3,9 +3,9 @@ package ru.sogaz.site.paymentService.dao.impl
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 
@@ -20,7 +20,7 @@ class PaymentOperationHistoryDaoImpl(
 
     override fun saveRecordOperationHistory(
         order: Order?,
-        clientSystem: ClientSystem?,
+        externalSystemCodeEnum: ExternalSystemCodeEnum?,
         traceId: String,
         actionTypeName: String,
     ) {
@@ -29,7 +29,7 @@ class PaymentOperationHistoryDaoImpl(
                 PaymentOperationHistory(
                     action = actionTypeName,
                     order = order,
-                    actionAuthor = clientSystem,
+                    actionAuthor = externalSystemCodeEnum,
                 )
             paymentOperationHistoryRepository.save(operationHistory)
         } catch (e: Exception) {
@@ -37,4 +37,15 @@ class PaymentOperationHistoryDaoImpl(
             throw InnerException(RequestInfo.getTraceId(), "$LOG_ERROR_PAYMENT_HISTORY_SAVE ${e.message}")
         }
     }
+
+    override fun save(
+        order: Order,
+        externalSystemCodeEnum: ExternalSystemCodeEnum?,
+        actionTypeName: String,
+    ): PaymentOperationHistory =
+        PaymentOperationHistory(
+            action = actionTypeName,
+            order = order,
+            actionAuthor = externalSystemCodeEnum,
+        ).run(paymentOperationHistoryRepository::save)
 }

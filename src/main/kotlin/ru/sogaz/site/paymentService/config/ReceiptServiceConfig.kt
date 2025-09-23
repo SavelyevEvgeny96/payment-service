@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.impl.ReceiptServiceImpl
+import ru.sogaz.site.paymentService.service.payment.ReceiptServiceImpl
 
 @Configuration
 open class ReceiptServiceConfig {

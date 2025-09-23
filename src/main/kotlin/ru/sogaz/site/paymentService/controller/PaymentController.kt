@@ -14,9 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
@@ -30,6 +33,8 @@ import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
 import ru.sogaz.siter.models.resonses.Response
+import java.util.Optional
+import java.util.UUID
 
 /**
  * Контроллер для обработки запросов на создание платежа.
@@ -112,7 +117,7 @@ class PaymentController(
         requestWrapper.payments.forEach { paymentRequest ->
             paymentRequestValidator.isValid(paymentRequest, requestWrapper, getTraceId())
         }
-        return orderService.createOrder(requestWrapper)
+        return ResponseEntity.ok(orderService.createOrder(requestWrapper))
     }
 
     @GetMapping("/paySbp/{orderId}")
@@ -120,14 +125,20 @@ class PaymentController(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
         @RequestParam(required = false) urlToReturnF: String?,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(urlToReturn, urlToReturnF, orderId)
+    ): ResponseEntity<Response<DataPay>> =
+        paymentService
+            .createSBPPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
+            .run { ResponseEntity.ok(this) }
 
     @GetMapping("/pay/{orderId}")
     fun pay(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
         @RequestParam(required = false) urlToReturnF: String?,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPayment(urlToReturn, urlToReturnF, orderId)
+    ): ResponseEntity<Response<DataPay>> =
+        paymentService
+            .createCardPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
+            .run { ResponseEntity.ok(this) }
 
     @Operation(
         summary = "Проверить статус оплаты",
@@ -235,4 +246,20 @@ class PaymentController(
             )
         return callbackService.processCallback(requestParams)
     }
+
+    @GetMapping("/pageinfo/{orderId}")
+    fun getInfoPage(
+        @PathVariable orderId: String,
+    ): Response<DataOrderPaymentPageInfo> =
+        orderId
+            .toUUID()
+            .orElseThrow { ValidationException(CODE_ERROR_REQUIRED_DATA) }
+            .run(paymentService::getOrderPaymentPageInfo)
+
+    private fun String.toUUID(): Optional<UUID> =
+        try {
+            Optional.of(UUID.fromString(this))
+        } catch (ex: Exception) {
+            Optional.empty<UUID>()
+        }
 }
