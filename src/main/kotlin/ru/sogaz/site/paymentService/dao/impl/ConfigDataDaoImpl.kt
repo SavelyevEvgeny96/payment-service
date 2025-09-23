@@ -10,6 +10,9 @@ class ConfigDataDaoImpl(
 ) : ConfigDataDao {
     companion object {
         const val LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND = "Не найдено значение : "
+        const val CODE_LENGTH = "codeLength"
+        const val LOG_CODE_LENGTH_NOT_FOUND = "Не найдено значение длины для генерации Order.code "
+        const val ERROR_ORDER_CODE_LENGTH_NOT_FOUND = "Длина кода не найдена"
     }
 
     private val logger = loggerFor(javaClass)
@@ -26,5 +29,16 @@ class ConfigDataDaoImpl(
                 throw InnerException(traceId, "$LOG_AND_ERROR_BANK_PRIORITY_NOT_FOUND$valueNameInfo")
             }
         return config.paramValue
+    }
+
+    fun getCodeLength(traceId: String): Int {
+        val config =
+            try {
+                configDataRepository.findByParamName(CODE_LENGTH)
+            } catch (e: Exception) {
+                logger.error(e, LOG_CODE_LENGTH_NOT_FOUND)
+                throw InnerException(traceId, ERROR_ORDER_CODE_LENGTH_NOT_FOUND)
+            }
+        return config.paramValue.toIntOrNull() ?: 6
     }
 }

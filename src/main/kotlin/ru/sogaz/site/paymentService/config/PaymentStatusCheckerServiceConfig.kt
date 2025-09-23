@@ -5,17 +5,15 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.HistoryService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.impl.PaymentStatusCheckerServiceImpl
+import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
 
 @Configuration
 class PaymentStatusCheckerServiceConfig {
@@ -29,8 +27,6 @@ class PaymentStatusCheckerServiceConfig {
         rabbitProperties: RabbitProperties,
         subOrderDao: SubOrderDao,
         paymentDao: PaymentDao,
-        paymentStatusDao: PaymentStatusDao,
-        orderStatusDao: OrderStatusDao,
         operationHistoryDao: PaymentOperationHistoryDao,
         orderDao: OrderDao,
         historyService: HistoryService,
@@ -44,8 +40,6 @@ class PaymentStatusCheckerServiceConfig {
             rabbit = rabbitProperties,
             subOrderDao = subOrderDao,
             paymentDao = paymentDao,
-            paymentStatusDao = paymentStatusDao,
-            orderStatusDao = orderStatusDao,
             operationHistoryDao = operationHistoryDao,
             orderDao = orderDao,
             historyService = historyService,

@@ -2,32 +2,33 @@ package ru.sogaz.site.paymentService.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.annotations.UuidGenerator
+import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "sub_orders")
 data class SubOrder(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
-    @Column(name = "sub_order_id")
-    var subOrderId: String? = "",
+    @UuidGenerator
+    var id: UUID? = null,
     @ManyToOne
-    @JoinColumn(name = "order_id", referencedColumnName = "order_id")
-    var orderId: Order? = null,
+    @JoinColumn(name = "order_id")
+    var order: Order? = null,
     @Column(name = "operation_id")
     var operationId: String? = "",
-    @ManyToOne
-    @JoinColumn(name = "external_system_code", referencedColumnName = "external_system_code")
-    var clientSystem: ClientSystem? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "external_system_code")
+    var externalSystemCode: ExternalSystemCodeEnum? = null,
     @Column(name = "doc_type")
     var docType: String? = "",
     @Column(name = "policy_id")
@@ -44,19 +45,10 @@ data class SubOrder(
     var contractNumber: String? = "",
     @Column(name = "premium_amount")
     var premiumAmount: String? = "",
+    @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
+    @UpdateTimestamp
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
-) {
-    @PrePersist
-    fun prePersist() {
-        createDate = LocalDateTime.now()
-        updateDate = LocalDateTime.now()
-    }
-
-    @PreUpdate
-    fun preUpdate() {
-        updateDate = LocalDateTime.now()
-    }
-}
+)

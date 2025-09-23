@@ -11,6 +11,8 @@ interface SubOrderDao {
 
     fun save(subOrder: SubOrder)
 
+    fun saveAll(subOrders: Iterable<SubOrder>): List<SubOrder>
+
     fun getAllSubOrderListByOrderId(
         orderId: Order,
         traceId: String,

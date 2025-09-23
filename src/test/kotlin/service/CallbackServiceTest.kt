@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.mockito.kotlin.any
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
@@ -14,13 +15,14 @@ import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.entity.PaymentStatus
-import ru.sogaz.site.paymentService.service.impl.CallbackServiceImpl
+import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
+import ru.sogaz.site.paymentService.service.callback.CallbackServiceImpl
+import java.util.Optional
+import java.util.UUID
 
 class CallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
-    private val callbackPaymentStatus = PaymentStatus().apply { stateId = "CALLBACK_AKB" }
     private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val testRequest =
@@ -32,14 +34,13 @@ class CallbackServiceTest {
     fun `processCallback should return success response when all steps are successful`() {
         val order =
             Order().apply {
-                id = 1L
-                orderId = "ORDER_123"
+                id = UUID.randomUUID()
             }
 
         val payment =
             Payment().apply {
                 paymentBankId = testRequest.bankId
-                orderId = order
+                this.order = order
             }
 
         val paymentDao =
@@ -48,15 +49,14 @@ class CallbackServiceTest {
             }
         val orderDao =
             mock<OrderDao>().apply {
-                `when`(getOrderId("1L")).thenReturn(order)
+                `when`(findById(any())).thenReturn(Optional.of(order))
             }
         val service =
             CallbackServiceImpl(
                 paymentDao = paymentDao,
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
-                callbackPaymentStatus = callbackPaymentStatus,
-                payClientSystem = payClientSystem,
+                payClientSystem = ExternalSystemCodeEnum.PAY,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
@@ -71,7 +71,7 @@ class CallbackServiceTest {
         val payment =
             Payment().apply {
                 paymentBankId = testRequest.bankId
-                orderId = Order().apply { id = 1L }
+                order = Order().apply { id = UUID.randomUUID() }
             }
 
         val paymentDao =
@@ -91,8 +91,7 @@ class CallbackServiceTest {
                 paymentDao = paymentDao,
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
-                callbackPaymentStatus = callbackPaymentStatus,
-                payClientSystem = payClientSystem,
+                payClientSystem = ExternalSystemCodeEnum.PAY,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 

@@ -8,7 +8,9 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
+import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
+import java.util.Optional
+import java.util.UUID
 
 class OrderDaoImpl(
     private val orderRepository: OrderRepository,
@@ -22,15 +24,17 @@ class OrderDaoImpl(
 
     override fun getOrderId(orderId: String): Order =
         try {
-            orderRepository.findByOrderId(orderId)
+            orderRepository.findById(UUID.fromString(orderId)).get()
         } catch (e: Exception) {
             logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, getTraceId())
             throw BusinessException(CODE_ERROR_GET_STATUS_ORDER, getTraceId())
         }
 
-    override fun save(order: Order) {
+    override fun findById(orderId: UUID): Optional<Order> = orderRepository.findById(orderId)
+
+    override fun save(order: Order): Order {
         try {
-            orderRepository.save(order)
+            return orderRepository.save(order)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_ORDER_SAVE)
             throw InnerException(getTraceId(), LOG_ERROR_ORDER_SAVE + e.message)

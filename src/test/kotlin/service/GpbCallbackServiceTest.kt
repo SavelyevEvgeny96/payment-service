@@ -5,31 +5,28 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.mockito.kotlin.any
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.OrderStatusDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dao.PaymentStatusDao
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
-import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import ru.sogaz.site.paymentService.service.impl.GpbCallbackServiceImpl
+import ru.sogaz.site.paymentService.service.callback.GpbCallbackServiceImpl
+import java.util.Optional
+import java.util.UUID
 
 class GpbCallbackServiceTest {
     private val signatureVerifier = mock<SignatureVerifier>()
     private val paymentDao = mock<PaymentDao>()
     private val orderDao = mock<OrderDao>()
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
-    private val paymentStatusDao = mock<PaymentStatusDao>()
-    private val getOrderStatusDao = mock<OrderStatusDao>()
     private val apiConfigProperties = mock<ApiConfigProperties>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
-
-    private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val service =
         GpbCallbackServiceImpl(
@@ -37,9 +34,7 @@ class GpbCallbackServiceTest {
             orderDao,
             paymentOperationHistoryDao,
             signatureVerifier,
-            paymentStatusDao,
-            getOrderStatusDao,
-            payClientSystem,
+            ExternalSystemCodeEnum.PAY,
             apiConfigProperties,
             callbackPaymentDao,
         )
@@ -73,19 +68,18 @@ class GpbCallbackServiceTest {
         val ordersId = "ORDER_123"
         val order =
             Order().apply {
-                id = 1L
-                orderId = ordersId
+                id = UUID.randomUUID()
             }
 
         val payment =
             Payment().apply {
-                id = 1
+                id = UUID.randomUUID()
                 paymentBankId = testRequest.trxId
-                orderId = order
+                this.order = order
             }
         `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(orderDao.getOrderId(ordersId)).thenReturn(order)
+        `when`(orderDao.findById(any())).thenReturn(Optional.of(order))
 
         val response = service.processCallback(testRequest)
 
@@ -98,7 +92,7 @@ class GpbCallbackServiceTest {
         val payment =
             Payment().apply {
                 paymentBankId = testRequest.trxId
-                orderId = null
+                order = null
             }
 
         `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
@@ -114,12 +108,12 @@ class GpbCallbackServiceTest {
         val payment =
             Payment().apply {
                 paymentBankId = testRequest.trxId
-                orderId = Order().apply { id = 999L }
+                order = Order().apply { id = UUID.randomUUID() }
             }
 
         `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(payment.orderId?.orderId?.let { orderDao.getOrderId(it) }).thenReturn(null)
+        `when`(payment.order?.id?.let { orderDao.findById(it) }).thenReturn(null)
 
         val response = service.processCallback(testRequest)
 

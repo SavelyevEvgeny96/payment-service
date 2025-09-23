@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import ru.sogaz.site.paymentService.service.impl.SignatureVerifierImpl
+import ru.sogaz.site.paymentService.service.callback.SignatureVerifierImpl
 import java.io.ByteArrayInputStream
 import java.security.PublicKey
 import java.security.Signature

@@ -4,15 +4,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
 import org.springframework.http.MediaType
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.service.ConfigDataService
-import ru.sogaz.site.paymentService.service.impl.GeneratorServiceImpl
+import ru.sogaz.site.paymentService.service.payment.GeneratorServiceImpl
 import java.time.Duration
 
 class GeneratorServiceImplTest {
-    private lateinit var configDataService: ConfigDataService
     private lateinit var service: GeneratorServiceImpl
 
     companion object {
@@ -23,8 +20,7 @@ class GeneratorServiceImplTest {
 
     @BeforeEach
     fun setUp() {
-        configDataService = mock()
-        service = GeneratorServiceImpl(configDataService)
+        service = GeneratorServiceImpl()
     }
 
     @Test

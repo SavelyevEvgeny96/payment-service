@@ -17,6 +17,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
+		<ru.sogaz.site.exception.starter.version>1.0.98</ru.sogaz.site.exception.starter.version>
 		<logback-gelf.version>6.1.1</logback-gelf.version>
 		<springdoc-openapi-starter.version>2.2.0</springdoc-openapi-starter.version>
 		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
@@ -46,36 +47,21 @@
 			<version>${logback-gelf.version}</version>
 		</dependency>
 
+		<!-- inner libraries -->
 		<dependency>
 			<groupId>ru.sogaz.esb.core</groupId>
 			<artifactId>logger</artifactId>
 			<version>${ru.sogaz.esb.core.logger.version}</version>
 		</dependency>
-		<!-- swagger / openapi -->
-		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>${springdoc-openapi-starter.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>exception-starter</artifactId>
-			<version>1.0.88</version>
-		</dependency>
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
-			<version>1.69</version>
-		</dependency>
-		<dependency>
-			<groupId>com.auth0</groupId>
-			<artifactId>java-jwt</artifactId>
-			<version>3.18.2</version>
+			<version>${ru.sogaz.site.exception.starter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>models-lib</artifactId>
-			<version>1.0.4</version>
+			<version>1.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>net.javacrumbs.shedlock</groupId>
@@ -92,6 +78,27 @@
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>filter-starter</artifactId>
 			<version>1.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>ru.sogaz.site</groupId>
+			<artifactId>qr-generator-api-client</artifactId >
+			<version>0.0.1</version>
+		</dependency>
+		<!-- swagger / openapi -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc-openapi-starter.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.69</version>
+		</dependency>
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>java-jwt</artifactId>
+			<version>3.18.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -118,6 +125,12 @@
 				<groupId>org.mockito.kotlin</groupId>
 				<artifactId>mockito-kotlin</artifactId>
 				<version>5.2.1</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>io.mockk</groupId>
+				<artifactId>mockk-jvm</artifactId>
+				<version>1.13.13</version>
 				<scope>test</scope>
 			</dependency>
 

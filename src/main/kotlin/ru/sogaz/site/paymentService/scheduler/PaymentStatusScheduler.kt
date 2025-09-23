@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.scheduler
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -31,7 +32,10 @@ class PaymentStatusScheduler(
         logger.info(LOG_BACKGROUND_TASK_START.format(traceId))
         try {
             val periodPay = configDataRepository.findByParamName("periodPay").paramValue.toLong()
-            val unpaidOrders = paymentRepository.findByStatuses(listOf("REG", "WAIT", "CALLBACK"))
+            val unpaidOrders =
+                paymentRepository.findByStatuses(
+                    listOf(PaymentStatusEnum.REG, PaymentStatusEnum.WAIT, PaymentStatusEnum.CALLBACK),
+                )
             logger.info(LOG_UNPAID_PAYMENTS_FOUND.format(unpaidOrders.size))
             unpaidOrders.forEach { payment ->
                 try {

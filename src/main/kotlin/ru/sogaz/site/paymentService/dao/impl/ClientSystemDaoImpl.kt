@@ -5,7 +5,7 @@ import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl.Companion.ERROR_CLIENT_SYSTEM_NOT_FOUND
+import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.ERROR_CLIENT_SYSTEM_NOT_FOUND
 
 class ClientSystemDaoImpl(
     private val clientSystemRepository: ClientSystemRepository,
