@@ -105,6 +105,8 @@ api:
   receipt:
     receiptUrl: ${RECEIPT_URL:}
     receiptPath: ${RECEIPT_PATH:}
+  qr:
+    baseUrl: ${QR_GENERATOR_URL:}
 
 management:
   endpoints:
