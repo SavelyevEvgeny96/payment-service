@@ -20,5 +20,7 @@ databaseChangeLog:
   - include:
       file: db.changelog\v2.1.2\2025-09-11\DATA\refactor_table_sub_orders.sql
   - include:
+      file: db.changelog\v2.1.2\2025-09-11\DATA\clear_operation_history.sql
+  - include:
       file: db.changelog\v2.1.2\2025-09-11\DATA\refactor_table_operation_history.sql
 
