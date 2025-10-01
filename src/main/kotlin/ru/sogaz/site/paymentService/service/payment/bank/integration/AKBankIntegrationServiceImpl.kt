@@ -107,7 +107,7 @@ class AKBankIntegrationServiceImpl(
      */
     private fun setSrcToken(payment: Payment) {
         val password = payment.paymentPageUrl?.substringAfter("password=")
-        val orderId = payment.order?.id.toString()
+        val orderId = payment.paymentBankId
         val url = "${apiConfigProperties.akbSbpUrl}/$orderId/$SET_SRC_TOKEN_SUFFIX$password"
         val body = SetSrcTokenRequest(token = mapOf(IPS_RU to true))
 
@@ -132,7 +132,7 @@ class AKBankIntegrationServiceImpl(
      */
     private fun preparePushTran(payment: Payment): String? {
         val password = payment.paymentPageUrl?.substringAfter("password=")
-        val orderId = payment.order?.id.toString()
+        val orderId = payment.paymentBankId
         val url = "${apiConfigProperties.akbSbpUrl}/$orderId/$PUSH_TRAN_SUFFIX$password"
         val body =
             PreparePushTranRequest(
@@ -185,7 +185,7 @@ class AKBankIntegrationServiceImpl(
         payment.apply {
             state = PaymentStatusEnum.REG
             paymentPageUrl = response.order?.hppUrl.orEmpty()
-            paymentBankId = response.order?.id.toString()
+            paymentBankId = (response.order?.id ?: 0).toString()
         }
 
     private fun validateRegisteredPayment(payment: Payment) {
