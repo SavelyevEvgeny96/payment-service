@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.dto.request
 
-class GPBSBPPaymentRequest(
+data class GPBSBPPaymentRequest(
     val account: String?,
     val merchantId: String,
     val templateVersion: String,
