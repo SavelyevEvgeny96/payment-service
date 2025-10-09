@@ -22,7 +22,9 @@ class ClientSystemDaoImpl(
         externalSystemCode: String,
     ): ClientSystem =
         try {
-            clientSystemRepository.findByExternalSystemCode(externalSystemCode)
+            clientSystemRepository
+                .findByExternalSystemCode(externalSystemCode)
+                .run { this ?: throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND) }
         } catch (e: Exception) {
             logger.error(
                 e,
@@ -32,4 +34,7 @@ class ClientSystemDaoImpl(
             )
             throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND)
         }
+
+    override fun findBySystemCode(externalSystemCode: String?): ClientSystem? =
+        clientSystemRepository.findByExternalSystemCode(externalSystemCode)
 }

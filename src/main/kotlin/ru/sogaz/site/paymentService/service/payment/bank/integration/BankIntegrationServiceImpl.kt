@@ -66,12 +66,14 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
 
     abstract override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse
 
-    fun generateDescription(
+    fun generateDescription(payment: Payment) = generateDescription(payment.order?.premiumAmount, payment.order?.subOrders)
+
+    private fun generateDescription(
         premiumAmount: String?,
         listSubOrder: List<SubOrder>?,
     ): DataDescriptionAndPremiumAmount =
         DataDescriptionAndPremiumAmount(
-            premiumAmount?.replace(".", ""),
+            premiumAmount?.replace(".", "")?.toInt(),
             generateDescription(listSubOrder),
         )
 

@@ -58,7 +58,7 @@ class PaymentServiceImpl(
         const val LOG_INFO_PAGE_WITHOUT_SBP_QR =
             "Для заказа с id: %s не будет отображена оплата по QR коду с СБП"
         const val LOG_FULL_INFO_PAGE =
-            "Для генерации информации по платежу для заказа с id: %s не будет отображена оплата по QR коду с СБП"
+            "Для генерации информации по платежу для заказа с id: %s будет отображена оплата по QR коду с СБП"
         const val LOG_ERROR_TO_GET_QR_FROM_BANK = "Не удалось получить QR код из банка %s, ex: %s"
     }
 
@@ -111,7 +111,8 @@ class PaymentServiceImpl(
 
     override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
         findOrderForQROrThrow(orderId)
-            .run { formPaySBPInfo(this) }
+            .also(::checkOrderStatus)
+            .run(::formPaySBPInfo)
             .run { formOrderPaymentPageInfo(orderId, this) }
             .also(::logPageInfoResultInfo)
             .run { getSuccessResponse(getTraceId(), SUCCESS_STATUS_CODE_PAY_INFO_PAGE, this) }
@@ -120,6 +121,12 @@ class PaymentServiceImpl(
         orderDao
             .findById(orderId)
             .orElseThrow { createBusinessException(CODE_ERROR_ORDER_NOT_FOUND_INFO) }
+
+    private fun checkOrderStatus(order: Order) {
+        if (order.status.isPaidFor() || order.status.isNotAvailable()) {
+            throw BusinessException(CODE_ERROR_ORDER_IS_PAID_FOR)
+        }
+    }
 
     private fun formPaySBPInfo(order: Order): PaySbp? {
         if (isSBPActive().not()) {

@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.dto.request
 
-class AkbCardAndSbpPaymentRequest(
+data class AkbCardAndSbpPaymentRequest(
     val order: OrderDto,
 )
 

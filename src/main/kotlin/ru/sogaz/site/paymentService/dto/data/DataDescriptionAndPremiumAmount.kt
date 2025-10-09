@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.dto.data
 
 class DataDescriptionAndPremiumAmount(
-    val premiumAmount: String?,
+    val premiumAmount: Int?,
     val description: String,
 )

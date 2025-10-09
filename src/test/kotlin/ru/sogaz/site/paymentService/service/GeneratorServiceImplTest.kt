@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 import org.hibernate.validator.internal.util.Contracts.assertNotNull
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

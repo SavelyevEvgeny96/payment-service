@@ -59,7 +59,7 @@ class GeneratorServiceImpl : GeneratorService {
         listSubOrder: List<SubOrder>?,
     ): DataDescriptionAndPremiumAmount =
         DataDescriptionAndPremiumAmount(
-            premiumAmount?.replace(".", ""),
+            premiumAmount?.replace(".", "")?.toInt(),
             generateDescription(listSubOrder),
         )
 

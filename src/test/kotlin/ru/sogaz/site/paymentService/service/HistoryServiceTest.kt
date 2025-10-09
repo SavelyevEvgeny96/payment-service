@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito.doReturn

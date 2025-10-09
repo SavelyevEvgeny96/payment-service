@@ -70,7 +70,7 @@ class BankDaoImpl(
             .run(::convertBankToEnumOrThrow)
 
     private fun convertBankToEnumOrThrow(bankName: String?): BankEnum =
-        BankEnum.fromValue(bankName) ?: throw InnerException(getTraceId(), LOG_RESOLVE_BANK_ERROR.format(bankName))
+        BankEnum.from(bankName) ?: throw InnerException(getTraceId(), LOG_RESOLVE_BANK_ERROR.format(bankName))
 
     private fun getConfigData(name: String): String = configDataDao.getBankInfoFromConfigData(getTraceId(), name)
 

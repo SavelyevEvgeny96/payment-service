@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -20,9 +20,6 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.MediaTypeValue
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.service.QRCodeService
-import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
 import java.util.Optional
 import java.util.UUID
