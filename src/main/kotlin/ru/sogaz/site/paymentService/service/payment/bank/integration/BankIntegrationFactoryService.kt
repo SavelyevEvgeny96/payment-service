@@ -15,7 +15,7 @@ class BankIntegrationFactoryService(
     private val props: SslClientProperties,
 ) {
     @Throws(BusinessException::class)
-    fun getInstanceByBank(bankId: String?): BankIntegrationService = BankEnum.fromValue(bankId).run(::getInstanceByBank)
+    fun getInstanceByBank(bankId: String?): BankIntegrationService = BankEnum.from(bankId).run(::getInstanceByBank)
 
     @Throws(BusinessException::class)
     fun getInstanceByBank(bankType: BankEnum?): BankIntegrationService =

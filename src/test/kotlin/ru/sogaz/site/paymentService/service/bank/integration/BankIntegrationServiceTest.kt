@@ -1,4 +1,4 @@
-package service.bank.integrations
+package ru.sogaz.site.paymentService.service.bank.integration
 
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -157,14 +157,22 @@ class BankIntegrationServiceTest {
 
     private fun mockGPBRestTemplate() {
         every { restTemplate.postForObject<GazpromTokenResponse>(any(String::class)) }.returns(TOKEN_RESPONSE)
-        every { restTemplate.postForObject<GazpromCardPaymentResponse>(any(String::class), any()) }.returns(GPB_CARD_PAYMENT_RESPONSE)
-        every { restTemplate.postForObject<GazpromSBPPaymentResponse>(any(String::class), any()) }.returns(GPB_SBP_PAYMENT_RESPONSE)
-        every { restTemplate.postForObject<GPBQRImageResponse>(any(String::class), any()) }.returns(GPB_QR_IMAGE_RESPONSE)
+        every { restTemplate.postForObject<GazpromCardPaymentResponse>(any(String::class), any()) }.returns(
+            GPB_CARD_PAYMENT_RESPONSE,
+        )
+        every { restTemplate.postForObject<GazpromSBPPaymentResponse>(any(String::class), any()) }.returns(
+            GPB_SBP_PAYMENT_RESPONSE,
+        )
+        every { restTemplate.postForObject<GPBQRImageResponse>(any(String::class), any()) }.returns(
+            GPB_QR_IMAGE_RESPONSE,
+        )
     }
 
     private fun mockAKBRestTemplate() {
         every { restTemplate.postForObject<AkbOrderResponse>(any(String::class), any()) }.returns(AKB_ORDER_RESPONSE)
-        every { restTemplate.postForObject<PreparePushTranResponse>(any(String::class), any()) }.returns(PREPARE_PUSH_TRAN_RESPONSE)
+        every { restTemplate.postForObject<PreparePushTranResponse>(any(String::class), any()) }.returns(
+            PREPARE_PUSH_TRAN_RESPONSE,
+        )
         every { restTemplate.postForObject<Map<String, Any>>(any(String::class), any()) }.answers { mutableMapOf() }
     }
 }

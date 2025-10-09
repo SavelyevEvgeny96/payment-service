@@ -18,8 +18,7 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import java.time.Duration
-import java.time.Instant
+import kotlin.time.measureTimedValue
 
 class AKBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
@@ -43,22 +42,24 @@ class AKBankIntegrationServiceImpl(
     @Throws(RestClientException::class)
     override fun registerCardPayment(payment: Payment): Payment =
         buildCardRequest(payment)
-            .run { postForCardPayment(this) }
-            .also { it.order ?: throw InnerException(getTraceId(), EMPTY_ORDER_RESPONSE) }
+            .also(::println)
+            .run(::postForCardPayment)
+            .also(::checkOrderResponseFromBank)
             .run { fillPaymentDataFromResponse(this, payment) }
-            .also { validateRegisteredPayment(it) }
+            .also(::validateRegisteredPayment)
 
     private fun buildCardRequest(payment: Payment): AkbCardAndSbpPaymentRequest =
-        generateDescription(payment.order?.premiumAmount, payment.order?.subOrders)
+        payment
+            .run(::generateDescription)
             .run { buildCardOrderDto(this, payment) }
-            .run { AkbCardAndSbpPaymentRequest(this) }
+            .run(::AkbCardAndSbpPaymentRequest)
 
     private fun buildCardOrderDto(
         dataDescriptionAndPremiumAmount: DataDescriptionAndPremiumAmount,
         payment: Payment,
     ) = OrderDto(
         typeRid = WITH_3DS,
-        amount = dataDescriptionAndPremiumAmount.premiumAmount?.toInt(),
+        amount = dataDescriptionAndPremiumAmount.premiumAmount,
         currency = RUB,
         hppRedirectUrl = payment.urlToReturn.success() ?: apiConfigProperties.backUrlS,
         ridByMerchant = payment.id.toString(),
@@ -71,27 +72,25 @@ class AKBankIntegrationServiceImpl(
     @Throws(RestClientException::class)
     override fun registerSBPPayment(payment: Payment): Payment =
         buildPaymentSBPRequest(payment)
-            .run { postForSBPPaymentData(this) }
-            .also { it.order ?: throw InnerException(getTraceId(), EMPTY_ORDER_RESPONSE) }
+            .run(::postForSBPPaymentData)
+            .also(::checkOrderResponseFromBank)
             .run { fillPaymentDataFromResponse(this, payment) }
-            .also { validateRegisteredPayment(it) }
-            .also { setSrcToken(it) }
+            .also(::validateRegisteredPayment)
+            .also(::setSrcToken)
             .apply { paymentPageUrl = preparePushTran(this) }
 
-    private fun buildPaymentSBPRequest(payment: Payment): AkbCardAndSbpPaymentRequest {
-        val expTime = nowPlusFormatted(0, 15)
-        return generateDescription(payment.order?.premiumAmount, payment.order?.subOrders)
-            .run { buildSbpOrderDto(this, payment, expTime) }
-            .run { AkbCardAndSbpPaymentRequest(this) }
-    }
+    private fun buildPaymentSBPRequest(payment: Payment): AkbCardAndSbpPaymentRequest =
+        payment
+            .run(::generateDescription)
+            .run { buildSbpOrderDto(this, payment) }
+            .run(::AkbCardAndSbpPaymentRequest)
 
     private fun buildSbpOrderDto(
         descriptionAndPremiumAmount: DataDescriptionAndPremiumAmount,
         payment: Payment,
-        expTime: String,
     ) = OrderDto(
         typeRid = QRC_PAY,
-        amount = descriptionAndPremiumAmount.premiumAmount?.toInt(),
+        amount = descriptionAndPremiumAmount.premiumAmount,
         currency = RUB,
         hppRedirectUrl = payment.urlToReturn.success() ?: apiConfigProperties.backUrlS,
         ridByMerchant = payment.id.toString(),
@@ -99,7 +98,7 @@ class AKBankIntegrationServiceImpl(
         description = descriptionAndPremiumAmount.description,
         descriptionHtml = descriptionAndPremiumAmount.description,
         language = RU,
-        expTime = expTime,
+        expTime = nowPlusFormatted(0, 15),
     )
 
     /**
@@ -110,20 +109,10 @@ class AKBankIntegrationServiceImpl(
         val orderId = payment.paymentBankId
         val url = "${apiConfigProperties.akbSbpUrl}/$orderId/$SET_SRC_TOKEN_SUFFIX$password"
         val body = SetSrcTokenRequest(token = mapOf(IPS_RU to true))
-
-        val start = Instant.now()
         try {
-            val response = postForObject<Map<String, Any>>(url, body)
-            val duration = Duration.between(start, Instant.now())
-            logger.info(
-                "setSrcToken success (took ${formatDuration(duration)}): $response",
-            )
-        } catch (e: Exception) {
-            val duration = Duration.between(start, Instant.now())
-            logger.info(
-                "Error setSrcToken (after ${formatDuration(duration)}): ${e.message}",
-            )
-            throw InnerException(getTraceId(), "Ошибка при установке SRC-токена: ${e.message}")
+            postForObject<Map<String, Any>>(url, body)
+        } catch (ex: Exception) {
+            throw InnerException(getTraceId(), "Ошибка при установке SRC-токена: ${ex.message}")
         }
     }
 
@@ -134,41 +123,25 @@ class AKBankIntegrationServiceImpl(
         val password = payment.paymentPageUrl?.substringAfter("password=")
         val orderId = payment.paymentBankId
         val url = "${apiConfigProperties.akbSbpUrl}/$orderId/$PUSH_TRAN_SUFFIX$password"
+        val returnUrl = payment.urlToReturn.success() ?: apiConfigProperties.backUrlS
         val body =
-            PreparePushTranRequest(
-                specificByPm =
-                    mapOf(
-                        IPS_RU to mapOf(REDIRECT_URL to apiConfigProperties.backUrlS),
-                    ),
-            )
-        val start = Instant.now()
+            PreparePushTranRequest(specificByPm = mapOf(IPS_RU to mapOf(REDIRECT_URL to returnUrl)))
         return try {
             val response = postForObject<PreparePushTranResponse?>(url, body)
-            val duration = Duration.between(start, Instant.now())
-            logger.info(
-                "preparePushTran success (took ${formatDuration(duration)}): $response",
-            )
             response
                 ?.specificByPm
                 ?.get(IPS_RU)
                 ?.qrcPayload
-        } catch (e: Exception) {
-            val duration = Duration.between(start, Instant.now())
-            logger.error(
-                "Ошибка получения qrcPayload (after ${formatDuration(duration)}): ${e.message}",
-            )
-            throw InnerException(getTraceId(), "Ошибка при подготовке push-транзакции: ${e.message}")
+        } catch (ex: Exception) {
+            throw InnerException(getTraceId(), "Ошибка при подготовке push-транзакции: ${ex.message}")
         }
     }
 
-    private fun postForCardPayment(request: AkbCardAndSbpPaymentRequest) =
-        postForObject<AkbOrderResponse>(
-            apiConfigProperties.akbUrl,
-            HttpEntity(request, jsonHeaders()),
-        )
+    private fun postForCardPayment(request: AkbCardAndSbpPaymentRequest): AkbOrderResponse =
+        postForObject(apiConfigProperties.akbUrl, HttpEntity(request, jsonHeaders()))
 
-    private fun postForSBPPaymentData(request: AkbCardAndSbpPaymentRequest) =
-        postForObject<AkbOrderResponse>(
+    private fun postForSBPPaymentData(request: AkbCardAndSbpPaymentRequest): AkbOrderResponse =
+        postForObject(
             apiConfigProperties.akbSbpUrl,
             HttpEntity(request, jsonHeaders()),
         )
@@ -176,7 +149,22 @@ class AKBankIntegrationServiceImpl(
     private inline fun <reified T> postForObject(
         url: String,
         request: Any? = null,
-    ): T = restTemplate.postForObject<T>(url, request)
+    ): T = postForObjectWithLogging(url, request)
+
+    private inline fun <reified T> postForObjectWithLogging(
+        url: String,
+        request: Any? = null,
+    ): T {
+        logger.info("Prepare for POST AKB request: $url with body: $request")
+        return withMeasureTime { restTemplate.postForObject<T>(url, request) }
+            .also { logger.info("Successfully processing request for AKB with response: $it") }
+    }
+
+    private inline fun <reified T> withMeasureTime(block: () -> T): T {
+        val (value: T, timeTaken) = measureTimedValue(block)
+        logger.info("${timeTaken.inWholeSeconds} whole seconds taken for AKB request")
+        return value
+    }
 
     private fun fillPaymentDataFromResponse(
         response: AkbOrderResponse,
@@ -195,6 +183,10 @@ class AKBankIntegrationServiceImpl(
             )
             throw InnerException(getTraceId(), EMPTY_HPP_URL_RESPONSE)
         }
+    }
+
+    private fun checkOrderResponseFromBank(response: AkbOrderResponse) {
+        response.order ?: throw InnerException(getTraceId(), EMPTY_ORDER_RESPONSE)
     }
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse {

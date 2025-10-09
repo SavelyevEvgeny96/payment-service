@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat

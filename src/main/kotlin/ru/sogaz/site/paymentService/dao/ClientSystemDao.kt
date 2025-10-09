@@ -7,4 +7,6 @@ interface ClientSystemDao {
         traceId: String,
         externalSystemCode: String,
     ): ClientSystem
+
+    fun findBySystemCode(externalSystemCode: String?): ClientSystem?
 }

@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

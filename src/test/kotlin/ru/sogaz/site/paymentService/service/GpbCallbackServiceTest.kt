@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -15,7 +15,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.callback.GpbCallbackServiceImpl
 import java.util.Optional
 import java.util.UUID

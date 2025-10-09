@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -10,15 +10,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.GeneratorService
-import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.order.OrderServiceImpl
 import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.STATUS_CODE_SUCCESS_GET_ORDER_STATUS
 import ru.sogaz.siter.models.resonses.Response
@@ -31,20 +26,8 @@ class OrderServiceTest {
         const val INVALID_ORDER_ID = "invalid"
     }
 
-    @MockK
-    private lateinit var subOrderDao: SubOrderDao
-
     @RelaxedMockK
     private lateinit var apiConfigProperty: ApiConfigProperties
-
-    @MockK
-    private lateinit var generatorService: GeneratorService
-
-    @MockK
-    private lateinit var bankDao: BankDao
-
-    @MockK
-    private lateinit var clientSystemDao: ClientSystemDao
 
     @MockK
     private lateinit var orderDao: OrderDao

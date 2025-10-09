@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
@@ -15,8 +15,6 @@ import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.service.HistoryService
-import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
 
 class CheckStatusOrderTest {

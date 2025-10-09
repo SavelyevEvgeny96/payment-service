@@ -4,12 +4,10 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
-import ru.sogaz.site.paymentService.dto.request.PaymentRequest
-import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.request.OrderPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.OrderService
@@ -17,7 +15,7 @@ import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.ZonedDateTime
+import java.time.ZoneId
 import java.util.UUID
 
 class OrderServiceImpl(
@@ -56,9 +54,8 @@ class OrderServiceImpl(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    override fun createOrder(requestWrapper: PaymentRequestWrapper): Response<DataOrder> {
-        val traceId = getTraceId()
-        logger.info(LOG_START_ORDER_CREATION + traceId)
+    override fun createOrder(requestWrapper: OrderPaymentRequest): Response<DataOrder> {
+        logger.info(LOG_START_ORDER_CREATION)
 
         val savedOrder =
             formOrderFromRequest(requestWrapper)
@@ -68,43 +65,44 @@ class OrderServiceImpl(
                     premiumAmount = extractPremiumAmount(this.subOrders).setScale(2, RoundingMode.HALF_UP).toString()
                 }.run(orderDao::save)
 
-        logger.info("$LOG_END_ORDER_CREATION $traceId")
+        logger.info(LOG_END_ORDER_CREATION)
         return getSuccessResponse(
-            traceId,
+            getTraceId(),
             STATUS_CODE_SUCCESS,
             formDataOrder(savedOrder.id),
         )
     }
 
-    private fun formOrderFromRequest(requestWrapper: PaymentRequestWrapper): Order =
+    private fun formOrderFromRequest(requestWrapper: OrderPaymentRequest): Order =
         Order(
-            bank = BankEnum.fromValue(requestWrapper.bank),
-            paymentEndDate = ZonedDateTime.parse(requestWrapper.paymentEndDate).toLocalDateTime(),
+            bank = requestWrapper.bank,
+            paymentEndDate = requestWrapper.paymentEndDate?.atZone(ZoneId.systemDefault())?.toLocalDateTime(),
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
         )
 
     private fun formSubOrdersFromRequest(
-        requestWrapper: PaymentRequestWrapper,
+        requestWrapper: OrderPaymentRequest,
         order: Order,
     ): List<SubOrder> =
         requestWrapper.payments
             .map(::formSubOrder)
             .onEach { it.order = order }
 
-    private fun formSubOrder(paymentRequest: PaymentRequest): SubOrder =
+    private fun formSubOrder(orderRequest: OrderRequest): SubOrder =
         SubOrder(
-            operationId = paymentRequest.operationId,
-            externalSystemCode = ExternalSystemCodeEnum.valueOf(paymentRequest.externalSystemCode),
-            docType = paymentRequest.docType,
-            policyId = paymentRequest.policyId,
-            policyNumber = paymentRequest.policyNumber,
-            contractId = paymentRequest.contractId,
-            typeInsurance = paymentRequest.typeInsurance,
-            contractNumber = paymentRequest.contractNumber,
-            insuranceProgram = paymentRequest.insuranceProgram,
-            premiumAmount = paymentRequest.premiumAmount,
+            operationId = orderRequest.operationId,
+            externalSystemCode = orderRequest.externalSystemCode,
+            docType = orderRequest.docType,
+            policyId = orderRequest.policyId,
+            policyNumber = orderRequest.policyNumber,
+            contractId = orderRequest.contractId,
+            typeInsurance = orderRequest.typeInsurance.description,
+            mainContractCheck = orderRequest.mainContractCheck,
+            contractNumber = orderRequest.contractNumber,
+            insuranceProgram = orderRequest.insuranceProgram,
+            premiumAmount = orderRequest.premiumAmount.toString(),
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }

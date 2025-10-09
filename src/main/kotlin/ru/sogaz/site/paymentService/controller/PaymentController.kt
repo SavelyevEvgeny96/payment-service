@@ -6,24 +6,26 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
-import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
-import ru.sogaz.site.paymentService.dto.request.PaymentRequestWrapper
+import ru.sogaz.site.paymentService.dto.request.OrderPaymentRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.service.CallbackService
@@ -31,7 +33,7 @@ import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
-import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
+import ru.sogaz.site.paymentService.validation.PermissionValidator
 import ru.sogaz.siter.models.resonses.Response
 import java.util.Optional
 import java.util.UUID
@@ -46,9 +48,9 @@ class PaymentController(
     private val orderService: OrderService,
     private val paymentService: PaymentService,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
-    private val paymentRequestValidator: PaymentRequestValidator,
     private val gpbCallbackService: GpbCallbackService,
     private val callbackService: CallbackService,
+    private val permissionValidator: PermissionValidator,
 ) {
     /**
      * Метод для создания заявки.
@@ -112,11 +114,10 @@ class PaymentController(
     )
     @PostMapping("/create")
     fun createOrder(
-        @RequestBody requestWrapper: PaymentRequestWrapper,
+        @Valid @RequestBody requestWrapper: OrderPaymentRequest,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
     ): ResponseEntity<Response<DataOrder>> {
-        requestWrapper.payments.forEach { paymentRequest ->
-            paymentRequestValidator.isValid(paymentRequest, requestWrapper, getTraceId())
-        }
+        permissionValidator.checkPermission(authorization)
         return ResponseEntity.ok(orderService.createOrder(requestWrapper))
     }
 

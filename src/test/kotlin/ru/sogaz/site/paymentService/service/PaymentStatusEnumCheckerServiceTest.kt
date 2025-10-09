@@ -1,4 +1,4 @@
-package service
+package ru.sogaz.site.paymentService.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
@@ -31,8 +31,6 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.service.HistoryService
-import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
 import java.time.LocalDateTime
 import java.util.Optional

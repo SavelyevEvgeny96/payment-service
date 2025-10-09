@@ -41,6 +41,8 @@ data class SubOrder(
     var insuranceProgram: String? = "",
     @Column(name = "type_insurance")
     var typeInsurance: String? = "",
+    @Column(name = "mainContractCheck")
+    var mainContractCheck: Boolean = false,
     @Column(name = "contract_number")
     var contractNumber: String? = "",
     @Column(name = "premium_amount")
