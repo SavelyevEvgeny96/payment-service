@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.service.payment
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_CANNOT_BE_PAID_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE_SBP
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
@@ -124,7 +125,7 @@ class PaymentServiceImpl(
 
     private fun checkOrderStatus(order: Order) {
         if (order.status.isPaidFor() || order.status.isNotAvailable()) {
-            throw BusinessException(CODE_ERROR_ORDER_IS_PAID_FOR)
+            throw BusinessException(CODE_ERROR_ORDER_CANNOT_BE_PAID_INFO)
         }
     }
 
