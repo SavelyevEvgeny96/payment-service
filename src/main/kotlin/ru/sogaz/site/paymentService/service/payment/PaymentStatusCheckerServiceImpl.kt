@@ -19,6 +19,7 @@ import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
 import ru.sogaz.site.paymentService.dto.data.VariableDto
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -201,7 +202,7 @@ class PaymentStatusCheckerServiceImpl(
                     "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
                 val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
-                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
                     updatePaymentStatus(payment, paymentResponse)
@@ -298,11 +299,11 @@ class PaymentStatusCheckerServiceImpl(
 
     private fun updatePaymentStatus(
         payment: Payment,
-        response: PaymentStatusResponse,
+        response: PaymentStatusResponseCard,
     ) {
         val traceId = getTraceId()
         val order: Order? = findOrderByPayment(payment)
-        val status = response.result.first().status
+        val status = response.result.status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.id, traceId))
 

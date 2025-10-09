@@ -13,7 +13,7 @@ import ru.sogaz.site.qr.generator.client.invoker.ApiClient
 
 @Configuration
 class GeneratorConfig(
-    val qrConfigProperties: QrConfigProperties
+    val qrConfigProperties: QrConfigProperties,
 ) {
     @Bean
     fun generatorServiceConfig(): GeneratorService = GeneratorServiceImpl()
