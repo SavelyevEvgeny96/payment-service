@@ -39,7 +39,8 @@ class QRCodeServiceImpl(
 
     override fun requestFromBank(payment: Payment): Optional<FileQR> =
         try {
-            bankIntegrationFactoryService.getInstanceByBank(payment.bank)
+            bankIntegrationFactoryService
+                .getInstanceByBank(payment.bank)
                 .run { this.getQRCodeImageData(payment) }
                 .run { makeFileQREntity(this) }
                 .run { Optional.of(this) }
