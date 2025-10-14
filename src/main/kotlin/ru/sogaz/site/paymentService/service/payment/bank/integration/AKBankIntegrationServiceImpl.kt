@@ -110,7 +110,7 @@ class AKBankIntegrationServiceImpl(
         val url = "${apiConfigProperties.akbSbpUrl}/$orderId/$SET_SRC_TOKEN_SUFFIX$password"
         val body = SetSrcTokenRequest(token = mapOf(IPS_RU to true))
         try {
-            postForObject<Map<String, Any>>(url, body)
+            postForObject<Map<String, Any>>(url, HttpEntity(body, jsonHeaders()))
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), "Ошибка при установке SRC-токена: ${ex.message}")
         }
@@ -127,7 +127,7 @@ class AKBankIntegrationServiceImpl(
         val body =
             PreparePushTranRequest(specificByPm = mapOf(IPS_RU to mapOf(REDIRECT_URL to returnUrl)))
         return try {
-            val response = postForObject<PreparePushTranResponse?>(url, body)
+            val response = postForObject<PreparePushTranResponse?>(url, HttpEntity(body, jsonHeaders()))
             response
                 ?.specificByPm
                 ?.get(IPS_RU)
