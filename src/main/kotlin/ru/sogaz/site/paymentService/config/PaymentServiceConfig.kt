@@ -7,11 +7,13 @@ import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.mapper.OrderMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.QRCodeService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
+import ru.sogaz.site.paymentService.service.SubOrderService
 import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
 import ru.sogaz.site.paymentService.service.payment.RegisterPaymentServiceImpl
 import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
@@ -42,6 +44,8 @@ open class PaymentServiceConfig(
         registerPaymentService: RegisterPaymentService,
         qrCodeService: QRCodeService,
         apiConfigProperties: ApiConfigProperties,
+        subOrderService: SubOrderService,
+        orderMapper: OrderMapper,
     ): PaymentService =
         PaymentServiceImpl(
             orderDao = orderDao,
@@ -50,5 +54,7 @@ open class PaymentServiceConfig(
             registerPaymentService = registerPaymentService,
             qrCodeService = qrCodeService,
             apiConfigProperties = apiConfigProperties,
+            subOrderService = subOrderService,
+            orderMapper = orderMapper,
         )
 }

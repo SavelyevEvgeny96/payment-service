@@ -6,6 +6,7 @@ enum class OrderStatus {
     OVERDUE,
     MARKEDDEL,
     SUCCESS,
+    CANCELED,
     ;
 
     fun isPaidFor() = this == SUCCESS

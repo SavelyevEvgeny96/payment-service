@@ -10,6 +10,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_SBP
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_UPDATED_ORDER_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
@@ -19,16 +20,20 @@ import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.FileQR
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
+import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
+import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.OrderMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.QRCodeService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
+import ru.sogaz.site.paymentService.service.SubOrderService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.util.Objects.isNull
@@ -46,16 +51,21 @@ class PaymentServiceImpl(
     private val registerPaymentService: RegisterPaymentService,
     private val qrCodeService: QRCodeService,
     private val apiConfigProperties: ApiConfigProperties,
+    private val subOrderService: SubOrderService,
+    private val orderMapper: OrderMapper,
 ) : PaymentService {
     companion object {
         const val SUCCESS_STATUS_CODE_CARD_PAY = 1101510200
         const val SUCCESS_STATUS_CODE_SBP_PAY = 1101530200
         const val SUCCESS_STATUS_CODE_PAY_INFO_PAGE = 1101540200
+        const val SUCCESS_UPDATE_CODE_PAYMENT_INVOICE = 1101580200
 
+        const val SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE = "ok"
         const val SBP_ACTIVE_CONFIG_NAME = "sbpActive"
         const val LOG_ERROR_PAYMENT_TYPE_IS_ABSENT = "Отсутствует тип платежа"
         const val LOG_ORDER_INFO_BEFORE_REGISTRATION = "Для регистрации платежа по заказу с id: %s был выбран банк: %s"
-        const val LOG_PAYMENT_INFO_AFTER_REGISTRATION = "Платеж по заказу с id: %s был успешно зарегистрирован в банке: %s"
+        const val LOG_PAYMENT_INFO_AFTER_REGISTRATION =
+            "Платеж по заказу с id: %s был успешно зарегистрирован в банке: %s"
         const val LOG_INFO_PAGE_WITHOUT_SBP_QR =
             "Для заказа с id: %s не будет отображена оплата по QR коду с СБП"
         const val LOG_FULL_INFO_PAGE =
@@ -86,6 +96,26 @@ class PaymentServiceImpl(
             PaymentTypeEnum.SBP,
             UrlToReturn(urlToReturnS, urlToReturnF),
         )
+
+    override fun updatePaymentInvoice(
+        updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest
+    ): Response<UpdatePaymentInvoiceResponse> {
+        val existedOrderPayment =
+            orderDao
+                .findById(updatePaymentInvoiceRequest.orderId)
+                .orElseThrow { BusinessException(CODE_ERROR_UPDATED_ORDER_NOT_FOUND, getTraceId()) }
+
+        subOrderService.updateSubOrder(updatePaymentInvoiceRequest)
+
+        val updatedOrder = orderMapper.updateOrder(updatePaymentInvoiceRequest, existedOrderPayment)
+        orderDao.save(updatedOrder)
+
+        return getSuccessResponse(
+            getTraceId(),
+            SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,
+            UpdatePaymentInvoiceResponse(SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE)
+        )
+    }
 
     private fun createPayment(
         orderId: UUID,
@@ -138,7 +168,8 @@ class PaymentServiceImpl(
             .run { formPaySBPInfo(order, this) }
     }
 
-    private fun isSBPActive() = configDataDao.getBankInfoFromConfigData(getTraceId(), SBP_ACTIVE_CONFIG_NAME).toBoolean()
+    private fun isSBPActive() =
+        configDataDao.getBankInfoFromConfigData(getTraceId(), SBP_ACTIVE_CONFIG_NAME).toBoolean()
 
     private fun formPaySBPInfo(
         order: Order,
@@ -225,7 +256,8 @@ class PaymentServiceImpl(
             .format(payment.order?.id, payment.bank)
             .run(logger::info)
 
-    private fun logPageInfoResultInfo(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::info)
+    private fun logPageInfoResultInfo(pageInfo: DataOrderPaymentPageInfo) =
+        getLogMessageForPageInfo(pageInfo).run(logger::info)
 
     private fun getLogMessageForPageInfo(pageInfo: DataOrderPaymentPageInfo) =
         if (isNull(pageInfo.paySbp)) {

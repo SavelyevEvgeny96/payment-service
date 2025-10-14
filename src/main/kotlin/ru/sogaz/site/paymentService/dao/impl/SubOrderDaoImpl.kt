@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import java.util.UUID
 
 class SubOrderDaoImpl(
     private val subOrderRepository: SubOrderRepository,
@@ -29,14 +30,13 @@ class SubOrderDaoImpl(
             throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER${order?.id}")
         }
 
-    override fun save(subOrder: SubOrder) {
+    override fun save(subOrder: SubOrder): SubOrder =
         try {
             subOrderRepository.save(subOrder)
         } catch (e: Exception) {
             logger.error(e, LOG_ERROR_SUB_ORDER_SAVE)
             throw InnerException(getTraceId(), LOG_ERROR_SUB_ORDER_SAVE + e.message)
         }
-    }
 
     override fun saveAll(subOrders: Iterable<SubOrder>): List<SubOrder> = subOrderRepository.saveAll(subOrders)
 
@@ -50,4 +50,6 @@ class SubOrderDaoImpl(
             logger.error("$LOG_AND_ERROR_FIND_SUB_ORDER ${orderId.id}")
             throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER${orderId.id}")
         }
+
+    override fun findAllByOrderId(orderId: UUID): List<SubOrder> = subOrderRepository.findAllByOrderId(orderId)
 }
