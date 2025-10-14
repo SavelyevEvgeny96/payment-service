@@ -10,5 +10,5 @@ import java.util.UUID
 interface SubOrderRepository : JpaRepository<SubOrder, UUID> {
     fun findFirstByOrderId(orderId: Order?): SubOrder
 
-    fun findAllByOrderId(orderId: Order): List<SubOrder>
+    fun findAllByOrderId(orderId: UUID): List<SubOrder>
 }

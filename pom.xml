@@ -96,6 +96,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
+			<artifactId>payment-receipt-api-client</artifactId >
+			<version>0.0.2-dev</version>
+		</dependency>
+		<dependency>
+			<groupId>ru.sogaz.site</groupId>
 			<artifactId>jwt-starter</artifactId >
 			<version>1.0.1</version>
 		</dependency>

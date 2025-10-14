@@ -16,5 +16,5 @@ interface SubOrderDao {
     fun getAllSubOrderListByOrderId(
         orderId: Order,
         traceId: String,
-    ): List<SubOrder>
+    ): List<SubOrder>?
 }

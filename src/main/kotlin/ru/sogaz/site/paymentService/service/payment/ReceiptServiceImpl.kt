@@ -1,23 +1,17 @@
 package ru.sogaz.site.paymentService.service.payment
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
-import org.springframework.http.MediaType
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
+import ru.sogaz.site.payment.receipt.client.model.ClientInfo
+import ru.sogaz.site.payment.receipt.client.model.PaymentItemRequest
 import ru.sogaz.site.paymentService.dao.SubOrderDao
-import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
@@ -25,11 +19,9 @@ import ru.sogaz.site.paymentService.service.ReceiptService
 import java.time.LocalDateTime
 
 class ReceiptServiceImpl(
-    private val receiptProperty: ReceiptProperties,
-    private val restTemplate: WebConfigRestTemplate,
     private val subOrderDao: SubOrderDao,
     private val operationHistoryRepository: PaymentOperationHistoryRepository,
-    private val objectMapper: ObjectMapper,
+    private val paymentReceiptControllerApi: PaymentReceiptControllerApi,
     private val paymentRepository: PaymentRepository,
     private val chequeSentRepository: ChequeSentRepository,
 ) : ReceiptService {
@@ -53,7 +45,6 @@ class ReceiptServiceImpl(
 
     override fun generateReceipt(order: Order) {
         val traceId = getTraceId()
-        val url = receiptProperty.receiptUrl
 
         val payment = paymentRepository.findByOrder(order)
 
@@ -77,7 +68,7 @@ class ReceiptServiceImpl(
             }
 
         val receiptItems =
-            subOrders.mapNotNull { subOrder ->
+            subOrders?.mapNotNull { subOrder ->
                 val itemName =
                     buildString {
                         append(ITEM_NAME_PREFIX)
@@ -90,61 +81,50 @@ class ReceiptServiceImpl(
                     }
 
                 subOrder.premiumAmount?.toReceiptAmount()?.let { premiumAmount ->
-                    PaymentReceiptCreateRequest.PaymentItemRequest(
-                        name = itemName,
-                        price = premiumAmount,
-                        quantity = 1.00,
-                        sum = premiumAmount,
-                        paymentMethod = "full_payment",
-                        paymentObject = "service",
-                        vat = PaymentReceiptCreateRequest.VatRequest(type = "none"),
-                    )
+                    ru.sogaz.site.payment.receipt.client.model
+                        .PaymentReceiptCreateRequest()
+                        .apply {
+                            addItemsItem(
+                                PaymentItemRequest().apply {
+                                    name = itemName
+                                    price = premiumAmount
+                                    quantity = 1.00
+                                    sum = premiumAmount
+                                    paymentMethod = "full_payment"
+                                    paymentObject = "service"
+                                    vat =
+                                        ru.sogaz.site.payment.receipt.client.model.VatRequest().apply {
+                                            type = "none"
+                                        }
+                                },
+                            )
+                        }
                 }
             }
 
         val totalAmount = order.premiumAmount.toReceiptAmount()
 
         val requestBody =
-            totalAmount.let { it ->
-                PaymentReceiptCreateRequest(
-                    client =
-                        PaymentReceiptCreateRequest.ClientInfo(
-                            email = order.recipientEmail,
-                        ),
-                    items = receiptItems,
-                    payments =
-                        listOf(
-                            totalAmount.let {
-                                PaymentReceiptCreateRequest.PaymentPaymentRequest(
-                                    type = "1",
-                                    sum = it,
-                                )
-                            },
-                        ),
-                    system = "Atol",
-                    total = it,
-                    version = "v4",
-                )
-            }
+            ru.sogaz.site.payment.receipt.client.model
+                .PaymentReceiptCreateRequest()
 
-        val headers =
-            HttpHeaders().apply {
-                set("TraceId", traceId)
-                contentType = MediaType.APPLICATION_JSON
-            }
+        order.recipientEmail?.let { ClientInfo().email(it) }?.let { requestBody.client(it) }
+        requestBody.items.add(receiptItems?.first()?.items?.first())
+        requestBody.payments.add(
+            totalAmount.let {
+                ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest().apply {
+                    type = "1"
+                    sum = it
+                }
+            })
+        requestBody.system = "Atol"
+        requestBody.total = totalAmount
+        requestBody.version = "v4"
 
         try {
-            val response =
-                restTemplate
-                    .defaultRestTemplate()
-                    .exchange(
-                        url,
-                        HttpMethod.POST,
-                        HttpEntity(requestBody, headers),
-                        PaymentReceiptCreateResponse::class.java,
-                    )
+            val response = paymentReceiptControllerApi.createPaymentCheck(requestBody)
 
-            when (response.body?.status) {
+            when (response.status) {
                 StatusEnum.SUCCESS.value -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.id, traceId))
                     payment?.paymentBankId?.let { handleReceiptSuccess(order, it) }
@@ -157,14 +137,14 @@ class ReceiptServiceImpl(
                 }
 
                 else -> {
-                    logger.error(LOG_RECEIPT_API_ERROR.format(response.body?.status, traceId))
+                    logger.error(LOG_RECEIPT_API_ERROR.format(response.status, traceId))
                     payment?.paymentBankId?.let {
                         handleReceiptError(
                             order,
                             it,
                         )
                     }
-                    throw InnerException(traceId, ERROR_RECEIPT + response.body?.code)
+                    throw InnerException(traceId, ERROR_RECEIPT + response.code)
                 }
             }
         } catch (e: Exception) {

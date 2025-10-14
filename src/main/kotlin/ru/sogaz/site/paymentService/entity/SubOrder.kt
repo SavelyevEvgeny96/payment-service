@@ -22,7 +22,7 @@ data class SubOrder(
     @UuidGenerator
     var id: UUID? = null,
     @ManyToOne
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
     var order: Order? = null,
     @Column(name = "operation_id")
     var operationId: String? = "",
