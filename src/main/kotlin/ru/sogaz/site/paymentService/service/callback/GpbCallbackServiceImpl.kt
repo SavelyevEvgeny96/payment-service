@@ -27,7 +27,6 @@ class GpbCallbackServiceImpl(
     private val orderDao: OrderDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
-    private val payClientSystem: ExternalSystemCodeEnum,
     private val apiConfigProperties: ApiConfigProperties,
     private val callbackPaymentDao: CallbackPaymentDao,
 ) : GpbCallbackService {
@@ -149,7 +148,6 @@ class GpbCallbackServiceImpl(
                 }
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
-                payClientSystem,
                 traceId,
                 ActionType.CALLBACK_RECEIVED.value,
             )

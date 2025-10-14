@@ -214,24 +214,20 @@ class ReceiptServiceImpl(
     }
 
     private fun saveReceiptOperationHistory(order: Order) {
-        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
                 action = ActionType.ORDER_PAID.value,
                 order = order,
-                actionAuthor = subOrder.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             ),
         )
     }
 
     private fun saveFailedReceiptOperationHistory(order: Order) {
-        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
         operationHistoryRepository.save(
             PaymentOperationHistory(
                 action = ActionType.PAYMENT_ERROR.value,
                 order = order,
-                actionAuthor = subOrder.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             ),
         )

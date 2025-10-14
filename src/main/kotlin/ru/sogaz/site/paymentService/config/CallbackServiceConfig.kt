@@ -25,7 +25,6 @@ class CallbackServiceConfig(
     ) = CallbackServiceImpl(
         paymentDao = paymentDao,
         orderDao = orderDao,
-        payClientSystem = ExternalSystemCodeEnum.PAY,
         callbackPaymentDao = callbackPaymentDao,
         paymentOperationHistoryDao = paymentOperationHistoryDao,
     )

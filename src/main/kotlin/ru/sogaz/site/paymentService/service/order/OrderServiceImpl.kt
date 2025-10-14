@@ -92,8 +92,6 @@ class OrderServiceImpl(
 
     private fun formSubOrder(orderRequest: OrderRequest): SubOrder =
         SubOrder(
-            operationId = orderRequest.operationId,
-            externalSystemCode = orderRequest.externalSystemCode,
             docType = orderRequest.docType,
             policyId = orderRequest.policyId,
             policyNumber = orderRequest.policyNumber,

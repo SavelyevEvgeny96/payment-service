@@ -20,7 +20,6 @@ class PaymentOperationHistoryDaoImpl(
 
     override fun saveRecordOperationHistory(
         order: Order?,
-        externalSystemCodeEnum: ExternalSystemCodeEnum?,
         traceId: String,
         actionTypeName: String,
     ) {
@@ -28,8 +27,7 @@ class PaymentOperationHistoryDaoImpl(
             val operationHistory =
                 PaymentOperationHistory(
                     action = actionTypeName,
-                    order = order,
-                    actionAuthor = externalSystemCodeEnum,
+                    order = order
                 )
             paymentOperationHistoryRepository.save(operationHistory)
         } catch (e: Exception) {
@@ -40,12 +38,10 @@ class PaymentOperationHistoryDaoImpl(
 
     override fun save(
         order: Order,
-        externalSystemCodeEnum: ExternalSystemCodeEnum?,
         actionTypeName: String,
     ): PaymentOperationHistory =
         PaymentOperationHistory(
             action = actionTypeName,
-            order = order,
-            actionAuthor = externalSystemCodeEnum,
+            order = order
         ).run(paymentOperationHistoryRepository::save)
 }

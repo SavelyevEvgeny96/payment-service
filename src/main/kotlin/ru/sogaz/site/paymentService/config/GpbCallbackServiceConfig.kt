@@ -29,7 +29,6 @@ class GpbCallbackServiceConfig(
         orderDao = orderDao,
         paymentOperationHistoryDao = paymentOperationHistoryDao,
         signatureVerifier = signatureVerifier,
-        payClientSystem = ExternalSystemCodeEnum.PAY,
         apiConfigProperties = apiConfigProperties,
         callbackPaymentDao = callbackPaymentDao,
     )

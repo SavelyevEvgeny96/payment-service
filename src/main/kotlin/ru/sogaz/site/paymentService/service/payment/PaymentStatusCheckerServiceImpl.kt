@@ -328,11 +328,9 @@ class PaymentStatusCheckerServiceImpl(
                     ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
 
             val requestBody =
-                mainSubOrder.externalSystemCode?.let {
                     PaidOrderMessage(
                         orderId = order.id.toString(),
                         recipientEmail = order.recipientEmail,
-                        externalSystemCode = it.name,
                         docType = mainSubOrder.docType,
                         policyId = mainSubOrder.policyId,
                         policyNumber = mainSubOrder.policyNumber,
@@ -342,7 +340,6 @@ class PaymentStatusCheckerServiceImpl(
                         premiumAmount = mainSubOrder.premiumAmount,
                         paySuccess = order.updateDate?.atZone(ZoneOffset.UTC)?.format(DateTimeFormatter.ISO_INSTANT),
                     )
-                }
 
             val paidOrderMessage =
                 QueueMessageDto(

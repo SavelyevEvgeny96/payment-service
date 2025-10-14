@@ -25,7 +25,6 @@ import java.time.LocalDateTime
 class CallbackServiceImpl(
     private val paymentDao: PaymentDao,
     private val orderDao: OrderDao,
-    private val payClientSystem: ExternalSystemCodeEnum,
     private val callbackPaymentDao: CallbackPaymentDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
 ) : CallbackService {
@@ -133,7 +132,6 @@ class CallbackServiceImpl(
             val order = orderDao.findById(orderId.id!!).orElseThrow { throw InnerException(traceId, ORDER_NOT_FOUND) }
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
-                payClientSystem,
                 traceId,
                 ActionType.CALLBACK_RECEIVED.value,
             )
