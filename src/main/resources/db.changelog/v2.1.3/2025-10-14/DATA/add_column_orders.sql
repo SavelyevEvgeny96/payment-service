@@ -1,4 +1,4 @@
--- === Обновление ТАБЛИЦЫ orders ===
+-- === Редактирование ТАБЛИЦЫ orders ===
 
 ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS recipient_phone VARCHAR(255),        -- Мобильный телефон страхователя

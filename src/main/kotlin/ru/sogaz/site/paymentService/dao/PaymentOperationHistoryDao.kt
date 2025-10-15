@@ -2,7 +2,6 @@ package ru.sogaz.site.paymentService.dao
 
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 
 interface PaymentOperationHistoryDao {
     fun saveRecordOperationHistory(

@@ -5,7 +5,6 @@ import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 
@@ -27,7 +26,7 @@ class PaymentOperationHistoryDaoImpl(
             val operationHistory =
                 PaymentOperationHistory(
                     action = actionTypeName,
-                    order = order
+                    order = order,
                 )
             paymentOperationHistoryRepository.save(operationHistory)
         } catch (e: Exception) {
@@ -42,6 +41,6 @@ class PaymentOperationHistoryDaoImpl(
     ): PaymentOperationHistory =
         PaymentOperationHistory(
             action = actionTypeName,
-            order = order
+            order = order,
         ).run(paymentOperationHistoryRepository::save)
 }

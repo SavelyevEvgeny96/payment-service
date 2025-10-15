@@ -24,64 +24,45 @@ data class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     var status: OrderStatus = OrderStatus.NEW,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,
-
     @Column(name = "premium_amount")
     var premiumAmount: String = "",
-
     @Column(name = "recipient_email")
     var recipientEmail: String? = "",
-
     @Column(name = "url_to_return")
     var urlToReturn: String? = "",
-
     @Column(name = "url_to_decline")
     var urlToDecline: String? = "",
-
     @Column(name = "payment_end_date")
     var paymentEndDate: LocalDateTime? = null,
-
     @Column(name = "date_delete")
     var dateDelete: LocalDateTime? = null,
-
     @Column(name = "recipient_phone")
     var recipientPhone: String? = null,
-
     @Column(name = "recipient_user_id")
     var recipientUserId: String? = null,
-
     @Column(name = "policyholder")
     var policyholder: String? = null,
-
     @Column(name = "recipient_gd_id")
     var recipientGdId: String? = null,
-
     @Column(name = "key_card")
     var keyCard: String? = null,
-
     @Column(name = "save_card")
     var saveCard: Boolean = false,
-
     @Column(name = "recurrent")
     var recurrent: Boolean = false,
-
-
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
-
     @UpdateTimestamp
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
 ) {
     @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
     val subOrders: MutableList<SubOrder> = mutableListOf()
-
 }

@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.validation.constraint
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import ru.sogaz.site.paymentService.config.ValidatorConfig
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -9,8 +8,9 @@ class EmailValidatorTest {
     private lateinit var emailValidator: EmailValidator
 
     @BeforeEach
-    fun setUp() {
-        emailValidator = ValidatorConfig().emailValidator()
+    fun setup() {
+        val emailRegex = Regex("^(?!\\.)(?!.*\\.\\.)[a-zA-Z0-9._%+-]+(?<!\\.)@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")
+        emailValidator = EmailValidator(emailRegex)
     }
 
     @Test

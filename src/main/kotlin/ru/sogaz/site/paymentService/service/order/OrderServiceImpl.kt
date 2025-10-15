@@ -4,8 +4,8 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
-import ru.sogaz.site.paymentService.dto.request.OrderPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.SubOrdersRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
@@ -25,26 +25,14 @@ class OrderServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val LOG_ORDER_UPDATED_WITH_PREMIUM = "Обновление общей суммы премии"
         const val STATUS_CODE_SUCCESS = 1101500200
         const val STATUS_CODE_SUCCESS_GET_ORDER_STATUS = 1201503200
         const val LOG_START_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки для orderId: "
-        const val LOG_END_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки  stateId =  "
-        const val LOG_START_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
+        const val LOG_END_GET_ORDER_STATUS = "***** КОНЕЦ ***** метод получения статуса заявки  stateId =  "
+        const val LOG_START_ORDER_CREATION = "***** НАЧАЛО ***** создания заявки для TraceId: "
         const val LOG_END_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
-        const val LOG_ORDER_CREATION_SUCCESS = "Заказ успешно создан и сохранен в базу с orderCode: "
-        const val LOG_SUB_ORDER_CREATION_SUCCESS = "Подзаказ успешно создан с subOrderId: "
         const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с не найден для TraceId: "
-        const val LOG_ERROR_WHILE_UPDATING_ORDER = "Ошибка при обновлении суммы премии заказа"
-        const val LOG_PAYMENT_ID_GENERATED = "Сгенерирован orderId: "
-        const val LOG_PAYMENT_SUB_ORDER_ID_GENERATED = "Сгенерирован subOrderId: "
-        const val LOG_PAYMENT_CODE_GENERATED = "Сгенерирован paymentCode: "
-        const val LOG_ERROR_WHILE_CREATING_ORDER = "Ошибка при создании заказа для TraceId: "
-        const val LOG_ERROR_WHILE_CREATING_SUB_ORDER = "Ошибка при создании подзаказа для TraceId: "
         const val ERROR_CLIENT_SYSTEM_NOT_FOUND = "Система клиента не найдена"
-        const val ERROR_WHILE_SAVING_ORDER = "Ошибка при сохранении заказа"
-        const val ERROR_WHILE_SAVING_SUB_ORDER = "Ошибка при сохранении подзаказа"
-        const val ERROR_WHILE_UPDATING_ORDER = "Ошибка сумма премии не обновленна"
     }
 
     /**
@@ -54,7 +42,7 @@ class OrderServiceImpl(
      * @throws Exception Если данные невалидны или произошла ошибка при сохранении
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
-    override fun createOrder(requestWrapper: OrderPaymentRequest): Response<DataOrder> {
+    override fun createOrder(requestWrapper: OrderRequest): Response<DataOrder> {
         logger.info(LOG_START_ORDER_CREATION)
 
         val savedOrder =
@@ -73,34 +61,34 @@ class OrderServiceImpl(
         )
     }
 
-    private fun formOrderFromRequest(requestWrapper: OrderPaymentRequest): Order =
+    private fun formOrderFromRequest(requestWrapper: OrderRequest): Order =
         Order(
             bank = requestWrapper.bank,
-            paymentEndDate = requestWrapper.paymentEndDate?.atZone(ZoneId.systemDefault())?.toLocalDateTime(),
+            paymentEndDate = requestWrapper.orderEndDate?.atZone(ZoneId.systemDefault())?.toLocalDateTime(),
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
         )
 
     private fun formSubOrdersFromRequest(
-        requestWrapper: OrderPaymentRequest,
+        requestWrapper: OrderRequest,
         order: Order,
     ): List<SubOrder> =
-        requestWrapper.payments
+        requestWrapper.orders
             .map(::formSubOrder)
             .onEach { it.order = order }
 
-    private fun formSubOrder(orderRequest: OrderRequest): SubOrder =
+    private fun formSubOrder(subOrdersRequest: SubOrdersRequest): SubOrder =
         SubOrder(
-            docType = orderRequest.docType,
-            policyId = orderRequest.policyId,
-            policyNumber = orderRequest.policyNumber,
-            contractId = orderRequest.contractId,
-            typeInsurance = orderRequest.typeInsurance.description,
-            mainContractCheck = orderRequest.mainContractCheck,
-            contractNumber = orderRequest.contractNumber,
-            insuranceProgram = orderRequest.insuranceProgram,
-            premiumAmount = orderRequest.premiumAmount.toString(),
+            docType = subOrdersRequest.docType,
+            policyId = subOrdersRequest.policyId,
+            policyNumber = subOrdersRequest.policyNumber,
+            contractId = subOrdersRequest.contractId,
+            typeInsurance = subOrdersRequest.typeInsurance.description,
+            mainContractCheck = subOrdersRequest.mainContractCheck,
+            contractNumber = subOrdersRequest.contractNumber,
+            insuranceProgram = subOrdersRequest.insuranceProgram,
+            premiumAmount = subOrdersRequest.premiumAmount.toString(),
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }
