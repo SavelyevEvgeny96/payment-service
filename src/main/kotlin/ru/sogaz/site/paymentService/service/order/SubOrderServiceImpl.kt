@@ -7,6 +7,7 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.SubOrderMapper
 import ru.sogaz.site.paymentService.service.SubOrderService
 
@@ -17,9 +18,14 @@ class SubOrderServiceImpl(
     companion object {
         private const val EMPTY_LIST_SIZE = 0
         private const val NON_CROSS_SELL_SUB_ORDER_LIST_SIZE = 1
+        const val LOG_UPDATE_SUB_ORDER_PAYMENT_INVOICE = "Начало обновления информации о заказе с orderId = "
+        const val LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE = "Успешное обновление информации о заказе с orderId = "
     }
 
+    private val logger = loggerFor(javaClass)
+
     override fun updateSubOrder(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): SubOrder {
+        logger.info(LOG_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         val subOrders = subOrderDao.findAllByOrderId(updatePaymentInvoiceRequest.orderId)
 
         val existedSubOrder = when (subOrders.size) {
@@ -28,6 +34,7 @@ class SubOrderServiceImpl(
             else -> throw BusinessException(CODE_ERROR_UPDATED_SUB_ORDER_CROSS_SELL, getTraceId())
         }
         val updatedSubOrder = subOrderMapper.updateSubOrder(updatePaymentInvoiceRequest, existedSubOrder)
+        logger.info(LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return subOrderDao.save(updatedSubOrder)
     }
 }

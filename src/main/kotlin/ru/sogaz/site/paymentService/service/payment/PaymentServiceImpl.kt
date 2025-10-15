@@ -71,6 +71,8 @@ class PaymentServiceImpl(
         const val LOG_FULL_INFO_PAGE =
             "Для генерации информации по платежу для заказа с id: %s будет отображена оплата по QR коду с СБП"
         const val LOG_ERROR_TO_GET_QR_FROM_BANK = "Не удалось получить QR код из банка %s, ex: %s"
+        const val LOG_UPDATE_PAYMENT_INVOICE = "Начало обновления информации о заказе с orderId = "
+        const val LOG_SUCCESS_UPDATE_PAYMENT_INVOICE = "Успешное обновление информации о заказе с orderId = "
     }
 
     private val logger = loggerFor(javaClass)
@@ -100,6 +102,8 @@ class PaymentServiceImpl(
     override fun updatePaymentInvoice(
         updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest
     ): Response<UpdatePaymentInvoiceResponse> {
+        logger.info(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+
         val existedOrderPayment =
             orderDao
                 .findById(updatePaymentInvoiceRequest.orderId)
@@ -110,6 +114,7 @@ class PaymentServiceImpl(
         val updatedOrder = orderMapper.updateOrder(updatePaymentInvoiceRequest, existedOrderPayment)
         orderDao.save(updatedOrder)
 
+        logger.info(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return getSuccessResponse(
             getTraceId(),
             SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,
