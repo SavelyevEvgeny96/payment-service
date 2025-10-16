@@ -5,11 +5,16 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
 import ru.sogaz.site.payment.receipt.client.model.ClientInfo
 import ru.sogaz.site.payment.receipt.client.model.PaymentItemRequest
+import ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest
+import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest
+import ru.sogaz.site.payment.receipt.client.model.VatRequest
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.PaymentMethodEnum
+import ru.sogaz.site.paymentService.enums.PaymentObjectEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
@@ -81,8 +86,7 @@ class ReceiptServiceImpl(
                     }
 
                 subOrder.premiumAmount?.toReceiptAmount()?.let { premiumAmount ->
-                    ru.sogaz.site.payment.receipt.client.model
-                        .PaymentReceiptCreateRequest()
+                    PaymentReceiptCreateRequest()
                         .apply {
                             addItemsItem(
                                 PaymentItemRequest().apply {
@@ -90,10 +94,10 @@ class ReceiptServiceImpl(
                                     price = premiumAmount
                                     quantity = 1.00
                                     sum = premiumAmount
-                                    paymentMethod = "full_payment"
-                                    paymentObject = "service"
+                                    paymentMethod = PaymentMethodEnum.FULL_PAYMENT.value
+                                    paymentObject = PaymentObjectEnum.PAYMENT_OBJECT_SERVICE.value
                                     vat =
-                                        ru.sogaz.site.payment.receipt.client.model.VatRequest().apply {
+                                        VatRequest().apply {
                                             type = "none"
                                         }
                                 },
@@ -104,15 +108,13 @@ class ReceiptServiceImpl(
 
         val totalAmount = order.premiumAmount.toReceiptAmount()
 
-        val requestBody =
-            ru.sogaz.site.payment.receipt.client.model
-                .PaymentReceiptCreateRequest()
+        val requestBody = PaymentReceiptCreateRequest()
 
         order.recipientEmail?.let { ClientInfo().email(it) }?.let { requestBody.client(it) }
         requestBody.items.add(receiptItems?.first()?.items?.first())
         requestBody.payments.add(
             totalAmount.let {
-                ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest().apply {
+                PaymentPaymentRequest().apply {
                     type = "1"
                     sum = it
                 }
