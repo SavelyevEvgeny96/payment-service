@@ -158,8 +158,8 @@ class PaymentServiceTest {
             orderMapper,
         )
 
-    private fun buildUpdatePaymentInvoiceRequest(): UpdatePaymentInvoiceRequest {
-        return UpdatePaymentInvoiceRequest(
+    private fun buildUpdatePaymentInvoiceRequest(): UpdatePaymentInvoiceRequest =
+        UpdatePaymentInvoiceRequest(
             validOrderUUID,
             null,
             BigDecimal.TEN,
@@ -167,5 +167,4 @@ class PaymentServiceTest {
             null,
             true,
         )
-    }
 }

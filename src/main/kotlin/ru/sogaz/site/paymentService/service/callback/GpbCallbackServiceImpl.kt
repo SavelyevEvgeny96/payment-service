@@ -43,17 +43,20 @@ class GpbCallbackServiceImpl(
         const val START_METHOD_PROCESS_CALL =
             ">>> СТАРТ метода проверки CALLBACK от банка" +
                 " traceID: "
+        const val RESPONSE_FOR_BANK = "Банку предоставлен ответ: "
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
         const val UPDATE_ORDER_STATUS = "Статус заказа в таблице ЗАКАЗОВ обновлен. paymentBankId: "
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
+        const val REQUEST_CALLBACK_BANK = "Запрос от сервиса интеграции trxId и signature:  "
     }
 
     override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
         return try {
             val traceId = getTraceId()
             logger.info(START_METHOD_PROCESS_CALL + traceId)
+            logger.info(REQUEST_CALLBACK_BANK + request.trxId + request.signature)
 
             if (!signatureVerifier.verifySignature(request)) {
                 logger.info(ERROR_TRX_ID + request.trxId)
@@ -169,6 +172,7 @@ class GpbCallbackServiceImpl(
               </result>
             </register-payment-response>
             """.trimIndent()
+        logger.info(RESPONSE_FOR_BANK + response)
         return ResponseEntity.ok(response)
     }
 
@@ -182,6 +186,7 @@ class GpbCallbackServiceImpl(
               </result>
             </register-payment-response>
             """.trimIndent()
+        logger.info(RESPONSE_FOR_BANK + response)
         return ResponseEntity.ok(response)
     }
 }

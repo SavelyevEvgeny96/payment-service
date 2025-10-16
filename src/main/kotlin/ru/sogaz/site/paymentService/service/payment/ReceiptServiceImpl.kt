@@ -116,7 +116,8 @@ class ReceiptServiceImpl(
                     type = "1"
                     sum = it
                 }
-            })
+            },
+        )
         requestBody.system = "Atol"
         requestBody.total = totalAmount
         requestBody.version = "v4"
@@ -194,24 +195,24 @@ class ReceiptServiceImpl(
     }
 
     private fun saveReceiptOperationHistory(order: Order) {
-        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
+        val subOrder = order.id?.let { subOrderDao.findAllByOrderId(it) }
         operationHistoryRepository.save(
             PaymentOperationHistory(
                 action = ActionType.ORDER_PAID.value,
                 order = order,
-                actionAuthor = subOrder.externalSystemCode,
+                actionAuthor = subOrder?.first()?.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             ),
         )
     }
 
     private fun saveFailedReceiptOperationHistory(order: Order) {
-        val subOrder = subOrderDao.getSubOrder(getTraceId(), order)
+        val subOrder = order.id?.let { subOrderDao.findAllByOrderId(it) }
         operationHistoryRepository.save(
             PaymentOperationHistory(
                 action = ActionType.PAYMENT_ERROR.value,
                 order = order,
-                actionAuthor = subOrder.externalSystemCode,
+                actionAuthor = subOrder?.first()?.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             ),
         )

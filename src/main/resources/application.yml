@@ -1,53 +1,17 @@
 app:
   info:
-    application_name: ${PROJECT_NAME:payment service}
+    application_name: ${PROJECT_NAME:app service}
     version: ${PROJECT_VERSION:1.0.0}
     description: ${PROJECT_DESCRIPTION:Payment Service}
     artifact_Id: ${PROJECT_ARTIFACTID:payment-service}
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
-    app_profile: ${ENVIRONMENT:local}
+    app_profile: ${ENVIRONMENT:dev}
     java-version: ${JAVA_VERSION:21}
   certs:
-    gpb: ${GPB_CERT:-----BEGIN CERTIFICATE-----
-      MIIGazCCBVOgAwIBAgIMWjPU+0NRR/wHAB9LMA0GCSqGSIb3DQEBCwUAMFMxCzAJ
-      BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSkwJwYDVQQDEyBH
-      bG9iYWxTaWduIEdDQyBSMyBEViBUTFMgQ0EgMjAyMDAeFw0yNDA5MTcxMTI3MDRa
-      Fw0yNTEwMTkxMTEwMzZaMCAxHjAcBgNVBAMTFWx0LnBnYS5nYXpwcm9tYmFuay5y
-      dTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANAL8knDwfFGe2oL3vGj
-      mx3Wkbpv0XfqW+kkHZB1y7WY5u95+MqLEiZQuPW3Zl9CYOOztDvp82vWNhkL0z4A
-      ZGVEI7m3RYQ1BmUlpH1z0KH+Jq+2FkKgCiuIg0W/8rJAeqPkRGgq0hmEE7U5wO26
-      4IRHN3wGSuVs44XsRaZddqL1O/8aMuzsGLcDUAuXVktyIJmdj5/h/aJS3MWQzPFx
-      Wze3cCCIkimCps+dx0/1IY4Dcok1NvT99x77d41sdCJRBleoJglG24RSG14Hfm2m
-      a0FNAp8871n8CLPt0/a4ZL6JrB+VaSg86fegPqm69BcLW5M9Jumyri+4tLK4D6yd
-      82ECAwEAAaOCA3AwggNsMA4GA1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMIGT
-      BggrBgEFBQcBAQSBhjCBgzBGBggrBgEFBQcwAoY6aHR0cDovL3NlY3VyZS5nbG9i
-      YWxzaWduLmNvbS9jYWNlcnQvZ3NnY2NyM2R2dGxzY2EyMDIwLmNydDA5BggrBgEF
-      BQcwAYYtaHR0cDovL29jc3AuZ2xvYmFsc2lnbi5jb20vZ3NnY2NyM2R2dGxzY2Ey
-      MDIwMFYGA1UdIARPME0wQQYJKwYBBAGgMgEKMDQwMgYIKwYBBQUHAgEWJmh0dHBz
-      Oi8vd3d3Lmdsb2JhbHNpZ24uY29tL3JlcG9zaXRvcnkvMAgGBmeBDAECATBBBgNV
-      HR8EOjA4MDagNKAyhjBodHRwOi8vY3JsLmdsb2JhbHNpZ24uY29tL2dzZ2NjcjNk
-      dnRsc2NhMjAyMC5jcmwwOwYDVR0RBDQwMoIVbHQucGdhLmdhenByb21iYW5rLnJ1
-      ghl3d3cubHQucGdhLmdhenByb21iYW5rLnJ1MB0GA1UdJQQWMBQGCCsGAQUFBwMB
-      BggrBgEFBQcDAjAfBgNVHSMEGDAWgBQNmMBzf6u9vdlHS0mtCkoMrD7HfDAdBgNV
-      HQ4EFgQUCIAU86cFNgjBZ+3AoZpiRywe8KkwggF9BgorBgEEAdZ5AgQCBIIBbQSC
-      AWkBZwB1AK8YGijWjKPgqYpMnGerCfi7vCK6rryxOKOhndP5tgMNAAABkf+8dqwA
-      AAQDAEYwRAIgS5xgZaJfG/Hs/4PeiSeThC5x3KCWEqPnWCm6yGqkeNsCIE565xY5
-      4Ktr+wgDd0LjC0psA8Gqx6ZAYqdhNZM/X1jDAHYAEvFONL1TckyEBhnDjz96E/jn
-      tWKHiJxtMAWE6+WGJjoAAAGR/7x25gAABAMARzBFAiEAwkjW+SRcmHF4lnJZMKAY
-      jN+lyFpYupY/sWR83FYdQh4CIFROUPaZzQAVdk46jvmDAjjrl2g+L33DCX7Fgt4/
-      6AJcAHYAGgT/SdBUHUCv9qDDv/HYxGcvTuzuI0BomGsXQC7ciX0AAAGR/7x2gwAA
-      BAMARzBFAiEA85XehwROKMuucoEfoOohfL+1ADFRujnej/jX0HDUFsoCIGMWX0Wm
-      KrRIQys2P+Qbaj3noncu4qGkiKYpPwj6fLscMA0GCSqGSIb3DQEBCwUAA4IBAQAz
-      KLxwsux4dAi+MNVb1erZhcX4oWrn1uMqsq/Jtt8srCdLXsHQStBJlo5WLCmqV5Hc
-      qh4jLg0PtI4e1zDTBmp0MfatnzQHOLCX6rD/EZaumgmyz2Cs7GNgxyJX5Dz7Ng7O
-      N68arL4jt/hVg2NqR9lt6gHdI2bHvpNiJM25eLuyEFFNC9SOhDAokCt58wR9qNYD
-      /dhIA2XoCVJ5UoQSFbmf2ZaGkv9iYdK4/jyP3cbStP/++aMN33fnCqFNj4j/vn6/
-      BfD5x0tdOZKn0v2yj0B9K3JRnMD3GlRi7qLtq8dTrVXd0BFurTpdOAvhpvrjVElo
-      Kuq9my9avEA+i8VCLLFx
-      -----END CERTIFICATE-----}
+    gpb: ${GPB_CERT:-----BEGIN CERTIFICATE-----       MIIGazCCBVOgAwIBAgIMWjPU+0NRR/wHAB9LMA0GCSqGSIb3DQEBCwUAMFMxCzAJ       BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSkwJwYDVQQDEyBH       bG9iYWxTaWduIEdDQyBSMyBEViBUTFMgQ0EgMjAyMDAeFw0yNDA5MTcxMTI3MDRa       Fw0yNTEwMTkxMTEwMzZaMCAxHjAcBgNVBAMTFWx0LnBnYS5nYXpwcm9tYmFuay5y       dTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANAL8knDwfFGe2oL3vGj       mx3Wkbpv0XfqW+kkHZB1y7WY5u95+MqLEiZQuPW3Zl9CYOOztDvp82vWNhkL0z4A       ZGVEI7m3RYQ1BmUlpH1z0KH+Jq+2FkKgCiuIg0W/8rJAeqPkRGgq0hmEE7U5wO26       4IRHN3wGSuVs44XsRaZddqL1O/8aMuzsGLcDUAuXVktyIJmdj5/h/aJS3MWQzPFx       Wze3cCCIkimCps+dx0/1IY4Dcok1NvT99x77d41sdCJRBleoJglG24RSG14Hfm2m       a0FNAp8871n8CLPt0/a4ZL6JrB+VaSg86fegPqm69BcLW5M9Jumyri+4tLK4D6yd       82ECAwEAAaOCA3AwggNsMA4GA1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMIGT       BggrBgEFBQcBAQSBhjCBgzBGBggrBgEFBQcwAoY6aHR0cDovL3NlY3VyZS5nbG9i       YWxzaWduLmNvbS9jYWNlcnQvZ3NnY2NyM2R2dGxzY2EyMDIwLmNydDA5BggrBgEF       BQcwAYYtaHR0cDovL29jc3AuZ2xvYmFsc2lnbi5jb20vZ3NnY2NyM2R2dGxzY2Ey       MDIwMFYGA1UdIARPME0wQQYJKwYBBAGgMgEKMDQwMgYIKwYBBQUHAgEWJmh0dHBz       Oi8vd3d3Lmdsb2JhbHNpZ24uY29tL3JlcG9zaXRvcnkvMAgGBmeBDAECATBBBgNV       HR8EOjA4MDagNKAyhjBodHRwOi8vY3JsLmdsb2JhbHNpZ24uY29tL2dzZ2NjcjNk       dnRsc2NhMjAyMC5jcmwwOwYDVR0RBDQwMoIVbHQucGdhLmdhenByb21iYW5rLnJ1       ghl3d3cubHQucGdhLmdhenByb21iYW5rLnJ1MB0GA1UdJQQWMBQGCCsGAQUFBwMB       BggrBgEFBQcDAjAfBgNVHSMEGDAWgBQNmMBzf6u9vdlHS0mtCkoMrD7HfDAdBgNV       HQ4EFgQUCIAU86cFNgjBZ+3AoZpiRywe8KkwggF9BgorBgEEAdZ5AgQCBIIBbQSC       AWkBZwB1AK8YGijWjKPgqYpMnGerCfi7vCK6rryxOKOhndP5tgMNAAABkf+8dqwA       AAQDAEYwRAIgS5xgZaJfG/Hs/4PeiSeThC5x3KCWEqPnWCm6yGqkeNsCIE565xY5       4Ktr+wgDd0LjC0psA8Gqx6ZAYqdhNZM/X1jDAHYAEvFONL1TckyEBhnDjz96E/jn       tWKHiJxtMAWE6+WGJjoAAAGR/7x25gAABAMARzBFAiEAwkjW+SRcmHF4lnJZMKAY       jN+lyFpYupY/sWR83FYdQh4CIFROUPaZzQAVdk46jvmDAjjrl2g+L33DCX7Fgt4/       6AJcAHYAGgT/SdBUHUCv9qDDv/HYxGcvTuzuI0BomGsXQC7ciX0AAAGR/7x2gwAA       BAMARzBFAiEA85XehwROKMuucoEfoOohfL+1ADFRujnej/jX0HDUFsoCIGMWX0Wm       KrRIQys2P+Qbaj3noncu4qGkiKYpPwj6fLscMA0GCSqGSIb3DQEBCwUAA4IBAQAz       KLxwsux4dAi+MNVb1erZhcX4oWrn1uMqsq/Jtt8srCdLXsHQStBJlo5WLCmqV5Hc       qh4jLg0PtI4e1zDTBmp0MfatnzQHOLCX6rD/EZaumgmyz2Cs7GNgxyJX5Dz7Ng7O       N68arL4jt/hVg2NqR9lt6gHdI2bHvpNiJM25eLuyEFFNC9SOhDAokCt58wR9qNYD       /dhIA2XoCVJ5UoQSFbmf2ZaGkv9iYdK4/jyP3cbStP/++aMN33fnCqFNj4j/vn6/       BfD5x0tdOZKn0v2yj0B9K3JRnMD3GlRi7qLtq8dTrVXd0BFurTpdOAvhpvrjVElo       Kuq9my9avEA+i8VCLLFx       -----END CERTIFICATE-----}
 
 server:
-  port: ${SERVER_PORT:}
+  port: ${SERVER_PORT:8080}
   use-forward-headers: true
   forward-headers-strategy: framework
   main.allow-bean-definition-overriding: true
@@ -85,28 +49,28 @@ ssl:
 
 api:
   payment:
-    paymentUrl: ${PAYMENT_URL:}
-    akbUrl: ${AKB_URL:}
-    akbSbpUrl: ${AKB_SBP_URL:}
-    akbUrlStatus: ${AKB_PAYMENT_URL:}
-    gpbUrl: ${GPB_URL:}
-    gpbSbpUrl: ${GPB_SBP_URL:}
-    gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL:}
-    gpbSbpQRImageUrl: ${GPB_SBP_QR_IMAGE_URL:}
-    callbackUrlSbp: ${CALLBACK_URL_SBP:}
-    paymentAccount: ${PAYMENT_ACCOUNT:}
-    portalId: ${GPB_PORTAL_ID:}
-    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:}
-    merchantId: ${GPB_MERCHANT_ID:}
-    backUrlS: ${BACK_URL_SUCCESS:}
-    backUrlF: ${BACK_URL_FALSE:}
-    qrUrlForCardPayment: ${QR_CARD_PAYMENT_URL:}
-    qrUrlForSbpPayment: ${QR_SBP_PAYMENT_URL:}
+    paymentUrl: ${PAYMENT_URL:URL}
+    akbUrl: ${AKB_URL:https:https://test-gateway-site-dmz.sogaz.ru/payment/akb/order}
+    gpbUrl: ${GPB_URL:https://lt.pga.gazprombank.ru/api/v4/}
+    gpbSbpUrl: ${GPB_SBP_URL:https://test-gateway-site-dmz.sogaz.ru/payment/gpb/sbp/merchant/qrc-data}
+    gpbSbpQRImageUrl: ${GPB_SBP_QR_IMAGE_URL:https://testapi.sbp.gazprombank.ru:9443/merchant/qr-image}
+    gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL:https://test-gateway-site-dmz.sogaz.ru/payment/gpb/sbp/merchant/qrc-status}
+    callbackUrlSbp: ${CALLBACK_URL_SBP:https://example.com/callback}
+    paymentAccount: ${PAYMENT_ACCOUNT:40701810800000030052}
+    portalId: ${GPB_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}
+    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:MA0000016649}
+    merchantId: ${GPB_MERCHANT_ID:B80540E3096C8730BCE3}
+    backUrlS: ${BACK_URL_SUCCESS:http:http://test.k835.sogaz.ru/realty/flat/success/}
+    backUrlF: ${BACK_URL_FALSE:https:http://test.k835.sogaz.ru/realty/flat/}
+    akbSbpUrl: ${AKB_SBP_URL:https://test-gateway-site-dmz.sogaz.ru/payment/akb/order/}
+    akbUrlStatus: ${AKB_PAYMENT_URL:https://test-gateway-site-dmz.sogaz.ru/payment/akb/order/}
+    qrUrlForCardPayment: ${QR_CARD_PAYMENT_URL:https://s00-0000-k835.sogaz.ru/test/payment-service/payment/pay/}
+    qrUrlForSbpPayment: ${QR_SBP_PAYMENT_URL:https://s00-0000-k835.sogaz.ru/test/payment-service/payment/paySbp/}
   receipt:
-    receiptUrl: ${RECEIPT_URL:}
-    receiptPath: ${RECEIPT_PATH:}
+    receiptUrl: ${RECEIPT_URL:http://s00-0000-k835.sogaz.ru/test/payment-receipt-service}
+    receiptPath: ${RECEIPT_PATH:/paymentCheck/create}
   qr:
-    baseUrl: ${QR_GENERATOR_URL:}
+    baseUrl: ${QR_GENERATOR_URL:http://s00-0000-k835.sogaz.ru/test/qr-generator-service}
 
 management:
   endpoints:
@@ -129,15 +93,14 @@ management:
     readinessState:
       enable: true
 logstash:
-  host: ${LOG_SERVER_HOST:}
-  port: ${LOG_SERVER_PORT:}
-  level: ${LOG_LEVEL:}
-  level_local: ${LOG_LEVEL_LOCAL:}
+  host: ${LOG_SERVER_HOST:localhost}
+  port: ${LOG_SERVER_PORT:12201}
+  level: ${LOG_LEVEL:INFO}
+  level_local: ${LOG_LEVEL_LOCAL:INFO}
 
 logging:
   level:
     ru:
       sogaz:
         site:
-          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
-
+          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}

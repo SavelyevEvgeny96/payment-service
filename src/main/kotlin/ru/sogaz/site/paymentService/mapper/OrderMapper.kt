@@ -34,7 +34,6 @@ interface OrderMapper {
     companion object {
         @JvmStatic
         @Named("instantToLocalDateTime")
-        fun instantToLocalDateTime(paymentEndDate: Instant): LocalDateTime =
-            LocalDateTime.ofInstant(paymentEndDate, ZoneId.systemDefault())
+        fun instantToLocalDateTime(paymentEndDate: Instant): LocalDateTime = LocalDateTime.ofInstant(paymentEndDate, ZoneId.systemDefault())
     }
 }
