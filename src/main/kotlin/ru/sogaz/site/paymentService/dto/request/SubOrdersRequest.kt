@@ -1,6 +1,9 @@
 package ru.sogaz.site.paymentService.dto.request
 
-import jakarta.validation.constraints.*
+import jakarta.validation.constraints.FutureOrPresent
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Positive
 import ru.sogaz.site.paymentService.enums.TypeInsuranceEnum
 import ru.sogaz.site.paymentService.validation.constraint.Email
 import java.math.BigDecimal
