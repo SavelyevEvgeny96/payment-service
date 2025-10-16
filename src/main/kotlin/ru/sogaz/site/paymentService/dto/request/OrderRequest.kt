@@ -21,7 +21,7 @@ import java.time.Instant
 data class OrderRequest(
     @get:Valid
     @field:UniqueMainContract(message = "{validation.orderPaymentRequest.uniqueMainContract}")
-    val orders: List<SubOrdersRequest> = emptyList(),
+    val orders: List<SubOrderRequest> = emptyList(),
     val bank: BankEnum? = null,
     @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
     @field:Future(message = "{validation.orderPaymentRequest.date.future}")

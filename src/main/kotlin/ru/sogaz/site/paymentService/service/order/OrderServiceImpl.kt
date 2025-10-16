@@ -5,7 +5,7 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
-import ru.sogaz.site.paymentService.dto.request.SubOrdersRequest
+import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
@@ -78,17 +78,17 @@ class OrderServiceImpl(
             .map(::formSubOrder)
             .onEach { it.order = order }
 
-    private fun formSubOrder(subOrdersRequest: SubOrdersRequest): SubOrder =
+    private fun formSubOrder(subOrderRequest: SubOrderRequest): SubOrder =
         SubOrder(
-            docType = subOrdersRequest.docType,
-            policyId = subOrdersRequest.policyId,
-            policyNumber = subOrdersRequest.policyNumber,
-            contractId = subOrdersRequest.contractId,
-            typeInsurance = subOrdersRequest.typeInsurance.description,
-            mainContractCheck = subOrdersRequest.mainContractCheck,
-            contractNumber = subOrdersRequest.contractNumber,
-            insuranceProgram = subOrdersRequest.insuranceProgram,
-            premiumAmount = subOrdersRequest.premiumAmount.toString(),
+            docType = subOrderRequest.docType,
+            policyId = subOrderRequest.policyId,
+            policyNumber = subOrderRequest.policyNumber,
+            contractId = subOrderRequest.contractId,
+            typeInsurance = subOrderRequest.typeInsurance.description,
+            mainContractCheck = subOrderRequest.mainContractCheck,
+            contractNumber = subOrderRequest.contractNumber,
+            insuranceProgram = subOrderRequest.insuranceProgram,
+            premiumAmount = subOrderRequest.premiumAmount.toString(),
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }

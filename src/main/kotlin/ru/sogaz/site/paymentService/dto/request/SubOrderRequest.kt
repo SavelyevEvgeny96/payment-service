@@ -12,7 +12,7 @@ import java.time.Instant
 /**
  * DTO для запроса на создание заказа.
  */
-data class SubOrdersRequest(
+data class SubOrderRequest(
     @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val operationId: String = "",
     @field:NotNull(message = "{validation.orderRequest.premiumAmount.notNull}")
