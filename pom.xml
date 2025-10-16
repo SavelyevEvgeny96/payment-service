@@ -96,6 +96,12 @@
             <artifactId>qr-generator-api-client</artifactId>
             <version>0.0.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>ru.sogaz.site</groupId>
+            <artifactId>payment-receipt-api-client</artifactId>
+            <version>0.0.3-dev</version>
+        </dependency>
         <dependency>
             <groupId>ru.sogaz.site</groupId>
             <artifactId>jwt-starter</artifactId>

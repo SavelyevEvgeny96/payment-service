@@ -31,7 +31,7 @@ class HistoryServiceImpl(
             PaymentOperationHistory(
                 action = actionType,
                 order = order,
-                actionAuthor = subOrder.first().externalSystemCode,
+                actionAuthor = subOrder?.first()?.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             )
 

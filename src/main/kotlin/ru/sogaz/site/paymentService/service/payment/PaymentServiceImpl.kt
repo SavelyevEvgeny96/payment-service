@@ -99,9 +99,7 @@ class PaymentServiceImpl(
             UrlToReturn(urlToReturnS, urlToReturnF),
         )
 
-    override fun updatePaymentInvoice(
-        updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest
-    ): Response<UpdatePaymentInvoiceResponse> {
+    override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {
         logger.info(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
 
         val existedOrderPayment =
@@ -118,7 +116,7 @@ class PaymentServiceImpl(
         return getSuccessResponse(
             getTraceId(),
             SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,
-            UpdatePaymentInvoiceResponse(SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE)
+            UpdatePaymentInvoiceResponse(SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE),
         )
     }
 
@@ -173,8 +171,7 @@ class PaymentServiceImpl(
             .run { formPaySBPInfo(order, this) }
     }
 
-    private fun isSBPActive() =
-        configDataDao.getBankInfoFromConfigData(getTraceId(), SBP_ACTIVE_CONFIG_NAME).toBoolean()
+    private fun isSBPActive() = configDataDao.getBankInfoFromConfigData(getTraceId(), SBP_ACTIVE_CONFIG_NAME).toBoolean()
 
     private fun formPaySBPInfo(
         order: Order,
@@ -261,8 +258,7 @@ class PaymentServiceImpl(
             .format(payment.order?.id, payment.bank)
             .run(logger::info)
 
-    private fun logPageInfoResultInfo(pageInfo: DataOrderPaymentPageInfo) =
-        getLogMessageForPageInfo(pageInfo).run(logger::info)
+    private fun logPageInfoResultInfo(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::info)
 
     private fun getLogMessageForPageInfo(pageInfo: DataOrderPaymentPageInfo) =
         if (isNull(pageInfo.paySbp)) {

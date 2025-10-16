@@ -43,9 +43,9 @@ class SubOrderDaoImpl(
     override fun getAllSubOrderListByOrderId(
         orderId: Order,
         traceId: String,
-    ): List<SubOrder> =
+    ): List<SubOrder>? =
         try {
-            subOrderRepository.findAllByOrderId(orderId)
+            orderId.id?.let { subOrderRepository.findAllByOrderId(it) }
         } catch (ex: Exception) {
             logger.error("$LOG_AND_ERROR_FIND_SUB_ORDER ${orderId.id}")
             throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER${orderId.id}")

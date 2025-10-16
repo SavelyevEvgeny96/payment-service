@@ -28,11 +28,12 @@ class SubOrderServiceImpl(
         logger.info(LOG_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         val subOrders = subOrderDao.findAllByOrderId(updatePaymentInvoiceRequest.orderId)
 
-        val existedSubOrder = when (subOrders.size) {
-            EMPTY_LIST_SIZE -> throw BusinessException(CODE_ERROR_UPDATED_ORDER_NOT_FOUND, getTraceId())
-            NON_CROSS_SELL_SUB_ORDER_LIST_SIZE -> subOrders.first()
-            else -> throw BusinessException(CODE_ERROR_UPDATED_SUB_ORDER_CROSS_SELL, getTraceId())
-        }
+        val existedSubOrder =
+            when (subOrders.size) {
+                EMPTY_LIST_SIZE -> throw BusinessException(CODE_ERROR_UPDATED_ORDER_NOT_FOUND, getTraceId())
+                NON_CROSS_SELL_SUB_ORDER_LIST_SIZE -> subOrders.first()
+                else -> throw BusinessException(CODE_ERROR_UPDATED_SUB_ORDER_CROSS_SELL, getTraceId())
+            }
         val updatedSubOrder = subOrderMapper.updateSubOrder(updatePaymentInvoiceRequest, existedSubOrder)
         logger.info(LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return subOrderDao.save(updatedSubOrder)

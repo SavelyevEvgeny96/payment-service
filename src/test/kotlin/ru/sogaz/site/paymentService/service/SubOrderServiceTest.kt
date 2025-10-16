@@ -18,7 +18,6 @@ import kotlin.test.assertEquals
 
 @ExtendWith(MockitoExtension::class)
 class SubOrderServiceTest {
-
     @Mock
     lateinit var subOrderDao: SubOrderDao
 
@@ -46,8 +45,8 @@ class SubOrderServiceTest {
         assertEquals(updateRequest.premiumAmount.toString(), result.premiumAmount)
     }
 
-    private fun buildUpdatePaymentInvoiceRequest(): UpdatePaymentInvoiceRequest {
-        return UpdatePaymentInvoiceRequest(
+    private fun buildUpdatePaymentInvoiceRequest(): UpdatePaymentInvoiceRequest =
+        UpdatePaymentInvoiceRequest(
             UUID.fromString(ORDER_ID),
             null,
             BigDecimal.TEN,
@@ -55,13 +54,11 @@ class SubOrderServiceTest {
             null,
             true,
         )
-    }
 
-    private fun buildSubOrder(): SubOrder {
-        return SubOrder(
+    private fun buildSubOrder(): SubOrder =
+        SubOrder(
             id = UUID.fromString(ORDER_ID),
             order = Order(UUID.fromString(ORDER_ID)),
-            premiumAmount = BigDecimal.TEN.toString()
+            premiumAmount = BigDecimal.TEN.toString(),
         )
-    }
 }

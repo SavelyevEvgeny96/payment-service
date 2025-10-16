@@ -286,8 +286,8 @@ class PaymentStatusCheckerServiceImpl(
             ?.apply { status = OrderStatus.SUCCESS }
             ?.let {
                 orderDao.save(it)
-                historyService.createOrderHistoryRecord(it, getTraceId())
                 receiptService.generateReceipt(it)
+                historyService.createOrderHistoryRecord(it, getTraceId())
                 sendToPaidOrdersQueue(it, getTraceId())
             }
     }
@@ -324,7 +324,7 @@ class PaymentStatusCheckerServiceImpl(
         try {
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
             val mainSubOrder =
-                subOrders.firstOrNull()
+                subOrders?.firstOrNull()
                     ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
 
             val requestBody =
