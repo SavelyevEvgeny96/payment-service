@@ -20,7 +20,7 @@ data class SubOrder(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
     @ManyToOne
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
     var order: Order? = null,
     @Column(name = "doc_type")
     var docType: String? = "",

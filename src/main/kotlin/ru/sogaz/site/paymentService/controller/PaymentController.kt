@@ -10,6 +10,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -26,8 +27,10 @@ import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
@@ -263,4 +266,13 @@ class PaymentController(
         } catch (ex: Exception) {
             Optional.empty<UUID>()
         }
+
+    @PatchMapping("/paymentinvoice")
+    fun updatePaymentInvoice(
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
+        @RequestBody updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest,
+    ): Response<UpdatePaymentInvoiceResponse> {
+        permissionValidator.checkPermission(authorization)
+        return paymentService.updatePaymentInvoice(updatePaymentInvoiceRequest)
+    }
 }

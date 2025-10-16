@@ -167,6 +167,6 @@ class GPBankIntegrationServiceImpl(
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
         postForObject<GPBQRImageResponse>(
             apiConfigProperties.gpbSbpQRImageUrl,
-            GPBQRImageRequest(payment.qrcId!!),
+            HttpEntity(GPBQRImageRequest(payment.qrcId!!), jsonHeaders()),
         )
 }

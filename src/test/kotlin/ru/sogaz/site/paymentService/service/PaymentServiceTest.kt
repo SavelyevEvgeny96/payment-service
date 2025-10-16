@@ -15,14 +15,19 @@ import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.FileQR
+import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.MediaTypeValue
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
+import ru.sogaz.site.paymentService.mapper.OrderMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
+import java.math.BigDecimal
 import java.util.Optional
 import java.util.UUID
+import kotlin.test.assertEquals
 
 @ExtendWith(MockKExtension::class)
 class PaymentServiceTest {
@@ -31,6 +36,7 @@ class PaymentServiceTest {
         const val PAY_CARD_URL = "pay-card-url"
         const val PAY_SBP_GPB_URL = "pay-sbp-gpb-url"
         private const val QR_CONTENT = "QR Content"
+        private const val SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE = "ok"
 
         private val VALID_FILE_QR = FileQR(QR_CONTENT, MediaTypeValue.IMAGE_PNG_VALUE)
     }
@@ -49,6 +55,12 @@ class PaymentServiceTest {
 
     @MockK
     private lateinit var qrCodeService: QRCodeService
+
+    @MockK
+    private lateinit var subOrderService: SubOrderService
+
+    @MockK
+    private lateinit var orderMapper: OrderMapper
 
     @RelaxedMockK
     private lateinit var apiConfigProperties: ApiConfigProperties
@@ -119,6 +131,17 @@ class PaymentServiceTest {
         verify(inverse = true) { qrCodeService.requestFromBank(any(Payment::class)) }
     }
 
+    @Test
+    fun `updatePaymentInvoice should return success response`() {
+        every { subOrderService.updateSubOrder(buildUpdatePaymentInvoiceRequest()) } returns SubOrder()
+        every { orderMapper.updateOrder(buildUpdatePaymentInvoiceRequest(), validOrder) } returns validOrder
+        every { orderDao.save(validOrder) } returns validOrder
+
+        val result = paymentService.updatePaymentInvoice(buildUpdatePaymentInvoiceRequest())
+
+        assertEquals(SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE, result.data?.status)
+    }
+
     private fun setSbpActiveConfigValue(value: Boolean) =
         every { configDataDao.getBankInfoFromConfigData(any(), PaymentServiceImpl.SBP_ACTIVE_CONFIG_NAME) }
             .returns(value.toString())
@@ -131,5 +154,17 @@ class PaymentServiceTest {
             registerPaymentService,
             qrCodeService,
             apiConfigProperties,
+            subOrderService,
+            orderMapper,
+        )
+
+    private fun buildUpdatePaymentInvoiceRequest(): UpdatePaymentInvoiceRequest =
+        UpdatePaymentInvoiceRequest(
+            validOrderUUID,
+            null,
+            BigDecimal.TEN,
+            "testemail@gmail.com",
+            null,
+            true,
         )
 }
