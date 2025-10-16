@@ -10,7 +10,6 @@ import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.service.order.HistoryServiceImpl
 import kotlin.test.Test
 
@@ -29,7 +28,7 @@ class HistoryServiceTest {
     fun `should create order history record and save it to DAO`() {
         val order = Order()
         val traceId = "trace123"
-        val subOrders = listOf(SubOrder(externalSystemCode = ExternalSystemCodeEnum.ADI))
+        val subOrders = listOf(SubOrder())
         val actionType = ActionType.ORDER_PAID.value
 
         doReturn(subOrders).`when`(subOrderDao).getAllSubOrderListByOrderId(order, traceId)
@@ -38,7 +37,6 @@ class HistoryServiceTest {
 
         verify(operationHistoryDao).saveRecordOperationHistory(
             order,
-            subOrders.first().externalSystemCode,
             traceId,
             actionType,
         )

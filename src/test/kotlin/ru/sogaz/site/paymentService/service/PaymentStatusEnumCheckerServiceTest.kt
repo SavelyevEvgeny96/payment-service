@@ -25,13 +25,13 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.Optional
 import java.util.UUID
@@ -161,7 +161,6 @@ class PaymentStatusEnumCheckerServiceTest {
             SubOrder(
                 id = UUID.randomUUID(),
                 order = order,
-                externalSystemCode = ExternalSystemCodeEnum.LK,
                 docType = "docType",
                 policyId = "policyId",
                 policyNumber = "policyNumber",
@@ -169,7 +168,7 @@ class PaymentStatusEnumCheckerServiceTest {
                 contractId = "contractId",
                 typeInsurance = "typeInsurance",
                 premiumAmount = "100.0",
-                updateDate = LocalDateTime.now(),
+                updateDate = Instant.now(),
             )
         `when`(restTemplate.defaultRestTemplate()).thenReturn(restTemplateMock)
 

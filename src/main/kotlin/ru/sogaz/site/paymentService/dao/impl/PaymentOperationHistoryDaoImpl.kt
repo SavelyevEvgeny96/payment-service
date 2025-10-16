@@ -5,7 +5,6 @@ import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 
@@ -20,7 +19,6 @@ class PaymentOperationHistoryDaoImpl(
 
     override fun saveRecordOperationHistory(
         order: Order?,
-        externalSystemCodeEnum: ExternalSystemCodeEnum?,
         traceId: String,
         actionTypeName: String,
     ) {
@@ -29,7 +27,6 @@ class PaymentOperationHistoryDaoImpl(
                 PaymentOperationHistory(
                     action = actionTypeName,
                     order = order,
-                    actionAuthor = externalSystemCodeEnum,
                 )
             paymentOperationHistoryRepository.save(operationHistory)
         } catch (e: Exception) {
@@ -40,12 +37,10 @@ class PaymentOperationHistoryDaoImpl(
 
     override fun save(
         order: Order,
-        externalSystemCodeEnum: ExternalSystemCodeEnum?,
         actionTypeName: String,
     ): PaymentOperationHistory =
         PaymentOperationHistory(
             action = actionTypeName,
             order = order,
-            actionAuthor = externalSystemCodeEnum,
         ).run(paymentOperationHistoryRepository::save)
 }

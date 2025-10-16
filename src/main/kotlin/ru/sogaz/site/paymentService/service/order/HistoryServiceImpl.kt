@@ -25,20 +25,17 @@ class HistoryServiceImpl(
         traceId: String,
     ) {
         val actionType = ActionType.ORDER_PAID.value
-        val subOrder = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
 
         val historyRecord =
             PaymentOperationHistory(
                 action = actionType,
                 order = order,
-                actionAuthor = subOrder?.first()?.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             )
 
         historyRecord.action?.let {
             operationHistoryDao.saveRecordOperationHistory(
                 historyRecord.order,
-                historyRecord.actionAuthor,
                 traceId,
                 it,
             )

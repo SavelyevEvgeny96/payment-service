@@ -14,7 +14,6 @@ import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.CallbackService
@@ -25,7 +24,6 @@ import java.time.LocalDateTime
 class CallbackServiceImpl(
     private val paymentDao: PaymentDao,
     private val orderDao: OrderDao,
-    private val payClientSystem: ExternalSystemCodeEnum,
     private val callbackPaymentDao: CallbackPaymentDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
 ) : CallbackService {
@@ -133,7 +131,6 @@ class CallbackServiceImpl(
             val order = orderDao.findById(orderId.id!!).orElseThrow { throw InnerException(traceId, ORDER_NOT_FOUND) }
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
-                payClientSystem,
                 traceId,
                 ActionType.CALLBACK_RECEIVED.value,
             )

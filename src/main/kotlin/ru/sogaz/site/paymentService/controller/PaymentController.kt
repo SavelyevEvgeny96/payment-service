@@ -26,7 +26,7 @@ import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
-import ru.sogaz.site.paymentService.dto.request.OrderPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
@@ -117,7 +117,7 @@ class PaymentController(
     )
     @PostMapping("/create")
     fun createOrder(
-        @Valid @RequestBody requestWrapper: OrderPaymentRequest,
+        @Valid @RequestBody requestWrapper: OrderRequest,
         @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
     ): ResponseEntity<Response<DataOrder>> {
         permissionValidator.checkPermission(authorization)

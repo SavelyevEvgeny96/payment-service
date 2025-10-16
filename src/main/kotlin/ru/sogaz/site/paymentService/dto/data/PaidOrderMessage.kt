@@ -8,7 +8,7 @@ import java.io.Serializable
 data class PaidOrderMessage(
     val orderId: String?,
     val recipientEmail: String?,
-    val externalSystemCode: String,
+    val externalSystemCode: String? = null,
     val docType: String?,
     val policyId: String?,
     val policyNumber: String?,

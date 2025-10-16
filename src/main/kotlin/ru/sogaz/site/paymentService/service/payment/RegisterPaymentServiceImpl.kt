@@ -72,7 +72,7 @@ class RegisterPaymentServiceImpl(
     private fun saveHistory(
         order: Order,
         actionType: ActionType,
-    ) = paymentOperationHistoryDao.save(order, order.getClientSystem(), actionType.value)
+    ) = paymentOperationHistoryDao.save(order, actionType.value)
 
     private fun registerInBank(payment: Payment): Payment =
         bankIntegrationFactoryService

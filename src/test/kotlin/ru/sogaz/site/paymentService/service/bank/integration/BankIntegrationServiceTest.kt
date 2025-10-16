@@ -26,7 +26,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
@@ -139,7 +138,7 @@ class BankIntegrationServiceTest {
         paymentType: PaymentTypeEnum,
     ) = Payment(
         bank = bank,
-        order = generateOrder(subOrders = List(Random.nextInt(0, 10)) { generateSubOrder() }),
+        order = generateOrder(),
         type = paymentType,
     )
 
@@ -149,11 +148,6 @@ class BankIntegrationServiceTest {
     ) = Order(
         premiumAmount = amount.toString(),
     ).apply { this.subOrders.addAll(subOrders) }
-
-    private fun generateSubOrder() =
-        SubOrder(
-            externalSystemCode = ExternalSystemCodeEnum.LK,
-        )
 
     private fun mockGPBRestTemplate() {
         every { restTemplate.postForObject<GazpromTokenResponse>(any(String::class)) }.returns(TOKEN_RESPONSE)

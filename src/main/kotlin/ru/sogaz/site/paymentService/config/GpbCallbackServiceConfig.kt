@@ -6,7 +6,6 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -29,7 +28,6 @@ class GpbCallbackServiceConfig(
         orderDao = orderDao,
         paymentOperationHistoryDao = paymentOperationHistoryDao,
         signatureVerifier = signatureVerifier,
-        payClientSystem = ExternalSystemCodeEnum.PAY,
         apiConfigProperties = apiConfigProperties,
         callbackPaymentDao = callbackPaymentDao,
     )

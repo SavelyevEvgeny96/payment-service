@@ -14,7 +14,6 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import java.time.LocalDateTime
 import java.util.UUID
@@ -43,6 +42,20 @@ data class Order(
     var paymentEndDate: LocalDateTime? = null,
     @Column(name = "date_delete")
     var dateDelete: LocalDateTime? = null,
+    @Column(name = "recipient_phone")
+    var recipientPhone: String? = null,
+    @Column(name = "recipient_user_id")
+    var recipientUserId: String? = null,
+    @Column(name = "policyholder")
+    var policyholder: String? = null,
+    @Column(name = "recipient_gd_id")
+    var recipientGdId: String? = null,
+    @Column(name = "key_card")
+    var keyCard: String? = null,
+    @Column(name = "save_card")
+    var saveCard: Boolean = false,
+    @Column(name = "recurrent")
+    var recurrent: Boolean = false,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
@@ -52,6 +65,4 @@ data class Order(
 ) {
     @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
     val subOrders: MutableList<SubOrder> = mutableListOf()
-
-    fun getClientSystem(): ExternalSystemCodeEnum? = subOrders.first().externalSystemCode
 }

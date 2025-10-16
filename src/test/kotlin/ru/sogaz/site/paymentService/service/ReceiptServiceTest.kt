@@ -26,7 +26,6 @@ import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.repository.ChequeSentRepository
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
@@ -65,7 +64,6 @@ class ReceiptServiceTest {
                 policyNumber = "POL123"
                 contractId = "CONT123"
                 premiumAmount = "1000.00"
-                externalSystemCode = ExternalSystemCodeEnum.LK
             }
 
         val order =
@@ -128,7 +126,6 @@ class ReceiptServiceTest {
                 policyNumber = "POL123"
                 contractId = "CONT123"
                 premiumAmount = "1000.00"
-                externalSystemCode = ExternalSystemCodeEnum.LK
             }
 
         val order =
@@ -181,7 +178,6 @@ class ReceiptServiceTest {
                 policyNumber = "POL123"
                 contractId = "CONT123"
                 premiumAmount = "1000.00"
-                externalSystemCode = ExternalSystemCodeEnum.LK
             }
 
         val order =

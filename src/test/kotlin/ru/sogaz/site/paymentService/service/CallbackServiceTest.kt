@@ -15,7 +15,6 @@ import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.service.callback.CallbackServiceImpl
 import java.util.Optional
 import java.util.UUID
@@ -56,7 +55,6 @@ class CallbackServiceTest {
                 paymentDao = paymentDao,
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
-                payClientSystem = ExternalSystemCodeEnum.PAY,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 
@@ -91,7 +89,6 @@ class CallbackServiceTest {
                 paymentDao = paymentDao,
                 orderDao = orderDao,
                 callbackPaymentDao = callbackPaymentDao,
-                payClientSystem = ExternalSystemCodeEnum.PAY,
                 paymentOperationHistoryDao = paymentOperationHistoryDao,
             )
 

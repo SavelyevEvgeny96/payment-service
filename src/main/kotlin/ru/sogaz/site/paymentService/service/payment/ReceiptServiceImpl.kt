@@ -202,7 +202,6 @@ class ReceiptServiceImpl(
             PaymentOperationHistory(
                 action = ActionType.ORDER_PAID.value,
                 order = order,
-                actionAuthor = subOrder?.first()?.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             ),
         )
@@ -214,7 +213,6 @@ class ReceiptServiceImpl(
             PaymentOperationHistory(
                 action = ActionType.PAYMENT_ERROR.value,
                 order = order,
-                actionAuthor = subOrder?.first()?.externalSystemCode,
                 actionDate = LocalDateTime.now(),
             ),
         )

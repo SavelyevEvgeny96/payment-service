@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.ExternalSystemCodeEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
@@ -27,7 +26,6 @@ class GpbCallbackServiceImpl(
     private val orderDao: OrderDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
-    private val payClientSystem: ExternalSystemCodeEnum,
     private val apiConfigProperties: ApiConfigProperties,
     private val callbackPaymentDao: CallbackPaymentDao,
 ) : GpbCallbackService {
@@ -152,7 +150,6 @@ class GpbCallbackServiceImpl(
                 }
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
-                payClientSystem,
                 traceId,
                 ActionType.CALLBACK_RECEIVED.value,
             )
