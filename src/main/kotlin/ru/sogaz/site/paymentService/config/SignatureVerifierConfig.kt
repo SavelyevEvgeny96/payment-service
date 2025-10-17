@@ -10,6 +10,7 @@ import java.security.PublicKey
 import java.security.Signature
 import java.security.cert.CertificateFactory
 import java.util.Base64
+import java.util.regex.Pattern
 
 @Configuration
 class SignatureVerifierConfig {
@@ -48,6 +49,8 @@ class SignatureVerifierConfig {
         }
 
     @Bean
-    fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier =
-        SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties))
+    fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier {
+        val pattern = Pattern.compile("%[0-9a-fA-F]{2}")
+        return SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties), pattern)
+    }
 }
