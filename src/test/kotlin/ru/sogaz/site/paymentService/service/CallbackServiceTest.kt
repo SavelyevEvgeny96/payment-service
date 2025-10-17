@@ -12,17 +12,14 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
-import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.service.callback.CallbackServiceImpl
-import java.util.Optional
 import java.util.UUID
 
 class CallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
-    private val payClientSystem = ClientSystem(1, "PAY", "Test")
 
     private val testRequest =
         CallbackRequest(
@@ -48,7 +45,7 @@ class CallbackServiceTest {
             }
         val orderDao =
             mock<OrderDao>().apply {
-                `when`(findById(any())).thenReturn(Optional.of(order))
+                `when`(findById(any())).thenReturn(order)
             }
         val service =
             CallbackServiceImpl(

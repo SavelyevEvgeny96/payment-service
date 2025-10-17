@@ -15,7 +15,6 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.callback.GpbCallbackServiceImpl
-import java.util.Optional
 import java.util.UUID
 
 class GpbCallbackServiceTest {
@@ -76,7 +75,7 @@ class GpbCallbackServiceTest {
             }
         `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(orderDao.findById(any())).thenReturn(Optional.of(order))
+        `when`(orderDao.findById(any())).thenReturn(order)
 
         val response = service.processCallback(testRequest)
 

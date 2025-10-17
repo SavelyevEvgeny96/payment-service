@@ -10,8 +10,7 @@ class PaymentTypeDaoImpl(
     private val paymentTypeRepository: PaymentTypeRepository,
 ) : PaymentTypeDao {
     companion object {
-        const val LOG_AND_ERROR_GET_TYPE_STATUS =
-            "Ошибка при получении статуса типа оплаты из таблицы payment_type для TraceID:"
+        const val LOG_AND_ERROR_GET_TYPE_STATUS = "Ошибка при получении статуса типа оплаты из таблицы payment_type"
     }
 
     private val logger = loggerFor(javaClass)
@@ -23,7 +22,7 @@ class PaymentTypeDaoImpl(
         try {
             paymentTypeRepository.findByTypeId(type).get()
         } catch (e: Exception) {
-            logger.error(e, LOG_AND_ERROR_GET_TYPE_STATUS, traceId)
+            logger.error(LOG_AND_ERROR_GET_TYPE_STATUS, e)
             throw InnerException(traceId, LOG_AND_ERROR_GET_TYPE_STATUS)
         }
 

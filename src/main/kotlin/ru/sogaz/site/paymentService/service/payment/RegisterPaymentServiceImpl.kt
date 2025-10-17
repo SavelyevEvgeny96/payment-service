@@ -5,7 +5,6 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
@@ -17,11 +16,9 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
-import java.time.LocalDateTime
 
 class RegisterPaymentServiceImpl(
     private val paymentDao: PaymentDao,
-    private val orderDao: OrderDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val bankIntegrationFactoryService: BankIntegrationFactoryService,
 ) : RegisterPaymentService {
@@ -42,7 +39,6 @@ class RegisterPaymentServiceImpl(
                 .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
                 .run { registerInBank(this) }
                 .run { paymentDao.save(this) }
-                .also { renewOrder(order) }
                 .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
         } catch (ex: Exception) {
             logger.error("ERROR: " + ex.message)
@@ -72,15 +68,10 @@ class RegisterPaymentServiceImpl(
     private fun saveHistory(
         order: Order,
         actionType: ActionType,
-    ) = paymentOperationHistoryDao.save(order, actionType.value)
+    ) = paymentOperationHistoryDao.saveForOrder(order, actionType.value)
 
     private fun registerInBank(payment: Payment): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
             .run { this.registerPayment(payment) }
-
-    private fun renewOrder(order: Order) =
-        order
-            .apply { updateDate = LocalDateTime.now() }
-            .run(orderDao::save)
 }

@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
 import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
@@ -46,13 +47,11 @@ class ReceiptServiceTest {
 
     private val service =
         ReceiptServiceImpl(
+            subOrderDao = subOrderDao,
             operationHistoryRepository = operationHistoryRepository,
-            receiptProperty = receiptProperty,
-            restTemplate = restTemplate,
-            objectMapper = objectMapper,
+            paymentReceiptControllerApi = PaymentReceiptControllerApi(),
             paymentRepository = paymentRepository,
             chequeSentRepository = chequeSentRepository,
-            subOrderDao = subOrderDao,
         )
 
     private val traceId = "test-trace-id"

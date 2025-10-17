@@ -69,7 +69,7 @@ class GpbCallbackServiceImpl(
                     ?.id
                     ?.let {
                         orderDao.findById(it)
-                    }?.isEmpty == true
+                    } == null
             ) {
                 return createErrorResponse(NOT_FOUND)
             }
@@ -146,7 +146,7 @@ class GpbCallbackServiceImpl(
             val orderId = payment.order ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
             val order =
                 orderId.id?.let {
-                    orderDao.findById(it).get()
+                    orderDao.findById(it)
                 }
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,

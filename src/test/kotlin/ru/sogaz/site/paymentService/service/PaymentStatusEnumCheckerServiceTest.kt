@@ -33,7 +33,6 @@ import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
 import java.time.Instant
 import java.time.LocalDateTime
-import java.util.Optional
 import java.util.UUID
 
 class PaymentStatusEnumCheckerServiceTest {
@@ -183,7 +182,7 @@ class PaymentStatusEnumCheckerServiceTest {
 
         `when`(objectMapper.readValue(akbResponse, PaymentAkbStatusResponse::class.java))
             .thenReturn(PaymentAkbStatusResponse(status = "Closed", prevStatus = PrevStatusEnum.FULLYPAID))
-        `when`(order.id?.let { orderDao.findById(it) }).thenReturn(Optional.of(order))
+        `when`(order.id?.let { orderDao.findById(it) }).thenReturn(order)
         `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(subOrderDao.getAllSubOrderListByOrderId(eq(order), org.mockito.kotlin.any())).thenReturn(listOf(subOrder))
         val mockPayment =

@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dao.impl.BankDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.CallbackPaymentDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.ClientSystemDaoImpl
@@ -20,6 +21,7 @@ import ru.sogaz.site.paymentService.dao.impl.PaymentDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentOperationHistoryDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.PaymentTypeDaoImpl
 import ru.sogaz.site.paymentService.dao.impl.SubOrderDaoImpl
+import ru.sogaz.site.paymentService.dao.impl.WaitingPaymentDaoImpl
 import ru.sogaz.site.paymentService.repository.BankRepository
 import ru.sogaz.site.paymentService.repository.CallbackPaymentRepository
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
@@ -29,6 +31,7 @@ import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
+import ru.sogaz.site.paymentService.repository.WaitingPaymentRepository
 
 @Configuration
 class DataDaoConfig {
@@ -69,6 +72,10 @@ class DataDaoConfig {
     @Bean
     fun callbackPaymentDaoConfig(callbackPaymentRepository: CallbackPaymentRepository): CallbackPaymentDao =
         CallbackPaymentDaoImpl(callbackPaymentRepository = callbackPaymentRepository)
+
+    @Bean
+    fun waitingPaymentDaoConfig(waitingPaymentRepository: WaitingPaymentRepository): WaitingPaymentDao =
+        WaitingPaymentDaoImpl(waitingPaymentRepository = waitingPaymentRepository)
 
     @Bean
     fun paymentOperationHistoryDao(paymentOperationHistoryRepository: PaymentOperationHistoryRepository): PaymentOperationHistoryDao =

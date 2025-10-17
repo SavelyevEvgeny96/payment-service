@@ -15,7 +15,7 @@ class PaymentDaoImpl(
     private val paymentTypeDao: PaymentTypeDao,
 ) : PaymentDao {
     companion object {
-        const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Не найден платеж по данному TraceId: "
+        const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Платеж не найден"
         const val LOG_ERROR_GET_PAYMENT_SAVE = "Не удалось сохранить данные платежа"
         const val ERROR_GET_PAYMENT_BY_ORDER_ID = "Ошибка поиска платежа по order_id Exception:  "
         const val PAYMENT_NOT_FOUND = "Ошибка запроса смены статуса. Указанный ордер не найден"
@@ -32,7 +32,7 @@ class PaymentDaoImpl(
         try {
             paymentRepository.findById(paymentId).orElse(null)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, traceId)
+            logger.error(LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, e)
             throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID ${e.message}")
         }
 
@@ -40,7 +40,7 @@ class PaymentDaoImpl(
         try {
             paymentRepository.findByPaymentBankId(bankId)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_GET_PAYMENT_BY_ORDER_ID)
+            logger.error(LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, e)
             throw InnerException(getTraceId(), "$PAYMENT_NOT_FOUND ${e.message}")
         }
 
@@ -48,7 +48,7 @@ class PaymentDaoImpl(
         try {
             paymentRepository.findByPaymentBankId(paymentId)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_PAYMENT_FIND)
+            logger.error(LOG_ERROR_PAYMENT_FIND, e)
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
 
@@ -56,7 +56,7 @@ class PaymentDaoImpl(
         try {
             paymentRepository.save(payment)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_GET_PAYMENT_SAVE)
+            logger.error(LOG_ERROR_GET_PAYMENT_SAVE, e)
             throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
         }
 

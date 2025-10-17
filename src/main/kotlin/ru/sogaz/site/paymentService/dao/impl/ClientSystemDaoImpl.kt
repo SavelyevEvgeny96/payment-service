@@ -27,10 +27,10 @@ class ClientSystemDaoImpl(
                 .run { this ?: throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND) }
         } catch (e: Exception) {
             logger.error(
-                e,
                 LOG_CLIENT_SYSTEM_NOT_FOUND,
                 externalSystemCode,
                 traceId,
+                e,
             )
             throw InnerException(traceId, ERROR_CLIENT_SYSTEM_NOT_FOUND)
         }

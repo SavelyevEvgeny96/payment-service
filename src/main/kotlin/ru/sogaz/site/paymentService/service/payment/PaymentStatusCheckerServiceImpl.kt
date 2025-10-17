@@ -39,7 +39,6 @@ import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import kotlin.jvm.optionals.getOrNull
 
 class PaymentStatusCheckerServiceImpl(
     private val paymentDao: PaymentDao,
@@ -72,9 +71,9 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_AKB_API_SUCCESS = "Успешный ответ от API АКБ для платежа %s. ID операции: %s"
         const val LOG_AKB_API_ERROR = "Ошибка при запросе статуса в АКБ. ID операции: %s"
         const val LOG_AKB_API_CALL_ERROR = "Произошла ошибка на одном из шагов операции, история сохранена."
-        const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен для TraceId: {}"
+        const val LOG_ORDER_STATUS_SUCCESS = "Ошибка совершения платежа. Указанный заказ уже оплачен"
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
-            "Ошибка совершения платежа. Указанный заказ не доступен для оплаты для TraceId: {} "
+            "Ошибка совершения платежа. Указанный заказ не доступен для оплаты"
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
@@ -179,7 +178,7 @@ class PaymentStatusCheckerServiceImpl(
 
             if (paymentResponse.status == "Closed") {
                 logger.info(LOG_AKB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                updateAkbPaymentStatus(payment, paymentResponse, traceId)
+                updateAkbPaymentStatus(payment, paymentResponse)
             } else {
                 logger.error(LOG_AKB_API_ERROR.format(traceId))
                 throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
@@ -246,7 +245,6 @@ class PaymentStatusCheckerServiceImpl(
     private fun updateAkbPaymentStatus(
         payment: Payment,
         response: PaymentAkbStatusResponse,
-        traceId: String,
     ) {
         val order: Order? = findOrderByPayment(payment)
 
@@ -263,7 +261,7 @@ class PaymentStatusCheckerServiceImpl(
         response: PaymentStatusResponse,
     ) {
         val traceId = getTraceId()
-        val order: Order? = findOrderByPayment(payment)
+        val order: Order? = payment.order
 
         val status = response.result.first().status
 
@@ -292,20 +290,16 @@ class PaymentStatusCheckerServiceImpl(
             }
     }
 
-    private fun findOrderByPayment(payment: Payment): Order? =
-        payment.order
-            ?.id
-            ?.let { orderDao.findById(it).getOrNull() }
+    private fun findOrderByPayment(payment: Payment): Order? = payment.order
 
     private fun updatePaymentStatus(
         payment: Payment,
         response: PaymentStatusResponseCard,
     ) {
         val traceId = getTraceId()
-        val order: Order? = findOrderByPayment(payment)
         val status = response.result.status
 
-        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.id, traceId))
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, payment.order?.id, traceId))
 
         payment.state = status.toPaymentStatusesEnum()
 
