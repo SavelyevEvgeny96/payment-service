@@ -13,14 +13,13 @@ import org.hibernate.annotations.UpdateTimestamp
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Entity
 @Table(name = "waiting_payments")
 data class WaitingPayment(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    var id: UUID? = null,
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,
