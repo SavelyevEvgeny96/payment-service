@@ -8,9 +8,11 @@ import java.nio.charset.StandardCharsets
 import java.security.Security
 import java.security.Signature
 import java.util.Base64
+import java.util.regex.Pattern
 
 class SignatureVerifierImpl(
     private val preconfiguredSignature: Signature,
+    private val pattern: Pattern,
 ) : SignatureVerifier {
     private val logger = loggerFor(javaClass)
 
@@ -25,7 +27,12 @@ class SignatureVerifierImpl(
 
     override fun verifySignature(request: GpbCallbackRequest): Boolean =
         try {
-            val decodedQueryString = java.net.URLDecoder.decode(request.signature, StandardCharsets.UTF_8)
+            val signature = request.signature
+            val decodedQueryString = if (isEncoded(signature)) {
+                java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)
+            } else {
+                signature
+            }
 
             val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
@@ -34,6 +41,9 @@ class SignatureVerifierImpl(
             logger.error(VEREFIELD_FAIL)
             false
         }
+
+    private fun isEncoded(signature: String): Boolean =
+        pattern.matcher(signature).find()
 
     private fun verifySignatureCert(signature: ByteArray): Boolean =
         try {
