@@ -2,6 +2,8 @@ package ru.sogaz.site.paymentService.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -19,9 +21,11 @@ data class WaitingPayment(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
-    @Column(name = "bank_id")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bank")
     var bank: BankEnum? = null,
-    @Column(name = "type_id")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
     var type: PaymentTypeEnum? = null,
     @Column(name = "payment_bank_id")
     var paymentBankId: String? = null,
