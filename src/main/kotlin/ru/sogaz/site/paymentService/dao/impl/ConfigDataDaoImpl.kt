@@ -36,7 +36,7 @@ class ConfigDataDaoImpl(
             try {
                 configDataRepository.findByParamName(CODE_LENGTH)
             } catch (e: Exception) {
-                logger.error(e, LOG_CODE_LENGTH_NOT_FOUND)
+                logger.error(LOG_CODE_LENGTH_NOT_FOUND, e)
                 throw InnerException(traceId, ERROR_ORDER_CODE_LENGTH_NOT_FOUND)
             }
         return config.paramValue.toIntOrNull() ?: 6

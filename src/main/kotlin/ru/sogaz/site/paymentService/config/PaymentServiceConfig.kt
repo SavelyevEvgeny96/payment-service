@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.mapper.OrderMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -31,7 +32,6 @@ open class PaymentServiceConfig(
     ): RegisterPaymentService =
         RegisterPaymentServiceImpl(
             paymentDao = paymentDao,
-            orderDao = orderDao,
             paymentOperationHistoryDao = paymentOperationHistoryDao,
             bankIntegrationFactoryService = bankIntegrationFactoryService,
         )
@@ -46,6 +46,7 @@ open class PaymentServiceConfig(
         apiConfigProperties: ApiConfigProperties,
         subOrderService: SubOrderService,
         orderMapper: OrderMapper,
+        waitingPaymentDao: WaitingPaymentDao,
     ): PaymentService =
         PaymentServiceImpl(
             orderDao = orderDao,
@@ -56,5 +57,6 @@ open class PaymentServiceConfig(
             apiConfigProperties = apiConfigProperties,
             subOrderService = subOrderService,
             orderMapper = orderMapper,
+            waitingPaymentDao = waitingPaymentDao,
         )
 }

@@ -10,7 +10,7 @@ interface PaymentOperationHistoryDao {
         actionTypeName: String,
     )
 
-    fun save(
+    fun saveForOrder(
         order: Order,
         actionTypeName: String,
     ): PaymentOperationHistory

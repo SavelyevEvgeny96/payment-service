@@ -15,6 +15,7 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.FileQR
@@ -29,6 +30,7 @@ import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.OrderMapper
+import ru.sogaz.site.paymentService.orElseThrow
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.QRCodeService
@@ -36,6 +38,7 @@ import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.SubOrderService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
+import java.time.LocalDateTime
 import java.util.Objects.isNull
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
@@ -53,6 +56,7 @@ class PaymentServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val subOrderService: SubOrderService,
     private val orderMapper: OrderMapper,
+    private val waitingPaymentDao: WaitingPaymentDao,
 ) : PaymentService {
     companion object {
         const val SUCCESS_STATUS_CODE_CARD_PAY = 1101510200
@@ -127,13 +131,20 @@ class PaymentServiceImpl(
     ): Response<DataPay> =
         orderDao
             .findById(orderId)
+            .run { validateOrder(this, paymentTypeEnum) }
+            .apply { bank = resolveCurrentBank(bank) }
+            .run { registerPayment(this, paymentTypeEnum, urlToReturn) }
+            .also(::renewOrder)
+            .also(waitingPaymentDao::saveWaitingForPayment)
+            .run(::getSuccessResponse)
+
+    private fun validateOrder(
+        order: Order?,
+        paymentTypeEnum: PaymentTypeEnum,
+    ): Order =
+        order
             .orElseThrow { businessExceptionByPaymentType(paymentTypeEnum) }
             .also { throwIfNotAllowedToPay(orderStatus = it.status, paymentTypeEnum) }
-            .apply { bank = resolveCurrentBank(bank) }
-            .also(::logOrderInfoBeforeRegistrationPayment)
-            .run { registerPayment(this, paymentTypeEnum, urlToReturn) }
-            .also(::logRegisteredPaymentInfo)
-            .run(::getSuccessResponse)
 
     private fun resolveCurrentBank(bank: BankEnum?): BankEnum = bankDao.resolveBank(bank)
 
@@ -141,7 +152,16 @@ class PaymentServiceImpl(
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
         urlToReturn: UrlToReturn,
-    ): Payment = registerPaymentService.register(order, paymentTypeEnum, urlToReturn)
+    ): Payment =
+        order
+            .also(::logOrderInfoBeforeRegistrationPayment)
+            .run { registerPaymentService.register(order, paymentTypeEnum, urlToReturn) }
+            .also(::logRegisteredPaymentInfo)
+
+    private fun renewOrder(payment: Payment) =
+        payment.order!!
+            .apply { updateDate = LocalDateTime.now() }
+            .run(orderDao::save)
 
     override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
         findOrderForQROrThrow(orderId)
@@ -154,7 +174,7 @@ class PaymentServiceImpl(
     private fun findOrderForQROrThrow(orderId: UUID) =
         orderDao
             .findById(orderId)
-            .orElseThrow { createBusinessException(CODE_ERROR_ORDER_NOT_FOUND_INFO) }
+            .orElseThrow { BusinessException(CODE_ERROR_ORDER_NOT_FOUND_INFO) }
 
     private fun checkOrderStatus(order: Order) {
         if (order.status.isPaidFor() || order.status.isNotAvailable()) {
@@ -212,17 +232,15 @@ class PaymentServiceImpl(
 
     private fun businessExceptionByPaymentType(paymentTypeEnum: PaymentTypeEnum) =
         when (paymentTypeEnum) {
-            PaymentTypeEnum.CARD -> createBusinessException(CODE_ERROR_ORDER_NOT_FOUND)
-            PaymentTypeEnum.SBP -> createBusinessException(CODE_ERROR_ORDER_NOT_FOUND_SBP)
+            PaymentTypeEnum.CARD -> BusinessException(CODE_ERROR_ORDER_NOT_FOUND)
+            PaymentTypeEnum.SBP -> BusinessException(CODE_ERROR_ORDER_NOT_FOUND_SBP)
         }
-
-    private fun createBusinessException(code: Int) = BusinessException(code, getTraceId())
 
     private fun throwIfNotAllowedToPay(
         orderStatus: OrderStatus,
         paymentTypeEnum: PaymentTypeEnum,
     ) = resolveErrorCodeIfNotAllowedToPay(orderStatus, paymentTypeEnum)
-        ?.let { throw BusinessException(it, getTraceId()) }
+        ?.let { throw BusinessException(it) }
 
     private fun resolveErrorCodeIfNotAllowedToPay(
         orderStatus: OrderStatus,

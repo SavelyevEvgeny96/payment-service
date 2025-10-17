@@ -8,5 +8,5 @@ import ru.sogaz.site.paymentService.entity.CallbackPayment
 @Repository
 interface CallbackPaymentRepository : JpaRepository<CallbackPayment, Long> {
     @Query("SELECT cp FROM CallbackPayment cp WHERE cp.paymentBankId = :paymentBankId")
-    fun findByPaymentBankId(paymentBankId: String?): CallbackPayment?
+    fun findByPaymentBankId(paymentBankId: String): CallbackPayment?
 }

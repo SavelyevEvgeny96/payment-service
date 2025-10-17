@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -19,6 +21,6 @@ fun main(args: Array<String>) {
     runApplication<KotlinApplication>(*args)
 }
 
-fun <T> loggerFor(clazz: Class<T>) =
-    ru.sogaz.core.logger.LoggerFactory
-        .getApiLogger(clazz)
+fun <T> loggerFor(clazz: Class<T>): Logger = LoggerFactory.getLogger(clazz)
+
+inline fun <reified T> T?.orElseThrow(block: () -> Exception): T = this ?: throw block()

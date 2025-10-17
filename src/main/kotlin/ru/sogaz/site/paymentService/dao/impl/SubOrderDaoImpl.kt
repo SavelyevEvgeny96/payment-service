@@ -34,7 +34,7 @@ class SubOrderDaoImpl(
         try {
             subOrderRepository.save(subOrder)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_SUB_ORDER_SAVE)
+            logger.error(LOG_ERROR_SUB_ORDER_SAVE, e)
             throw InnerException(getTraceId(), LOG_ERROR_SUB_ORDER_SAVE + e.message)
         }
 

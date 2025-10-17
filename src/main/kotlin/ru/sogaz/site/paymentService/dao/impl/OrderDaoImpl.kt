@@ -9,8 +9,9 @@ import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderRepository
 import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
-import java.util.Optional
+import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.jvm.optionals.getOrNull
 
 class OrderDaoImpl(
     private val orderRepository: OrderRepository,
@@ -18,7 +19,6 @@ class OrderDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val ERROR_ORDER_STATUS_NOT_FOUND = "Статус заказа не найден для stateId 0"
         const val LOG_ERROR_ORDER_SAVE = "Не удалось сохранить данные по заказу"
     }
 
@@ -26,18 +26,26 @@ class OrderDaoImpl(
         try {
             orderRepository.findById(UUID.fromString(orderId)).get()
         } catch (e: Exception) {
-            logger.error(e, LOG_ORDER_STATUS_NOT_FOUND, getTraceId())
+            logger.error(LOG_ORDER_STATUS_NOT_FOUND, e)
             throw BusinessException(CODE_ERROR_GET_STATUS_ORDER, getTraceId())
         }
 
-    override fun findById(orderId: UUID): Optional<Order> = orderRepository.findById(orderId)
+    override fun findById(orderId: UUID): Order? =
+        orderRepository
+            .findById(orderId)
+            .getOrNull()
 
     override fun save(order: Order): Order {
         try {
             return orderRepository.save(order)
         } catch (e: Exception) {
-            logger.error(e, LOG_ERROR_ORDER_SAVE)
+            logger.error(LOG_ERROR_ORDER_SAVE, e)
             throw InnerException(getTraceId(), LOG_ERROR_ORDER_SAVE + e.message)
         }
     }
+
+    override fun renewUpdateDate(order: Order): Order =
+        order
+            .apply { updateDate = LocalDateTime.now() }
+            .run(::save)
 }

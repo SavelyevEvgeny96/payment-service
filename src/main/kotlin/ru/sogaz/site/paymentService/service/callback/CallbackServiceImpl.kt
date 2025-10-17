@@ -128,7 +128,7 @@ class CallbackServiceImpl(
                     traceId,
                     ORDER_NOT_FOUND,
                 )
-            val order = orderDao.findById(orderId.id!!).orElseThrow { throw InnerException(traceId, ORDER_NOT_FOUND) }
+            val order = orderDao.findById(orderId.id!!).run { this ?: throw InnerException(traceId, ORDER_NOT_FOUND) }
             paymentOperationHistoryDao.saveRecordOperationHistory(
                 order,
                 traceId,
