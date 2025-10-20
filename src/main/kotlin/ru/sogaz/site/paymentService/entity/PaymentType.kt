@@ -12,16 +12,9 @@ import jakarta.persistence.Table
 data class PaymentType(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: String,
+    var id: String = "",
     @Column(name = "type_id")
-    var typeId: String,
+    var typeId: String = "",
     @Column(name = "type_name")
-    var typeName: String,
-) {
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(
-        "",
-        "",
-        "",
-    )
-}
+    var typeName: String = "",
+)

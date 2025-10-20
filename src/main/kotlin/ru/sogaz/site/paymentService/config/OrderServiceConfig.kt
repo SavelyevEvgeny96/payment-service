@@ -2,32 +2,30 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentService.dao.ConfigDataDao
+import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.mapper.SubOrderMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.OrderStatusRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.OrderService
-import ru.sogaz.site.paymentService.service.impl.OrderServiceImpl
+import ru.sogaz.site.paymentService.service.SubOrderService
+import ru.sogaz.site.paymentService.service.order.OrderServiceImpl
+import ru.sogaz.site.paymentService.service.order.SubOrderServiceImpl
 
 @Configuration
 open class OrderServiceConfig {
     @Bean
     open fun orderService(
-        configDataDao: ConfigDataDao,
         apiConfigProperty: ApiConfigProperties,
-        clientSystemRepository: ClientSystemRepository,
-        orderRepository: OrderRepository,
-        orderStatusRepository: OrderStatusRepository,
-        subOrderRepository: SubOrderRepository,
+        orderDao: OrderDao,
     ): OrderService =
         OrderServiceImpl(
             apiConfigProperty = apiConfigProperty,
-            clientSystemRepository = clientSystemRepository,
-            orderRepository = orderRepository,
-            orderStatusRepository = orderStatusRepository,
-            subOrderRepository = subOrderRepository,
-            configDataDao = configDataDao,
+            orderDao = orderDao,
         )
+
+    @Bean
+    fun subOrderService(
+        subOrderDao: SubOrderDao,
+        subOrderMapper: SubOrderMapper,
+    ): SubOrderService = SubOrderServiceImpl(subOrderDao, subOrderMapper)
 }

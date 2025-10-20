@@ -1,93 +1,68 @@
 package ru.sogaz.site.paymentService.entity
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.OrderStatus
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "orders")
 data class Order(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
-    @Column(name = "order_id")
-    var orderId: String,
-    @Column(name = "code")
-    var code: String,
-    @ManyToOne
-    @JoinColumn(name = "state_id", referencedColumnName = "state_id")
-    var orderStatus: OrderStatus?,
-    @ManyToOne
-    @JoinColumn(name = "bank_id", referencedColumnName = "bank_id")
-    var bankId: Bank?,
-    @Column(name = "date_delete")
-    var dateDelete: String?,
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var id: UUID? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    var status: OrderStatus = OrderStatus.NEW,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bank")
+    var bank: BankEnum? = null,
     @Column(name = "premium_amount")
-    var premiumAmount: String?,
-    @Column(name = "payment_end_date")
-    var paymentEndDate: String?,
+    var premiumAmount: String = "",
+    @Column(name = "recipient_email")
+    var recipientEmail: String? = "",
     @Column(name = "url_to_return")
-    var urlToReturn: String?,
+    var urlToReturn: String? = "",
     @Column(name = "url_to_decline")
-    var urlToDecline: String?,
-    @Column(name = "custom_url")
-    var customURL: String?,
+    var urlToDecline: String? = "",
+    @Column(name = "payment_end_date")
+    var paymentEndDate: LocalDateTime? = null,
+    @Column(name = "date_delete")
+    var dateDelete: LocalDateTime? = null,
+    @Column(name = "recipient_phone")
+    var recipientPhone: String? = null,
+    @Column(name = "recipient_user_id")
+    var recipientUserId: String? = null,
+    @Column(name = "policyholder")
+    var policyholder: String? = null,
+    @Column(name = "recipient_gd_id")
+    var recipientGdId: String? = null,
+    @Column(name = "key_card")
+    var keyCard: String? = null,
+    @Column(name = "save_card")
+    var saveCard: Boolean = false,
+    @Column(name = "recurrent")
+    var recurrent: Boolean = false,
+    @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
+    @UpdateTimestamp
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
-    @Column(name = "recipient_email")
-    var recipientEmail: String,
-    @Column(name = "need_receipt")
-    var needReceipt: Boolean?,
-    @Column(name = "recipient_phone")
-    var recipientPhone: String?,
-    @Column(name = "policyholder")
-    var policyholder: String?,
-    @Column(name = "policyholder_doc")
-    var policyholderDoc: String?,
-    @Column(name = "recipient_user_id")
-    var recipientUserId: String?,
 ) {
-    @PrePersist
-    fun prePersist() {
-        createDate = LocalDateTime.now()
-        updateDate = LocalDateTime.now()
-    }
-
-    @PreUpdate
-    fun preUpdate() {
-        updateDate = LocalDateTime.now()
-    }
-
-    // Конструктор по умолчанию нужен для JPA
-    constructor() : this(
-        0,
-        "",
-        "",
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        "",
-        null,
-        null,
-        null,
-        null,
-        null,
-    )
+    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    val subOrders: MutableList<SubOrder> = mutableListOf()
 }

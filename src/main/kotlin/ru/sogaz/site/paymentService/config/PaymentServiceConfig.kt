@@ -2,41 +2,61 @@ package ru.sogaz.site.paymentService.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
-import ru.sogaz.site.paymentService.repository.ActionTypeRepository
+import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
+import ru.sogaz.site.paymentService.mapper.OrderMapper
+import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
-import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.PaymentStatusRepository
-import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.service.impl.PaymentServiceImpl
+import ru.sogaz.site.paymentService.service.QRCodeService
+import ru.sogaz.site.paymentService.service.RegisterPaymentService
+import ru.sogaz.site.paymentService.service.SubOrderService
+import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
+import ru.sogaz.site.paymentService.service.payment.RegisterPaymentServiceImpl
+import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
 
 @Configuration
-open class PaymentServiceConfig {
+open class PaymentServiceConfig(
+    private val configDataRepository: ConfigDataRepository,
+) {
+    @Bean
+    fun registerPaymentService(
+        paymentDao: PaymentDao,
+        orderDao: OrderDao,
+        paymentOperationHistoryDao: PaymentOperationHistoryDao,
+        bankIntegrationFactoryService: BankIntegrationFactoryService,
+    ): RegisterPaymentService =
+        RegisterPaymentServiceImpl(
+            paymentDao = paymentDao,
+            paymentOperationHistoryDao = paymentOperationHistoryDao,
+            bankIntegrationFactoryService = bankIntegrationFactoryService,
+        )
+
     @Bean
     open fun paymentService(
-        configDataRepository: ConfigDataRepository,
-        orderRepository: OrderRepository,
-        subOrderRepository: SubOrderRepository,
-        actionTypeRepository: ActionTypeRepository,
-        operationHistoryRepository: PaymentOperationHistoryRepository,
+        orderDao: OrderDao,
+        bankDao: BankDao,
         configDataDao: ConfigDataDao,
-        paymentStatusRepository: PaymentStatusRepository,
-        paymentRepository: PaymentRepository,
-        paymentTypeRepository: PaymentTypeRepository,
+        registerPaymentService: RegisterPaymentService,
+        qrCodeService: QRCodeService,
+        apiConfigProperties: ApiConfigProperties,
+        subOrderService: SubOrderService,
+        orderMapper: OrderMapper,
+        waitingPaymentDao: WaitingPaymentDao,
     ): PaymentService =
         PaymentServiceImpl(
-            orderRepository = orderRepository,
-            subOrderRepository = subOrderRepository,
-            configDataRepository = configDataRepository,
-            actionTypeRepository = actionTypeRepository,
-            operationHistoryRepository = operationHistoryRepository,
+            orderDao = orderDao,
+            bankDao = bankDao,
             configDataDao = configDataDao,
-            paymentStatusRepository = paymentStatusRepository,
-            paymentRepository = paymentRepository,
-            paymentTypeRepository = paymentTypeRepository,
+            registerPaymentService = registerPaymentService,
+            qrCodeService = qrCodeService,
+            apiConfigProperties = apiConfigProperties,
+            subOrderService = subOrderService,
+            orderMapper = orderMapper,
+            waitingPaymentDao = waitingPaymentDao,
         )
 }

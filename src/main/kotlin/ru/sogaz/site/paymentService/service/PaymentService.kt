@@ -1,14 +1,30 @@
 package ru.sogaz.site.paymentService.service
 
-import org.springframework.http.ResponseEntity
-import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.PaymentPayRequest
+import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
+import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
+import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
 import ru.sogaz.siter.models.resonses.Response
+import java.util.UUID
 
 /**
  * Интерфейс для сервиса обработки платежей.
  * Определяет контракт для работы с платежами.
  */
 interface PaymentService {
-    fun createPayment(paymentPayRequest: PaymentPayRequest): ResponseEntity<Response<DataPay>>
+    fun createCardPayment(
+        orderId: UUID,
+        urlToReturnS: String? = null,
+        urlToReturnF: String? = null,
+    ): Response<DataPay>
+
+    fun createSBPPayment(
+        orderId: UUID,
+        urlToReturnS: String? = null,
+        urlToReturnF: String? = null,
+    ): Response<DataPay>
+
+    fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo>
+
+    fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse>
 }
