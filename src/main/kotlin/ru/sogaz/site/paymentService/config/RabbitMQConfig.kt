@@ -11,7 +11,7 @@ import ru.sogaz.site.paymentService.properties.RabbitProperties
 class RabbitMQConfig(
     private val rabbit: RabbitProperties,
 ) {
-    private var queueName = rabbit.queue.name
+    private var queueName = rabbit.template.routingKey
 
     @Bean
     fun queue(): Queue = Queue(queueName)

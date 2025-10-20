@@ -6,5 +6,5 @@ import ru.sogaz.site.paymentService.entity.ClientSystem
 
 @Repository
 interface ClientSystemRepository : JpaRepository<ClientSystem, Long> {
-    fun findByExternalSystemCode(externalSystemCode: String): ClientSystem
+    fun findByExternalSystemCode(externalSystemCode: String?): ClientSystem?
 }

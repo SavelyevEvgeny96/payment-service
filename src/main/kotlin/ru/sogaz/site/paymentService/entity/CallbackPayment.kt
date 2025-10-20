@@ -5,9 +5,9 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
 
 @Entity
@@ -24,19 +24,10 @@ data class CallbackPayment(
     var paymentBankId: String? = null,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
+    @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
+    @UpdateTimestamp
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
-) {
-    @PrePersist
-    fun prePersist() {
-        createDate = LocalDateTime.now()
-        updateDate = LocalDateTime.now()
-    }
-
-    @PreUpdate
-    fun preUpdate() {
-        updateDate = LocalDateTime.now()
-    }
-}
+)

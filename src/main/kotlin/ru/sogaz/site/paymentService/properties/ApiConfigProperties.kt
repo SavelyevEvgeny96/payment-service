@@ -16,10 +16,16 @@ class ApiConfigProperties {
     lateinit var merchantIdSbpGpb: String
     lateinit var callbackUrlSbp: String
     lateinit var gpbSbpUrl: String
+    lateinit var gpbSbpUrlStatus: String
     lateinit var portalId: String
     lateinit var merchantId: String
     lateinit var backUrlF: String
     lateinit var backUrlS: String
+    lateinit var akbUrl: String
+    lateinit var akbSbpUrl: String
+    lateinit var gpbSbpQRImageUrl: String
+    lateinit var qrUrlForCardPayment: String
+    lateinit var qrUrlForSbpPayment: String
 
     @PostConstruct
     fun postConstruct() {
@@ -33,5 +39,10 @@ class ApiConfigProperties {
         logger.info("merchantId = $merchantId")
         logger.info("backUrlF = $backUrlF")
         logger.info("backUrlS = $backUrlS")
+        logger.info("akbSbpUrl = $akbSbpUrl")
+        logger.info("akbUrl = $akbUrl")
+        logger.info("gpbSbpQRImageUrl = $gpbSbpQRImageUrl")
+        logger.info("qrUrlForCardPayment = $qrUrlForCardPayment")
+        logger.info("qrUrlForSbpPayment = $qrUrlForSbpPayment")
     }
 }

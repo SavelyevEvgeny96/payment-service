@@ -7,7 +7,9 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
+import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
 
 @Entity
@@ -16,14 +18,17 @@ class PaymentOperationHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @ManyToOne
-    var action: ActionType? = null,
-    @Column(name = "action_date")
+    @Column(name = "action")
+    var action: String? = null,
+    @CreationTimestamp
+    @Column(name = "action_date", updatable = false)
     var actionDate: LocalDateTime? = null,
     @ManyToOne
-    @JoinColumn(name = "action_author_id")
-    var actionAuthor: ClientSystem? = null,
-    @ManyToOne
-    @JoinColumn(name = "order_id", referencedColumnName = "order_id")
+    @JoinColumn(name = "order_id")
     var order: Order? = null,
-)
+) {
+    @PrePersist
+    fun prePersist() {
+        actionDate = LocalDateTime.now()
+    }
+}

@@ -6,31 +6,40 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.CallbackRequest
-import ru.sogaz.site.paymentService.dto.CallbackResponse
-import ru.sogaz.site.paymentService.dto.DataGetOrderStatus
-import ru.sogaz.site.paymentService.dto.DataOrder
-import ru.sogaz.site.paymentService.dto.DataPay
-import ru.sogaz.site.paymentService.dto.GpbCallbackRequest
-import ru.sogaz.site.paymentService.dto.PaymentPayRequest
-import ru.sogaz.site.paymentService.dto.PaymentRequestWrapper
-import ru.sogaz.site.paymentService.dto.ResponseStatusPay
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
+import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.request.CallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
+import ru.sogaz.site.paymentService.dto.response.CallbackResponse
+import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
-import ru.sogaz.site.paymentService.validation.PaymentRequestValidator
+import ru.sogaz.site.paymentService.validation.PermissionValidator
 import ru.sogaz.siter.models.resonses.Response
+import java.util.Optional
+import java.util.UUID
 
 /**
  * Контроллер для обработки запросов на создание платежа.
@@ -42,9 +51,9 @@ class PaymentController(
     private val orderService: OrderService,
     private val paymentService: PaymentService,
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
-    private val paymentRequestValidator: PaymentRequestValidator,
     private val gpbCallbackService: GpbCallbackService,
     private val callbackService: CallbackService,
+    private val permissionValidator: PermissionValidator,
 ) {
     /**
      * Метод для создания заявки.
@@ -108,30 +117,32 @@ class PaymentController(
     )
     @PostMapping("/create")
     fun createOrder(
-        @RequestBody requestWrapper: PaymentRequestWrapper,
+        @Valid @RequestBody requestWrapper: OrderRequest,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
     ): ResponseEntity<Response<DataOrder>> {
-        requestWrapper.payments.forEach { paymentRequest ->
-            paymentRequestValidator.isValid(paymentRequest, requestWrapper, getTraceId())
-        }
-        return orderService.createOrder(requestWrapper)
+        permissionValidator.checkPermission(authorization)
+        return ResponseEntity.ok(orderService.createOrder(requestWrapper))
     }
 
-    /**
-     * Метод для создания платежа.
-     * @return Ответ с кодом состояния и данными о платеже или ошибкой
-     */
-    @PostMapping("/pay")
-    fun createPay(
-        @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> =
-        paymentService.createPayment(
-            paymentPayRequest,
-        )
-
-    @PostMapping("/paySbp")
+    @GetMapping("/paySbp/{orderId}")
     fun createPaySbp(
-        @RequestBody paymentPayRequest: PaymentPayRequest,
-    ): ResponseEntity<Response<DataPay>> = paymentService.createPaymentSbp(paymentPayRequest)
+        @PathVariable orderId: String,
+        @RequestParam(required = false) urlToReturn: String?,
+        @RequestParam(required = false) urlToReturnF: String?,
+    ): ResponseEntity<Response<DataPay>> =
+        paymentService
+            .createSBPPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
+            .run { ResponseEntity.ok(this) }
+
+    @GetMapping("/pay/{orderId}")
+    fun pay(
+        @PathVariable orderId: String,
+        @RequestParam(required = false) urlToReturn: String?,
+        @RequestParam(required = false) urlToReturnF: String?,
+    ): ResponseEntity<Response<DataPay>> =
+        paymentService
+            .createCardPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
+            .run { ResponseEntity.ok(this) }
 
     @Operation(
         summary = "Проверить статус оплаты",
@@ -162,15 +173,33 @@ class PaymentController(
         @RequestParam(value = "p.isFullyAuthenticated", required = false) isFullyAuthenticated: String?,
         @RequestParam(value = "p.transmissionDateTime", required = false) transmissionDateTime: String?,
         @RequestParam("discountType") discountType: String?,
-        @RequestParam(value = "p..paymentSystem", required = false) paymentSystem: String?,
+        @RequestParam("discountAmount") discountAmount: String?,
+        @RequestParam(value = "p.paymentSystem", required = false) paymentSystem: String?,
+        @RequestParam(value = "p.issuerName", required = false) issuerName: String?,
         @RequestParam("ts") ts: String?,
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
     ): ResponseEntity<String> {
         val requestParams =
             GpbCallbackRequest(
-                trxId = trxId,
-                signature = signature,
+                trxId,
+                merchId,
+                resultCode,
+                amount,
+                accountId,
+                orderId,
+                rrn,
+                authCode,
+                srcType,
+                maskedPan,
+                isFullyAuthenticated,
+                transmissionDateTime,
+                discountType,
+                discountAmount,
+                paymentSystem,
+                issuerName,
+                ts,
+                signature,
             )
         return gpbCallbackService.processCallback(requestParams)
     }
@@ -220,5 +249,30 @@ class PaymentController(
                 bankId = transactionId,
             )
         return callbackService.processCallback(requestParams)
+    }
+
+    @GetMapping("/pageinfo/{orderId}")
+    fun getInfoPage(
+        @PathVariable orderId: String,
+    ): Response<DataOrderPaymentPageInfo> =
+        orderId
+            .toUUID()
+            .orElseThrow { ValidationException(CODE_ERROR_REQUIRED_DATA) }
+            .run(paymentService::getOrderPaymentPageInfo)
+
+    private fun String.toUUID(): Optional<UUID> =
+        try {
+            Optional.of(UUID.fromString(this))
+        } catch (ex: Exception) {
+            Optional.empty<UUID>()
+        }
+
+    @PatchMapping("/paymentinvoice")
+    fun updatePaymentInvoice(
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
+        @RequestBody updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest,
+    ): Response<UpdatePaymentInvoiceResponse> {
+        permissionValidator.checkPermission(authorization)
+        return paymentService.updatePaymentInvoice(updatePaymentInvoiceRequest)
     }
 }

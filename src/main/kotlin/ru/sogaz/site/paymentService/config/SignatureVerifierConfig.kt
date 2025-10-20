@@ -4,12 +4,13 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import ru.sogaz.site.paymentService.service.impl.SignatureVerifierImpl
+import ru.sogaz.site.paymentService.service.callback.SignatureVerifierImpl
 import java.io.ByteArrayInputStream
 import java.security.PublicKey
 import java.security.Signature
 import java.security.cert.CertificateFactory
 import java.util.Base64
+import java.util.regex.Pattern
 
 @Configuration
 class SignatureVerifierConfig {
@@ -48,5 +49,8 @@ class SignatureVerifierConfig {
         }
 
     @Bean
-    fun signatureVerifier(preconfiguredSignature: Signature): SignatureVerifier = SignatureVerifierImpl(preconfiguredSignature)
+    fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier {
+        val pattern = Pattern.compile("%[0-9a-fA-F]{2}")
+        return SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties), pattern)
+    }
 }
