@@ -56,6 +56,8 @@ data class Order(
     var saveCard: Boolean = false,
     @Column(name = "recurrent")
     var recurrent: Boolean = false,
+    @Column(name = "subscription_id")
+    val subscriptionId: String = "",
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,

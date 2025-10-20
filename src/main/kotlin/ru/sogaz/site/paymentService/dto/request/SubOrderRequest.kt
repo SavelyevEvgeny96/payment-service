@@ -13,24 +13,20 @@ import java.time.Instant
  * DTO для запроса на создание заказа.
  */
 data class SubOrderRequest(
-    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
-    val operationId: String = "",
     @field:NotNull(message = "{validation.orderRequest.premiumAmount.notNull}")
     @field:Positive(message = "{validation.orderRequest.premiumAmount.positive}")
     val premiumAmount: BigDecimal = BigDecimal.ZERO,
-    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val policyId: String = "",
-    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val policyNumber: String = "",
     @field:NotNull(message = "{validation.orderRequest.notBlank}")
     val typeInsurance: TypeInsuranceEnum,
     val insuranceProgram: String? = null,
     val mainContractCheck: Boolean = false,
+    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val contractNumber: String? = null,
+    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val contractId: String? = null,
     val docType: String? = null,
-    @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
-    @field:FutureOrPresent(message = "{validation.orderPaymentRequest.date.future}")
     val policyDate: Instant? = null,
     @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
     @field:FutureOrPresent(message = "{validation.orderPaymentRequest.date.future}")
