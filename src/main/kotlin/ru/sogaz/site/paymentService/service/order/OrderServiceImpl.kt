@@ -68,6 +68,7 @@ class OrderServiceImpl(
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
+            subscriptionId = requestWrapper.subscriptionId
         )
 
     private fun formSubOrdersFromRequest(
@@ -89,6 +90,9 @@ class OrderServiceImpl(
             contractNumber = subOrderRequest.contractNumber,
             insuranceProgram = subOrderRequest.insuranceProgram,
             premiumAmount = subOrderRequest.premiumAmount.toString(),
+            policyDate = subOrderRequest.policyDate,
+            contractDate = subOrderRequest.contractDate,
+
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }
