@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment
 
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_CANNOT_BE_PAID_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE_SBP
@@ -10,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_SBP
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_UPDATED_ORDER_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
@@ -59,8 +59,6 @@ class PaymentServiceImpl(
     private val waitingPaymentDao: WaitingPaymentDao,
 ) : PaymentService {
     companion object {
-        const val SUCCESS_STATUS_CODE_CARD_PAY = 1101510200
-        const val SUCCESS_STATUS_CODE_SBP_PAY = 1101530200
         const val SUCCESS_STATUS_CODE_PAY_INFO_PAGE = 1101540200
         const val SUCCESS_UPDATE_CODE_PAYMENT_INVOICE = 1101580200
 
@@ -85,7 +83,7 @@ class PaymentServiceImpl(
         orderId: UUID,
         urlToReturnS: String?,
         urlToReturnF: String?,
-    ): Response<DataPay> =
+    ): DataPay =
         createPayment(
             orderId,
             PaymentTypeEnum.CARD,
@@ -96,7 +94,7 @@ class PaymentServiceImpl(
         orderId: UUID,
         urlToReturnS: String?,
         urlToReturnF: String?,
-    ): Response<DataPay> =
+    ): DataPay =
         createPayment(
             orderId,
             PaymentTypeEnum.SBP,
@@ -128,7 +126,7 @@ class PaymentServiceImpl(
         orderId: UUID,
         paymentTypeEnum: PaymentTypeEnum,
         urlToReturn: UrlToReturn,
-    ): Response<DataPay> =
+    ): DataPay =
         orderDao
             .findById(orderId)
             .run { validateOrder(this, paymentTypeEnum) }
@@ -136,7 +134,7 @@ class PaymentServiceImpl(
             .run { registerPayment(this, paymentTypeEnum, urlToReturn) }
             .also(::renewOrder)
             .also(waitingPaymentDao::saveWaitingForPayment)
-            .run(::getSuccessResponse)
+            .toDataPay()
 
     private fun validateOrder(
         order: Order?,
@@ -254,18 +252,6 @@ class PaymentServiceImpl(
             else -> null
         }
 
-    private fun getSuccessResponse(payment: Payment) =
-        when (payment.type) {
-            PaymentTypeEnum.CARD -> getSuccessResponse(payment, SUCCESS_STATUS_CODE_SBP_PAY)
-            PaymentTypeEnum.SBP -> getSuccessResponse(payment, SUCCESS_STATUS_CODE_CARD_PAY)
-            else -> throw InnerException(getTraceId(), LOG_ERROR_PAYMENT_TYPE_IS_ABSENT)
-        }
-
-    private fun getSuccessResponse(
-        payment: Payment,
-        code: Int,
-    ) = getSuccessResponse(getTraceId(), code, DataPay(payment.paymentPageUrl))
-
     private fun logOrderInfoBeforeRegistrationPayment(order: Order) =
         LOG_ORDER_INFO_BEFORE_REGISTRATION
             .format(order.id, order.bank)
@@ -284,4 +270,10 @@ class PaymentServiceImpl(
         } else {
             LOG_FULL_INFO_PAGE.format(pageInfo.orderId)
         }
+
+    @Throws(BusinessException::class)
+    private fun Payment.toDataPay(): DataPay {
+        val url = paymentPageUrl ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
+        return DataPay(url)
+    }
 }

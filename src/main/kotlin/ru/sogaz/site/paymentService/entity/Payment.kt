@@ -58,12 +58,4 @@ data class Payment(
     var updateDate: LocalDateTime? = null,
     @Transient
     var urlToReturn: UrlToReturn = UrlToReturn(),
-) {
-    fun checkIs(
-        paymentType: PaymentTypeEnum,
-        bankEnum: BankEnum? = null,
-    ) = when (bankEnum) {
-        null -> this.type == paymentType
-        else -> this.type == paymentType && this.bank == bankEnum
-    }
-}
+)

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.view.RedirectView
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
@@ -129,20 +130,20 @@ class PaymentController(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
         @RequestParam(required = false) urlToReturnF: String?,
-    ): ResponseEntity<Response<DataPay>> =
+    ): RedirectView =
         paymentService
             .createSBPPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
-            .run { ResponseEntity.ok(this) }
+            .wrapToRedirectView()
 
     @GetMapping("/pay/{orderId}")
     fun pay(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
         @RequestParam(required = false) urlToReturnF: String?,
-    ): ResponseEntity<Response<DataPay>> =
+    ): RedirectView =
         paymentService
             .createCardPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
-            .run { ResponseEntity.ok(this) }
+            .wrapToRedirectView()
 
     @Operation(
         summary = "Проверить статус оплаты",
@@ -275,4 +276,6 @@ class PaymentController(
         permissionValidator.checkPermission(authorization)
         return paymentService.updatePaymentInvoice(updatePaymentInvoiceRequest)
     }
+
+    private fun DataPay.wrapToRedirectView() = RedirectView(this.paymentPageUrl)
 }

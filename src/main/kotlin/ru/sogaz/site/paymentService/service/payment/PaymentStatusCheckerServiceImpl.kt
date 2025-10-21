@@ -316,7 +316,7 @@ class PaymentStatusCheckerServiceImpl(
         traceId: String,
     ) {
         try {
-            val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+            val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
             val mainSubOrder =
                 subOrders?.firstOrNull()
                     ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")

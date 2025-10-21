@@ -1,10 +1,12 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
 
+@Repository
 class ConfigDataDaoImpl(
     private val configDataRepository: ConfigDataRepository,
 ) : ConfigDataDao {

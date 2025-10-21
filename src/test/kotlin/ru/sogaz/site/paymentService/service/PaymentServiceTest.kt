@@ -107,7 +107,7 @@ class PaymentServiceTest {
         paymentService
             .createCardPayment(validOrderUUID)
             .run(::assertThat)
-            .returns(PAY_CARD_GPB_URL) { it.data?.paymentPageUrl }
+            .returns(PAY_CARD_GPB_URL) { it.paymentPageUrl }
         verify { orderDao.save(validOrder) }
         verify { waitingPaymentDao.saveWaitingForPayment(registeredPayment) }
     }

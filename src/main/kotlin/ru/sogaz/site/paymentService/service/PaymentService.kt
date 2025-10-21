@@ -16,13 +16,13 @@ interface PaymentService {
         orderId: UUID,
         urlToReturnS: String? = null,
         urlToReturnF: String? = null,
-    ): Response<DataPay>
+    ): DataPay
 
     fun createSBPPayment(
         orderId: UUID,
         urlToReturnS: String? = null,
         urlToReturnF: String? = null,
-    ): Response<DataPay>
+    ): DataPay
 
     fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo>
 
