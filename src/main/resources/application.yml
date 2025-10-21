@@ -24,8 +24,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    username: dev
+    password: dev
     virtual-host: /
     listener:
       simple:
@@ -42,7 +42,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
+    password: ${DB_PASSWORD:123456}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true

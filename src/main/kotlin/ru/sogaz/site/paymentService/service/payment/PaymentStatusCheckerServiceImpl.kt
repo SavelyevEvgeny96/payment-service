@@ -37,6 +37,7 @@ import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
@@ -47,7 +48,7 @@ class PaymentStatusCheckerServiceImpl(
     private val receiptService: ReceiptService,
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
-    private val rabbit: RabbitProperties,
+    private val props: RabbitProperties,
     private val subOrderDao: SubOrderDao,
     private val operationHistoryDao: PaymentOperationHistoryDao,
     private val orderDao: OrderDao,
@@ -82,12 +83,12 @@ class PaymentStatusCheckerServiceImpl(
         const val CONST_PASSWORD = "?password="
         const val CONST_URL_AKB =
             "&orderDetailLevel=2&" +
-                "tranDetailLevel=2&" +
-                "actionDetailLevel=2&" +
-                "cofpDetailLevel=2&" +
-                "consumerDetailLevel=2&" +
-                "consumerTokenDetailLevel=2&" +
-                "tokenDetailLevel=2"
+                    "tranDetailLevel=2&" +
+                    "actionDetailLevel=2&" +
+                    "cofpDetailLevel=2&" +
+                    "consumerDetailLevel=2&" +
+                    "consumerTokenDetailLevel=2&" +
+                    "tokenDetailLevel=2"
     }
 
     override fun getStatus(paymentBankId: String): Response<ResponseStatusPay> {
@@ -98,7 +99,8 @@ class PaymentStatusCheckerServiceImpl(
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
             PaymentStatusEnum.CALLBACK,
-            -> processPaymentStatusCheck(payment)
+                -> processPaymentStatusCheck(payment)
+
             else -> {}
         }
         return getSuccessResponse(
@@ -125,7 +127,7 @@ class PaymentStatusCheckerServiceImpl(
         when (payment.type) {
             PaymentTypeEnum.SBP,
             PaymentTypeEnum.CARD,
-            -> {
+                -> {
                 if (payment.bank == BankEnum.GPB) {
                     getStatusBankCardPaymentGpb(payment, traceId)
                 } else if (payment.bank == BankEnum.AKB_RUS) {
@@ -170,10 +172,11 @@ class PaymentStatusCheckerServiceImpl(
         try {
             val url =
                 apiConfigProperty.akbUrl + "/" + payment.paymentBankId + CONST_PASSWORD + payment.paymentPass +
-                    CONST_URL_AKB
+                        CONST_URL_AKB
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
-            val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+            val response =
+                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
             val paymentResponse = objectMapper.readValue(response, PaymentAkbStatusResponse::class.java)
 
             if (paymentResponse.status == "Closed") {
@@ -200,7 +203,9 @@ class PaymentStatusCheckerServiceImpl(
                 val url =
                     "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
-                val response = restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+                val response =
+                    restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body
+                        ?: ""
                 val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
@@ -310,58 +315,51 @@ class PaymentStatusCheckerServiceImpl(
         paymentDao.save(payment)
     }
 
-    /** начало генерации ИИ qwen2.5-coder:14b  */
+
     private fun sendToPaidOrdersQueue(
         order: Order,
         traceId: String,
     ) {
         try {
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
-            val mainSubOrder =
-                subOrders?.firstOrNull()
-                    ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
+            val mainSubOrder = subOrders?.firstOrNull()
+                ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
 
-            val requestBody =
-                PaidOrderMessage(
-                    orderId = order.id.toString(),
-                    recipientEmail = order.recipientEmail,
-                    docType = mainSubOrder.docType,
-                    policyId = mainSubOrder.policyId,
-                    policyNumber = mainSubOrder.policyNumber,
-                    contractNumber = mainSubOrder.contractNumber,
-                    contractId = mainSubOrder.contractId,
-                    typeInsurance = mainSubOrder.typeInsurance,
-                    premiumAmount = mainSubOrder.premiumAmount,
-                    paySuccess = order.updateDate?.atZone(ZoneOffset.UTC)?.format(DateTimeFormatter.ISO_INSTANT),
-                )
+            // Формируем тело (payload)
+            val requestBody = PaidOrderMessage(
+                orderId = order.id.toString(),
+                recipientEmail = order.recipientEmail,
+                docType = mainSubOrder.docType,
+                policyId = mainSubOrder.policyId,
+                policyNumber = mainSubOrder.policyNumber,
+                contractNumber = mainSubOrder.contractNumber,
+                contractId = mainSubOrder.contractId,
+                typeInsurance = mainSubOrder.typeInsurance,
+                premiumAmount = mainSubOrder.premiumAmount,
+                paySuccess = order.updateDate?.atZone(ZoneOffset.UTC)?.format(DateTimeFormatter.ISO_INSTANT),
+                subscriptionId = order.subscriptionId
+            )
 
-            val paidOrderMessage =
-                QueueMessageDto(
-                    variables =
-                        listOf(
-                            VariableDto("ClientID", "payService"),
-                            VariableDto("flowCode", "ResultPay"),
-                            VariableDto(
-                                "requestBody",
-                                objectMapper.writeValueAsString(requestBody.toString()),
-                            ),
-                        ),
-                )
+            val timestamp = OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)
 
             rabbitTemplate.convertAndSend(
-                "",
-                rabbit.template.routingKey,
-                paidOrderMessage,
-            )
+                props.exchange,
+                props.routingKeyStatusPayment,
+                requestBody
+            ) { message ->
+                message.messageProperties.headers["author"] = "payService"
+                message.messageProperties.headers["flowCode"] = "ResultPay"
+                message.messageProperties.headers["timestamp"] = timestamp
+                message
+            }
 
             logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.id, traceId))
         } catch (e: Exception) {
-            logger.info(LOG_QUEUE_MESSAGE_ERROR + e.message)
+            logger.error(LOG_QUEUE_MESSAGE_ERROR + e.message, e)
             throw InnerException(traceId, LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
 
-    /** Конец генерации ИИ qwen2.5-coder:14b  */
 
     private fun checkChequeStatus(
         payment: Payment,
@@ -383,15 +381,18 @@ class PaymentStatusCheckerServiceImpl(
             StatusEnum.UNKNOWN,
             StatusEnum.INTERIM_SUCCESS,
             StatusEnum.REFUND,
-            -> PaymentStatusEnum.WAIT
+                -> PaymentStatusEnum.WAIT
+
             StatusEnum.BLOCKED,
             StatusEnum.REJECTED,
             StatusEnum.FAILED,
-            -> PaymentStatusEnum.FAIL
+                -> PaymentStatusEnum.FAIL
+
             StatusEnum.DECLINED -> PaymentStatusEnum.DECLINED
             StatusEnum.SUCCESS,
             StatusEnum.ACCEPTED,
-            -> PaymentStatusEnum.SUCCESS
+                -> PaymentStatusEnum.SUCCESS
+
             StatusEnum.NEW -> PaymentStatusEnum.NEW
             else -> throw InnerException(getTraceId(), "Unknown status for transform to payment status")
         }
@@ -401,14 +402,17 @@ class PaymentStatusCheckerServiceImpl(
             PrevStatusEnum.PREPARING,
             PrevStatusEnum.WAITPUSHTRAN,
             PrevStatusEnum.AUTHORIZED,
-            -> PaymentStatusEnum.WAIT
+                -> PaymentStatusEnum.WAIT
+
             PrevStatusEnum.PARTPAID,
             PrevStatusEnum.REFUNDED,
             PrevStatusEnum.VOIDED,
-            -> PaymentStatusEnum.REFUND
+                -> PaymentStatusEnum.REFUND
+
             PrevStatusEnum.DECLINED,
             PrevStatusEnum.EXPIRED,
-            -> PaymentStatusEnum.FAIL
+                -> PaymentStatusEnum.FAIL
+
             PrevStatusEnum.REFUSED -> PaymentStatusEnum.DECLINED
             PrevStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS
         }

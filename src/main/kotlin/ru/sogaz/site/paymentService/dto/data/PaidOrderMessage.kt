@@ -16,5 +16,6 @@ data class PaidOrderMessage(
     val contractId: String?,
     val typeInsurance: String?,
     val premiumAmount: String?,
+    val subscriptionId:String?,
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") val paySuccess: String?,
 ) : Serializable
