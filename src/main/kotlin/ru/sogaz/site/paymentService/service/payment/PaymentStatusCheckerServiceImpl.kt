@@ -322,10 +322,13 @@ class PaymentStatusCheckerServiceImpl(
     ) {
         try {
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+
+                // не корректно реализовано
             val mainSubOrder = subOrders?.firstOrNull()
                 ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
 
-            // Формируем тело (payload)
+                    //Спросить у вали как надо формировать так как по описанию не до конца понятно так как у нас может
+            // быть два блока саб ордер у ромы тут щас первый вытягивается
             val requestBody = PaidOrderMessage(
                 orderId = order.id.toString(),
                 recipientEmail = order.recipientEmail,
