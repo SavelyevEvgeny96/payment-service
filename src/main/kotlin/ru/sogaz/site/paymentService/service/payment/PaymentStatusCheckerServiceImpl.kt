@@ -346,7 +346,7 @@ class PaymentStatusCheckerServiceImpl(
         paymentStatusResponse: PaymentStatusResponseCard?
     ) {
         try {
-            val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+            val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
             val subOrderPayloads = subOrders?.map { s ->
                 SubOrderPayload(
                     s.docType,
