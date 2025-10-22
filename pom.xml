@@ -242,6 +242,7 @@
                 <executions>
                     <execution>
                         <id>kapt</id>
+                        <phase>process-sources</phase>
                         <goals>
                             <goal>kapt</goal>
                         </goals>
@@ -249,7 +250,7 @@
 
                     <execution>
                         <id>compile</id>
-                        <phase>process-sources</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
@@ -257,15 +258,13 @@
 
                     <execution>
                         <id>test-compile</id>
+                        <phase>test-compile</phase>
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <sourceDirs>
-                        <sourceDir>src/main/kotlin</sourceDir>
-                    </sourceDirs>
                     <annotationProcessorPaths>
                         <annotationProcessorPath>
                             <groupId>org.mapstruct</groupId>-->
