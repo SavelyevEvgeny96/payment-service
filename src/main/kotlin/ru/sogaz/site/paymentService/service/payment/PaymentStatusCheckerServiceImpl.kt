@@ -14,12 +14,11 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
+import ru.sogaz.site.paymentService.dto.data.GpbCardDetailsDto
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
-import ru.sogaz.site.paymentService.dto.data.QueueMessageDto
-import ru.sogaz.site.paymentService.dto.data.VariableDto
-import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
-import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
+import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
+import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -203,13 +202,19 @@ class PaymentStatusCheckerServiceImpl(
                 val url =
                     "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
-                val response =
-                    restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body
-                        ?: ""
-                val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
+
+                val response = restTemplate
+                    .defaultRestTemplate()
+                    .exchange(url, HttpMethod.POST, null, String::class.java)
+                    .body.orEmpty()
+
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
+
+                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
                     updatePaymentStatus(payment, paymentResponse)
+                    val cardDetails = response.toGpbCardDetails(objectMapper)
+                    logger.info("GPB card details: $cardDetails")
                 } else {
                     logger.error(LOG_GPB_API_ERROR.format(traceId))
                     throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK, traceId)
@@ -235,7 +240,7 @@ class PaymentStatusCheckerServiceImpl(
 
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponse::class.java)
+                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
                     updatePaymentStatusSbp(payment, paymentResponse)
                 } else {
                     logger.error(LOG_GPB_API_ERROR.format(traceId))
@@ -247,6 +252,25 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
+    private fun PaymentStatusResponseCard.toGpbCardDetails(): GpbCardDetailsDto {
+        val maskedPan = src?.pan
+        val paymentSystem = src?.paymentSystem
+        val issuerName = src?.issuerName
+        val paymentType = portalType
+
+        return GpbCardDetailsDto(
+            maskedPan = maskedPan,
+            paymentSystem = paymentSystem,
+            issuerName = issuerName,
+            paymentType = paymentType
+        )
+    }
+
+    private fun String.toGpbCardDetails(objectMapper: ObjectMapper): GpbCardDetailsDto {
+        val parsed = objectMapper.readValue(this, PaymentStatusResponseCard::class.java)
+        return parsed.toGpbCardDetails()
+    }
+
     private fun updateAkbPaymentStatus(
         payment: Payment,
         response: PaymentAkbStatusResponse,
@@ -255,7 +279,7 @@ class PaymentStatusCheckerServiceImpl(
 
         payment.state = response.prevStatus.toPaymentStatusesEnum()
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(order)
+            updateOrderForSuccessPayment(order,null)
         }
 
         paymentDao.save(payment)
@@ -263,12 +287,12 @@ class PaymentStatusCheckerServiceImpl(
 
     private fun updatePaymentStatusSbp(
         payment: Payment,
-        response: PaymentStatusResponse,
+        response: PaymentStatusResponseCard,
     ) {
         val traceId = getTraceId()
         val order: Order? = payment.order
 
-        val status = response.result.first().status
+        val status = response.result.status
 
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.id, traceId))
 
@@ -278,20 +302,20 @@ class PaymentStatusCheckerServiceImpl(
             logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order?.id, traceId))
         }
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(payment.order)
+            updateOrderForSuccessPayment(payment.order, response)
         }
 
         paymentDao.save(payment)
     }
 
-    private fun updateOrderForSuccessPayment(order: Order?) {
+    private fun updateOrderForSuccessPayment(order: Order?, paymentStatusResponse: PaymentStatusResponseCard?) {
         order
             ?.apply { status = OrderStatus.SUCCESS }
             ?.let {
                 orderDao.save(it)
                 receiptService.generateReceipt(it)
                 historyService.createOrderHistoryRecord(it, getTraceId())
-                sendToPaidOrdersQueue(it, getTraceId())
+                sendToPaidOrdersQueue(it, getTraceId(), paymentStatusResponse)
             }
     }
 
@@ -309,7 +333,7 @@ class PaymentStatusCheckerServiceImpl(
         payment.state = status.toPaymentStatusesEnum()
 
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(payment.order)
+            updateOrderForSuccessPayment(payment.order,response)
         }
 
         paymentDao.save(payment)
@@ -319,31 +343,42 @@ class PaymentStatusCheckerServiceImpl(
     private fun sendToPaidOrdersQueue(
         order: Order,
         traceId: String,
+        paymentStatusResponse: PaymentStatusResponseCard?
     ) {
         try {
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
+            val subOrderPayloads = subOrders?.map { s ->
+                SubOrderPayload(
+                    s.docType,
+                    s.policyId,
+                    s.policyNumber,
+                    s.contractNumber,
+                    s.contractId,
+                    s.typeInsurance,
+                    s.premiumAmount,
+                    s.channel,
+                    s.policyDate,
+                    s.contractDate
+                )
+            }
 
-                // не корректно реализовано
-            val mainSubOrder = subOrders?.firstOrNull()
-                ?: throw IllegalStateException("Нет подзаказов для заказа: ${order.id}")
-
-                    //Спросить у вали как надо формировать так как по описанию не до конца понятно так как у нас может
-            // быть два блока саб ордер у ромы тут щас первый вытягивается
             val requestBody = PaidOrderMessage(
-                orderId = order.id.toString(),
+                orderId = order.id?.toString(),
                 recipientEmail = order.recipientEmail,
-                docType = mainSubOrder.docType,
-                policyId = mainSubOrder.policyId,
-                policyNumber = mainSubOrder.policyNumber,
-                contractNumber = mainSubOrder.contractNumber,
-                contractId = mainSubOrder.contractId,
-                typeInsurance = mainSubOrder.typeInsurance,
-                premiumAmount = mainSubOrder.premiumAmount,
-                paySuccess = order.updateDate?.atZone(ZoneOffset.UTC)?.format(DateTimeFormatter.ISO_INSTANT),
-                subscriptionId = order.subscriptionId
+                externalSystemCode = order.clientId,
+                subscriptionId = order.subscriptionId,
+                paySuccess = order.updateDate
+                    ?.atZone(ZoneOffset.UTC)
+                    ?.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                subOrders = subOrderPayloads,
+                paymentStatusResponse?.src?.issuerName,
+                paymentStatusResponse?.src?.paymentSystem,
+                paymentStatusResponse?.src?.pan,
+                paymentStatusResponse?.src?.type
             )
 
-            val timestamp = OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)
+            val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
             rabbitTemplate.convertAndSend(
                 props.exchange,
