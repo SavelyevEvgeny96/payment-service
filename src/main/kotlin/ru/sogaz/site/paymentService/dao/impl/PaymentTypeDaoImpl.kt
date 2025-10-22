@@ -1,11 +1,13 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
 import ru.sogaz.site.paymentService.entity.PaymentType
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentTypeRepository
 
+@Repository
 class PaymentTypeDaoImpl(
     private val paymentTypeRepository: PaymentTypeRepository,
 ) : PaymentTypeDao {

@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.SubOrderDao
@@ -9,6 +10,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import java.util.UUID
 
+@Repository
 class SubOrderDaoImpl(
     private val subOrderRepository: SubOrderRepository,
 ) : SubOrderDao {
@@ -40,15 +42,12 @@ class SubOrderDaoImpl(
 
     override fun saveAll(subOrders: Iterable<SubOrder>): List<SubOrder> = subOrderRepository.saveAll(subOrders)
 
-    override fun getAllSubOrderListByOrderId(
-        orderId: Order,
-        traceId: String,
-    ): List<SubOrder>? =
+    override fun getAllSubOrderListByOrderId(orderId: Order): List<SubOrder>? =
         try {
             orderId.id?.let { subOrderRepository.findAllByOrderId(it) }
         } catch (ex: Exception) {
             logger.error("$LOG_AND_ERROR_FIND_SUB_ORDER ${orderId.id}")
-            throw InnerException(traceId, "$LOG_AND_ERROR_FIND_SUB_ORDER${orderId.id}")
+            throw InnerException(getTraceId(), "$LOG_AND_ERROR_FIND_SUB_ORDER${orderId.id}")
         }
 
     override fun findAllByOrderId(orderId: UUID): List<SubOrder> = subOrderRepository.findAllByOrderId(orderId)

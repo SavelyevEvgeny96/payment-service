@@ -28,11 +28,12 @@ class SignatureVerifierImpl(
     override fun verifySignature(request: GpbCallbackRequest): Boolean =
         try {
             val signature = request.signature
-            val decodedQueryString = if (isEncoded(signature)) {
-                java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)
-            } else {
-                signature
-            }
+            val decodedQueryString =
+                if (isEncoded(signature)) {
+                    java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)
+                } else {
+                    signature
+                }
 
             val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
@@ -42,8 +43,7 @@ class SignatureVerifierImpl(
             false
         }
 
-    private fun isEncoded(signature: String): Boolean =
-        pattern.matcher(signature).find()
+    private fun isEncoded(signature: String): Boolean = pattern.matcher(signature).find()
 
     private fun verifySignatureCert(signature: ByteArray): Boolean =
         try {

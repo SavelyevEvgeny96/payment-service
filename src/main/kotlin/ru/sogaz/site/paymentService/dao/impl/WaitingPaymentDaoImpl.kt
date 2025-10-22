@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
@@ -9,6 +10,7 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.WaitingPaymentRepository
 
+@Repository
 class WaitingPaymentDaoImpl(
     private val waitingPaymentRepository: WaitingPaymentRepository,
 ) : WaitingPaymentDao {

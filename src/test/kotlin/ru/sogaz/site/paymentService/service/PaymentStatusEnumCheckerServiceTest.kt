@@ -184,7 +184,7 @@ class PaymentStatusEnumCheckerServiceTest {
             .thenReturn(PaymentAkbStatusResponse(status = "Closed", prevStatus = PrevStatusEnum.FULLYPAID))
         `when`(order.id?.let { orderDao.findById(it) }).thenReturn(order)
         `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
-        `when`(subOrderDao.getAllSubOrderListByOrderId(eq(order), org.mockito.kotlin.any())).thenReturn(listOf(subOrder))
+        `when`(subOrderDao.getAllSubOrderListByOrderId(eq(order))).thenReturn(listOf(subOrder))
         val mockPayment =
             Payment(
                 id = UUID.randomUUID(),
