@@ -69,6 +69,7 @@ class OrderServiceImpl(
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
             subscriptionId = requestWrapper.subscriptionId,
+            clientId = requestWrapper.clientId
         )
 
     private fun formSubOrdersFromRequest(
