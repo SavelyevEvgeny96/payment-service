@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment
 
+import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
@@ -8,27 +9,28 @@ import ru.sogaz.site.payment.receipt.client.model.PaymentItemRequest
 import ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest
 import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest
 import ru.sogaz.site.payment.receipt.client.model.VatRequest
+import ru.sogaz.site.paymentService.dao.ChequeSentDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
-import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.PaymentMethodEnum
 import ru.sogaz.site.paymentService.enums.PaymentObjectEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.repository.ChequeSentRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.ReceiptService
 import java.time.LocalDateTime
 
+@Service
 class ReceiptServiceImpl(
+    private val paymentDao: PaymentDao,
     private val subOrderDao: SubOrderDao,
-    private val operationHistoryRepository: PaymentOperationHistoryRepository,
+    private val chequeSentDao: ChequeSentDao,
+    private val operationHistoryDao: PaymentOperationHistoryDao,
     private val paymentReceiptControllerApi: PaymentReceiptControllerApi,
-    private val paymentRepository: PaymentRepository,
-    private val chequeSentRepository: ChequeSentRepository,
 ) : ReceiptService {
     private val logger = loggerFor(javaClass)
 
@@ -51,67 +53,15 @@ class ReceiptServiceImpl(
     override fun generateReceipt(order: Order) {
         val traceId = getTraceId()
 
-        val payment = paymentRepository.findByOrder(order)
+        val payment = paymentDao.findByOrder(order)
+        val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
 
-        val subOrders = subOrderDao.getAllSubOrderListByOrderId(order, traceId)
-
-        fun String.toReceiptAmount(): Double =
-            try {
-                val cleanAmount = this.replace(" ", "").replace(",", ".")
-                val amount = cleanAmount.toDouble()
-
-                val parts = cleanAmount.split(".")
-                if (parts.size > 1 && parts[1].length > 2) {
-                    throw InnerException(traceId, ERROR_FRACTION_SUM)
-                }
-                if (parts[0].length > 8) {
-                    throw InnerException(traceId, ERROR_HOLL_SUM)
-                }
-                amount
-            } catch (e: NumberFormatException) {
-                throw InnerException(traceId, ERROR_INCORRECT_SUM + this)
-            }
-
-        val receiptItems =
-            subOrders?.mapNotNull { subOrder ->
-                val itemName =
-                    buildString {
-                        append(ITEM_NAME_PREFIX)
-                        if (!subOrder.policyNumber.isNullOrEmpty()) {
-                            append(POLICY_NUMBER_PREFIX.format(subOrder.policyNumber))
-                        }
-                        if (!subOrder.contractId.isNullOrEmpty()) {
-                            append(CONTRACT_ID_PREFIX.format(subOrder.contractId))
-                        }
-                    }
-
-                subOrder.premiumAmount?.toReceiptAmount()?.let { premiumAmount ->
-                    PaymentReceiptCreateRequest()
-                        .apply {
-                            addItemsItem(
-                                PaymentItemRequest().apply {
-                                    name = itemName
-                                    price = premiumAmount
-                                    quantity = 1.00
-                                    sum = premiumAmount
-                                    paymentMethod = PaymentMethodEnum.FULL_PAYMENT.value
-                                    paymentObject = PaymentObjectEnum.PAYMENT_OBJECT_SERVICE.value
-                                    vat =
-                                        VatRequest().apply {
-                                            type = "none"
-                                        }
-                                },
-                            )
-                        }
-                }
-            }
-
-        val totalAmount = order.premiumAmount.toReceiptAmount()
-
+        val receiptItems = subOrders!!.map(::buildReceiptItem)
+        val totalAmount = order.makeReceiptAmount()
         val requestBody = PaymentReceiptCreateRequest()
 
         order.recipientEmail?.let { ClientInfo().email(it) }?.let { requestBody.client(it) }
-        requestBody.items.add(receiptItems?.first()?.items?.first())
+        requestBody.items.add(receiptItems.first().items.first())
         requestBody.payments.add(
             totalAmount.let {
                 PaymentPaymentRequest().apply {
@@ -159,14 +109,46 @@ class ReceiptServiceImpl(
         }
     }
 
+    private fun buildReceiptItem(subOrder: SubOrder): PaymentReceiptCreateRequest {
+        val itemName = buildItemName(subOrder)
+        val amount = subOrder.makeReceiptAmount()
+        return buildPaymentItemRequest(itemName, amount)
+            .run { PaymentReceiptCreateRequest().addItemsItem(this) }
+    }
+
+    private fun buildPaymentItemRequest(
+        itemName: String,
+        amount: Double,
+    ) = PaymentItemRequest().apply {
+        name = itemName
+        price = amount
+        quantity = 1.00
+        sum = amount
+        paymentMethod = PaymentMethodEnum.FULL_PAYMENT.value
+        paymentObject = PaymentObjectEnum.PAYMENT_OBJECT_SERVICE.value
+        vat = VatRequest().type("none")
+    }
+
+    private fun buildItemName(subOrder: SubOrder): String =
+        buildString {
+            append(ITEM_NAME_PREFIX)
+            if (!subOrder.policyNumber.isNullOrEmpty()) {
+                append(POLICY_NUMBER_PREFIX.format(subOrder.policyNumber))
+            }
+            if (!subOrder.contractId.isNullOrEmpty()) {
+                append(CONTRACT_ID_PREFIX.format(subOrder.contractId))
+            }
+        }
+
     private fun handleReceiptError(
         order: Order,
         paymentBankId: String?,
     ) {
-        val payment = paymentRepository.findByPaymentBankId(paymentBankId)
-        payment.chequeName = "NOT_SENT"
-        payment.updateDate = LocalDateTime.now()
-        paymentRepository.save(payment)
+        paymentBankId?.let {
+            val payment = paymentDao.findByPaymentBankId(it)
+            payment.chequeName = "NOT_SENT"
+            paymentDao.save(payment)
+        }
         saveFailedReceiptOperationHistory(order)
         saveChequeSentRecord(paymentBankId, false)
     }
@@ -175,10 +157,9 @@ class ReceiptServiceImpl(
         order: Order,
         paymentBankId: String,
     ) {
-        val payment = paymentRepository.findByPaymentBankId(paymentBankId)
+        val payment = paymentDao.findByPaymentBankId(paymentBankId)
         payment.chequeName = "SENT"
-        payment.updateDate = LocalDateTime.now()
-        paymentRepository.save(payment)
+        paymentDao.save(payment)
         saveReceiptOperationHistory(order)
     }
 
@@ -186,7 +167,7 @@ class ReceiptServiceImpl(
         paymentBankId: String?,
         success: Boolean,
     ) {
-        chequeSentRepository.save(
+        chequeSentDao.save(
             ChequeSent(
                 paymentBankId = paymentBankId,
                 status = if (success) StatusEnum.SUCCESS.value else StatusEnum.FAILED.value,
@@ -197,24 +178,42 @@ class ReceiptServiceImpl(
     }
 
     private fun saveReceiptOperationHistory(order: Order) {
-        val subOrder = order.id?.let { subOrderDao.findAllByOrderId(it) }
-        operationHistoryRepository.save(
-            PaymentOperationHistory(
-                action = ActionType.ORDER_PAID.value,
-                order = order,
-                actionDate = LocalDateTime.now(),
-            ),
-        )
+        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
 
     private fun saveFailedReceiptOperationHistory(order: Order) {
-        val subOrder = order.id?.let { subOrderDao.findAllByOrderId(it) }
-        operationHistoryRepository.save(
-            PaymentOperationHistory(
-                action = ActionType.PAYMENT_ERROR.value,
-                order = order,
-                actionDate = LocalDateTime.now(),
-            ),
-        )
+        operationHistoryDao.saveForOrder(order, ActionType.PAYMENT_ERROR.value)
+    }
+
+    private fun SubOrder.makeReceiptAmount(): Double =
+        try {
+            this.premiumAmount!!
+                .replace(" ", "")
+                .replace(",", ".")
+                .toDouble()
+                .also(::checkAmount)
+        } catch (e: NumberFormatException) {
+            throw InnerException(getTraceId(), ERROR_INCORRECT_SUM + this)
+        }
+
+    private fun Order.makeReceiptAmount(): Double =
+        try {
+            this.premiumAmount
+                .replace(" ", "")
+                .replace(",", ".")
+                .toDouble()
+                .also(::checkAmount)
+        } catch (e: NumberFormatException) {
+            throw InnerException(getTraceId(), ERROR_INCORRECT_SUM + this)
+        }
+
+    private fun checkAmount(amount: Double) {
+        val parts = amount.toString().split(".")
+        if (parts.size > 1 && parts[1].length > 2) {
+            throw InnerException(getTraceId(), ERROR_FRACTION_SUM)
+        }
+        if (parts[0].length > 8) {
+            throw InnerException(getTraceId(), ERROR_HOLL_SUM)
+        }
     }
 }

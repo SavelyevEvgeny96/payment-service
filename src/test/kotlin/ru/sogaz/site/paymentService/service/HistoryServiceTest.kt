@@ -31,7 +31,7 @@ class HistoryServiceTest {
         val subOrders = listOf(SubOrder())
         val actionType = ActionType.ORDER_PAID.value
 
-        doReturn(subOrders).`when`(subOrderDao).getAllSubOrderListByOrderId(order, traceId)
+        doReturn(subOrders).`when`(subOrderDao).getAllSubOrderListByOrderId(order)
 
         historyService.createOrderHistoryRecord(order, traceId)
 

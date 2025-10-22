@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
@@ -10,6 +11,7 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.BankRepository
 
+@Repository
 class BankDaoImpl(
     private val bankRepository: BankRepository,
     private val configDataDao: ConfigDataDao,
