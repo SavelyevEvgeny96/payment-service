@@ -1,8 +1,5 @@
 package ru.sogaz.site.paymentService.scheduler
 
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
-import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ConfigDataRepository
@@ -10,7 +7,6 @@ import ru.sogaz.site.paymentService.repository.PaymentRepository
 import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import java.util.UUID
 
-@Component
 class PaymentStatusScheduler(
     private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val configDataRepository: ConfigDataRepository,
@@ -25,8 +21,6 @@ class PaymentStatusScheduler(
         const val LOG_CRITICAL_TASK_ERROR = "Критическая ошибка в фоновой задаче проверки платежей. ID операции: %s"
     }
 
-    @Scheduled(fixedDelayString = "60000")
-    @SchedulerLock(name = "checkUnpaidPayments", lockAtMostFor = "PT1M")
     fun checkUnpaidPayments() {
         val traceId = UUID.randomUUID().toString()
         logger.info(LOG_BACKGROUND_TASK_START.format(traceId))

@@ -1,15 +1,18 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentTypeDao
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import java.util.UUID
 
+@Repository
 class PaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
     private val paymentTypeDao: PaymentTypeDao,
@@ -51,6 +54,8 @@ class PaymentDaoImpl(
             logger.error(LOG_ERROR_PAYMENT_FIND, e)
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
+
+    override fun findByOrder(order: Order): Payment? = paymentRepository.findByOrder(order)
 
     override fun save(payment: Payment): Payment =
         try {

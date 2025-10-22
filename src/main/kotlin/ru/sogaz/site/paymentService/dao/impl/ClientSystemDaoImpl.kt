@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.entity.ClientSystem
@@ -7,6 +8,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
 import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.ERROR_CLIENT_SYSTEM_NOT_FOUND
 
+@Repository
 class ClientSystemDaoImpl(
     private val clientSystemRepository: ClientSystemRepository,
 ) : ClientSystemDao {
