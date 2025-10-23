@@ -95,6 +95,7 @@ class PaymentStatusCheckerServiceImpl(
         val traceId = getTraceId()
         logger.info(LOG_START_STATUS_CHECK.format(paymentBankId, traceId))
         val payment = paymentDao.findByPaymentBankId(paymentBankId)
+        logger.info(payment.state.name)
         when (payment.state) {
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
@@ -381,7 +382,7 @@ class PaymentStatusCheckerServiceImpl(
             val routingKey = props.routingKeyStatusPayment
             val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            logger.info(START_LOG_MESSAGE_QUEUE.format(exchange, routingKey))
+            logger.info(START_LOG_MESSAGE_QUEUE.format( routingKey,exchange))
             rabbitTemplate.convertAndSend(
                 exchange,
                 routingKey,
