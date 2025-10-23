@@ -48,7 +48,7 @@ data class Order(
     var recipientUserId: String? = null,
     @Column(name = "policyholder")
     var policyholder: String? = null,
-    @Column(name = "unifiedId")
+    @Column(name = "unified_id")
     var unifiedId: String? = null,
     @Column(name = "key_card")
     var keyCard: String? = null,
