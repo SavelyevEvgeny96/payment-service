@@ -22,15 +22,18 @@ data class OrderRequest(
     @get:Valid
     @field:UniqueMainContract(message = "{validation.orderPaymentRequest.uniqueMainContract}")
     val orders: List<SubOrderRequest> = emptyList(),
-    val bank: BankEnum? = null,
     @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
     @field:Future(message = "{validation.orderPaymentRequest.date.future}")
     val orderEndDate: Instant? = null,
     @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     @field:Email(message = "{validation.orderPaymentRequest.recipientEmail.email}")
     val recipientEmail: String = "",
+    val recipientUserId: String? = null,
+    val unifiedId: String? = null,
+    val recipientPhone: String? = null,
     val urlToReturn: String? = null,
     val urlToDecline: String? = null,
     val saveCard: Boolean = false,
     val subscriptionId: String = "",
+    val policyholder: String? = null
 )

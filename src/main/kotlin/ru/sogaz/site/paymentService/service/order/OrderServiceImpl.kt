@@ -63,7 +63,6 @@ class OrderServiceImpl(
 
     private fun formOrderFromRequest(requestWrapper: OrderRequest): Order =
         Order(
-            bank = requestWrapper.bank,
             paymentEndDate = requestWrapper.orderEndDate?.atZone(ZoneId.systemDefault())?.toLocalDateTime(),
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
