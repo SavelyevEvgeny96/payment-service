@@ -63,13 +63,16 @@ class OrderServiceImpl(
 
     private fun formOrderFromRequest(requestWrapper: OrderRequest): Order =
         Order(
-            bank = requestWrapper.bank,
             paymentEndDate = requestWrapper.orderEndDate?.atZone(ZoneId.systemDefault())?.toLocalDateTime(),
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
             subscriptionId = requestWrapper.subscriptionId,
-            clientId = requestWrapper.clientId
+            clientId = requestWrapper.clientId,
+            recipientPhone = requestWrapper.recipientPhone,
+            saveCard = requestWrapper.saveCard,
+            policyholder = requestWrapper.policyholder,
+            unifiedId = requestWrapper.unifiedId,
         )
 
     private fun formSubOrdersFromRequest(

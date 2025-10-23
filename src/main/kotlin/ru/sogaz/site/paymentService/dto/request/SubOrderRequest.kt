@@ -35,5 +35,6 @@ data class SubOrderRequest(
     val managerEmail: String = "",
     @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val channel: String = "",
-    val recurrent: Boolean = false,
+
+
 )
