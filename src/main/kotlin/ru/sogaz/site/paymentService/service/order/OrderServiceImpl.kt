@@ -68,6 +68,11 @@ class OrderServiceImpl(
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
             subscriptionId = requestWrapper.subscriptionId,
+            recipientUserId = requestWrapper.recipientUserId,
+            recipientPhone = requestWrapper.recipientPhone,
+            saveCard = requestWrapper.saveCard,
+            policyholder = requestWrapper.policyholder,
+            unifiedId = requestWrapper.unifiedId,
         )
 
     private fun formSubOrdersFromRequest(
@@ -91,6 +96,8 @@ class OrderServiceImpl(
             premiumAmount = subOrderRequest.premiumAmount.toString(),
             policyDate = subOrderRequest.policyDate,
             contractDate = subOrderRequest.contractDate,
+            channel = subOrderRequest.channel,
+            managerEmail = subOrderRequest.managerEmail
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }
