@@ -11,13 +11,11 @@ class RabbitProperties {
     lateinit var queueStatusPayment: String
     lateinit var routingKeyStatusPayment: String
 
-
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
         logger.info("exchange = $exchange")
         logger.info("queueStatusPayment = $queueStatusPayment")
         logger.info("routingKeyStatusPayment = $routingKeyStatusPayment")
-
     }
 }
