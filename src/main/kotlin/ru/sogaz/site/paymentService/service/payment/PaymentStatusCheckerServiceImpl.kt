@@ -75,6 +75,7 @@ class PaymentStatusCheckerServiceImpl(
         const val LOG_ORDER_STATUS_OVERDUE_OR_MARKEDDEL =
             "Ошибка совершения платежа. Указанный заказ не доступен для оплаты"
         const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
+        const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
         const val ORDERS_NOT_FOUND = "Заказ не найден"
         const val ORDER_SUCCESS = "Заказ оплачен"
@@ -279,7 +280,7 @@ class PaymentStatusCheckerServiceImpl(
 
         payment.state = response.prevStatus.toPaymentStatusesEnum()
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(order,null)
+            updateOrderForSuccessPayment(order, null)
         }
 
         paymentDao.save(payment)
@@ -333,7 +334,7 @@ class PaymentStatusCheckerServiceImpl(
         payment.state = status.toPaymentStatusesEnum()
 
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(payment.order,response)
+            updateOrderForSuccessPayment(payment.order, response)
         }
 
         paymentDao.save(payment)
@@ -376,13 +377,14 @@ class PaymentStatusCheckerServiceImpl(
                 paymentStatusResponse?.src?.pan,
                 paymentStatusResponse?.src?.type
             )
-
+            val exchange = props.exchange
+            val routingKey = props.routingKeyStatusPayment
             val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
+            logger.info(START_LOG_MESSAGE_QUEUE.format(exchange, routingKey))
             rabbitTemplate.convertAndSend(
-                props.exchange,
-                props.routingKeyStatusPayment,
+                exchange,
+                routingKey,
                 requestBody
             ) { message ->
                 message.messageProperties.headers["author"] = "payService"
