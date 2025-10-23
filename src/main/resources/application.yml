@@ -88,6 +88,9 @@ management:
   metrics:
     tags:
       application: ${HOSTNAME:}
+    export:
+      prometheus:
+        enabled: true
   endpoint:
     health:
       show-details: always
