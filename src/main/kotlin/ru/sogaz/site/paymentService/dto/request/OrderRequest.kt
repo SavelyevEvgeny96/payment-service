@@ -35,5 +35,6 @@ data class OrderRequest(
     val urlToDecline: String? = null,
     val saveCard: Boolean = false,
     val subscriptionId: String = "",
+    var clientId: String? = null,
     val policyholder: String? = null
 )

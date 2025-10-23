@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException
 import ru.sogaz.site.jwt.starter.dto.JwtClaims
 import ru.sogaz.site.jwt.starter.service.JwtService
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
+import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.exceptions.ForbiddenBusinessException
 import ru.sogaz.site.paymentService.exceptions.UnauthorizedBusinessException
 import ru.sogaz.site.paymentService.loggerFor
@@ -19,8 +20,8 @@ class PermissionValidator(
     private val logger = loggerFor(javaClass)
 
     @Throws(UnauthorizedBusinessException::class, ForbiddenBusinessException::class)
-    fun checkPermission(authorizationHeader: String?) {
-        try {
+    fun checkPermission(authorizationHeader: String?): ClientSystem? {
+        return try {
             jwtService
                 .getClaims(authorizationHeader)
                 .run(::verifyClientSystem)
@@ -28,6 +29,7 @@ class PermissionValidator(
             logger.error(ex.message)
             throw UnauthorizedBusinessException()
         }
+
     }
 
     private fun verifyClientSystem(jwtClaims: JwtClaims) =

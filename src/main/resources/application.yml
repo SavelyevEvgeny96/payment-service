@@ -9,6 +9,10 @@ app:
     java-version: ${JAVA_VERSION:21}
   certs:
     gpb: ${GPB_CERT:}
+  rabbit:
+    exchange: ${ORDERS_EXCHANGE:payments.exchange}
+    queue-status-payment: ${QUEUE_STATUS_PAYMENT:payment.status.queue}
+    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT:payment.status.created}
 
 server:
   port: ${SERVER_PORT:}
@@ -18,14 +22,18 @@ server:
 
 spring:
   rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: ${RABBIT_PORT:5672}
-    username: ${RABBIT_USERNAME:guest}
-    password: ${RABBIT_PASSWORD:guest}
-    template:
-      routingKey: ${RABBIT_QUEUE:payment.queue}
-    queue:
-      name: ${RABBIT_QUEUE:payment.queue}
+    host: localhost
+    port: 5672
+    username: dev
+    password: dev
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: auto
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
   application:
     name: payment-service
   profiles:
@@ -34,7 +42,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
+    password: ${DB_PASSWORD:123456}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true

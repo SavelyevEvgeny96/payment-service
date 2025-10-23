@@ -56,6 +56,8 @@ data class Order(
     var saveCard: Boolean = false,
     @Column(name = "subscription_id")
     val subscriptionId: String = "",
+    @Column(name = "client_id")
+    val clientId: String? = null,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
