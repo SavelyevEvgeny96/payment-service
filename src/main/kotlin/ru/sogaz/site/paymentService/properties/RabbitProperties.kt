@@ -7,9 +7,9 @@ import ru.sogaz.site.paymentService.loggerFor
 @ConfigurationProperties(prefix = "app.rabbit")
 class RabbitProperties {
     private val logger = loggerFor(javaClass)
-    var exchange: String = "payments.exchange"
-    var queueStatusPayment: String = "payment.status.queue"
-    var routingKeyStatusPayment: String = "payment.status.created"
+    lateinit var exchange: String
+    lateinit var queueStatusPayment: String
+    lateinit var routingKeyStatusPayment: String
 
 
     @PostConstruct
