@@ -19,7 +19,6 @@ import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
 import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
-import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
