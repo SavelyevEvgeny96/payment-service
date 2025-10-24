@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment
 
+import java.time.LocalDateTime
 import org.springframework.web.client.RestClientException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -38,6 +39,7 @@ class RegisterPaymentServiceImpl(
                 .run { paymentDao.save(this) }
                 .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
                 .run { registerInBank(this) }
+                .apply { paymentStarted = LocalDateTime.now() }
                 .run { paymentDao.save(this) }
                 .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
         } catch (ex: Exception) {

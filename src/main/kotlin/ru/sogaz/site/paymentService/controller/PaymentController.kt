@@ -121,7 +121,7 @@ class PaymentController(
         @Valid @RequestBody requestWrapper: OrderRequest,
         @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
     ): ResponseEntity<Response<DataOrder>> {
-       requestWrapper.clientId = permissionValidator.checkPermission(authorization)?.externalSystemCode
+        requestWrapper.clientId = permissionValidator.checkPermission(authorization)?.externalSystemCode
         return ResponseEntity.ok(orderService.createOrder(requestWrapper))
     }
 

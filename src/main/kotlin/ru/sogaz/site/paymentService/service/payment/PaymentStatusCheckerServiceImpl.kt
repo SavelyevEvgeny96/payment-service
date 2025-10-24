@@ -36,6 +36,7 @@ import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -83,12 +84,12 @@ class PaymentStatusCheckerServiceImpl(
         const val CONST_PASSWORD = "?password="
         const val CONST_URL_AKB =
             "&orderDetailLevel=2&" +
-                    "tranDetailLevel=2&" +
-                    "actionDetailLevel=2&" +
-                    "cofpDetailLevel=2&" +
-                    "consumerDetailLevel=2&" +
-                    "consumerTokenDetailLevel=2&" +
-                    "tokenDetailLevel=2"
+                "tranDetailLevel=2&" +
+                "actionDetailLevel=2&" +
+                "cofpDetailLevel=2&" +
+                "consumerDetailLevel=2&" +
+                "consumerTokenDetailLevel=2&" +
+                "tokenDetailLevel=2"
     }
 
     override fun getStatus(paymentBankId: String): Response<ResponseStatusPay> {
@@ -100,7 +101,7 @@ class PaymentStatusCheckerServiceImpl(
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
             PaymentStatusEnum.CALLBACK,
-                -> processPaymentStatusCheck(payment)
+            -> processPaymentStatusCheck(payment)
 
             else -> {}
         }
@@ -128,7 +129,7 @@ class PaymentStatusCheckerServiceImpl(
         when (payment.type) {
             PaymentTypeEnum.SBP,
             PaymentTypeEnum.CARD,
-                -> {
+            -> {
                 if (payment.bank == BankEnum.GPB) {
                     getStatusBankCardPaymentGpb(payment, traceId)
                 } else if (payment.bank == BankEnum.AKB_RUS) {
@@ -173,7 +174,7 @@ class PaymentStatusCheckerServiceImpl(
         try {
             val url =
                 apiConfigProperty.akbUrl + "/" + payment.paymentBankId + CONST_PASSWORD + payment.paymentPass +
-                        CONST_URL_AKB
+                    CONST_URL_AKB
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
             val response =
@@ -205,10 +206,12 @@ class PaymentStatusCheckerServiceImpl(
                     "${apiConfigProperty.gpbUrl}${apiConfigProperty.portalId}$PAYMENT_PREFIX${payment.paymentBankId}"
                 logger.info(LOG_GPB_API_CALL.format(url, traceId))
 
-                val response = restTemplate
-                    .defaultRestTemplate()
-                    .exchange(url, HttpMethod.POST, null, String::class.java)
-                    .body.orEmpty()
+                val response =
+                    restTemplate
+                        .defaultRestTemplate()
+                        .exchange(url, HttpMethod.POST, null, String::class.java)
+                        .body
+                        .orEmpty()
 
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
@@ -264,7 +267,7 @@ class PaymentStatusCheckerServiceImpl(
             maskedPan = maskedPan,
             paymentSystem = paymentSystem,
             issuerName = issuerName,
-            paymentType = paymentType
+            paymentType = paymentType,
         )
     }
 
@@ -280,6 +283,7 @@ class PaymentStatusCheckerServiceImpl(
         val order: Order? = findOrderByPayment(payment)
 
         payment.state = response.prevStatus.toPaymentStatusesEnum()
+        payment.paymentFinished = LocalDateTime.now()
         if (payment.state == PaymentStatusEnum.SUCCESS) {
             updateOrderForSuccessPayment(order, null)
         }
@@ -300,6 +304,7 @@ class PaymentStatusCheckerServiceImpl(
 
         try {
             payment.state = status.toPaymentStatusesEnum()
+            payment.paymentFinished = LocalDateTime.now()
         } catch (ex: InnerException) {
             logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order?.id, traceId))
         }
@@ -310,7 +315,10 @@ class PaymentStatusCheckerServiceImpl(
         paymentDao.save(payment)
     }
 
-    private fun updateOrderForSuccessPayment(order: Order?, paymentStatusResponse: PaymentStatusResponseCard?) {
+    private fun updateOrderForSuccessPayment(
+        order: Order?,
+        paymentStatusResponse: PaymentStatusResponseCard?,
+    ) {
         order
             ?.apply { status = OrderStatus.SUCCESS }
             ?.let {
@@ -333,6 +341,7 @@ class PaymentStatusCheckerServiceImpl(
         logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, payment.order?.id, traceId))
 
         payment.state = status.toPaymentStatusesEnum()
+        payment.paymentFinished = LocalDateTime.now()
 
         if (payment.state == PaymentStatusEnum.SUCCESS) {
             updateOrderForSuccessPayment(payment.order, response)
@@ -345,24 +354,25 @@ class PaymentStatusCheckerServiceImpl(
     private fun sendToPaidOrdersQueue(
         order: Order,
         traceId: String,
-        paymentStatusResponse: PaymentStatusResponseCard?
+        paymentStatusResponse: PaymentStatusResponseCard?,
     ) {
         try {
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
-            val subOrderPayloads = subOrders?.map { s ->
-                SubOrderPayload(
-                    s.docType,
-                    s.policyId,
-                    s.policyNumber,
-                    s.contractNumber,
-                    s.contractId,
-                    s.typeInsurance,
-                    s.premiumAmount,
-                    s.channel,
-                    s.policyDate,
-                    s.contractDate
-                )
-            }
+            val subOrderPayloads =
+                subOrders?.map { s ->
+                    SubOrderPayload(
+                        s.docType,
+                        s.policyId,
+                        s.policyNumber,
+                        s.contractNumber,
+                        s.contractId,
+                        s.typeInsurance,
+                        s.premiumAmount,
+                        s.channel,
+                        s.policyDate,
+                        s.contractDate,
+                    )
+                }
 
             val requestBody = PaidOrderMessage(
                 orderId = order.id?.toString(),

@@ -15,11 +15,10 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 
-
 @Configuration
 class RabbitMQConfig(
     private val connectionFactory: ConnectionFactory,
-    private val props: RabbitProperties
+    private val props: RabbitProperties,
 ) {
     @Bean
     fun ordersExchange(): TopicExchange = TopicExchange(props.exchange, true, false)
@@ -33,10 +32,8 @@ class RabbitMQConfig(
         exchange: TopicExchange,
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusPayment)
 
-
     @Bean
-    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter =
-        Jackson2JsonMessageConverter(objectMapper)
+    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter = Jackson2JsonMessageConverter(objectMapper)
 
     @Bean
     fun rabbitTemplate(messageConverter: MessageConverter): RabbitTemplate =

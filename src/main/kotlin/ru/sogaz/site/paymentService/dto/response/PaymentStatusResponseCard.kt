@@ -15,8 +15,9 @@ data class Src(
     val type: String?,
     val pan: String?,
     val paymentSystem: String?,
-    val issuerName: String?
+    val issuerName: String?,
 )
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Result(
     val status: StatusEnum,
