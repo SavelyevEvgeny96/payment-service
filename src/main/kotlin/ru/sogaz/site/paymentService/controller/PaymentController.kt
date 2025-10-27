@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.view.RedirectView
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_FORBIDDEN_PAYMENT_INVOICE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
@@ -273,7 +274,7 @@ class PaymentController(
         @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
         @RequestBody updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest,
     ): Response<UpdatePaymentInvoiceResponse> {
-        permissionValidator.checkPermission(authorization)
+        permissionValidator.checkPermission(authorization, CODE_ERROR_FORBIDDEN_PAYMENT_INVOICE)
         return paymentService.updatePaymentInvoice(updatePaymentInvoiceRequest)
     }
 

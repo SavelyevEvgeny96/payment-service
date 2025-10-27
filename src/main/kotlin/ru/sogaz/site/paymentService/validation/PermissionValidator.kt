@@ -20,19 +20,24 @@ class PermissionValidator(
     private val logger = loggerFor(javaClass)
 
     @Throws(UnauthorizedBusinessException::class, ForbiddenBusinessException::class)
-    fun checkPermission(authorizationHeader: String?): ClientSystem? =
+    fun checkPermission(
+        authorizationHeader: String?,
+        errorCode: Int? = null,
+    ): ClientSystem? =
         try {
             jwtService
                 .getClaims(authorizationHeader)
-                .run(::verifyClientSystem)
+                .run { verifyClientSystem(this, errorCode) }
         } catch (ex: JWTDecodeException) {
             logger.error(ex.message)
             throw UnauthorizedBusinessException()
         }
 
-    private fun verifyClientSystem(jwtClaims: JwtClaims) =
-        jwtClaims
-            .getClaim<String>(CLIENT_ID)
-            .run(clientSystemDao::findBySystemCode)
-            .also { if (it == null) throw ForbiddenBusinessException() }
+    private fun verifyClientSystem(
+        jwtClaims: JwtClaims,
+        errorCode: Int? = null,
+    ) = jwtClaims
+        .getClaim<String>(CLIENT_ID)
+        .run(clientSystemDao::findBySystemCode)
+        .also { if (it == null) throw ForbiddenBusinessException(errorCode) }
 }
