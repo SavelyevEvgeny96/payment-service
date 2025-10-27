@@ -178,7 +178,7 @@ class PaymentStatusCheckerServiceImpl(
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
             val response =
-                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.GET, null, String::class.java).body ?: ""
             val paymentResponse = objectMapper.readValue(response, PaymentAkbStatusResponse::class.java)
 
             if (paymentResponse != null) {
