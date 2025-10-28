@@ -16,9 +16,9 @@ import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.GpbCardDetailsDto
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
-import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
 import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
+import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -178,10 +178,10 @@ class PaymentStatusCheckerServiceImpl(
             logger.info(LOG_AKB_API_CALL.format(url, traceId))
 
             val response =
-                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.POST, null, String::class.java).body ?: ""
+                restTemplate.defaultRestTemplate().exchange(url, HttpMethod.GET, null, String::class.java).body ?: ""
             val paymentResponse = objectMapper.readValue(response, PaymentAkbStatusResponse::class.java)
 
-            if (paymentResponse.status == "Closed") {
+            if (paymentResponse != null) {
                 logger.info(LOG_AKB_API_SUCCESS.format(payment.paymentBankId, traceId))
                 updateAkbPaymentStatus(payment, paymentResponse)
             } else {
@@ -282,12 +282,39 @@ class PaymentStatusCheckerServiceImpl(
     ) {
         val order: Order? = findOrderByPayment(payment)
 
-        payment.state = response.prevStatus.toPaymentStatusesEnum()
-        payment.paymentFinished = LocalDateTime.now()
-        if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(order, null)
+        if (response.order.status == "Closed") {
+            if (response.order.prevStatus == PrevStatusEnum.PREPARING ||
+                response.order.prevStatus == PrevStatusEnum.WAITPUSHTRAN ||
+                response.order.prevStatus == PrevStatusEnum.AUTHORIZED
+            ) {
+                payment.state = PaymentStatusEnum.WAIT
+                payment.updateDate = LocalDateTime.now()
+            }
         }
 
+        if (response.order.status == PrevStatusEnum.PARTPAID.value ||
+            response.order.status == PrevStatusEnum.REFUNDED.value ||
+            response.order.status == PrevStatusEnum.VOIDED.value
+        ) {
+            payment.state = PaymentStatusEnum.REFUND
+            payment.updateDate = LocalDateTime.now()
+        }
+        if (response.order.status == PrevStatusEnum.DECLINED.value ||
+            response.order.status == PrevStatusEnum.EXPIRED.value
+        ) {
+            payment.state = PaymentStatusEnum.FAIL
+            payment.updateDate = LocalDateTime.now()
+        }
+        if (response.order.status == PrevStatusEnum.REFUSED.value) {
+            payment.state = PaymentStatusEnum.DECLINED
+            payment.updateDate = LocalDateTime.now()
+        }
+
+        if (response.order.status == PrevStatusEnum.FULLYPAID.value) {
+            payment.state = PaymentStatusEnum.SUCCESS
+            payment.paymentFinished = LocalDateTime.now()
+            updateOrderForSuccessPayment(order, null)
+        }
         paymentDao.save(payment)
     }
 
@@ -350,7 +377,6 @@ class PaymentStatusCheckerServiceImpl(
         paymentDao.save(payment)
     }
 
-
     private fun sendToPaidOrdersQueue(
         order: Order,
         traceId: String,
@@ -374,29 +400,33 @@ class PaymentStatusCheckerServiceImpl(
                     )
                 }
 
-            val requestBody = PaidOrderMessage(
-                orderId = order.id?.toString(),
-                recipientEmail = order.recipientEmail,
-                externalSystemCode = order.clientId,
-                subscriptionId = order.subscriptionId,
-                paySuccess = order.updateDate
-                    ?.atZone(ZoneOffset.UTC)
-                    ?.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                subOrders = subOrderPayloads,
-                paymentStatusResponse?.src?.issuerName,
-                paymentStatusResponse?.src?.paymentSystem,
-                paymentStatusResponse?.src?.pan,
-                paymentStatusResponse?.src?.type
-            )
+            val requestBody =
+                PaidOrderMessage(
+                    orderId = order.id?.toString(),
+                    recipientEmail = order.recipientEmail,
+                    externalSystemCode = order.clientId,
+                    subscriptionId = order.subscriptionId,
+                    paySuccess =
+                        order.updateDate
+                            ?.atZone(ZoneOffset.UTC)
+                            ?.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                    subOrders = subOrderPayloads,
+                    paymentStatusResponse?.src?.issuerName,
+                    paymentStatusResponse?.src?.paymentSystem,
+                    paymentStatusResponse?.src?.pan,
+                    paymentStatusResponse?.src?.type,
+                )
             val exchange = props.exchange
             val routingKey = props.routingKeyStatusPayment
-            val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            logger.info(START_LOG_MESSAGE_QUEUE.format( routingKey,exchange))
+            val timestamp =
+                OffsetDateTime
+                    .now(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
             rabbitTemplate.convertAndSend(
                 exchange,
                 routingKey,
-                requestBody
+                requestBody,
             ) { message ->
                 message.messageProperties.headers["author"] = "payService"
                 message.messageProperties.headers["flowCode"] = "ResultPay"
@@ -410,7 +440,6 @@ class PaymentStatusCheckerServiceImpl(
             throw InnerException(traceId, LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
-
 
     private fun checkChequeStatus(
         payment: Payment,
@@ -432,17 +461,17 @@ class PaymentStatusCheckerServiceImpl(
             StatusEnum.UNKNOWN,
             StatusEnum.INTERIM_SUCCESS,
             StatusEnum.REFUND,
-                -> PaymentStatusEnum.WAIT
+            -> PaymentStatusEnum.WAIT
 
             StatusEnum.BLOCKED,
             StatusEnum.REJECTED,
             StatusEnum.FAILED,
-                -> PaymentStatusEnum.FAIL
+            -> PaymentStatusEnum.FAIL
 
             StatusEnum.DECLINED -> PaymentStatusEnum.DECLINED
             StatusEnum.SUCCESS,
             StatusEnum.ACCEPTED,
-                -> PaymentStatusEnum.SUCCESS
+            -> PaymentStatusEnum.SUCCESS
 
             StatusEnum.NEW -> PaymentStatusEnum.NEW
             else -> throw InnerException(getTraceId(), "Unknown status for transform to payment status")
@@ -453,16 +482,16 @@ class PaymentStatusCheckerServiceImpl(
             PrevStatusEnum.PREPARING,
             PrevStatusEnum.WAITPUSHTRAN,
             PrevStatusEnum.AUTHORIZED,
-                -> PaymentStatusEnum.WAIT
+            -> PaymentStatusEnum.WAIT
 
             PrevStatusEnum.PARTPAID,
             PrevStatusEnum.REFUNDED,
             PrevStatusEnum.VOIDED,
-                -> PaymentStatusEnum.REFUND
+            -> PaymentStatusEnum.REFUND
 
             PrevStatusEnum.DECLINED,
             PrevStatusEnum.EXPIRED,
-                -> PaymentStatusEnum.FAIL
+            -> PaymentStatusEnum.FAIL
 
             PrevStatusEnum.REFUSED -> PaymentStatusEnum.DECLINED
             PrevStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS

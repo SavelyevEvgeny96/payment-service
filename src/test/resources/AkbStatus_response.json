@@ -1,4 +1,6 @@
 {
-  "status": "Status",
-  "prevStatus": "Preparing"
+  "order": {
+    "status": "Status",
+    "prevStatus": "Preparing"
+  }
 }

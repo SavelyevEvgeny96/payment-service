@@ -20,6 +20,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
+import ru.sogaz.site.paymentService.dto.response.OrdersAkb
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -181,7 +182,7 @@ class PaymentStatusEnumCheckerServiceTest {
         ).thenReturn(ResponseEntity.ok(akbResponse))
 
         `when`(objectMapper.readValue(akbResponse, PaymentAkbStatusResponse::class.java))
-            .thenReturn(PaymentAkbStatusResponse(status = "Closed", prevStatus = PrevStatusEnum.FULLYPAID))
+            .thenReturn(PaymentAkbStatusResponse(order = OrdersAkb(status = "Closed", prevStatus = PrevStatusEnum.FULLYPAID)))
         `when`(order.id?.let { orderDao.findById(it) }).thenReturn(order)
         `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(subOrderDao.getAllSubOrderListByOrderId(eq(order))).thenReturn(listOf(subOrder))
@@ -206,7 +207,7 @@ class PaymentStatusEnumCheckerServiceTest {
                 javaClass.classLoader.getResourceAsStream("AkbStatus_response.json"),
                 PaymentAkbStatusResponse::class.java,
             )
-        assertEquals("Status", paymentAkbStatusResponse.status)
-        assertEquals(PrevStatusEnum.PREPARING, paymentAkbStatusResponse.prevStatus)
+        assertEquals("Status", paymentAkbStatusResponse.order.status)
+        assertEquals(PrevStatusEnum.PREPARING, paymentAkbStatusResponse.order.prevStatus)
     }
 }
