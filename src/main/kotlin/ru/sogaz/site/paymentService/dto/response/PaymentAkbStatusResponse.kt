@@ -2,15 +2,20 @@ package ru.sogaz.site.paymentService.dto.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import ru.sogaz.site.paymentService.enums.PrevStatusEnum
+import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PaymentAkbStatusResponse(
-    @JsonProperty("order") val order: OrdersAkb,
+    @JsonProperty("order")
+    val order: AkbOrderStatusResponse,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class OrdersAkb(
-    @JsonProperty("status") val status: String,
-    @JsonProperty("prevStatus") val prevStatus: PrevStatusEnum,
+data class AkbOrderStatusResponse(
+    @JsonProperty("id")
+    val id: String,
+    @JsonProperty("status")
+    val status: AkbPaymentStatusEnum,
+    @JsonProperty("prevStatus")
+    val prevStatus: AkbPaymentStatusEnum?,
 )

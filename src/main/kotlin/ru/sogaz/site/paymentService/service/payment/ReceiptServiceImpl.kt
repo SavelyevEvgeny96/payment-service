@@ -15,8 +15,10 @@ import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.entity.ChequeSent
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.ChequeStateEnum
 import ru.sogaz.site.paymentService.enums.PaymentMethodEnum
 import ru.sogaz.site.paymentService.enums.PaymentObjectEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
@@ -50,10 +52,11 @@ class ReceiptServiceImpl(
         const val ERROR_INCORRECT_SUM = "Некорректный формат суммы: "
     }
 
-    override fun generateReceipt(order: Order) {
+    override fun generateReceipt(payment: Payment) {
         val traceId = getTraceId()
 
-        val payment = paymentDao.findByOrder(order)
+        val order: Order = payment.order!!
+
         val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
 
         val receiptItems = subOrders!!.map(::buildReceiptItem)
@@ -80,18 +83,18 @@ class ReceiptServiceImpl(
             when (response.status) {
                 StatusEnum.SUCCESS.value -> {
                     logger.info(LOG_RECEIPT_SUCCESS.format(order.id, traceId))
-                    payment?.paymentBankId?.let { handleReceiptSuccess(order, it) }
+                    payment.paymentBankId?.let { handleReceiptSuccess(order, it) }
                 }
 
                 StatusEnum.FAILED.value -> {
                     logger.error(LOG_RECEIPT_FAILED.format(traceId))
-                    payment?.paymentBankId?.let { handleReceiptError(order, it) }
+                    payment.paymentBankId?.let { handleReceiptError(order, it) }
                     throw InnerException(traceId, ERROR_DATA_RECEIPT)
                 }
 
                 else -> {
                     logger.error(LOG_RECEIPT_API_ERROR.format(response.status, traceId))
-                    payment?.paymentBankId?.let {
+                    payment.paymentBankId?.let {
                         handleReceiptError(
                             order,
                             it,
@@ -102,7 +105,7 @@ class ReceiptServiceImpl(
             }
         } catch (e: Exception) {
             logger.info(LOG_RECEIPT_ERROR.format(order.id, traceId), e)
-            if (payment?.paymentBankId != null) {
+            if (payment.paymentBankId != null) {
                 handleReceiptError(order, payment.paymentBankId)
             }
             throw InnerException(traceId, ERROR_RECEIPT_GENERATION + e.message)
@@ -146,7 +149,7 @@ class ReceiptServiceImpl(
     ) {
         paymentBankId?.let {
             val payment = paymentDao.findByPaymentBankId(it)
-            payment.chequeName = "NOT_SENT"
+            payment.chequeName = ChequeStateEnum.NOT_SENT.name
             paymentDao.save(payment)
         }
         saveFailedReceiptOperationHistory(order)
@@ -158,7 +161,7 @@ class ReceiptServiceImpl(
         paymentBankId: String,
     ) {
         val payment = paymentDao.findByPaymentBankId(paymentBankId)
-        payment.chequeName = "SENT"
+        payment.chequeName = ChequeStateEnum.SENT.name
         paymentDao.save(payment)
         saveReceiptOperationHistory(order)
     }

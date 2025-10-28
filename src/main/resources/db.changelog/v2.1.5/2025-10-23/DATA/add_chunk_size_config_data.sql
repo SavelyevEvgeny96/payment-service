@@ -1,0 +1,2 @@
+INSERT INTO config_data(param_name,param_description,param_value)VALUES('callbackPaymentsStatusCheckChunkSize', 'Количество единовременно обрабатываемых калбэков в задаче по расписанию', '30');
+INSERT INTO config_data(param_name,param_description,param_value)VALUES('waitingPaymentsStatusCheckChunkSize', 'Количество единовременно обрабатываемых платежей ожидающих оплаты в задаче по расписанию', '200');

@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.dto.data
 
-data class GpbCardDetailsDto(
+data class ClientCardDetails(
     val maskedPan: String?, // Маскированный номер карты
     val paymentSystem: String?, // Наименование платёжной системы
     val issuerName: String?, // Кем выдана карта (банк-эмитент)

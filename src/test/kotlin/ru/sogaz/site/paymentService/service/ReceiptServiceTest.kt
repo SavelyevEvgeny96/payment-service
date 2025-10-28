@@ -82,7 +82,7 @@ class ReceiptServiceTest {
         val requestSlot = slot<PaymentReceiptCreateRequest>()
         every { paymentReceiptControllerApi.createPaymentCheck(any()) } returns buildSuccessReceiptServiceResponse()
 
-        service.generateReceipt(validOrder)
+        service.generateReceipt(validPayment)
 
         verify(atLeast = 1) { paymentReceiptControllerApi.createPaymentCheck(capture(requestSlot)) }
         requestSlot.captured
@@ -96,7 +96,7 @@ class ReceiptServiceTest {
         every { paymentReceiptControllerApi.createPaymentCheck(any()) } returns buildFailedReceiptServiceResponse()
 
         assertThrows<InnerException> {
-            service.generateReceipt(validOrder)
+            service.generateReceipt(validPayment)
         }
     }
 
@@ -106,7 +106,7 @@ class ReceiptServiceTest {
 
         val exception =
             assertThrows<InnerException> {
-                service.generateReceipt(validOrder)
+                service.generateReceipt(validPayment)
             }
 
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
@@ -128,6 +128,7 @@ class ReceiptServiceTest {
         validPayment =
             Payment(
                 paymentBankId = TEST_PAYMENT_BANK_ID,
+                order = validOrder,
             )
     }
 

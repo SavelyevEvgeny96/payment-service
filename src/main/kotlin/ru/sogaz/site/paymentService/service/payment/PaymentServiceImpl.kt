@@ -1,78 +1,70 @@
 package ru.sogaz.site.paymentService.service.payment
 
+import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_CANNOT_BE_PAID_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_NOT_AVAILABLE_SBP
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_IS_PAID_FOR_SBP
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_SBP
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_STATUS_BANK
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_UPDATED_ORDER_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
-import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
-import ru.sogaz.site.paymentService.dto.data.FileQR
-import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
+import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.ChequeStateEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.mapper.OrderMapper
-import ru.sogaz.site.paymentService.orElseThrow
-import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.mapper.order.OrderMapper
+import ru.sogaz.site.paymentService.orThrow
+import ru.sogaz.site.paymentService.properties.ServiceStatuses.Companion.SUCCESS_STATUS_CODE_PAY_INFO_PAGE
+import ru.sogaz.site.paymentService.properties.ServiceStatuses.Companion.SUCCESS_STATUS_CODE_UPDATE_PAYMENT_STATUS
+import ru.sogaz.site.paymentService.service.InfoPageService
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.service.QRCodeService
+import ru.sogaz.site.paymentService.service.PaymentStatusService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.SubOrderService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
-import java.util.Objects.isNull
 import java.util.UUID
-import kotlin.jvm.optionals.getOrNull
 
 /**
  * Сервис для обработки платежей.
  * Включает в себя валидацию данных и создание записи о платеже.
  */
+@Service
 class PaymentServiceImpl(
     private val orderDao: OrderDao,
     private val bankDao: BankDao,
-    private val configDataDao: ConfigDataDao,
     private val registerPaymentService: RegisterPaymentService,
-    private val qrCodeService: QRCodeService,
-    private val apiConfigProperties: ApiConfigProperties,
     private val subOrderService: SubOrderService,
     private val orderMapper: OrderMapper,
     private val waitingPaymentDao: WaitingPaymentDao,
+    private val infoPageService: InfoPageService,
+    private val paymentStatusService: PaymentStatusService,
 ) : PaymentService {
     companion object {
-        const val SUCCESS_STATUS_CODE_PAY_INFO_PAGE = 1101540200
         const val SUCCESS_UPDATE_CODE_PAYMENT_INVOICE = 1101580200
 
         const val SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE = "ok"
         const val SBP_ACTIVE_CONFIG_NAME = "sbpActive"
-        const val LOG_ERROR_PAYMENT_TYPE_IS_ABSENT = "Отсутствует тип платежа"
         const val LOG_ORDER_INFO_BEFORE_REGISTRATION = "Для регистрации платежа по заказу с id: %s был выбран банк: %s"
         const val LOG_PAYMENT_INFO_AFTER_REGISTRATION =
             "Платеж по заказу с id: %s был успешно зарегистрирован в банке: %s"
-        const val LOG_INFO_PAGE_WITHOUT_SBP_QR =
-            "Для заказа с id: %s не будет отображена оплата по QR коду с СБП"
-        const val LOG_FULL_INFO_PAGE =
-            "Для генерации информации по платежу для заказа с id: %s будет отображена оплата по QR коду с СБП"
-        const val LOG_ERROR_TO_GET_QR_FROM_BANK = "Не удалось получить QR код из банка %s, ex: %s"
         const val LOG_UPDATE_PAYMENT_INVOICE = "Начало обновления информации о заказе с orderId = "
         const val LOG_SUCCESS_UPDATE_PAYMENT_INVOICE = "Успешное обновление информации о заказе с orderId = "
     }
@@ -101,13 +93,18 @@ class PaymentServiceImpl(
             UrlToReturn(urlToReturnS, urlToReturnF),
         )
 
+    override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
+        orderId
+            .run(infoPageService::getInfo)
+            .wrapToSuccessResponse(SUCCESS_STATUS_CODE_PAY_INFO_PAGE)
+
     override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {
         logger.info(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
 
         val existedOrderPayment =
             orderDao
                 .findById(updatePaymentInvoiceRequest.orderId)
-                .orElseThrow { BusinessException(CODE_ERROR_UPDATED_ORDER_NOT_FOUND, getTraceId()) }
+                .orThrow { BusinessException(CODE_ERROR_UPDATED_ORDER_NOT_FOUND, getTraceId()) }
 
         subOrderService.updateSubOrder(updatePaymentInvoiceRequest)
 
@@ -121,6 +118,13 @@ class PaymentServiceImpl(
             UpdatePaymentInvoiceResponse(SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE),
         )
     }
+
+    override fun updateStatus(paymentBankId: String): Response<ResponseStatusPay> =
+        paymentBankId
+            .run(paymentStatusService::updateStatus)
+            .orThrow { throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK) }
+            .toResponseStatusPay()
+            .wrapToSuccessResponse(SUCCESS_STATUS_CODE_UPDATE_PAYMENT_STATUS)
 
     private fun createPayment(
         orderId: UUID,
@@ -141,7 +145,7 @@ class PaymentServiceImpl(
         paymentTypeEnum: PaymentTypeEnum,
     ): Order =
         order
-            .orElseThrow { businessExceptionByPaymentType(paymentTypeEnum) }
+            .orThrow { businessExceptionByPaymentType(paymentTypeEnum) }
             .also { throwIfNotAllowedToPay(orderStatus = it.status, paymentTypeEnum) }
 
     private fun resolveCurrentBank(bank: BankEnum?): BankEnum = bankDao.resolveBank(bank)
@@ -160,73 +164,6 @@ class PaymentServiceImpl(
         payment.order!!
             .apply { updateDate = LocalDateTime.now() }
             .run(orderDao::save)
-
-    override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
-        findOrderForQROrThrow(orderId)
-            .also(::checkOrderStatus)
-            .run(::formPaySBPInfo)
-            .run { formOrderPaymentPageInfo(orderId, this) }
-            .also(::logPageInfoResultInfo)
-            .run { getSuccessResponse(getTraceId(), SUCCESS_STATUS_CODE_PAY_INFO_PAGE, this) }
-
-    private fun findOrderForQROrThrow(orderId: UUID) =
-        orderDao
-            .findById(orderId)
-            .orElseThrow { BusinessException(CODE_ERROR_ORDER_NOT_FOUND_INFO) }
-
-    private fun checkOrderStatus(order: Order) {
-        if (order.status.isPaidFor() || order.status.isNotAvailable()) {
-            throw BusinessException(CODE_ERROR_ORDER_CANNOT_BE_PAID_INFO)
-        }
-    }
-
-    private fun formPaySBPInfo(order: Order): PaySbp? {
-        if (isSBPActive().not()) {
-            return null
-        }
-
-        return formSPBPayLink(order.id.toString())
-            .run { formPaySBPInfo(order, this) }
-    }
-
-    private fun isSBPActive() = configDataDao.getBankInfoFromConfigData(getTraceId(), SBP_ACTIVE_CONFIG_NAME).toBoolean()
-
-    private fun formPaySBPInfo(
-        order: Order,
-        spbPayUrl: String,
-    ): PaySbp? =
-        qrCodeService
-            .generateQRCode(spbPayUrl)
-            .orElseGet { getQRCodeFromBank(order) }
-            ?.let { PaySbp(urlPay = spbPayUrl, fileQR = it) }
-
-    private fun getQRCodeFromBank(order: Order): FileQR? =
-        try {
-            order
-                .apply { bank = BankEnum.GPB }
-                .run { registerPaymentService.register(this, PaymentTypeEnum.SBP) }
-                .run { qrCodeService.requestFromBank(this) }
-                .getOrNull()
-        } catch (ex: Exception) {
-            LOG_ERROR_TO_GET_QR_FROM_BANK
-                .format(BankEnum.GPB, ex.message)
-                .run(logger::info)
-            null
-        }
-
-    private fun formOrderPaymentPageInfo(
-        orderId: UUID,
-        paySbp: PaySbp?,
-    ): DataOrderPaymentPageInfo =
-        DataOrderPaymentPageInfo(
-            orderId = orderId.toString(),
-            urlPayBank = formCardPayLink(orderId.toString()),
-            paySbp = paySbp,
-        )
-
-    private fun formCardPayLink(orderId: String): String = "${apiConfigProperties.qrUrlForCardPayment}$orderId"
-
-    private fun formSPBPayLink(orderId: String): String = "${apiConfigProperties.qrUrlForSbpPayment}$orderId"
 
     private fun businessExceptionByPaymentType(paymentTypeEnum: PaymentTypeEnum) =
         when (paymentTypeEnum) {
@@ -262,18 +199,17 @@ class PaymentServiceImpl(
             .format(payment.order?.id, payment.bank)
             .run(logger::info)
 
-    private fun logPageInfoResultInfo(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::info)
-
-    private fun getLogMessageForPageInfo(pageInfo: DataOrderPaymentPageInfo) =
-        if (isNull(pageInfo.paySbp)) {
-            LOG_INFO_PAGE_WITHOUT_SBP_QR.format(pageInfo.orderId)
-        } else {
-            LOG_FULL_INFO_PAGE.format(pageInfo.orderId)
-        }
-
     @Throws(BusinessException::class)
     private fun Payment.toDataPay(): DataPay {
         val url = paymentPageUrl ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
         return DataPay(url)
     }
+
+    private fun Payment.toResponseStatusPay() =
+        ResponseStatusPay(
+            paymentStatus = state,
+            cheque = chequeName == ChequeStateEnum.SENT.name,
+        )
+
+    private fun <T : Any> T.wrapToSuccessResponse(status: Int) = getSuccessResponse(getTraceId(), status, this)
 }

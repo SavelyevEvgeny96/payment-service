@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.any
 import org.mockito.Mockito.doNothing
@@ -20,15 +21,15 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
-import ru.sogaz.site.paymentService.dto.response.OrdersAkb
+import ru.sogaz.site.paymentService.dto.response.AkbOrderStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
-import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.payment.PaymentStatusCheckerServiceImpl
@@ -70,8 +71,6 @@ class PaymentStatusEnumCheckerServiceTest {
     fun testGetStatusWithSuccessfulPayment() {
         val paymentBankId = "test-payment-id"
 
-        val expectedStatus = "SUCCESS"
-
         val order = Order()
         order.id = UUID.randomUUID()
         val payment =
@@ -86,7 +85,7 @@ class PaymentStatusEnumCheckerServiceTest {
 
         val response = service.getStatus(paymentBankId)
 
-        assertEquals(expectedStatus, response.data?.paymentStatus)
+        assertEquals(PaymentStatusEnum.SUCCESS, response.data?.paymentStatus)
     }
 
     @Test
@@ -107,7 +106,7 @@ class PaymentStatusEnumCheckerServiceTest {
 
         `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
 
-        doNothing().`when`(receiptService).generateReceipt(order)
+        doNothing().`when`(receiptService).generateReceipt(payment)
 
         val response = service.getStatus(paymentBankId)
 
@@ -129,7 +128,7 @@ class PaymentStatusEnumCheckerServiceTest {
 
         val response = service.getStatus(paymentBankId)
 
-        assertEquals("REG", response.data?.paymentStatus)
+        assertEquals(PaymentStatusEnum.REG, response.data?.paymentStatus)
     }
 
     @Test
@@ -182,7 +181,7 @@ class PaymentStatusEnumCheckerServiceTest {
         ).thenReturn(ResponseEntity.ok(akbResponse))
 
         `when`(objectMapper.readValue(akbResponse, PaymentAkbStatusResponse::class.java))
-            .thenReturn(PaymentAkbStatusResponse(order = OrdersAkb(status = "Closed", prevStatus = PrevStatusEnum.FULLYPAID)))
+            .thenReturn(PaymentAkbStatusResponse(AkbOrderStatusResponse("id", AkbPaymentStatusEnum.CLOSED, AkbPaymentStatusEnum.FULLYPAID)))
         `when`(order.id?.let { orderDao.findById(it) }).thenReturn(order)
         `when`(paymentDao.findByPaymentBankId(paymentBankId)).thenReturn(payment)
         `when`(subOrderDao.getAllSubOrderListByOrderId(eq(order))).thenReturn(listOf(subOrder))
@@ -207,7 +206,7 @@ class PaymentStatusEnumCheckerServiceTest {
                 javaClass.classLoader.getResourceAsStream("AkbStatus_response.json"),
                 PaymentAkbStatusResponse::class.java,
             )
-        assertEquals("Status", paymentAkbStatusResponse.order.status)
-        assertEquals(PrevStatusEnum.PREPARING, paymentAkbStatusResponse.order.prevStatus)
+        assertNull(paymentAkbStatusResponse.order.prevStatus)
+        assertEquals(AkbPaymentStatusEnum.PREPARING, paymentAkbStatusResponse.order.status)
     }
 }

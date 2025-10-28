@@ -3,10 +3,13 @@ package ru.sogaz.site.paymentService.service.payment.bank.integration
 import org.springframework.http.HttpEntity
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.getForObject
 import org.springframework.web.client.postForObject
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.AmountData
+import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -14,11 +17,14 @@ import ru.sogaz.site.paymentService.dto.request.PreparePushTranRequest
 import ru.sogaz.site.paymentService.dto.request.SetSrcTokenRequest
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
+import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -28,6 +34,7 @@ import kotlin.time.measureTimedValue
 class AKBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,
+    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val SET_SRC_TOKEN_SUFFIX = "set-src-token?password="
@@ -37,6 +44,15 @@ class AKBankIntegrationServiceImpl(
         private const val EMPTY_HPP_URL_RESPONSE = "Пустой HPP URL в ответе Банка Россия"
         private const val EMPTY_ORDER_RESPONSE = "Пустой 'order' в ответе Банка Россия"
         private const val EMPTY_REDIRECT_URL_RESPONSE = "Пустой REDIRECT URL в ответе Банка Россия"
+        private const val URL_PARAM_NAME_PASSWORD = "?password="
+        private const val CONST_URL_PARAMS_FOR_STATUS_REQUEST =
+            "&orderDetailLevel=2&" +
+                "tranDetailLevel=2&" +
+                "actionDetailLevel=2&" +
+                "cofpDetailLevel=2&" +
+                "consumerDetailLevel=2&" +
+                "consumerTokenDetailLevel=2&" +
+                "tokenDetailLevel=2"
 
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         private val setSrcTokenRequest = SetSrcTokenRequest(token = mapOf(IPS_RU_PARAM_NAME to true))
@@ -164,5 +180,37 @@ class AKBankIntegrationServiceImpl(
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse {
         TODO("Not yet implemented")
+    }
+
+    override fun requestPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails {
+        val url = formUrl(paymentBankInfo)
+        return restTemplate
+            .getForObject<PaymentAkbStatusResponse>(url)
+            .toBankPaymentDetails()
+    }
+
+    private fun formUrl(paymentBankInfo: PaymentBankInfo): String =
+        buildString {
+            append(apiConfigProperties.akbUrl)
+            append("/")
+            append(paymentBankInfo.paymentBankId)
+            append(URL_PARAM_NAME_PASSWORD + paymentBankInfo.paymentPass)
+            append(CONST_URL_PARAMS_FOR_STATUS_REQUEST)
+        }
+
+    private fun PaymentAkbStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
+        bankPaymentDetailsMapper.convert(order, getCurrentStatus())
+
+    private fun PaymentAkbStatusResponse.getCurrentStatus(): AkbPaymentStatusEnum {
+        if (order.status != AkbPaymentStatusEnum.CLOSED) {
+            return order.status
+        }
+        return when (order.prevStatus) {
+            AkbPaymentStatusEnum.PREPARING,
+            AkbPaymentStatusEnum.WAITPUSHTRAN,
+            AkbPaymentStatusEnum.AUTHORIZED,
+            -> AkbPaymentStatusEnum.PREPARING
+            else -> AkbPaymentStatusEnum.CLOSED
+        }
     }
 }

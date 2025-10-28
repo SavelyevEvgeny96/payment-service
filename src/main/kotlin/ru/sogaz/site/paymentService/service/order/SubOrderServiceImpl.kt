@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.order
 
+import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_UPDATED_ORDER_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_UPDATED_SUB_ORDER_CROSS_SELL
@@ -8,9 +9,10 @@ import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.mapper.SubOrderMapper
+import ru.sogaz.site.paymentService.mapper.order.SubOrderMapper
 import ru.sogaz.site.paymentService.service.SubOrderService
 
+@Service
 class SubOrderServiceImpl(
     private val subOrderDao: SubOrderDao,
     private val subOrderMapper: SubOrderMapper,

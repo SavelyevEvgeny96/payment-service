@@ -1,6 +1,6 @@
 {
   "order": {
-    "status": "Status",
-    "prevStatus": "Preparing"
+    "id": "123123",
+    "status": "Preparing"
   }
 }

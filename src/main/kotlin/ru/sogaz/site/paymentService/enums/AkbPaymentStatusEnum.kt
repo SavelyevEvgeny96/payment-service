@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 
-enum class PrevStatusEnum(
+enum class AkbPaymentStatusEnum(
     @JsonValue val value: String,
 ) {
     PREPARING("Preparing"),
@@ -15,9 +15,5 @@ enum class PrevStatusEnum(
     EXPIRED("Expired"),
     REFUSED("Refused"),
     FULLYPAID("FullyPaid"),
-    ;
-
-    companion object {
-        fun fromValue(value: String?): PrevStatusEnum? = PrevStatusEnum.entries.find { it.value == value }
-    }
+    CLOSED("Closed"),
 }

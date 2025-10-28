@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.order
 
+import org.springframework.stereotype.Service
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
@@ -18,6 +19,7 @@ import java.math.RoundingMode
 import java.time.ZoneId
 import java.util.UUID
 
+@Service
 class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
     private val orderDao: OrderDao,

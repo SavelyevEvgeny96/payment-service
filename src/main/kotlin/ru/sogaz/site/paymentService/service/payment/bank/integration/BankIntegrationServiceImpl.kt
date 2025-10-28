@@ -18,7 +18,6 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         const val TEMPLATE_VERSION = "01"
         const val QR_TTL = "60"
         const val QR_TYPE = "02"
-        const val RUB = "RUB"
 
         private const val DESC_POLICY_NUMBER = "Номера полиса №"
         private const val SEPARATOR = ", №"
