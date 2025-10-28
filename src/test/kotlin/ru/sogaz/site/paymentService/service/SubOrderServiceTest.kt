@@ -10,7 +10,7 @@ import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.mapper.SubOrderMapper
+import ru.sogaz.site.paymentService.mapper.order.SubOrderMapper
 import ru.sogaz.site.paymentService.service.order.SubOrderServiceImpl
 import java.math.BigDecimal
 import java.util.UUID

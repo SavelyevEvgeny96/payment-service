@@ -8,6 +8,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import java.time.LocalDateTime
 
 @Entity
@@ -16,12 +18,14 @@ data class CallbackPayment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @Column(name = "bank_id")
-    var bankId: String? = null,
-    @Column(name = "type_id")
-    var typeId: String? = null,
+    @Column(name = "bank")
+    var bank: BankEnum,
+    @Column(name = "type")
+    var type: PaymentTypeEnum,
     @Column(name = "payment_bank_id")
-    var paymentBankId: String? = null,
+    var paymentBankId: String,
+    @Column(name = "payment_pass")
+    var paymentPass: String? = null,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
     @CreationTimestamp

@@ -14,19 +14,20 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
-import ru.sogaz.site.paymentService.dto.data.GpbCardDetailsDto
+import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
-import ru.sogaz.site.paymentService.dto.response.PaymentStatusResponseCard
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
+import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.ChequeStateEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
-import ru.sogaz.site.paymentService.enums.PrevStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
@@ -119,7 +120,7 @@ class PaymentStatusCheckerServiceImpl(
         val payments =
             payment.paymentBankId?.let { paymentDao.findByPaymentBankId(it) }
         return ResponseStatusPay(
-            paymentStatus = payments?.state!!.name,
+            paymentStatus = payments!!.state,
             cheque = checkChequeStatus(payments, traceId),
         )
     }
@@ -136,7 +137,6 @@ class PaymentStatusCheckerServiceImpl(
                     getStatusBankCardPaymentAkb(payment, traceId)
                 }
             }
-
             else ->
                 logger.info(
                     LOG_UNSUPPORTED_PAYMENT_TYPE.format(
@@ -181,7 +181,7 @@ class PaymentStatusCheckerServiceImpl(
                 restTemplate.defaultRestTemplate().exchange(url, HttpMethod.GET, null, String::class.java).body ?: ""
             val paymentResponse = objectMapper.readValue(response, PaymentAkbStatusResponse::class.java)
 
-            if (paymentResponse != null) {
+            if (paymentResponse.order.prevStatus?.name == "Closed") {
                 logger.info(LOG_AKB_API_SUCCESS.format(payment.paymentBankId, traceId))
                 updateAkbPaymentStatus(payment, paymentResponse)
             } else {
@@ -216,9 +216,9 @@ class PaymentStatusCheckerServiceImpl(
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
 
-                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
+                    val paymentResponse = objectMapper.readValue(response, GpbCardPaymentStatusResponse::class.java)
                     updatePaymentStatus(payment, paymentResponse)
-                    val cardDetails = response.toGpbCardDetails(objectMapper)
+                    val cardDetails = paymentResponse.toGpbCardDetails()
                     logger.info("GPB card details: $cardDetails")
                 } else {
                     logger.error(LOG_GPB_API_ERROR.format(traceId))
@@ -245,7 +245,7 @@ class PaymentStatusCheckerServiceImpl(
 
                 if (response.isNotEmpty()) {
                     logger.info(LOG_GPB_API_SUCCESS.format(payment.paymentBankId, traceId))
-                    val paymentResponse = objectMapper.readValue(response, PaymentStatusResponseCard::class.java)
+                    val paymentResponse = objectMapper.readValue(response, GpbCardPaymentStatusResponse::class.java)
                     updatePaymentStatusSbp(payment, paymentResponse)
                 } else {
                     logger.error(LOG_GPB_API_ERROR.format(traceId))
@@ -257,13 +257,13 @@ class PaymentStatusCheckerServiceImpl(
         }
     }
 
-    private fun PaymentStatusResponseCard.toGpbCardDetails(): GpbCardDetailsDto {
-        val maskedPan = src?.pan
-        val paymentSystem = src?.paymentSystem
-        val issuerName = src?.issuerName
+    private fun GpbCardPaymentStatusResponse.toGpbCardDetails(): ClientCardDetails {
+        val maskedPan = gpbCardDetails?.pan
+        val paymentSystem = gpbCardDetails?.paymentSystem
+        val issuerName = gpbCardDetails?.issuerName
         val paymentType = portalType
 
-        return GpbCardDetailsDto(
+        return ClientCardDetails(
             maskedPan = maskedPan,
             paymentSystem = paymentSystem,
             issuerName = issuerName,
@@ -271,8 +271,8 @@ class PaymentStatusCheckerServiceImpl(
         )
     }
 
-    private fun String.toGpbCardDetails(objectMapper: ObjectMapper): GpbCardDetailsDto {
-        val parsed = objectMapper.readValue(this, PaymentStatusResponseCard::class.java)
+    private fun String.toGpbCardDetails(objectMapper: ObjectMapper): ClientCardDetails {
+        val parsed = objectMapper.readValue(this, GpbCardPaymentStatusResponse::class.java)
         return parsed.toGpbCardDetails()
     }
 
@@ -280,98 +280,69 @@ class PaymentStatusCheckerServiceImpl(
         payment: Payment,
         response: PaymentAkbStatusResponse,
     ) {
-        val order: Order? = findOrderByPayment(payment)
+        val order: Order = payment.order ?: return
 
-        if (response.order.status == "Closed") {
-            if (response.order.prevStatus == PrevStatusEnum.PREPARING ||
-                response.order.prevStatus == PrevStatusEnum.WAITPUSHTRAN ||
-                response.order.prevStatus == PrevStatusEnum.AUTHORIZED
-            ) {
-                payment.state = PaymentStatusEnum.WAIT
-                payment.updateDate = LocalDateTime.now()
-            }
-        }
-
-        if (response.order.status == PrevStatusEnum.PARTPAID.value ||
-            response.order.status == PrevStatusEnum.REFUNDED.value ||
-            response.order.status == PrevStatusEnum.VOIDED.value
-        ) {
-            payment.state = PaymentStatusEnum.REFUND
-            payment.updateDate = LocalDateTime.now()
-        }
-        if (response.order.status == PrevStatusEnum.DECLINED.value ||
-            response.order.status == PrevStatusEnum.EXPIRED.value
-        ) {
-            payment.state = PaymentStatusEnum.FAIL
-            payment.updateDate = LocalDateTime.now()
-        }
-        if (response.order.status == PrevStatusEnum.REFUSED.value) {
-            payment.state = PaymentStatusEnum.DECLINED
-            payment.updateDate = LocalDateTime.now()
-        }
-
-        if (response.order.status == PrevStatusEnum.FULLYPAID.value) {
-            payment.state = PaymentStatusEnum.SUCCESS
-            payment.paymentFinished = LocalDateTime.now()
-            updateOrderForSuccessPayment(order, null)
+        payment.state = response.order.prevStatus?.toPaymentStatusesEnum() ?: PaymentStatusEnum.FAIL
+        payment.paymentFinished = LocalDateTime.now()
+        if (payment.state == PaymentStatusEnum.SUCCESS) {
+            updateOrderForSuccessPayment(payment, null)
         }
         paymentDao.save(payment)
     }
 
     private fun updatePaymentStatusSbp(
         payment: Payment,
-        response: PaymentStatusResponseCard,
+        response: GpbCardPaymentStatusResponse,
     ) {
         val traceId = getTraceId()
-        val order: Order? = payment.order
+        val order: Order = payment.order ?: return
 
-        val status = response.result.status
+        val status = response.result?.status
 
-        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order?.id, traceId))
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.id, traceId))
 
         try {
-            payment.state = status.toPaymentStatusesEnum()
+            payment.state = status?.toPaymentStatusesEnum() ?: PaymentStatusEnum.WAIT
             payment.paymentFinished = LocalDateTime.now()
         } catch (ex: InnerException) {
-            logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order?.id, traceId))
+            logger.warn(LOG_UNKNOWN_PAYMENT_STATUS.format(status, order.id, traceId))
         }
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(payment.order, response)
+            updateOrderForSuccessPayment(payment, response)
         }
 
         paymentDao.save(payment)
     }
 
     private fun updateOrderForSuccessPayment(
-        order: Order?,
-        paymentStatusResponse: PaymentStatusResponseCard?,
+        payment: Payment,
+        paymentStatusResponse: GpbCardPaymentStatusResponse?,
     ) {
-        order
+        payment.order
             ?.apply { status = OrderStatus.SUCCESS }
             ?.let {
                 orderDao.save(it)
-                receiptService.generateReceipt(it)
+                receiptService.generateReceipt(payment)
                 historyService.createOrderHistoryRecord(it, getTraceId())
                 sendToPaidOrdersQueue(it, getTraceId(), paymentStatusResponse)
             }
     }
 
-    private fun findOrderByPayment(payment: Payment): Order? = payment.order
-
     private fun updatePaymentStatus(
         payment: Payment,
-        response: PaymentStatusResponseCard,
+        response: GpbCardPaymentStatusResponse,
     ) {
         val traceId = getTraceId()
-        val status = response.result.status
+        val status = response.result?.status
+        val order = payment.order ?: return
 
-        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, payment.order?.id, traceId))
+        logger.info(LOG_PAYMENT_STATUS_RECEIVED.format(status, order.id, traceId))
 
-        payment.state = status.toPaymentStatusesEnum()
+        payment.state = status?.toPaymentStatusesEnum() ?: PaymentStatusEnum.WAIT
         payment.paymentFinished = LocalDateTime.now()
 
         if (payment.state == PaymentStatusEnum.SUCCESS) {
-            updateOrderForSuccessPayment(payment.order, response)
+            updateOrderForSuccessPayment(payment, response)
         }
 
         paymentDao.save(payment)
@@ -380,7 +351,7 @@ class PaymentStatusCheckerServiceImpl(
     private fun sendToPaidOrdersQueue(
         order: Order,
         traceId: String,
-        paymentStatusResponse: PaymentStatusResponseCard?,
+        paymentStatusResponse: GpbCardPaymentStatusResponse?,
     ) {
         try {
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
@@ -411,10 +382,10 @@ class PaymentStatusCheckerServiceImpl(
                             ?.atZone(ZoneOffset.UTC)
                             ?.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                     subOrders = subOrderPayloads,
-                    paymentStatusResponse?.src?.issuerName,
-                    paymentStatusResponse?.src?.paymentSystem,
-                    paymentStatusResponse?.src?.pan,
-                    paymentStatusResponse?.src?.type,
+                    paymentStatusResponse?.gpbCardDetails?.issuerName,
+                    paymentStatusResponse?.gpbCardDetails?.paymentSystem,
+                    paymentStatusResponse?.gpbCardDetails?.pan,
+                    paymentStatusResponse?.gpbCardDetails?.type,
                 )
             val exchange = props.exchange
             val routingKey = props.routingKeyStatusPayment
@@ -451,7 +422,7 @@ class PaymentStatusCheckerServiceImpl(
                     .findByPaymentBankId(it)
             }
 
-        return freshPayment?.chequeName == "SENT"
+        return freshPayment?.chequeName == ChequeStateEnum.SENT.name
     }
 
     private fun StatusEnum.toPaymentStatusesEnum(): PaymentStatusEnum =
@@ -477,23 +448,24 @@ class PaymentStatusCheckerServiceImpl(
             else -> throw InnerException(getTraceId(), "Unknown status for transform to payment status")
         }
 
-    private fun PrevStatusEnum.toPaymentStatusesEnum(): PaymentStatusEnum =
+    private fun AkbPaymentStatusEnum.toPaymentStatusesEnum(): PaymentStatusEnum =
         when (this) {
-            PrevStatusEnum.PREPARING,
-            PrevStatusEnum.WAITPUSHTRAN,
-            PrevStatusEnum.AUTHORIZED,
+            AkbPaymentStatusEnum.PREPARING,
+            AkbPaymentStatusEnum.WAITPUSHTRAN,
+            AkbPaymentStatusEnum.AUTHORIZED,
             -> PaymentStatusEnum.WAIT
 
-            PrevStatusEnum.PARTPAID,
-            PrevStatusEnum.REFUNDED,
-            PrevStatusEnum.VOIDED,
+            AkbPaymentStatusEnum.PARTPAID,
+            AkbPaymentStatusEnum.REFUNDED,
+            AkbPaymentStatusEnum.VOIDED,
             -> PaymentStatusEnum.REFUND
 
-            PrevStatusEnum.DECLINED,
-            PrevStatusEnum.EXPIRED,
+            AkbPaymentStatusEnum.DECLINED,
+            AkbPaymentStatusEnum.EXPIRED,
+            AkbPaymentStatusEnum.CLOSED,
             -> PaymentStatusEnum.FAIL
 
-            PrevStatusEnum.REFUSED -> PaymentStatusEnum.DECLINED
-            PrevStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS
+            AkbPaymentStatusEnum.REFUSED -> PaymentStatusEnum.DECLINED
+            AkbPaymentStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS
         }
 }

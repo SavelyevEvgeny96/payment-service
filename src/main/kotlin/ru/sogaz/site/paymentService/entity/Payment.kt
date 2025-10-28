@@ -58,4 +58,17 @@ data class Payment(
     var updateDate: LocalDateTime? = null,
     @Transient
     var urlToReturn: UrlToReturn = UrlToReturn(),
-)
+) {
+    fun isInProcess(): Boolean =
+        when (state) {
+            PaymentStatusEnum.REG,
+            PaymentStatusEnum.WAIT,
+            PaymentStatusEnum.CALLBACK,
+            -> true
+            else -> false
+        }
+
+    fun isClosed(): Boolean = isInProcess().not()
+
+    fun isSuccess(): Boolean = state == PaymentStatusEnum.SUCCESS
+}

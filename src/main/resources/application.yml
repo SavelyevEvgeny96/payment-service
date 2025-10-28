@@ -80,6 +80,10 @@ api:
   qr:
     baseUrl: ${QR_GENERATOR_URL:}
 
+crons:
+  waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:* */5 * * * *}
+  callbackPaymentsCheck: ${CALLBACK_PAYMENTS_CHECK_CRON:*/10 * * * * *}
+
 management:
   endpoints:
     web:

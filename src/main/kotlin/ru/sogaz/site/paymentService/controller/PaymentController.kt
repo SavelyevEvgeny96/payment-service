@@ -37,7 +37,6 @@ import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.service.PaymentStatusCheckerService
 import ru.sogaz.site.paymentService.validation.PermissionValidator
 import ru.sogaz.siter.models.resonses.Response
 import java.util.Optional
@@ -52,7 +51,6 @@ import java.util.UUID
 class PaymentController(
     private val orderService: OrderService,
     private val paymentService: PaymentService,
-    private val paymentStatusCheckerService: PaymentStatusCheckerService,
     private val gpbCallbackService: GpbCallbackService,
     private val callbackService: CallbackService,
     private val permissionValidator: PermissionValidator,
@@ -150,10 +148,10 @@ class PaymentController(
         summary = "Проверить статус оплаты",
         description = "Проверяет статус оплаты и отправляет в очередь (по успешности).",
     )
-    @GetMapping("/pay/status/{payment_bank_id}")
+    @GetMapping("/pay/status/{paymentBankId}")
     fun getStatusPay(
-        @PathVariable payment_bank_id: String,
-    ): Response<ResponseStatusPay> = paymentStatusCheckerService.getStatus(payment_bank_id)
+        @PathVariable paymentBankId: String,
+    ): Response<ResponseStatusPay> = paymentService.updateStatus(paymentBankId)
 
     @GetMapping("/order/status/{orderId}")
     fun getOrderStatus(

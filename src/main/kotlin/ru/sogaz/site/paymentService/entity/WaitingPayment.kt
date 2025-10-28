@@ -22,12 +22,14 @@ data class WaitingPayment(
     var id: Long? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
-    var bank: BankEnum? = null,
+    var bank: BankEnum,
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    var type: PaymentTypeEnum? = null,
+    var type: PaymentTypeEnum,
     @Column(name = "payment_bank_id")
-    var paymentBankId: String? = null,
+    var paymentBankId: String,
+    @Column(name = "payment_pass")
+    var paymentPass: String? = null,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
     @CreationTimestamp
