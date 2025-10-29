@@ -129,10 +129,19 @@ class PaymentController(
         @PathVariable orderId: String,
         @RequestParam(required = false) urlToReturn: String?,
         @RequestParam(required = false) urlToReturnF: String?,
+        @RequestHeader("paymentDelay") paymentDelay: String?,
+        @RequestHeader("processPayments") processPayments: String?,
+        @RequestHeader("paymentStatus") paymentStatus: String?,
     ): RedirectView =
         paymentService
-            .createSBPPayment(UUID.fromString(orderId), urlToReturn, urlToReturnF)
-            .wrapToRedirectView()
+            .createSBPPayment(
+                orderId = UUID.fromString(orderId),
+                urlToReturnS = urlToReturn,
+                urlToReturnF = urlToReturnF,
+                paymentDelay = paymentDelay,
+                processPayments = processPayments,
+                paymentStatus = paymentStatus,
+            ).wrapToRedirectView()
 
     @GetMapping("/pay/{orderId}")
     fun pay(

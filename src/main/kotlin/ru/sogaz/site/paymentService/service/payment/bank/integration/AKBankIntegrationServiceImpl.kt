@@ -9,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
@@ -68,7 +69,10 @@ class AKBankIntegrationServiceImpl(
             .run { payment.fillFromResponse(this) }
 
     @Throws(RestClientException::class)
-    override fun registerSBPPayment(payment: Payment): Payment =
+    override fun registerSBPPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment =
         payment
             .run(::buildSBPRequest)
             .run(::postForSBPPaymentData)

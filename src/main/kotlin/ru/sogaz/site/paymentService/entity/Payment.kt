@@ -58,6 +58,8 @@ data class Payment(
     var updateDate: LocalDateTime? = null,
     @Transient
     var urlToReturn: UrlToReturn = UrlToReturn(),
+    @Transient
+    var saveCard: Boolean = false,
 ) {
     fun isInProcess(): Boolean =
         when (state) {

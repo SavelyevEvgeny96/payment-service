@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service
 
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -10,5 +11,6 @@ interface RegisterPaymentService {
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
         urlToReturn: UrlToReturn = UrlToReturn(),
+        headersParams: GpbSbpHeadersParams? = null,
     ): Payment
 }

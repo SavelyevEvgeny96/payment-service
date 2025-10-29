@@ -2,6 +2,8 @@ package ru.sogaz.site.paymentService.service.payment.bank.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
@@ -9,6 +11,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.exceptions.BankIntegrationException
@@ -99,6 +102,7 @@ class GPBankIntegrationServiceImpl(
         state = cardPaymentState,
         threeDSTwo = cardPayment3ds2,
         openApiMirPaySupported = true,
+        addCardAllowed = order.saveCard,
     )
 
     private fun formRegisterPaymentRequestUrl(token: String): String =
@@ -111,10 +115,13 @@ class GPBankIntegrationServiceImpl(
         )
 
     @Throws(RestClientException::class)
-    override fun registerSBPPayment(payment: Payment): Payment =
+    override fun registerSBPPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment =
         payment
             .run(::buildPaymentSBPRequest)
-            .run(::postForSBPPaymentData)
+            .run { postForSBPPaymentData(this, headersParams) }
             .run { payment.fillFromResponse(this) }
 
     private fun buildPaymentSBPRequest(payment: Payment): GPBSBPPaymentRequest =
@@ -138,11 +145,23 @@ class GPBankIntegrationServiceImpl(
         currency = amountData.currency,
     )
 
-    private fun postForSBPPaymentData(request: GPBSBPPaymentRequest): GazpromSBPPaymentResponse =
+    private fun postForSBPPaymentData(
+        request: GPBSBPPaymentRequest,
+        headersParams: GpbSbpHeadersParams?,
+    ): GazpromSBPPaymentResponse =
         postForObject(
             apiConfigProperties.gpbSbpUrl,
-            HttpEntity(request, jsonHeaders),
+            HttpEntity(request, sbpHeaders(headersParams)),
         )
+
+    private fun sbpHeaders(headersParams: GpbSbpHeadersParams?) =
+        HttpHeaders()
+            .apply {
+                contentType = MediaType.APPLICATION_JSON
+                set("paymentDelay", headersParams?.paymentDelay)
+                set("processPayments", headersParams?.processPayments)
+                set("paymentStatus", headersParams?.paymentStatus)
+            }
 
     private inline fun <reified T> postForObject(
         url: String,
