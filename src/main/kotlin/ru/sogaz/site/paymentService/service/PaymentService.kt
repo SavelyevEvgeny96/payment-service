@@ -23,6 +23,9 @@ interface PaymentService {
         orderId: UUID,
         urlToReturnS: String? = null,
         urlToReturnF: String? = null,
+        paymentDelay: String? = null,
+        processPayments: String? = null,
+        paymentStatus: String? = null,
     ): DataPay
 
     fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo>

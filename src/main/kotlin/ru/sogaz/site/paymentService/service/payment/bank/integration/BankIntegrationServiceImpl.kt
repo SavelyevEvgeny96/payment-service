@@ -5,6 +5,7 @@ import org.springframework.http.MediaType
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.AmountData
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
@@ -27,16 +28,22 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
 
     protected val jsonHeaders = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
 
-    override fun registerPayment(payment: Payment): Payment =
+    override fun registerPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment =
         when (payment.type) {
             PaymentTypeEnum.CARD -> registerCardPayment(payment)
-            PaymentTypeEnum.SBP -> registerSBPPayment(payment)
+            PaymentTypeEnum.SBP -> registerSBPPayment(payment, headersParams)
             else -> throw InnerException(getTraceId(), ERROR_UNKNOWN_PAYMENT_TYPE)
         }
 
     abstract fun registerCardPayment(payment: Payment): Payment
 
-    abstract fun registerSBPPayment(payment: Payment): Payment
+    abstract fun registerSBPPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment
 
     abstract override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse
 

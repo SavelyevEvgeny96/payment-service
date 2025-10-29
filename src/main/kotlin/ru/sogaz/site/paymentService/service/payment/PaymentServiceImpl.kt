@@ -17,6 +17,7 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
@@ -86,11 +87,15 @@ class PaymentServiceImpl(
         orderId: UUID,
         urlToReturnS: String?,
         urlToReturnF: String?,
+        paymentDelay: String?,
+        processPayments: String?,
+        paymentStatus: String?,
     ): DataPay =
         createPayment(
             orderId,
             PaymentTypeEnum.SBP,
             UrlToReturn(urlToReturnS, urlToReturnF),
+            GpbSbpHeadersParams(paymentDelay, processPayments, paymentStatus),
         )
 
     override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
@@ -130,12 +135,13 @@ class PaymentServiceImpl(
         orderId: UUID,
         paymentTypeEnum: PaymentTypeEnum,
         urlToReturn: UrlToReturn,
+        headersParams: GpbSbpHeadersParams? = null,
     ): DataPay =
         orderDao
             .findById(orderId)
             .run { validateOrder(this, paymentTypeEnum) }
             .apply { bank = resolveCurrentBank(bank) }
-            .run { registerPayment(this, paymentTypeEnum, urlToReturn) }
+            .run { registerPayment(this, paymentTypeEnum, urlToReturn, headersParams) }
             .also(::renewOrder)
             .also(waitingPaymentDao::saveWaitingForPayment)
             .toDataPay()
@@ -154,10 +160,11 @@ class PaymentServiceImpl(
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
         urlToReturn: UrlToReturn,
+        headersParams: GpbSbpHeadersParams?,
     ): Payment =
         order
             .also(::logOrderInfoBeforeRegistrationPayment)
-            .run { registerPaymentService.register(order, paymentTypeEnum, urlToReturn) }
+            .run { registerPaymentService.register(order, paymentTypeEnum, urlToReturn, headersParams) }
             .also(::logRegisteredPaymentInfo)
 
     private fun renewOrder(payment: Payment) =
