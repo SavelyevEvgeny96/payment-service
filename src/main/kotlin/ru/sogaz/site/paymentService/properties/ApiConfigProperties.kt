@@ -24,8 +24,6 @@ class ApiConfigProperties {
     lateinit var akbUrl: String
     lateinit var akbSbpUrl: String
     lateinit var gpbSbpQRImageUrl: String
-    lateinit var qrUrlForCardPayment: String
-    lateinit var qrUrlForSbpPayment: String
 
     @PostConstruct
     fun postConstruct() {
@@ -42,7 +40,5 @@ class ApiConfigProperties {
         logger.info("akbSbpUrl = $akbSbpUrl")
         logger.info("akbUrl = $akbUrl")
         logger.info("gpbSbpQRImageUrl = $gpbSbpQRImageUrl")
-        logger.info("qrUrlForCardPayment = $qrUrlForCardPayment")
-        logger.info("qrUrlForSbpPayment = $qrUrlForSbpPayment")
     }
 }

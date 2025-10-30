@@ -19,6 +19,7 @@ import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
+import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
@@ -98,9 +99,12 @@ class PaymentServiceImpl(
             GpbSbpHeadersParams(paymentDelay, processPayments, paymentStatus),
         )
 
-    override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
-        orderId
-            .run(infoPageService::getInfo)
+    override fun getOrderPaymentPageInfo(
+        orderId: UUID,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): Response<DataOrderPaymentPageInfo> =
+        infoPageService
+            .getInfo(orderId, pageInfoRequestParams)
             .wrapToSuccessResponse(SUCCESS_STATUS_CODE_PAY_INFO_PAGE)
 
     override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {

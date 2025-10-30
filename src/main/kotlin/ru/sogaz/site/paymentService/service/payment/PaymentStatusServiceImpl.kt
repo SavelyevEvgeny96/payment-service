@@ -170,7 +170,7 @@ class PaymentStatusServiceImpl(
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order) ?: emptyList()
             val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
 
-            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails)
+            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
 
             val exchange = props.exchange
             val routingKey = props.routingKeyStatusPayment
