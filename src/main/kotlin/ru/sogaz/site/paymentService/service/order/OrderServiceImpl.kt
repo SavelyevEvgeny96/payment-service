@@ -91,7 +91,7 @@ class OrderServiceImpl(
             policyId = subOrderRequest.policyId,
             policyNumber = subOrderRequest.policyNumber,
             contractId = subOrderRequest.contractId,
-            typeInsurance = subOrderRequest.typeInsurance.description,
+            typeInsurance = subOrderRequest.typeInsurance,
             mainContractCheck = subOrderRequest.mainContractCheck,
             contractNumber = subOrderRequest.contractNumber,
             insuranceProgram = subOrderRequest.insuranceProgram,

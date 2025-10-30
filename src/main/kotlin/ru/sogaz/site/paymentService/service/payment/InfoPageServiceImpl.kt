@@ -1,6 +1,12 @@
 package ru.sogaz.site.paymentService.service.payment
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.convertValue
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.util.MultiValueMap
+import org.springframework.web.util.UriComponentsBuilder
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_CANNOT_BE_PAID_INFO
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_ORDER_NOT_FOUND_INFO
@@ -9,15 +15,18 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.findByKey
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaySbp
+import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.orThrow
-import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.InfoPageService
 import ru.sogaz.site.paymentService.service.QRCodeService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
+import java.net.URI
 import java.util.Objects.isNull
 import java.util.UUID
 
@@ -27,29 +36,42 @@ class InfoPageServiceImpl(
     private val configDataDao: ConfigDataDao,
     private val registerPaymentService: RegisterPaymentService,
     private val qrCodeService: QRCodeService,
-    private val apiConfigProperties: ApiConfigProperties,
+    private val orderMapper: OrderMapper,
 ) : InfoPageService {
     companion object {
-        const val SBP_ACTIVE_CONFIG_NAME = "sbpActive"
-        const val LOG_INFO_PAGE_WITHOUT_SBP_QR = "Для заказа с id: %s не будет отображена оплата по QR коду с СБП"
-        const val LOG_ERROR_TO_GET_QR_FROM_BANK = "Не удалось получить QR код из банка %s, ex: %s"
-        const val LOG_FULL_INFO_PAGE =
+        private const val SBP_ACTIVE_CONFIG_NAME = "sbpActive"
+        private const val LOG_INFO_PAGE_WITHOUT_SBP_QR = "Для заказа с id: %s не будет отображена оплата по QR коду с СБП"
+        private const val LOG_ERROR_TO_GET_QR_FROM_BANK = "Не удалось получить QR код из банка %s, ex: %s"
+        private const val LOG_FULL_INFO_PAGE =
             "Для генерации информации по платежу для заказа с id: %s будет отображена оплата по QR коду с СБП"
     }
 
-    private val logger = loggerFor(javaClass)
+    @Value("\${api.payment.paymentUrl}")
+    lateinit var cardPayBaseUri: String
 
-    override fun getInfo(orderId: UUID): DataOrderPaymentPageInfo =
-        orderDao
-            .findById(orderId)
+    @Value("\${api.payment.sbpPaymentUrl}")
+    lateinit var sbpPayBaseUri: String
+
+    private val logger = loggerFor(javaClass)
+    private val objectMapper: ObjectMapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+
+    override fun getInfo(
+        orderId: UUID,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): DataOrderPaymentPageInfo =
+        orderId
+            .run(orderDao::findById)
             .orThrow { BusinessException(CODE_ERROR_ORDER_NOT_FOUND_INFO) }
             .also(::checkOrderStatus)
-            .run(::getInfo)
+            .run { getInfo(this, pageInfoRequestParams) }
 
-    override fun getInfo(order: Order): DataOrderPaymentPageInfo =
+    override fun getInfo(
+        order: Order,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): DataOrderPaymentPageInfo =
         order
-            .run(::formPaymentPageInfo)
-            .also(::logPageInfoResultInfo)
+            .run { formPaymentPageInfo(this, pageInfoRequestParams) }
+            .also(::logPageInfoResult)
 
     private fun checkOrderStatus(order: Order) {
         if (order.status.isPaidFor() || order.status.isNotAvailable()) {
@@ -57,57 +79,105 @@ class InfoPageServiceImpl(
         }
     }
 
-    private fun formPaymentPageInfo(order: Order): DataOrderPaymentPageInfo =
+    private fun formPaymentPageInfo(
+        order: Order,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): DataOrderPaymentPageInfo =
         order
-            .run(::formPaySBPInfo)
-            .run { formOrderPaymentPageInfo(order.id, this) }
+            .run { formPaySbpInfo(this, pageInfoRequestParams) }
+            .run { formPaymentPageInfo(this, order, pageInfoRequestParams) }
 
-    private fun formPaySBPInfo(order: Order): PaySbp? {
+    private fun formPaymentPageInfo(
+        paySbp: PaySbp?,
+        order: Order,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): DataOrderPaymentPageInfo =
+        orderMapper.toOrderPaymentPageInfo(
+            order = order,
+            paySbp = paySbp,
+            urlPayBank = buildCardPayUri(order.id!!, pageInfoRequestParams),
+        )
+
+    private fun formPaySbpInfo(
+        order: Order,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): PaySbp? {
         if (isSBPActive().not()) {
             return null
         }
-        val paySbpLink = formSPBPayLink(order.id.toString())
-        return formPaySBPInfo(order, paySbpLink)
+        val paySbpLink = buildSbpPayUri(order.id!!, pageInfoRequestParams)
+        return formPaySbpInfo(order, paySbpLink)
     }
 
-    private fun isSBPActive(): Boolean = configDataDao.findByKey(SBP_ACTIVE_CONFIG_NAME)
-
-    private fun formSPBPayLink(orderId: String): String = "${apiConfigProperties.qrUrlForSbpPayment}$orderId"
-
-    private fun formPaySBPInfo(
+    private fun formPaySbpInfo(
         order: Order,
-        spbPayUrl: String,
-    ): PaySbp? = qrCodeService.generatePaySbp(spbPayUrl) ?: getQRCodeFromBank(order)
+        spbPayUrl: URI,
+    ): PaySbp? =
+        generatePaySbpFromQRGeneratorService(spbPayUrl)
+            ?: generatePaySbpFromBank(order)
 
-    private fun getQRCodeFromBank(order: Order): PaySbp? {
+    private fun generatePaySbpFromQRGeneratorService(spbPayUrl: URI): PaySbp? =
+        spbPayUrl
+            .run(qrCodeService::generateFileQR)
+            ?.let { PaySbp(spbPayUrl, it) }
+
+    private fun generatePaySbpFromBank(order: Order): PaySbp? {
         if (order.bank == BankEnum.AKB_RUS) {
             return null
         }
-        try {
-            return registerPaymentService
-                .register(order, PaymentTypeEnum.SBP)
-                .run(qrCodeService::requestFromBank)
+        return try {
+            order
+                .run(::registerSbpPayment)
+                .run(::generatePaySbpFromBank)
         } catch (ex: Exception) {
             LOG_ERROR_TO_GET_QR_FROM_BANK
                 .format(order.bank, ex.message)
                 .run(logger::info)
+            null
         }
-        return null
     }
 
-    private fun formOrderPaymentPageInfo(
-        orderId: UUID?,
-        paySbp: PaySbp?,
-    ): DataOrderPaymentPageInfo =
-        DataOrderPaymentPageInfo(
-            orderId = orderId.toString(),
-            urlPayBank = formCardPayLink(orderId.toString()),
-            paySbp = paySbp,
+    private fun registerSbpPayment(order: Order): Payment =
+        registerPaymentService.register(order, PaymentTypeEnum.SBP)
+
+    private fun generatePaySbpFromBank(payment: Payment): PaySbp? =
+        payment
+            .run(qrCodeService::requestFileQRFromBank)
+            ?.let { PaySbp(payment.paymentPageUrl.toString(), it) }
+
+    private fun buildSbpPayUri(
+        orderId: UUID,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): URI =
+        buildUri(
+            "$sbpPayBaseUri$orderId",
+            pageInfoRequestParams.toQueryParams(),
         )
 
-    private fun formCardPayLink(orderId: String): String = "${apiConfigProperties.qrUrlForCardPayment}$orderId"
+    private fun buildCardPayUri(
+        orderId: UUID,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): URI =
+        buildUri(
+            "$cardPayBaseUri$orderId",
+            pageInfoRequestParams.toQueryParams(),
+        )
 
-    private fun logPageInfoResultInfo(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::info)
+    private fun buildUri(
+        uriString: String,
+        params: MultiValueMap<String, String>,
+    ): URI =
+        UriComponentsBuilder
+            .fromUriString(uriString)
+            .queryParams(params)
+            .toUriString()
+            .run(URI::create)
+
+    private fun PageInfoRequestParams.toQueryParams(): MultiValueMap<String, String> = MultiValueMap.fromSingleValue(toMap())
+
+    private fun PageInfoRequestParams.toMap(): Map<String, String> = objectMapper.convertValue(this)
+
+    private fun logPageInfoResult(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::info)
 
     private fun getLogMessageForPageInfo(pageInfo: DataOrderPaymentPageInfo) =
         if (isNull(pageInfo.paySbp)) {
@@ -115,4 +185,6 @@ class InfoPageServiceImpl(
         } else {
             LOG_FULL_INFO_PAGE.format(pageInfo.orderId)
         }
+
+    private fun isSBPActive(): Boolean = configDataDao.findByKey(SBP_ACTIVE_CONFIG_NAME)
 }

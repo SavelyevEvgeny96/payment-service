@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment
 
 import ru.sogaz.site.paymentService.dto.data.FileQR
-import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.MediaTypeValue
@@ -11,6 +10,7 @@ import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegra
 import ru.sogaz.site.qr.generator.client.api.QrCodeControllerApi
 import ru.sogaz.site.qr.generator.client.model.QRCodeRequest
 import ru.sogaz.site.qr.generator.client.model.ResponseQRCodeData
+import java.net.URI
 
 class QRCodeServiceImpl(
     private val qrCodeControllerApi: QrCodeControllerApi,
@@ -23,19 +23,18 @@ class QRCodeServiceImpl(
 
     private val logger = loggerFor(javaClass)
 
-    override fun generatePaySbp(
-        url: String,
+    override fun generateFileQR(
+        uri: URI,
         size: Int,
-    ): PaySbp? =
+    ): FileQR? =
         QRCodeRequest()
-            .apply { text = url }
-            .run(::generatePaySbp)
+            .apply { text = uri.toString() }
+            .run(::generateFileQR)
 
-    override fun generatePaySbp(qrCodeRequest: QRCodeRequest): PaySbp? =
+    override fun generateFileQR(qrCodeRequest: QRCodeRequest): FileQR? =
         qrCodeRequest
             .runCatching(::requestQRFromQRGeneratorService)
             .run(::handleGenerationResult)
-            ?.let { PaySbp(qrCodeRequest.text, it) }
 
     private fun requestQRFromQRGeneratorService(qrCodeRequest: QRCodeRequest): FileQR =
         qrCodeRequest
@@ -52,12 +51,7 @@ class QRCodeServiceImpl(
         return result.getOrNull()
     }
 
-    override fun requestFromBank(payment: Payment): PaySbp? =
-        payment
-            .run(::requestQRFileFromBank)
-            ?.let { PaySbp(payment.paymentPageUrl.toString(), it) }
-
-    private fun requestQRFileFromBank(payment: Payment): FileQR? =
+    override fun requestFileQRFromBank(payment: Payment): FileQR? =
         payment.bank
             .run(bankIntegrationFactoryService::getInstanceByBank)
             .runCatching { this.getQRCodeImageData(payment) }

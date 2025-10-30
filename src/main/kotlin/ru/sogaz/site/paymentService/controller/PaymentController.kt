@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.view.RedirectView
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.ValidationException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_FORBIDDEN_PAYMENT_INVOICE
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.Companion.CODE_ERROR_REQUIRED_DATA
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
@@ -29,6 +27,7 @@ import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
@@ -39,7 +38,6 @@ import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.validation.PermissionValidator
 import ru.sogaz.siter.models.resonses.Response
-import java.util.Optional
 import java.util.UUID
 
 /**
@@ -262,19 +260,9 @@ class PaymentController(
 
     @GetMapping("/pageinfo/{orderId}")
     fun getInfoPage(
-        @PathVariable orderId: String,
-    ): Response<DataOrderPaymentPageInfo> =
-        orderId
-            .toUUID()
-            .orElseThrow { ValidationException(CODE_ERROR_REQUIRED_DATA) }
-            .run(paymentService::getOrderPaymentPageInfo)
-
-    private fun String.toUUID(): Optional<UUID> =
-        try {
-            Optional.of(UUID.fromString(this))
-        } catch (ex: Exception) {
-            Optional.empty<UUID>()
-        }
+        @PathVariable orderId: UUID,
+        requestParams: PageInfoRequestParams,
+    ): Response<DataOrderPaymentPageInfo> = paymentService.getOrderPaymentPageInfo(orderId, requestParams)
 
     @PatchMapping("/paymentinvoice")
     fun updatePaymentInvoice(

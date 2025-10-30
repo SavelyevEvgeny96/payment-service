@@ -1,16 +1,17 @@
 package ru.sogaz.site.paymentService.service
 
-import ru.sogaz.site.paymentService.dto.data.PaySbp
+import ru.sogaz.site.paymentService.dto.data.FileQR
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.qr.generator.client.model.QRCodeRequest
+import java.net.URI
 
 interface QRCodeService {
-    fun generatePaySbp(
-        url: String,
+    fun generateFileQR(
+        uri: URI,
         size: Int = 512,
-    ): PaySbp?
+    ): FileQR?
 
-    fun generatePaySbp(qrCodeRequest: QRCodeRequest): PaySbp?
+    fun generateFileQR(qrCodeRequest: QRCodeRequest): FileQR?
 
-    fun requestFromBank(payment: Payment): PaySbp?
+    fun requestFileQRFromBank(payment: Payment): FileQR?
 }

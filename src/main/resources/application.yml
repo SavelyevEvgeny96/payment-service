@@ -59,6 +59,7 @@ ssl:
 api:
   payment:
     paymentUrl: ${PAYMENT_URL:}
+    sbpPaymentUrl: ${SBP_PAYMENT_URL:}
     akbUrl: ${AKB_URL:}
     akbSbpUrl: ${AKB_SBP_URL:}
     akbUrlStatus: ${AKB_PAYMENT_URL:}
@@ -73,15 +74,13 @@ api:
     merchantId: ${GPB_MERCHANT_ID:}
     backUrlS: ${BACK_URL_SUCCESS:}
     backUrlF: ${BACK_URL_FALSE:}
-    qrUrlForCardPayment: ${QR_CARD_PAYMENT_URL:}
-    qrUrlForSbpPayment: ${QR_SBP_PAYMENT_URL:}
   receipt:
     receiptUrl: ${RECEIPT_URL:}
   qr:
     baseUrl: ${QR_GENERATOR_URL:}
 
 crons:
-  waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:* */5 * * * *}
+  waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
   callbackPaymentsCheck: ${CALLBACK_PAYMENTS_CHECK_CRON:*/10 * * * * *}
 
 management:

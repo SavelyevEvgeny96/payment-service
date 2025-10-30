@@ -4,7 +4,6 @@ import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
-import ru.sogaz.site.paymentService.enums.TypeInsuranceEnum
 import ru.sogaz.site.paymentService.validation.constraint.Email
 import java.math.BigDecimal
 import java.time.Instant
@@ -18,8 +17,7 @@ data class SubOrderRequest(
     val premiumAmount: BigDecimal = BigDecimal.ZERO,
     val policyId: String = "",
     val policyNumber: String = "",
-    @field:NotNull(message = "{validation.orderRequest.notBlank}")
-    val typeInsurance: TypeInsuranceEnum,
+    val typeInsurance: String? = null,
     val insuranceProgram: String? = null,
     val mainContractCheck: Boolean = false,
     @field:NotBlank(message = "{validation.orderRequest.notBlank}")
