@@ -22,6 +22,7 @@ import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
 import ru.sogaz.site.paymentService.loggerFor
@@ -80,11 +81,13 @@ class AKBankIntegrationServiceImpl(
             .also(::setSrcToken)
             .apply { paymentPageUrl = preparePushTran(this) }
 
+    override fun provider(): BankEnum = BankEnum.AKB_RUS
+
     private fun buildCardRequest(payment: Payment): AkbCardAndSbpPaymentRequest =
         buildAkbRequest(
             payment.id!!,
             payment.getAmountData(),
-            payment.getDescription(),
+            payment.v4Description(),
             payment.urlToReturn,
             TypeRidEnum.WITH_3DS,
         )
@@ -96,7 +99,7 @@ class AKBankIntegrationServiceImpl(
         buildAkbRequest(
             payment.id!!,
             payment.getAmountData(),
-            payment.getDescription(),
+            payment.v4Description(),
             payment.urlToReturn,
             TypeRidEnum.QRC_PAY,
         )

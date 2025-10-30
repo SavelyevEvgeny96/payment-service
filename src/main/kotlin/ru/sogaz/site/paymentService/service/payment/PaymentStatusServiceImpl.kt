@@ -51,7 +51,9 @@ class PaymentStatusServiceImpl(
     companion object {
         private const val UPDATE_STATUS_ERROR_MESSAGE = "Произошла ошибка во время обновления статуса для банковского платежа [bankId: %s]"
         private const val NOT_FIND_ORDER_WARN_MESSAGE = "Не найден заказ для банковского платежа"
-        private const val ORDER_ALREADY_PAID_WARN_MESSAGE = "Заказ [orderId: %s, bank: %s] уже отмечен как оплаченный для банковского платежа"
+        private const val ORDER_ALREADY_PAID_WARN_MESSAGE =
+            "Заказ [orderId: %s, bank: %s] уже " +
+                "отмечен как оплаченный для банковского платежа"
         private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         private const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "

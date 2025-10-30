@@ -29,6 +29,7 @@ import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusRespons
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
@@ -58,6 +59,8 @@ class GPBankIntegrationServiceImpl(
 
     private val logger = loggerFor(javaClass)
 
+    override fun provider(): BankEnum = BankEnum.GPB
+
     @Throws(BankIntegrationException::class, RestClientException::class)
     override fun registerCardPayment(payment: Payment): Payment =
         payment
@@ -70,7 +73,7 @@ class GPBankIntegrationServiceImpl(
             token = exchangeForToken(),
             order = payment.order!!,
             amountData = payment.getAmountData(),
-            description = payment.getDescription(),
+            description = payment.v4Description(),
             urlToReturn = payment.urlToReturn,
         )
 
@@ -127,7 +130,7 @@ class GPBankIntegrationServiceImpl(
     private fun buildPaymentSBPRequest(payment: Payment): GPBSBPPaymentRequest =
         buildPaymentSBPRequest(
             payment.getAmountData(),
-            payment.getDescription(),
+            payment.v4Description(),
         )
 
     private fun buildPaymentSBPRequest(
