@@ -28,9 +28,6 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         private const val MAX_DESC_LEN = 250
 
         private const val PREFIX = "Зачисление по операции оплата банковской картой "
-        private const val PROVIDER_GPB = "ГПБ"
-        private const val PROVIDER_AKB = "АБР"
-
         private const val TEXT_DOGOVOROV = "договор(ов) "
         private const val TEXT_OT = " от "
         private const val SEP = ", "
@@ -69,41 +66,12 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         subOrders: List<SubOrder>?,
         operationDate: LocalDate,
     ): String {
-        val providerText =
-            when (provider) {
-                BankEnum.GPB -> PROVIDER_GPB
-                BankEnum.AKB_RUS -> PROVIDER_AKB
-            }
+        val providerText = provider.description
 
         val blocks =
             subOrders
                 .orEmpty()
-                .mapNotNull { so ->
-                    val parts = mutableListOf<String>()
-
-                    if (isValid(so.contractId)) {
-                        val id = so.contractId!!.trim()
-                        val datePart =
-                            so.contractDate
-                                ?.atZone(DEFAULT_ZONE)
-                                ?.toLocalDate()
-                                ?.format(DDMMYYYY)
-                                ?.let { TEXT_OT + it }
-                                ?: ""
-                        parts += (id + datePart)
-                    }
-
-                    if (isValid(so.policyNumber)) {
-                        parts += so.policyNumber!!.trim()
-                    }
-
-                    val block = parts.joinToString(SPACE)
-                    if (block.isNotBlank()){
-                        block
-                    } else {
-                        null
-                    }
-                }
+                .mapNotNull(::buildBlockFromSubOrder)
 
         val sb =
             StringBuilder(PREFIX)
@@ -120,7 +88,7 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
             .append(operationDate.format(DDMMYYYY))
 
         val result = sb.toString()
-        return if (result.length <= MAX_DESC_LEN){
+        return if (result.length <= MAX_DESC_LEN) {
             result
         } else {
             result.take(MAX_DESC_LEN)
@@ -128,6 +96,33 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
     }
 
     private fun isValid(v: String?): Boolean = !v.isNullOrBlank() && v.trim() != ZERO
+
+    private fun buildBlockFromSubOrder(so: SubOrder): String? {
+        val parts = mutableListOf<String>()
+
+        if (isValid(so.contractId)) {
+            val id = so.contractId!!.trim()
+            val datePart =
+                so.contractDate
+                    ?.atZone(DEFAULT_ZONE)
+                    ?.toLocalDate()
+                    ?.format(DDMMYYYY)
+                    ?.let { TEXT_OT + it }
+                    ?: ""
+            parts += (id + datePart)
+        }
+
+        if (isValid(so.policyNumber)) {
+            parts += so.policyNumber!!.trim()
+        }
+
+        val block = parts.joinToString(SPACE)
+        return if (block.isNotBlank()) {
+            block
+        } else {
+            null
+        }
+    }
 
     protected fun Payment.getAmountData() =
         AmountData(
