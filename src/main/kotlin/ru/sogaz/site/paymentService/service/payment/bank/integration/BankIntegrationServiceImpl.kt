@@ -9,9 +9,13 @@ import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.service.BankIntegrationService
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 abstract class BankIntegrationServiceImpl : BankIntegrationService {
     companion object {
@@ -20,10 +24,18 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         const val QR_TTL = "60"
         const val QR_TYPE = "02"
 
-        private const val DESC_POLICY_NUMBER = "Номера полиса №"
-        private const val SEPARATOR = ", №"
-        private const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
-        private const val DESC = "Оплата: "
+        private const val ZERO = "0"
+        private const val MAX_DESC_LEN = 250
+
+        private const val PREFIX = "Зачисление по операции оплата банковской картой "
+        private const val TEXT_DOGOVOROV = "договор(ов) "
+        private const val TEXT_OT = " от "
+        private const val SEP = ", "
+        private const val SPACE = " "
+        private const val TAIL = " платежный сервис, дата операции "
+
+        private val DDMMYYYY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+        private val DEFAULT_ZONE: ZoneId = ZoneId.systemDefault()
     }
 
     protected val jsonHeaders = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -45,48 +57,72 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         headersParams: GpbSbpHeadersParams?,
     ): Payment
 
+    protected abstract fun provider(): BankEnum
+
     abstract override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse
 
-    private fun generateDescription(subOrders: List<SubOrder>): String {
-        val policyNumbers = collectPolicyNumbers(subOrders)
+    private fun generateDescriptionV4(
+        provider: BankEnum,
+        subOrders: List<SubOrder>?,
+        operationDate: LocalDate,
+    ): String {
+        val providerText = provider.description
 
-        val contractIds = collectContractIds(subOrders)
+        val blocks =
+            subOrders
+                .orEmpty()
+                .mapNotNull(::buildBlockFromSubOrder)
 
-        val description =
-            buildString {
-                append(DESC)
+        val sb =
+            StringBuilder(PREFIX)
+                .append(providerText)
+                .append(SPACE)
+                .append(TEXT_DOGOVOROV)
 
-                if (policyNumbers.isNotEmpty() || contractIds.isNotEmpty()) {
-                    append(" (")
+        if (blocks.isNotEmpty()) {
+            sb.append(blocks.joinToString(SEP))
+        }
 
-                    if (policyNumbers.isNotEmpty()) {
-                        append(DESC_POLICY_NUMBER)
-                        append(policyNumbers.joinToString(SEPARATOR))
-                    }
+        sb
+            .append(TAIL)
+            .append(operationDate.format(DDMMYYYY))
 
-                    if (contractIds.isNotEmpty()) {
-                        if (policyNumbers.isNotEmpty()) append("; ")
-                        append(DESC_INSURANCE_CONTRACT)
-                        append(contractIds.joinToString(SEPARATOR))
-                    }
-
-                    append(")")
-                }
-            }
-        return description
+        val result = sb.toString()
+        return if (result.length <= MAX_DESC_LEN) {
+            result
+        } else {
+            result.take(MAX_DESC_LEN)
+        }
     }
 
-    private fun collectPolicyNumbers(subOrders: List<SubOrder>): List<String> =
-        subOrders
-            .mapNotNull { it.policyNumber }
-            .filter(::numberFilter)
+    private fun isValid(v: String?): Boolean = !v.isNullOrBlank() && v.trim() != ZERO
 
-    private fun collectContractIds(subOrders: List<SubOrder>): List<String> =
-        subOrders
-            .mapNotNull { it.contractId }
-            .filter(::numberFilter)
+    private fun buildBlockFromSubOrder(so: SubOrder): String? {
+        val parts = mutableListOf<String>()
 
-    private fun numberFilter(number: String) = number.isNotBlank() && number != "0"
+        if (isValid(so.contractId)) {
+            val id = so.contractId!!.trim()
+            val datePart =
+                so.contractDate
+                    ?.atZone(DEFAULT_ZONE)
+                    ?.toLocalDate()
+                    ?.format(DDMMYYYY)
+                    ?.let { TEXT_OT + it }
+                    ?: ""
+            parts += (id + datePart)
+        }
+
+        if (isValid(so.policyNumber)) {
+            parts += so.policyNumber!!.trim()
+        }
+
+        val block = parts.joinToString(SPACE)
+        return if (block.isNotBlank()) {
+            block
+        } else {
+            null
+        }
+    }
 
     protected fun Payment.getAmountData() =
         AmountData(
@@ -94,5 +130,6 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
             currency = CurrencyEnum.RUB,
         )
 
-    protected fun Payment.getDescription() = generateDescription(this.order!!.subOrders)
+    protected fun Payment.v4Description(operationDate: LocalDate = LocalDate.now(DEFAULT_ZONE)): String =
+        generateDescriptionV4(provider(), this.order?.subOrders, operationDate)
 }
