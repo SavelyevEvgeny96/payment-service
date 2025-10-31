@@ -176,8 +176,9 @@ class GPBankIntegrationServiceImpl(
         request: Any? = null,
     ): T {
         logger.info("Prepare for POST GPB request: $url with body: $request")
-        return withMeasureTime { restTemplate.postForObject<T>(url, request) }
-            .also { logger.info("Successfully processing request for GPB with response: $it") }
+        return withMeasureTime { runCatching { restTemplate.postForObject<T>(url, request) } }
+            .also { logger.info("Response from GPB: $it") }
+            .getOrThrow()
     }
 
     private inline fun <reified T> withMeasureTime(block: () -> T): T {
