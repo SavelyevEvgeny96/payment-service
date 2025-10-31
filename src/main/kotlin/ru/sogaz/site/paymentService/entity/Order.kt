@@ -48,14 +48,16 @@ data class Order(
     var recipientUserId: String? = null,
     @Column(name = "policyholder")
     var policyholder: String? = null,
-    @Column(name = "recipient_gd_id")
-    var recipientGdId: String? = null,
+    @Column(name = "unified_id")
+    var unifiedId: String? = null,
     @Column(name = "key_card")
     var keyCard: String? = null,
     @Column(name = "save_card")
     var saveCard: Boolean = false,
-    @Column(name = "recurrent")
-    var recurrent: Boolean = false,
+    @Column(name = "subscription_id")
+    val subscriptionId: String = "",
+    @Column(name = "client_id")
+    val clientId: String? = null,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,

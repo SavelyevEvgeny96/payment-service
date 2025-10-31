@@ -28,37 +28,42 @@ import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
+import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.payment.bank.integration.AKBankIntegrationServiceImpl
 import ru.sogaz.site.paymentService.service.payment.bank.integration.GPBankIntegrationServiceImpl
+import java.util.UUID
 import kotlin.random.Random
 
 @ExtendWith(MockKExtension::class)
 class BankIntegrationServiceTest {
     companion object {
         private const val TEST_GPB_TOKEN = "test-token"
-        private const val TEST_PAYMENT_PAGE_URL = "payment-url"
+        private const val TEST_GPB_PAYMENT_PAGE_URL = "payment-url"
         private const val TEST_GPB_SBP_QR_ID = "qr-id"
         private const val TEST_GPB_SBP_PAYLOAD = "gazprom-payload"
         private const val TEST_GPB_SBP_TRANSACTIONAL_ID = "transactional-id"
         private const val TEST_AKB_ORDER_ID = "123"
+        private const val TEST_AKB_PASSWORD = "akb-password"
+        private const val TEST_AKB_HPP_URL = "payment-url?password=$TEST_AKB_PASSWORD"
         private const val AKB_REDIRECT_URL = "afterPayRedirectUrl"
         private const val AKB_QRC_PAYLOAD = "akb-qrc-payload"
         private const val GPB_QR_CONTENT = "gpb-qr-content"
         private const val GPB_QR_MEDIA_TYPE = "image/png"
 
-        private val TOKEN_RESPONSE = GazpromTokenResponse(TEST_GPB_TOKEN)
-        private val GPB_CARD_PAYMENT_RESPONSE = GazpromCardPaymentResponse(TEST_GPB_TOKEN, Options(TEST_PAYMENT_PAGE_URL))
-        private val GPB_SBP_PAYMENT_RESPONSE =
+        private val GPBTokenResponse = GazpromTokenResponse(TEST_GPB_TOKEN)
+        private val GPBCardPaymentResponse = GazpromCardPaymentResponse(TEST_GPB_TOKEN, Options(TEST_GPB_PAYMENT_PAGE_URL))
+        private val GPBSBPPaymentResponse =
             GazpromSBPPaymentResponse(SBPData(TEST_GPB_SBP_QR_ID, TEST_GPB_SBP_PAYLOAD), TEST_GPB_SBP_TRANSACTIONAL_ID)
-        private val AKB_ORDER_RESPONSE = AkbOrderResponse(AkbOrderInfo(TEST_AKB_ORDER_ID.toInt(), TEST_PAYMENT_PAGE_URL))
-        private val PREPARE_PUSH_TRAN_RESPONSE =
+        private val akbOrderInfo = AkbOrderInfo(id = TEST_AKB_ORDER_ID.toInt(), hppUrl = TEST_AKB_HPP_URL, password = TEST_AKB_PASSWORD)
+        private val akbOrderResponse = AkbOrderResponse(akbOrderInfo)
+        private val preparePushTranResponse =
             PreparePushTranResponse(
                 mutableMapOf(
                     "ipsRu" to IpsRuData(AKB_QRC_PAYLOAD, AKB_REDIRECT_URL),
                 ),
             )
-        private val GPB_QR_IMAGE_RESPONSE = GPBQRImageResponse(QRCoreData(QRImageData(GPB_QR_CONTENT, GPB_QR_MEDIA_TYPE)))
+        private val gpbqrImageResponse = GPBQRImageResponse(QRCoreData(QRImageData(GPB_QR_CONTENT, GPB_QR_MEDIA_TYPE)))
     }
 
     @RelaxedMockK
@@ -66,6 +71,9 @@ class BankIntegrationServiceTest {
 
     @MockK
     private lateinit var restTemplate: RestTemplate
+
+    @MockK
+    private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
 
     private lateinit var gpBankIntegrationService: GPBankIntegrationServiceImpl
     private lateinit var akBankIntegrationService: AKBankIntegrationServiceImpl
@@ -75,8 +83,8 @@ class BankIntegrationServiceTest {
         mockGPBRestTemplate()
         mockAKBRestTemplate()
 
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate)
-        akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate)
+        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
+        akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 
     @Test
@@ -85,7 +93,7 @@ class BankIntegrationServiceTest {
             .run(gpBankIntegrationService::registerPayment)
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
-            .returns(TEST_PAYMENT_PAGE_URL, Payment::paymentPageUrl)
+            .returns(TEST_GPB_PAYMENT_PAGE_URL, Payment::paymentPageUrl)
             .returns(TEST_GPB_TOKEN, Payment::paymentBankId)
             .returns(null, Payment::qrcId)
     }
@@ -107,8 +115,9 @@ class BankIntegrationServiceTest {
             .run(akBankIntegrationService::registerPayment)
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
-            .returns(TEST_PAYMENT_PAGE_URL, Payment::paymentPageUrl)
+            .returns(TEST_AKB_HPP_URL, Payment::paymentPageUrl)
             .returns(TEST_AKB_ORDER_ID, Payment::paymentBankId)
+            .returns(TEST_AKB_PASSWORD, Payment::paymentPass)
             .returns(null, Payment::qrcId)
     }
 
@@ -120,6 +129,7 @@ class BankIntegrationServiceTest {
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(AKB_QRC_PAYLOAD, Payment::paymentPageUrl)
             .returns(TEST_AKB_ORDER_ID, Payment::paymentBankId)
+            .returns(TEST_AKB_PASSWORD, Payment::paymentPass)
             .returns(null, Payment::qrcId)
     }
 
@@ -137,6 +147,7 @@ class BankIntegrationServiceTest {
         bank: BankEnum,
         paymentType: PaymentTypeEnum,
     ) = Payment(
+        id = UUID.randomUUID(),
         bank = bank,
         order = generateOrder(),
         type = paymentType,
@@ -150,22 +161,22 @@ class BankIntegrationServiceTest {
     ).apply { this.subOrders.addAll(subOrders) }
 
     private fun mockGPBRestTemplate() {
-        every { restTemplate.postForObject<GazpromTokenResponse>(any(String::class)) }.returns(TOKEN_RESPONSE)
+        every { restTemplate.postForObject<GazpromTokenResponse>(any(String::class)) }.returns(GPBTokenResponse)
         every { restTemplate.postForObject<GazpromCardPaymentResponse>(any(String::class), any()) }.returns(
-            GPB_CARD_PAYMENT_RESPONSE,
+            GPBCardPaymentResponse,
         )
         every { restTemplate.postForObject<GazpromSBPPaymentResponse>(any(String::class), any()) }.returns(
-            GPB_SBP_PAYMENT_RESPONSE,
+            GPBSBPPaymentResponse,
         )
         every { restTemplate.postForObject<GPBQRImageResponse>(any(String::class), any()) }.returns(
-            GPB_QR_IMAGE_RESPONSE,
+            gpbqrImageResponse,
         )
     }
 
     private fun mockAKBRestTemplate() {
-        every { restTemplate.postForObject<AkbOrderResponse>(any(String::class), any()) }.returns(AKB_ORDER_RESPONSE)
+        every { restTemplate.postForObject<AkbOrderResponse>(any(String::class), any()) }.returns(akbOrderResponse)
         every { restTemplate.postForObject<PreparePushTranResponse>(any(String::class), any()) }.returns(
-            PREPARE_PUSH_TRAN_RESPONSE,
+            preparePushTranResponse,
         )
         every { restTemplate.postForObject<Map<String, Any>>(any(String::class), any()) }.answers { mutableMapOf() }
     }

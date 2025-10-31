@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment
 
+import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -7,6 +8,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.entity.Order
@@ -16,7 +18,9 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
+import java.time.LocalDateTime
 
+@Service
 class RegisterPaymentServiceImpl(
     private val paymentDao: PaymentDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
@@ -32,13 +36,15 @@ class RegisterPaymentServiceImpl(
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
         urlToReturn: UrlToReturn,
+        headersParams: GpbSbpHeadersParams?,
     ): Payment =
         try {
             formPayment(order, paymentTypeEnum, urlToReturn)
-                .run { paymentDao.save(this) }
+                .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
-                .run { registerInBank(this) }
-                .run { paymentDao.save(this) }
+                .run { registerInBank(this, headersParams) }
+                .apply { paymentStarted = LocalDateTime.now() }
+                .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
         } catch (ex: Exception) {
             logger.error("ERROR: " + ex.message)
@@ -63,6 +69,7 @@ class RegisterPaymentServiceImpl(
             order = order,
             type = paymentTypeEnum,
             urlToReturn = urlToReturn,
+            saveCard = order.saveCard,
         )
 
     private fun saveHistory(
@@ -70,8 +77,11 @@ class RegisterPaymentServiceImpl(
         actionType: ActionType,
     ) = paymentOperationHistoryDao.saveForOrder(order, actionType.value)
 
-    private fun registerInBank(payment: Payment): Payment =
+    private fun registerInBank(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
-            .run { this.registerPayment(payment) }
+            .registerPayment(payment, headersParams)
 }

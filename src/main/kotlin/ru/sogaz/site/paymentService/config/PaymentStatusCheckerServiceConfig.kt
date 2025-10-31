@@ -37,7 +37,7 @@ class PaymentStatusCheckerServiceConfig {
             receiptService = receiptService,
             restTemplate = restTemplate,
             objectMapper = objectMapper,
-            rabbit = rabbitProperties,
+            props = rabbitProperties,
             subOrderDao = subOrderDao,
             paymentDao = paymentDao,
             operationHistoryDao = operationHistoryDao,

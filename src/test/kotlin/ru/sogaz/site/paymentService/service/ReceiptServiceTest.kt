@@ -1,214 +1,157 @@
 package ru.sogaz.site.paymentService.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.junit5.MockKExtension
+import io.mockk.slot
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.eq
-import org.mockito.Mockito.atLeastOnce
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import org.mockito.kotlin.whenever
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.web.client.RestClientException
-import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
-import ru.sogaz.site.paymentService.config.WebConfigRestTemplate
+import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest
+import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateResponse
+import ru.sogaz.site.payment.receipt.client.model.ResponsePaymentReceiptCreateResponse
+import ru.sogaz.site.paymentService.dao.ChequeSentDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dao.SubOrderDao
-import ru.sogaz.site.paymentService.dto.request.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentService.dto.response.PaymentData
-import ru.sogaz.site.paymentService.dto.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
-import ru.sogaz.site.paymentService.repository.ChequeSentRepository
-import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
-import ru.sogaz.site.paymentService.repository.PaymentRepository
-import ru.sogaz.site.paymentService.repository.SubOrderRepository
 import ru.sogaz.site.paymentService.service.payment.ReceiptServiceImpl
 import java.util.UUID
 
+@ExtendWith(MockKExtension::class)
 class ReceiptServiceTest {
-    private val receiptProperty = mock<ReceiptProperties>()
-    private val restTemplate = mock<WebConfigRestTemplate>()
-    private val subOrderRepository = mock<SubOrderRepository>()
-    private val operationHistoryRepository = mock<PaymentOperationHistoryRepository>()
-    private val objectMapper = mock<ObjectMapper>()
-    private val paymentRepository = mock<PaymentRepository>()
-    private val chequeSentRepository = mock<ChequeSentRepository>()
-    private val subOrderDao = mock<SubOrderDao>()
+    companion object {
+        private const val TEST_RECEIPT_URL = "http://test.url"
+        private const val SUCCESS_STATUS = "SUCCESS"
+        private const val FAILED_STATUS = "FAILED"
+        private const val TEST_CLIENT_EMAIL = "test@example.com"
+        private const val ATOL_SYSTEM = "Atol"
+        private const val TEST_POLICY_NUMBER = "POL123"
+        private const val TEST_CONTRACT_ID = "CONT123"
+        private const val TEST_AMOUNT = "1000.00"
+        private const val TEST_PAYMENT_BANK_ID = "payment-bank-id"
+    }
 
-    private val service =
-        ReceiptServiceImpl(
-            subOrderDao = subOrderDao,
-            operationHistoryRepository = operationHistoryRepository,
-            paymentReceiptControllerApi = PaymentReceiptControllerApi(),
-            paymentRepository = paymentRepository,
-            chequeSentRepository = chequeSentRepository,
-        )
+    @MockK
+    private lateinit var paymentDao: PaymentDao
 
-    private val traceId = "test-trace-id"
+    @MockK
+    private lateinit var subOrderDao: SubOrderDao
+
+    @RelaxedMockK
+    private lateinit var chequeSentDao: ChequeSentDao
+
+    @RelaxedMockK
+    private lateinit var operationHistoryDao: PaymentOperationHistoryDao
+
+    @MockK
+    private lateinit var paymentReceiptControllerApi: PaymentReceiptControllerApi
+
+    @MockK
+    private lateinit var receiptProperty: ReceiptProperties
+
+    private lateinit var service: ReceiptServiceImpl
+    private lateinit var validOrder: Order
+    private lateinit var validSubOrder: SubOrder
+    private lateinit var validPayment: Payment
+
+    @BeforeEach
+    fun beforeEach() {
+        service = initReceiptService()
+        initOrdersTestData()
+
+        every { paymentDao.findByOrder(validOrder) } returns validPayment
+        every { paymentDao.findByPaymentBankId(any()) } returns validPayment
+        every { paymentDao.save(any()) } returnsArgument 0
+        every { subOrderDao.getAllSubOrderListByOrderId(validOrder) } returns listOf(validSubOrder)
+        every { receiptProperty.receiptUrl } returns TEST_RECEIPT_URL
+    }
 
     @Test
     fun `generateReceipt should create valid request`() {
-        val subOrder =
-            SubOrder().apply {
-                policyNumber = "POL123"
-                contractId = "CONT123"
-                premiumAmount = "1000.00"
-            }
+        val requestSlot = slot<PaymentReceiptCreateRequest>()
+        every { paymentReceiptControllerApi.createPaymentCheck(any()) } returns buildSuccessReceiptServiceResponse()
 
-        val order =
-            Order().apply {
-                id = UUID.randomUUID()
-                premiumAmount = "1000.00"
-                recipientEmail = "test@example.com"
-            }
+        service.generateReceipt(validPayment)
 
-        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        whenever(paymentRepository.findByOrder(order)).thenReturn(
-            Payment().apply { id = UUID.randomUUID() },
-        )
-        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
-
-        val mockResponse =
-            PaymentReceiptCreateResponse(
-                "SUCCESS",
-                200,
-                "222",
-                null,
-                null,
-                UUID.randomUUID().toString(),
-                null,
-                PaymentData("222", "222"),
-            )
-
-        val mockSpringRestTemplate = mock<RestTemplate>()
-        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
-
-        whenever(
-            mockSpringRestTemplate.exchange(
-                any<String>(),
-                any(),
-                any<HttpEntity<*>>(),
-                eq(PaymentReceiptCreateResponse::class.java),
-            ),
-        ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
-
-        service.generateReceipt(order)
-
-        val captor = ArgumentCaptor.forClass(HttpEntity::class.java)
-        verify(mockSpringRestTemplate, atLeastOnce()).exchange(
-            eq(receiptProperty.receiptUrl),
-            eq(HttpMethod.POST),
-            captor.capture(),
-            eq(PaymentReceiptCreateResponse::class.java),
-        )
-
-        val request = captor.value.body as PaymentReceiptCreateRequest
-        assertThat(request.client.email).isEqualTo("test@example.com")
-        assertThat(request.system).isEqualTo("Atol")
+        verify(atLeast = 1) { paymentReceiptControllerApi.createPaymentCheck(capture(requestSlot)) }
+        requestSlot.captured
+            .run(::assertThat)
+            .returns(TEST_CLIENT_EMAIL) { it.client.email }
+            .returns(ATOL_SYSTEM) { it.system }
     }
 
     @Test
     fun `generateReceipt should handle API failure response`() {
-        val subOrder =
-            SubOrder().apply {
-                policyNumber = "POL123"
-                contractId = "CONT123"
-                premiumAmount = "1000.00"
-            }
-
-        val order =
-            Order().apply {
-                id = UUID.randomUUID()
-                premiumAmount = "1000.00"
-                recipientEmail = "test@example.com"
-            }
-
-        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        whenever(paymentRepository.findByOrder(order)).thenReturn(Payment().apply { id = UUID.randomUUID() })
-        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
-
-        val mockResponse = """{"status":"FAILED"}"""
-        whenever(objectMapper.readValue(mockResponse, PaymentReceiptCreateResponse::class.java))
-            .thenReturn(
-                PaymentReceiptCreateResponse(
-                    "FAILED",
-                    500,
-                    "trace-123",
-                    null,
-                    null,
-                    UUID.randomUUID().toString(),
-                ),
-            )
-
-        // 👇 создаём мокнутый RestTemplate
-        val mockSpringRestTemplate = mock<RestTemplate>()
-        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
-
-        whenever(
-            mockSpringRestTemplate.exchange(
-                any<String>(),
-                any<HttpMethod>(),
-                any<HttpEntity<*>>(),
-                eq(String::class.java),
-            ),
-        ).thenReturn(ResponseEntity(mockResponse, HttpStatus.OK))
+        every { paymentReceiptControllerApi.createPaymentCheck(any()) } returns buildFailedReceiptServiceResponse()
 
         assertThrows<InnerException> {
-            service.generateReceipt(order)
+            service.generateReceipt(validPayment)
         }
     }
 
     @Test
     fun `generateReceipt should handle REST client exception`() {
-        val subOrder =
-            SubOrder().apply {
-                policyNumber = "POL123"
-                contractId = "CONT123"
-                premiumAmount = "1000.00"
-            }
-
-        val order =
-            Order().apply {
-                id = UUID.randomUUID()
-                premiumAmount = "1000.00"
-                recipientEmail = "test@example.com"
-            }
-
-        whenever(subOrderRepository.findAllByOrderId(order)).thenReturn(listOf(subOrder))
-        whenever(subOrderRepository.findFirstByOrderId(order)).thenReturn(subOrder)
-        whenever(paymentRepository.findByOrder(order)).thenReturn(Payment().apply { id = UUID.randomUUID() })
-        whenever(receiptProperty.receiptUrl).thenReturn("http://test.url")
-
-        // 👇 создаём мокнутый RestTemplate
-        val mockSpringRestTemplate = mock<RestTemplate>()
-        whenever(restTemplate.defaultRestTemplate()).thenReturn(mockSpringRestTemplate)
-
-        whenever(
-            mockSpringRestTemplate.exchange(
-                any<String>(),
-                any<HttpMethod>(),
-                any<HttpEntity<*>>(),
-                eq(String::class.java),
-            ),
-        ).thenThrow(RestClientException("API error"))
+        every { paymentReceiptControllerApi.createPaymentCheck(any()) } throws RestClientException("API error")
 
         val exception =
             assertThrows<InnerException> {
-                service.generateReceipt(order)
+                service.generateReceipt(validPayment)
             }
 
         assertThat(exception.message).contains(ReceiptServiceImpl.ERROR_RECEIPT_GENERATION)
     }
+
+    private fun initOrdersTestData() {
+        validOrder =
+            Order(
+                id = UUID.randomUUID(),
+                premiumAmount = TEST_AMOUNT,
+                recipientEmail = TEST_CLIENT_EMAIL,
+            )
+        validSubOrder =
+            SubOrder(
+                policyNumber = TEST_POLICY_NUMBER,
+                contractId = TEST_CONTRACT_ID,
+                premiumAmount = TEST_AMOUNT,
+            )
+        validPayment =
+            Payment(
+                paymentBankId = TEST_PAYMENT_BANK_ID,
+                order = validOrder,
+            )
+    }
+
+    private fun buildSuccessReceiptServiceResponse() = buildReceiptServiceResponse(SUCCESS_STATUS, 200)
+
+    private fun buildFailedReceiptServiceResponse() = buildReceiptServiceResponse(FAILED_STATUS, 500)
+
+    private fun buildReceiptServiceResponse(
+        status: String,
+        code: Int,
+    ) = ResponsePaymentReceiptCreateResponse()
+        .status(status)
+        .responseUuid(UUID.randomUUID())
+        .code(code)
+        .traceId("222")
+        .data(PaymentReceiptCreateResponse().state("222").externalId("222"))
+
+    private fun initReceiptService() =
+        ReceiptServiceImpl(
+            paymentDao = paymentDao,
+            subOrderDao = subOrderDao,
+            chequeSentDao = chequeSentDao,
+            operationHistoryDao = operationHistoryDao,
+            paymentReceiptControllerApi = paymentReceiptControllerApi,
+        )
 }

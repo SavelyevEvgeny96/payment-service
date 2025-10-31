@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.service.callback
 
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
@@ -8,19 +9,15 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
-import ru.sogaz.site.paymentService.entity.CallbackPayment
-import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
-import ru.sogaz.site.paymentService.enums.BankEnum
-import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.SignatureVerifier
-import java.time.LocalDateTime
 
+@Service
 class GpbCallbackServiceImpl(
     private val paymentDao: PaymentDao,
     private val orderDao: OrderDao,
@@ -43,7 +40,6 @@ class GpbCallbackServiceImpl(
                 " traceID: "
         const val RESPONSE_FOR_BANK = "Банку предоставлен ответ: "
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
-        const val UPDATE_ORDER_STATUS = "Статус заказа в таблице ЗАКАЗОВ обновлен. paymentBankId: "
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
@@ -77,9 +73,6 @@ class GpbCallbackServiceImpl(
             updatePaymentStatus(payment)
             logger.info(UPDATE_PAYMENT_STATUS)
 
-            updateOrderStatus(order = payment.order!!)
-            logger.info(UPDATE_ORDER_STATUS)
-
             logOperation(payment)
             logger.info(OPERATION_PAYMENT_SUCCESS)
 
@@ -98,47 +91,11 @@ class GpbCallbackServiceImpl(
 
     private fun updatePaymentStatus(payment: Payment) {
         payment
-            .apply { state = PaymentStatusEnum.SUCCESS }
+            .apply { state = PaymentStatusEnum.CALLBACK }
             .run { paymentDao.save(this) }
     }
 
-    private fun updateOrderStatus(order: Order) {
-        order
-            .apply { status = OrderStatus.SUCCESS }
-            .run { orderDao.save(this) }
-    }
-
-    private fun saveCallbackPayment(payment: Payment) {
-        val existingPayment = payment.paymentBankId?.let { callbackPaymentDao.findByPaymentBankId(it) }
-
-        if (existingPayment == null) {
-            val newCallbackPayment =
-                CallbackPayment(
-                    bankId =
-                        when (payment.bank) {
-                            BankEnum.GPB -> CallbackServiceImpl.SBP_GPB
-                            else -> CallbackServiceImpl.AKB_RUS
-                        },
-                    typeId = CallbackServiceImpl.BANK_CARD,
-                    paymentBankId = payment.paymentBankId,
-                    createDate = LocalDateTime.now(),
-                    updateDate = LocalDateTime.now(),
-                )
-            callbackPaymentDao.save(newCallbackPayment)
-        } else {
-            existingPayment.apply {
-                bankId =
-                    when (payment.bank) {
-                        BankEnum.GPB -> CallbackServiceImpl.SBP_GPB
-                        else -> CallbackServiceImpl.AKB_RUS
-                    }
-                typeId = CallbackServiceImpl.BANK_CARD
-                paymentBankId = payment.paymentBankId
-                updateDate = LocalDateTime.now()
-            }
-            callbackPaymentDao.save(existingPayment)
-        }
-    }
+    private fun saveCallbackPayment(payment: Payment) = callbackPaymentDao.saveCallbackForPayment(payment)
 
     private fun logOperation(payment: Payment) {
         try {

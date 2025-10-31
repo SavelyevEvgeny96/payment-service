@@ -1,26 +1,21 @@
 package ru.sogaz.site.paymentService.properties
 
+import jakarta.annotation.PostConstruct
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.NestedConfigurationProperty
+import ru.sogaz.site.paymentService.loggerFor
 
-@ConfigurationProperties(prefix = "spring.rabbitmq")
+@ConfigurationProperties(prefix = "app.rabbit")
 class RabbitProperties {
-    lateinit var host: String
-    var port: Int = 5672
-    lateinit var username: String
-    lateinit var password: String
+    private val logger = loggerFor(javaClass)
+    lateinit var exchange: String
+    lateinit var queueStatusPayment: String
+    lateinit var routingKeyStatusPayment: String
 
-    @NestedConfigurationProperty
-    lateinit var template: Template
-
-    @NestedConfigurationProperty
-    lateinit var queue: QueueConfig
-
-    class Template {
-        lateinit var routingKey: String
-    }
-
-    class QueueConfig {
-        lateinit var name: String
+    @PostConstruct
+    fun postConstruct() {
+        logger.info("PostConstruct:")
+        logger.info("exchange = $exchange")
+        logger.info("queueStatusPayment = $queueStatusPayment")
+        logger.info("routingKeyStatusPayment = $routingKeyStatusPayment")
     }
 }

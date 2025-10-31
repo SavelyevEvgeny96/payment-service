@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.BankDao
@@ -10,6 +11,7 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.BankRepository
 
+@Repository
 class BankDaoImpl(
     private val bankRepository: BankRepository,
     private val configDataDao: ConfigDataDao,
@@ -36,11 +38,11 @@ class BankDaoImpl(
     ): Bank {
         val bank: Bank?
         if (checkBankPriority == TRUE) {
-            val priorityBankName = configDataDao.getBankInfoFromConfigData(traceId, BANK_PRIORITY)
+            val priorityBankName = configDataDao.getConfigValueByKey(BANK_PRIORITY)
             bank = bankRepository.findByBankId(priorityBankName)
             logger.info("$LOG_INFO_BANK_PRIORITY_TRUE ${bank.bankName}")
         } else if (bankId.isNullOrBlank()) {
-            val reserveBankName = configDataDao.getBankInfoFromConfigData(traceId, BANK_RESERVE)
+            val reserveBankName = configDataDao.getConfigValueByKey(BANK_RESERVE)
             bank = bankRepository.findByBankId(reserveBankName)
             logger.info("$LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE ${bank.bankName}")
         } else {
@@ -72,7 +74,7 @@ class BankDaoImpl(
     private fun convertBankToEnumOrThrow(bankName: String?): BankEnum =
         BankEnum.from(bankName) ?: throw InnerException(getTraceId(), LOG_RESOLVE_BANK_ERROR.format(bankName))
 
-    private fun getConfigData(name: String): String = configDataDao.getBankInfoFromConfigData(getTraceId(), name)
+    private fun getConfigData(name: String): String = configDataDao.getConfigValueByKey(name)
 
     override fun findByBankId(bankId: String?): Bank = bankRepository.findByBankId(bankId)
 }

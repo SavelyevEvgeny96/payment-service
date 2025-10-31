@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.4</version>
+        <version>3.5.6</version>
     </parent>
     <groupId>ru.sogaz.esb</groupId>
     <artifactId>payment-service</artifactId>
@@ -14,13 +14,13 @@
     <properties>
         <java.version>21</java.version>
         <kotlin.version>1.9.25</kotlin.version>
-        <spring-cloud.version>2024.0.0-RC1</spring-cloud.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
-        <ru.sogaz.site.exception.starter.version>1.0.105</ru.sogaz.site.exception.starter.version>
+        <ru.sogaz.site.exception.starter.version>1.0.110</ru.sogaz.site.exception.starter.version>
         <logback-gelf.version>6.1.1</logback-gelf.version>
-        <springdoc-openapi-starter.version>2.2.0</springdoc-openapi-starter.version>
+        <springdoc-openapi-starter.version>2.7.0</springdoc-openapi-starter.version>
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
         <spring-boot-maven-plugin.version>3.1.4</spring-boot-maven-plugin.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -74,6 +74,11 @@
             <version>${kotlin.version}</version>
         </dependency>
 
+        <!-- Reactor-->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
 
         <!-- inner libraries -->
         <dependency>
@@ -129,14 +134,9 @@
 
         <!-- Jackson -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.13.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
-            <version>2.13.1</version>
+            <version>2.15.2</version>
         </dependency>
 
         <!-- Logger -->
@@ -158,6 +158,11 @@
             <version>4.29.2</version>
         </dependency>
 
+        <!-- Micrometer prometheus-->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
 
         <!-- For tests -->
         <dependency>
@@ -194,7 +199,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>6.1.6</version>
             <scope>test</scope>
         </dependency>
 
@@ -250,6 +254,18 @@
                         <goals>
                             <goal>kapt</goal>
                         </goals>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>org.mapstruct</groupId>-->
+                                    <artifactId>mapstruct-processor</artifactId>
+                                    <version>${mapstruct.version}</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
+                            <annotationProcessorArgs>
+                                <annotationProcessorArg>mapstruct.defaultComponentModel=spring</annotationProcessorArg>
+                            </annotationProcessorArgs>
+                        </configuration>
                     </execution>
 
                     <execution>
@@ -262,25 +278,13 @@
 
                     <execution>
                         <id>test-compile</id>
+                        <phase>test-compile</phase>
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <sourceDirs>
-                        <sourceDir>src/main/kotlin</sourceDir>
-                    </sourceDirs>
-                    <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                            <groupId>org.mapstruct</groupId>-->
-                            <artifactId>mapstruct-processor</artifactId>
-                            <version>${mapstruct.version}</version>
-                        </annotationProcessorPath>
-                    </annotationProcessorPaths>
-                    <annotationProcessorArgs>
-                        <annotationProcessorArg>mapstruct.defaultComponentModel=spring</annotationProcessorArg>
-                    </annotationProcessorArgs>
                     <args>
                         <arg>-Xjsr305=strict</arg>
                     </args>

@@ -23,4 +23,4 @@ fun main(args: Array<String>) {
 
 fun <T> loggerFor(clazz: Class<T>): Logger = LoggerFactory.getLogger(clazz)
 
-inline fun <reified T> T?.orElseThrow(block: () -> Exception): T = this ?: throw block()
+inline fun <reified T> T?.orThrow(block: () -> Exception): T = this ?: throw block()

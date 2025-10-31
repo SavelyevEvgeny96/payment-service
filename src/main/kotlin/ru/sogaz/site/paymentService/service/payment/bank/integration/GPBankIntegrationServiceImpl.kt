@@ -1,46 +1,81 @@
 package ru.sogaz.site.paymentService.service.payment.bank.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
-import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dto.data.AmountData
+import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
+import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.State
+import ru.sogaz.site.paymentService.dto.request.ThreeDSTwo
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
+import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import kotlin.time.measureTimedValue
 
 class GPBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,
+    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
 ) : BankIntegrationServiceImpl() {
     companion object {
-        const val PAYMENT_PREFIX = "/payment/"
-        const val START_PREFIX = "/start"
-        const val PAYMENT_PAGE = "payment_page"
-        const val TOKEN_PREFIX = "/token"
+        private const val PAYMENT_PATH = "/payment/"
+        private const val START_PATH = "/start"
+        private const val TOKEN_PATH = "/token"
+
+        private const val PAYMENT_PAGE = "payment_page"
+        private const val IN_PROGRESS_STATE = "no"
+
+        const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции:"
+
+        private val cardPaymentState = State(redirect = PAYMENT_PAGE, inProgress = IN_PROGRESS_STATE)
+        private val cardPayment3ds2 = ThreeDSTwo(true)
     }
 
     private val logger = loggerFor(javaClass)
 
+    override fun provider(): BankEnum = BankEnum.GPB
+
     @Throws(BankIntegrationException::class, RestClientException::class)
     override fun registerCardPayment(payment: Payment): Payment =
-        exchangeForToken()
-            .run { buildPaymentCardRequest(this, payment) }
-            .run { postForCardPaymentLink(this) }
-            .run { fillPaymentDataFromResponse(this, payment) }
+        payment
+            .run(::buildPaymentCardRequest)
+            .run(::postForCardPaymentLink)
+            .run { payment.fillFromResponse(this) }
+
+    private fun buildPaymentCardRequest(payment: Payment): GPBPaymentRequest =
+        buildPaymentCardRequest(
+            token = exchangeForToken(),
+            order = payment.order!!,
+            amountData = payment.getAmountData(),
+            description = payment.v4Description(),
+            urlToReturn = payment.urlToReturn,
+        )
 
     private fun exchangeForToken(): String {
         try {
@@ -50,78 +85,86 @@ class GPBankIntegrationServiceImpl(
         }
     }
 
-    private fun formUrlForToken(): String = "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$TOKEN_PREFIX"
+    private fun formUrlForToken(): String = "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$TOKEN_PATH"
 
     private fun buildPaymentCardRequest(
         token: String,
-        payment: Payment,
-    ): GPBPaymentRequest {
-        val descriptionAndPremiumAmount = generateDescription(payment)
-        return buildPaymentCardRequest(
-            descAndPremiumAmountData = descriptionAndPremiumAmount,
-            orderId = payment.order?.id.toString(),
-            token = token,
-            urlToReturn = payment.urlToReturn,
-        )
-    }
-
-    private fun buildPaymentCardRequest(
-        descAndPremiumAmountData: DataDescriptionAndPremiumAmount,
-        orderId: String,
-        token: String,
+        order: Order,
+        amountData: AmountData,
+        description: String,
         urlToReturn: UrlToReturn,
     ) = GPBPaymentRequest(
-        portalId = apiConfigProperties.portalId,
-        token = token,
         merchantId = apiConfigProperties.merchantId,
-        orderId = orderId,
+        orderId = order.id.toString(),
+        token = token,
         backUrlS = urlToReturn.success() ?: apiConfigProperties.backUrlS,
         backUrlF = urlToReturn.failed() ?: apiConfigProperties.backUrlF,
-        amount = descAndPremiumAmountData.premiumAmount.toString(),
-        description = descAndPremiumAmountData.description,
-        currency = RUB,
-        state = State(redirect = PAYMENT_PAGE),
+        amount = amountData.getAmountInPennies(),
+        description = description,
+        currency = amountData.currency,
+        state = cardPaymentState,
+        threeDSTwo = cardPayment3ds2,
+        openApiMirPaySupported = true,
+        addCardAllowed = order.saveCard,
     )
 
     private fun formRegisterPaymentRequestUrl(token: String): String =
-        "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$PAYMENT_PREFIX$token$START_PREFIX"
+        "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$PAYMENT_PATH$token$START_PATH"
 
-    private fun postForCardPaymentLink(request: GPBPaymentRequest) =
-        postForObject<GazpromCardPaymentResponse>(
+    private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
+        postForObject(
             formRegisterPaymentRequestUrl(request.token),
-            HttpEntity(request, jsonHeaders()),
+            HttpEntity(request, jsonHeaders),
         )
 
     @Throws(RestClientException::class)
-    override fun registerSBPPayment(payment: Payment): Payment =
+    override fun registerSBPPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment =
         payment
             .run(::buildPaymentSBPRequest)
-            .run(::postForSBPPaymentData)
-            .run { fillPaymentDataFromResponse(this, payment) }
+            .run { postForSBPPaymentData(this, headersParams) }
+            .run { payment.fillFromResponse(this) }
 
     private fun buildPaymentSBPRequest(payment: Payment): GPBSBPPaymentRequest =
-        payment
-            .run(::generateDescription)
-            .run(::buildPaymentSBPRequest)
-
-    private fun buildPaymentSBPRequest(descAndPremiumAmountData: DataDescriptionAndPremiumAmount) =
-        GPBSBPPaymentRequest(
-            amount = descAndPremiumAmountData.premiumAmount.toString(),
-            account = apiConfigProperties.paymentAccount,
-            merchantId = apiConfigProperties.merchantIdSbpGpb,
-            templateVersion = TEMPLATE_VERSION,
-            qrTtl = QR_TTL,
-            callbackMerchantNotifications = apiConfigProperties.callbackUrlSbp,
-            qrcType = QR_TYPE,
-            paymentPurpose = descAndPremiumAmountData.description,
-            currency = RUB,
+        buildPaymentSBPRequest(
+            payment.getAmountData(),
+            payment.v4Description(),
         )
 
-    private fun postForSBPPaymentData(request: GPBSBPPaymentRequest) =
-        postForObject<GazpromSBPPaymentResponse>(
+    private fun buildPaymentSBPRequest(
+        amountData: AmountData,
+        description: String,
+    ) = GPBSBPPaymentRequest(
+        amount = amountData.getAmount(),
+        account = apiConfigProperties.paymentAccount,
+        merchantId = apiConfigProperties.merchantIdSbpGpb,
+        templateVersion = TEMPLATE_VERSION,
+        qrTtl = QR_TTL,
+        callbackMerchantNotifications = apiConfigProperties.callbackUrlSbp,
+        qrcType = QR_TYPE,
+        paymentPurpose = description,
+        currency = amountData.currency,
+    )
+
+    private fun postForSBPPaymentData(
+        request: GPBSBPPaymentRequest,
+        headersParams: GpbSbpHeadersParams?,
+    ): GazpromSBPPaymentResponse =
+        postForObject(
             apiConfigProperties.gpbSbpUrl,
-            HttpEntity(request, jsonHeaders()),
+            HttpEntity(request, sbpHeaders(headersParams)),
         )
+
+    private fun sbpHeaders(headersParams: GpbSbpHeadersParams?) =
+        HttpHeaders()
+            .apply {
+                contentType = MediaType.APPLICATION_JSON
+                set("paymentDelay", headersParams?.paymentDelay)
+                set("processPayments", headersParams?.processPayments)
+                set("paymentStatus", headersParams?.paymentStatus)
+            }
 
     private inline fun <reified T> postForObject(
         url: String,
@@ -143,21 +186,15 @@ class GPBankIntegrationServiceImpl(
         return value
     }
 
-    private fun fillPaymentDataFromResponse(
-        response: GazpromCardPaymentResponse,
-        payment: Payment,
-    ): Payment =
-        payment.apply {
+    private fun Payment.fillFromResponse(response: GazpromCardPaymentResponse) =
+        this.apply {
             state = PaymentStatusEnum.REG
             paymentPageUrl = response.options.paymentPageUrl
             paymentBankId = response.token
         }
 
-    private fun fillPaymentDataFromResponse(
-        response: GazpromSBPPaymentResponse,
-        payment: Payment,
-    ): Payment =
-        payment.apply {
+    private fun Payment.fillFromResponse(response: GazpromSBPPaymentResponse) =
+        this.apply {
             state = PaymentStatusEnum.REG
             qrcId = response.data.qrcId
             paymentPageUrl = response.data.payload
@@ -165,8 +202,43 @@ class GPBankIntegrationServiceImpl(
         }
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
-        postForObject<GPBQRImageResponse>(
+        postForObject(
             apiConfigProperties.gpbSbpQRImageUrl,
-            HttpEntity(GPBQRImageRequest(payment.qrcId!!), jsonHeaders()),
+            HttpEntity(GPBQRImageRequest(payment.qrcId!!), jsonHeaders),
         )
+
+    override fun requestPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
+        try {
+            when (paymentBankInfo.type) {
+                PaymentTypeEnum.CARD -> requestCardPaymentStatus(paymentBankInfo)
+                PaymentTypeEnum.SBP -> requestSBPPaymentStatus(paymentBankInfo)
+            }
+        } catch (ex: RestClientException) {
+            logger.info("$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}", ex)
+            throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
+        }
+
+    private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails {
+        val url = "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$PAYMENT_PATH${paymentBankInfo.paymentBankId}"
+        return restTemplate
+            .postForObject<GpbCardPaymentStatusResponse>(url)
+            .toBankPaymentDetails()
+    }
+
+    private fun requestSBPPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails {
+        val url = apiConfigProperties.gpbSbpUrlStatus
+        val requestBody = ObjectMapper().writeValueAsString(mapOf("qrcIds" to listOf(paymentBankInfo.qrcId)))
+        return restTemplate
+            .postForObject<GpbSbpPaymentStatusResponse>(url, HttpEntity(requestBody, jsonHeaders))
+            .toBankPaymentDetails()
+    }
+
+    private fun GpbCardPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
+        bankPaymentDetailsMapper.convert(this, getStatus())
+
+    private fun GpbCardPaymentStatusResponse.getStatus(): StatusEnum = result?.status ?: StatusEnum.WAIT
+
+    private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails = bankPaymentDetailsMapper.convert(this, getStatus())
+
+    private fun GpbSbpPaymentStatusResponse.getStatus(): StatusEnum = result.firstOrNull()?.status ?: StatusEnum.WAIT
 }

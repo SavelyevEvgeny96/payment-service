@@ -4,14 +4,17 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentService.dto.data.DataDescriptionAndPremiumAmount
+import ru.sogaz.site.paymentService.dto.data.AmountData
+import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.service.BankIntegrationService
-import java.time.Duration
-import java.time.LocalDateTime
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 abstract class BankIntegrationServiceImpl : BankIntegrationService {
@@ -20,95 +23,113 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         const val TEMPLATE_VERSION = "01"
         const val QR_TTL = "60"
         const val QR_TYPE = "02"
-        const val RUB = "RUB"
 
-        private const val DESC_POLICY_NUMBER = "Номера полиса №"
-        private const val SEPARATOR = ", №"
-        private const val DESC_INSURANCE_CONTRACT = "Страхового договора №"
-        private const val DESC = "Оплата: "
+        private const val ZERO = "0"
+        private const val MAX_DESC_LEN = 250
 
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        private const val PREFIX = "Зачисление по операции оплата банковской картой "
+        private const val TEXT_DOGOVOROV = "договор(ов) "
+        private const val TEXT_OT = " от "
+        private const val SEP = ", "
+        private const val SPACE = " "
+        private const val TAIL = " платежный сервис, дата операции "
 
-        fun jsonHeaders() = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
-
-        fun nowPlusFormatted(
-            days: Long = 0,
-            minutes: Long = 0,
-        ): String =
-            LocalDateTime
-                .now()
-                .plusDays(days)
-                .plusMinutes(minutes)
-                .format(formatter)
-
-        fun formatDuration(duration: Duration): String {
-            val totalSeconds = duration.toMillis() / 1000.0
-            val minutes = (totalSeconds / 60).toInt()
-            val seconds = totalSeconds % 60
-            return if (minutes > 0) {
-                "${minutes}m${"%.1f".format(seconds)}s"
-            } else {
-                "%.1fs".format(seconds)
-            }
-        }
+        private val DDMMYYYY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+        private val DEFAULT_ZONE: ZoneId = ZoneId.systemDefault()
     }
 
-    override fun registerPayment(payment: Payment): Payment =
+    protected val jsonHeaders = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
+
+    override fun registerPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment =
         when (payment.type) {
             PaymentTypeEnum.CARD -> registerCardPayment(payment)
-            PaymentTypeEnum.SBP -> registerSBPPayment(payment)
+            PaymentTypeEnum.SBP -> registerSBPPayment(payment, headersParams)
             else -> throw InnerException(getTraceId(), ERROR_UNKNOWN_PAYMENT_TYPE)
         }
 
     abstract fun registerCardPayment(payment: Payment): Payment
 
-    abstract fun registerSBPPayment(payment: Payment): Payment
+    abstract fun registerSBPPayment(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+    ): Payment
+
+    protected abstract fun provider(): BankEnum
 
     abstract override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse
 
-    fun generateDescription(payment: Payment) = generateDescription(payment.order?.premiumAmount, payment.order?.subOrders)
+    private fun generateDescriptionV4(
+        provider: BankEnum,
+        subOrders: List<SubOrder>?,
+        operationDate: LocalDate,
+    ): String {
+        val providerText = provider.description
 
-    private fun generateDescription(
-        premiumAmount: String?,
-        listSubOrder: List<SubOrder>?,
-    ): DataDescriptionAndPremiumAmount =
-        DataDescriptionAndPremiumAmount(
-            premiumAmount?.replace(".", "")?.toInt(),
-            generateDescription(listSubOrder),
+        val blocks =
+            subOrders
+                .orEmpty()
+                .mapNotNull(::buildBlockFromSubOrder)
+
+        val sb =
+            StringBuilder(PREFIX)
+                .append(providerText)
+                .append(SPACE)
+                .append(TEXT_DOGOVOROV)
+
+        if (blocks.isNotEmpty()) {
+            sb.append(blocks.joinToString(SEP))
+        }
+
+        sb
+            .append(TAIL)
+            .append(operationDate.format(DDMMYYYY))
+
+        val result = sb.toString()
+        return if (result.length <= MAX_DESC_LEN) {
+            result
+        } else {
+            result.take(MAX_DESC_LEN)
+        }
+    }
+
+    private fun isValid(v: String?): Boolean = !v.isNullOrBlank() && v.trim() != ZERO
+
+    private fun buildBlockFromSubOrder(so: SubOrder): String? {
+        val parts = mutableListOf<String>()
+
+        if (isValid(so.contractId)) {
+            val id = so.contractId!!.trim()
+            val datePart =
+                so.contractDate
+                    ?.atZone(DEFAULT_ZONE)
+                    ?.toLocalDate()
+                    ?.format(DDMMYYYY)
+                    ?.let { TEXT_OT + it }
+                    ?: ""
+            parts += (id + datePart)
+        }
+
+        if (isValid(so.policyNumber)) {
+            parts += so.policyNumber!!.trim()
+        }
+
+        val block = parts.joinToString(SPACE)
+        return if (block.isNotBlank()) {
+            block
+        } else {
+            null
+        }
+    }
+
+    protected fun Payment.getAmountData() =
+        AmountData(
+            amount = this.order!!.premiumAmount.toBigDecimal(),
+            currency = CurrencyEnum.RUB,
         )
 
-    private fun generateDescription(sabOrderList: List<SubOrder>?): String {
-        val policyNumbers =
-            sabOrderList
-                ?.mapNotNull { it.policyNumber }
-                ?.filter { it.isNotBlank() && it != "0" }
-
-        val contractIds =
-            sabOrderList
-                ?.map { it.contractId }
-                ?.filter { it?.isNotBlank() == true && it != "0" }
-
-        val description =
-            buildString {
-                append(DESC)
-
-                if (policyNumbers?.isNotEmpty() == true || contractIds?.isNotEmpty() == true) {
-                    append(" (")
-
-                    if (policyNumbers?.isNotEmpty() == true) {
-                        append(DESC_POLICY_NUMBER)
-                        append(policyNumbers.joinToString(SEPARATOR))
-                    }
-
-                    if (contractIds?.isNotEmpty() == true) {
-                        if (policyNumbers?.isNotEmpty() == true) append("; ")
-                        append(DESC_INSURANCE_CONTRACT)
-                        append(contractIds.joinToString(SEPARATOR))
-                    }
-
-                    append(")")
-                }
-            }
-        return description
-    }
+    protected fun Payment.v4Description(operationDate: LocalDate = LocalDate.now(DEFAULT_ZONE)): String =
+        generateDescriptionV4(provider(), this.order?.subOrders, operationDate)
 }
