@@ -8,24 +8,24 @@ app:
     app_profile: ${ENVIRONMENT:local}
     java-version: ${JAVA_VERSION:21}
   certs:
-    gpb: ${GPB_CERT:}
+    gpb: ${GPB_CERT}
   rabbit:
-    exchange: ${ORDERS_EXCHANGE:payments.exchange}
-    queue-status-payment: ${QUEUE_STATUS_PAYMENT:payment.status.queue}
-    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT:payment.status.created}
+    exchange: ${ORDERS_EXCHANGE}
+    queue-status-payment: ${QUEUE_STATUS_PAYMENT}
+    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT}
 
 server:
-  port: ${SERVER_PORT:}
+  port: ${SERVER_PORT:8080}
   use-forward-headers: true
   forward-headers-strategy: framework
   main.allow-bean-definition-overriding: true
 
 spring:
   rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: ${RABBIT_PORT:5672}
-    username: ${RABBIT_USERNAME:dev}
-    password: ${RABBIT_PASSWORD:dev}
+    host: ${RABBIT_HOST}
+    port: ${RABBIT_PORT}
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
 
     virtual-host: /
     listener:
@@ -41,9 +41,14 @@ spring:
     active: ${ENVIRONMENT:local}
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      connectionTimeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
+      maxLifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
+      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:10000}
+
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -53,30 +58,34 @@ spring:
 
 api:
   payment:
-    paymentUrl: ${PAYMENT_URL:}
-    sbpPaymentUrl: ${SBP_PAYMENT_URL:}
-    akbUrl: ${AKB_URL:}
-    akbSbpUrl: ${AKB_SBP_URL:}
-    akbUrlStatus: ${AKB_PAYMENT_URL:}
-    gpbUrl: ${GPB_URL:}
-    gpbSbpUrl: ${GPB_SBP_URL:}
-    gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL:}
-    gpbSbpQRImageUrl: ${GPB_SBP_QR_IMAGE_URL:}
-    callbackUrlSbp: ${CALLBACK_URL_SBP:}
-    paymentAccount: ${PAYMENT_ACCOUNT:}
-    portalId: ${GPB_PORTAL_ID:}
-    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:}
-    merchantId: ${GPB_MERCHANT_ID:}
-    backUrlS: ${BACK_URL_SUCCESS:}
-    backUrlF: ${BACK_URL_FALSE:}
+    paymentUrl: ${PAYMENT_URL}
+    sbpPaymentUrl: ${SBP_PAYMENT_URL}
+    akbUrl: ${AKB_URL}
+    akbSbpUrl: ${AKB_SBP_URL}
+    akbUrlStatus: ${AKB_PAYMENT_URL}
+    gpbUrl: ${GPB_URL}
+    gpbSbpUrl: ${GPB_SBP_URL}
+    gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL}
+    gpbSbpQRImageUrl: ${GPB_SBP_QR_IMAGE_URL}
+    callbackUrlSbp: ${CALLBACK_URL_SBP}
+    paymentAccount: ${PAYMENT_ACCOUNT}
+    portalId: ${GPB_PORTAL_ID}
+    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
+    merchantId: ${GPB_MERCHANT_ID}
+    backUrlS: ${BACK_URL_SUCCESS}
+    backUrlF: ${BACK_URL_FALSE}
   receipt:
-    receiptUrl: ${RECEIPT_URL:}
+    receiptUrl: ${RECEIPT_URL}
   qr:
-    baseUrl: ${QR_GENERATOR_URL:}
+    baseUrl: ${QR_GENERATOR_URL}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
   callbackPaymentsCheck: ${CALLBACK_PAYMENTS_CHECK_CRON:*/10 * * * * *}
+
+micronaut:
+  metrics:
+    enabled: true
 
 management:
   endpoints:
@@ -85,7 +94,7 @@ management:
         include: "*"
   metrics:
     tags:
-      application: ${HOSTNAME:}
+      application: ${HOSTNAME:localhost}
     export:
       prometheus:
         enabled: true
@@ -95,17 +104,17 @@ management:
       probes:
         enabled: true
   server:
-    port: ${MANAGEMENT_SERVICE_PORT:}
+    port: ${MANAGEMENT_SERVICE_PORT:8091}
   health:
     livenessState:
       enable: true
     readinessState:
       enable: true
 logstash:
-  host: ${LOG_SERVER_HOST:}
-  port: ${LOG_SERVER_PORT:}
-  level: ${LOG_LEVEL:}
-  level_local: ${LOG_LEVEL_LOCAL:}
+  host: ${LOG_SERVER_HOST}
+  port: ${LOG_SERVER_PORT}
+  level: ${LOG_LEVEL}
+  level_local: ${LOG_LEVEL_LOCAL:INFO}
 
 logging:
   level:

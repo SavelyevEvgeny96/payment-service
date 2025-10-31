@@ -1,0 +1,79 @@
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: dev
+    password: dev
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=payments
+    username: postgres
+    password: 123456
+
+api:
+  host: http://localhost:${server.port}
+  gateway:
+    dmz: https://test-gateway-site-dmz.sogaz.ru
+  payment:
+    paymentUrl: ${api.host}/payment/pay/
+    sbpPaymentUrl: ${api.host}/payment/paySbp/
+    akbUrl: ${api.gateway.dmz}/payment/akb/order
+    akbSbpUrl: ${api.gateway.dmz}/payment/akb/order
+    akbUrlStatus: ${api.gateway.dmz}/payment/akb/order
+    gpbUrl: ${api.gateway.dmz}/payment/gpb/card/
+    gpbSbpUrl: ${api.gateway.dmz}/payment/gpb/sbp/merchant/qrc-data
+    gpbSbpUrlStatus: ${api.gateway.dmz}/payment/gpb/sbp/merchant/qrc-status
+    gpbSbpQRImageUrl: ${api.gateway.dmz}/payment/gpb/sbp/merchant/qr-image
+    callbackUrlSbp: https://example.com/callback
+    paymentAccount:
+    portalId:
+    merchantIdSbpGpb:
+    merchantId:
+    backUrlS: http://test.k835.sogaz.ru/realty/flat/success/
+    backUrlF: http://test.k835.sogaz.ru/realty/flat/
+  receipt:
+    receiptUrl: http://s00-0000-k835.sogaz.ru/test/payment-receipt-service
+  qr:
+    baseUrl: https://s00-0000-k835.sogaz.ru/test/qr-generator-service
+
+crons:
+  waitingPaymentsCheck: "*/30 * * * * *"
+  callbackPaymentsCheck: "*/10 * * * * *"
+
+app:
+  rabbit:
+    exchange: payments.exchange
+    queue-status-payment: payment.status.queue
+    routing-key-status-payment: payment.status.created
+  certs:
+    gpb: -----CERTIFICATE-----
+
+logstash:
+  host: localhost
+  port: 12201
+  level: INFO
+  level_local: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: localhost
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  server:
+    port: 8091
+  health:
+    livenessState:
+      enable: true
+    readinessState:
+      enable: true
