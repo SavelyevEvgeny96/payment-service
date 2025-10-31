@@ -10,48 +10,61 @@ import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegra
 import ru.sogaz.site.qr.generator.client.api.QrCodeControllerApi
 import ru.sogaz.site.qr.generator.client.model.QRCodeRequest
 import ru.sogaz.site.qr.generator.client.model.ResponseQRCodeData
-import java.util.Optional
+import java.net.URI
 
 class QRCodeServiceImpl(
     private val qrCodeControllerApi: QrCodeControllerApi,
     private val bankIntegrationFactoryService: BankIntegrationFactoryService,
 ) : QRCodeService {
+    companion object {
+        private const val QR_GENERATION_FAILED_LOG_MESSAGE = "При генерации QR кода возникла ошибка: "
+        private const val QR_REQUEST_FAILED_LOG_MESSAGE = "При запросе QR кода из банка возникла ошибка: "
+    }
+
     private val logger = loggerFor(javaClass)
 
-    override fun generateQRCode(
-        url: String,
+    override fun generateFileQR(
+        uri: URI,
         size: Int,
-    ): Optional<FileQR> =
+    ): FileQR? =
         QRCodeRequest()
-            .apply { text = url }
-            .run(::generateQRCode)
+            .apply { text = uri.toString() }
+            .run(::generateFileQR)
 
-    override fun generateQRCode(qrCodeRequest: QRCodeRequest): Optional<FileQR> =
-        try {
-            qrCodeRequest
-                .run(qrCodeControllerApi::generateQRCode)
-                .run(::makeFileQREntity)
-                .run { Optional.of(this) }
-        } catch (ex: Exception) {
-            logger.error(ex.message)
-            Optional.empty<FileQR>()
-        }
+    override fun generateFileQR(qrCodeRequest: QRCodeRequest): FileQR? =
+        qrCodeRequest
+            .runCatching(::requestQRFromQRGeneratorService)
+            .run(::handleGenerationResult)
 
-    override fun requestFromBank(payment: Payment): Optional<FileQR> =
-        try {
-            bankIntegrationFactoryService
-                .getInstanceByBank(payment.bank)
-                .run { this.getQRCodeImageData(payment) }
-                .run { makeFileQREntity(this) }
-                .run { Optional.of(this) }
-        } catch (ex: Exception) {
-            logger.error(ex.message)
-            Optional.empty<FileQR>()
-        }
+    private fun requestQRFromQRGeneratorService(qrCodeRequest: QRCodeRequest): FileQR =
+        qrCodeRequest
+            .run(qrCodeControllerApi::generateQRCode)
+            .run(::makeFileQREntity)
 
     private fun makeFileQREntity(responseQRCodeData: ResponseQRCodeData) =
         FileQR(responseQRCodeData.data!!.qrCode, MediaTypeValue.IMAGE_PNG_VALUE)
 
+    private fun handleGenerationResult(result: Result<FileQR>): FileQR? {
+        if (result.isFailure) {
+            logger.error(QR_GENERATION_FAILED_LOG_MESSAGE, result.exceptionOrNull())
+        }
+        return result.getOrNull()
+    }
+
+    override fun requestFileQRFromBank(payment: Payment): FileQR? =
+        payment.bank
+            .run(bankIntegrationFactoryService::getInstanceByBank)
+            .runCatching { this.getQRCodeImageData(payment) }
+            .run(::handleRequestResult)
+            ?.let(::makeFileQREntity)
+
     private fun makeFileQREntity(gpbQrImageResponse: GPBQRImageResponse) =
         FileQR(gpbQrImageResponse.getQRContent(), gpbQrImageResponse.getQRMediaType())
+
+    private fun handleRequestResult(result: Result<GPBQRImageResponse>): GPBQRImageResponse? {
+        if (result.isFailure) {
+            logger.error(QR_REQUEST_FAILED_LOG_MESSAGE, result.exceptionOrNull())
+        }
+        return result.getOrNull()
+    }
 }

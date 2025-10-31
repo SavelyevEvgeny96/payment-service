@@ -4,7 +4,6 @@ import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
-import ru.sogaz.site.paymentService.enums.TypeInsuranceEnum
 import ru.sogaz.site.paymentService.validation.constraint.Email
 import java.math.BigDecimal
 import java.time.Instant
@@ -13,24 +12,19 @@ import java.time.Instant
  * DTO для запроса на создание заказа.
  */
 data class SubOrderRequest(
-    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
-    val operationId: String = "",
     @field:NotNull(message = "{validation.orderRequest.premiumAmount.notNull}")
     @field:Positive(message = "{validation.orderRequest.premiumAmount.positive}")
     val premiumAmount: BigDecimal = BigDecimal.ZERO,
-    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val policyId: String = "",
-    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val policyNumber: String = "",
-    @field:NotNull(message = "{validation.orderRequest.notBlank}")
-    val typeInsurance: TypeInsuranceEnum,
+    val typeInsurance: String? = null,
     val insuranceProgram: String? = null,
     val mainContractCheck: Boolean = false,
+    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val contractNumber: String? = null,
+    @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val contractId: String? = null,
     val docType: String? = null,
-    @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
-    @field:FutureOrPresent(message = "{validation.orderPaymentRequest.date.future}")
     val policyDate: Instant? = null,
     @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
     @field:FutureOrPresent(message = "{validation.orderPaymentRequest.date.future}")
@@ -39,5 +33,4 @@ data class SubOrderRequest(
     val managerEmail: String = "",
     @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     val channel: String = "",
-    val recurrent: Boolean = false,
 )

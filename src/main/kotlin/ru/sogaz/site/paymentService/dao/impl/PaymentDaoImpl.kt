@@ -1,18 +1,18 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
-import ru.sogaz.site.paymentService.dao.PaymentTypeDao
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
-import java.util.UUID
 
+@Repository
 class PaymentDaoImpl(
     private val paymentRepository: PaymentRepository,
-    private val paymentTypeDao: PaymentTypeDao,
 ) : PaymentDao {
     companion object {
         const val LOG_ERROR_GET_PAYMENT_BY_ORDER_ID = "Платеж не найден"
@@ -24,17 +24,6 @@ class PaymentDaoImpl(
     }
 
     private val logger = loggerFor(javaClass)
-
-    override fun getPayment(
-        traceId: String,
-        paymentId: UUID,
-    ): Payment? =
-        try {
-            paymentRepository.findById(paymentId).orElse(null)
-        } catch (e: Exception) {
-            logger.error(LOG_ERROR_GET_PAYMENT_BY_ORDER_ID, e)
-            throw InnerException(traceId, "$ERROR_GET_PAYMENT_BY_ORDER_ID ${e.message}")
-        }
 
     override fun getPaymentFromBankId(bankId: String): Payment =
         try {
@@ -52,6 +41,8 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
 
+    override fun findByOrder(order: Order): Payment? = paymentRepository.findByOrder(order)
+
     override fun save(payment: Payment): Payment =
         try {
             paymentRepository.save(payment)
@@ -60,5 +51,5 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
         }
 
-    override fun findPaymentType(paymentType: PaymentTypeEnum) = paymentTypeDao.findByTypeId(paymentType.value)
+    override fun findByStatuses(statuses: List<PaymentStatusEnum>): List<Payment> = paymentRepository.findByStatuses(statuses)
 }

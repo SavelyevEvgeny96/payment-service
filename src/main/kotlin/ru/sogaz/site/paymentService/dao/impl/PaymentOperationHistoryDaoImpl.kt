@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
@@ -8,6 +9,7 @@ import ru.sogaz.site.paymentService.entity.PaymentOperationHistory
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentOperationHistoryRepository
 
+@Repository
 class PaymentOperationHistoryDaoImpl(
     private val paymentOperationHistoryRepository: PaymentOperationHistoryRepository,
 ) : PaymentOperationHistoryDao {

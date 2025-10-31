@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.order
 
+import org.springframework.stereotype.Service
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
@@ -18,6 +19,7 @@ import java.math.RoundingMode
 import java.time.ZoneId
 import java.util.UUID
 
+@Service
 class OrderServiceImpl(
     private val apiConfigProperty: ApiConfigProperties,
     private val orderDao: OrderDao,
@@ -63,11 +65,16 @@ class OrderServiceImpl(
 
     private fun formOrderFromRequest(requestWrapper: OrderRequest): Order =
         Order(
-            bank = requestWrapper.bank,
             paymentEndDate = requestWrapper.orderEndDate?.atZone(ZoneId.systemDefault())?.toLocalDateTime(),
             urlToDecline = requestWrapper.urlToDecline,
             urlToReturn = requestWrapper.urlToReturn,
             recipientEmail = requestWrapper.recipientEmail,
+            subscriptionId = requestWrapper.subscriptionId,
+            clientId = requestWrapper.clientId,
+            recipientPhone = requestWrapper.recipientPhone,
+            saveCard = requestWrapper.saveCard,
+            policyholder = requestWrapper.policyholder,
+            unifiedId = requestWrapper.unifiedId,
         )
 
     private fun formSubOrdersFromRequest(
@@ -84,11 +91,13 @@ class OrderServiceImpl(
             policyId = subOrderRequest.policyId,
             policyNumber = subOrderRequest.policyNumber,
             contractId = subOrderRequest.contractId,
-            typeInsurance = subOrderRequest.typeInsurance.description,
+            typeInsurance = subOrderRequest.typeInsurance,
             mainContractCheck = subOrderRequest.mainContractCheck,
             contractNumber = subOrderRequest.contractNumber,
             insuranceProgram = subOrderRequest.insuranceProgram,
             premiumAmount = subOrderRequest.premiumAmount.toString(),
+            policyDate = subOrderRequest.policyDate,
+            contractDate = subOrderRequest.contractDate,
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }

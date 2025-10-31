@@ -1,20 +1,16 @@
 package ru.sogaz.site.paymentService.enums
 
-import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
 
 enum class BankEnum(
-    val code: String,
+    @JsonValue val code: String,
+    val description: String,
 ) {
-    GPB("gpb"),
-    AKB_RUS("akb_rus"),
+    GPB("gpb", "ГПБ"),
+    AKB_RUS("akb_rus", "АБР"),
     ;
 
     companion object {
-        @JvmStatic
-        @JsonCreator
-        fun from(value: String?): BankEnum =
-            BankEnum.entries
-                .find { it.code == value }
-                ?: throw Exception("Invalid bank enum: $value")
+        fun from(value: String?): BankEnum? = BankEnum.entries.find { it.code == value }
     }
 }

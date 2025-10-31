@@ -3,15 +3,15 @@ package ru.sogaz.site.paymentService.service
 import ru.sogaz.site.paymentService.dto.data.FileQR
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.qr.generator.client.model.QRCodeRequest
-import java.util.Optional
+import java.net.URI
 
 interface QRCodeService {
-    fun generateQRCode(
-        url: String,
+    fun generateFileQR(
+        uri: URI,
         size: Int = 512,
-    ): Optional<FileQR>
+    ): FileQR?
 
-    fun generateQRCode(qrCodeRequest: QRCodeRequest): Optional<FileQR>
+    fun generateFileQR(qrCodeRequest: QRCodeRequest): FileQR?
 
-    fun requestFromBank(payment: Payment): Optional<FileQR>
+    fun requestFileQRFromBank(payment: Payment): FileQR?
 }
