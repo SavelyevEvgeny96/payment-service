@@ -51,37 +51,42 @@ class InfoPageServiceTest {
 
         private val validFileQR = FileQR(QR_CONTENT, MediaTypeValue.IMAGE_PNG_VALUE)
 
-        private val firstSubOrder = SubOrder(
-            policyNumber = FIRST_SUB_ORDER_POLICY_NUMBER,
-            contractNumber = FIRST_SUB_ORDER_CONTRACT_NUMBER,
-            typeInsurance = FIRST_SUB_ORDER_TYPE_INSURANCE,
-            insuranceProgram = FIRST_SUB_ORDER_INSURANCE_PROGRAM
-        )
+        private val firstSubOrder =
+            SubOrder(
+                policyNumber = FIRST_SUB_ORDER_POLICY_NUMBER,
+                contractNumber = FIRST_SUB_ORDER_CONTRACT_NUMBER,
+                typeInsurance = FIRST_SUB_ORDER_TYPE_INSURANCE,
+                insuranceProgram = FIRST_SUB_ORDER_INSURANCE_PROGRAM,
+            )
 
-        private val secondSubOrder = SubOrder(
-            policyNumber = SECOND_SUB_ORDER_POLICY_NUMBER,
-            contractNumber = SECOND_SUB_ORDER_CONTRACT_NUMBER,
-            typeInsurance = SECOND_SUB_ORDER_TYPE_INSURANCE,
-            insuranceProgram = SECOND_SUB_ORDER_INSURANCE_PROGRAM
-        )
+        private val secondSubOrder =
+            SubOrder(
+                policyNumber = SECOND_SUB_ORDER_POLICY_NUMBER,
+                contractNumber = SECOND_SUB_ORDER_CONTRACT_NUMBER,
+                typeInsurance = SECOND_SUB_ORDER_TYPE_INSURANCE,
+                insuranceProgram = SECOND_SUB_ORDER_INSURANCE_PROGRAM,
+            )
 
-        private val firstAccount = SubOrderInfo(
-            policyNumber = FIRST_SUB_ORDER_POLICY_NUMBER,
-            contractNumber = FIRST_SUB_ORDER_CONTRACT_NUMBER,
-            typeInsurance = FIRST_SUB_ORDER_TYPE_INSURANCE,
-            insuranceProgram = FIRST_SUB_ORDER_INSURANCE_PROGRAM
-        )
+        private val firstAccount =
+            SubOrderInfo(
+                policyNumber = FIRST_SUB_ORDER_POLICY_NUMBER,
+                contractNumber = FIRST_SUB_ORDER_CONTRACT_NUMBER,
+                typeInsurance = FIRST_SUB_ORDER_TYPE_INSURANCE,
+                insuranceProgram = FIRST_SUB_ORDER_INSURANCE_PROGRAM,
+            )
 
-        private val secondAccount = SubOrderInfo(
-            policyNumber = SECOND_SUB_ORDER_POLICY_NUMBER,
-            contractNumber = SECOND_SUB_ORDER_CONTRACT_NUMBER,
-            typeInsurance = SECOND_SUB_ORDER_TYPE_INSURANCE,
-            insuranceProgram = SECOND_SUB_ORDER_INSURANCE_PROGRAM
-        )
+        private val secondAccount =
+            SubOrderInfo(
+                policyNumber = SECOND_SUB_ORDER_POLICY_NUMBER,
+                contractNumber = SECOND_SUB_ORDER_CONTRACT_NUMBER,
+                typeInsurance = SECOND_SUB_ORDER_TYPE_INSURANCE,
+                insuranceProgram = SECOND_SUB_ORDER_INSURANCE_PROGRAM,
+            )
 
-        private val pageInfoRequestParams = PageInfoRequestParams(
-            RETURN_URL
-        )
+        private val pageInfoRequestParams =
+            PageInfoRequestParams(
+                RETURN_URL,
+            )
     }
 
     private lateinit var infoPageService: InfoPageService
