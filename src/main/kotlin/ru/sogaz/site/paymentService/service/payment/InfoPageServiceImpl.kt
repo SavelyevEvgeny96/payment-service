@@ -137,8 +137,7 @@ class InfoPageServiceImpl(
         }
     }
 
-    private fun registerSbpPayment(order: Order): Payment =
-        registerPaymentService.register(order, PaymentTypeEnum.SBP)
+    private fun registerSbpPayment(order: Order): Payment = registerPaymentService.register(order, PaymentTypeEnum.SBP)
 
     private fun generatePaySbpFromBank(payment: Payment): PaySbp? =
         payment

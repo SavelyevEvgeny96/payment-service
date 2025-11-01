@@ -23,9 +23,8 @@ data class PaySbp(
     val urlPay: URI,
     val fileQR: FileQR,
 ) {
-    constructor(stringUrl: String, fileQR: FileQR): this(URI.create(stringUrl), fileQR)
+    constructor(stringUrl: String, fileQR: FileQR) : this(URI.create(stringUrl), fileQR)
 }
-
 
 data class FileQR(
     val content: String,
