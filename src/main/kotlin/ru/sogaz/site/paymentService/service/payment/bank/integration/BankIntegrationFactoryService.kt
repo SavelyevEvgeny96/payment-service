@@ -17,7 +17,7 @@ import ru.sogaz.site.paymentService.service.payment.bank.integration.gpb.GPBankI
 class BankIntegrationFactoryService(
     private val apiConfigProperties: ApiConfigProperties,
     private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
-    private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl
+    private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
 ) {
     @Throws(BusinessException::class)
     fun getInstanceByBank(bankId: String?): BankIntegrationService = BankEnum.from(bankId).run(::getInstanceByBank)

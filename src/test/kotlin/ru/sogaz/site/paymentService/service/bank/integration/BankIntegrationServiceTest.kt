@@ -109,7 +109,7 @@ class BankIntegrationServiceTest {
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_GPB_SBP_PAYLOAD, Payment::paymentPageUrl)
-            .returns(TEST_GPB_SBP_TRANSACTIONAL_ID, Payment::paymentBankId)
+            .returns(TEST_GPB_SBP_QR_ID, Payment::paymentBankId)
             .returns(TEST_GPB_SBP_QR_ID, Payment::qrcId)
     }
 
