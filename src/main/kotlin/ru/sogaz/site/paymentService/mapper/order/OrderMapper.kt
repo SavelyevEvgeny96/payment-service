@@ -60,6 +60,7 @@ interface OrderMapper {
         qualifiedByName = ["localDateTimeToFormattedString"],
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
+    @Mapping(target = "keyCard", source = "cardDetails.cardId")
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
