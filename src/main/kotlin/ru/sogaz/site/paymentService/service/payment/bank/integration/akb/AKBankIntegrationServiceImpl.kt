@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration
+package ru.sogaz.site.paymentService.service.payment.bank.integration.akb
 
 import org.springframework.http.HttpEntity
 import org.springframework.web.client.RestClientException
@@ -28,6 +28,7 @@ import ru.sogaz.site.paymentService.enums.TypeRidEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationServiceImpl
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -128,7 +129,10 @@ class AKBankIntegrationServiceImpl(
         val body = buildPushTranRequest(returnUrl)
         return try {
             val response = postForObject<PreparePushTranResponse>(url, HttpEntity(body, jsonHeaders))
-            response.getQrcPayload(IPS_RU_PARAM_NAME) ?: throw InnerException(getTraceId(), EMPTY_REDIRECT_URL_RESPONSE)
+            response.getQrcPayload(IPS_RU_PARAM_NAME) ?: throw InnerException(
+                getTraceId(),
+                EMPTY_REDIRECT_URL_RESPONSE,
+            )
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), "Ошибка при подготовке push-транзакции: ${ex.message}")
         }

@@ -117,9 +117,7 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         }
 
         val block = parts.joinToString(SPACE)
-        return if (block.isNotBlank()) {
-            block
-        } else {
+        return block.ifBlank {
             null
         }
     }

@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration
+package ru.sogaz.site.paymentService.service.payment.bank.integration.gpb
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpEntity
@@ -14,7 +14,6 @@ import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
-import ru.sogaz.site.paymentService.dto.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
@@ -32,16 +31,16 @@ import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
-import ru.sogaz.site.paymentService.enums.StatusEnum
+import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationServiceImpl
 import kotlin.time.measureTimedValue
 
 class GPBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,
-    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
+    private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val PAYMENT_PATH = "/payment/"
@@ -73,7 +72,7 @@ class GPBankIntegrationServiceImpl(
             token = exchangeForToken(),
             order = payment.order!!,
             amountData = payment.getAmountData(),
-            description = payment.v4Description(),
+            description = payment.getMainDescription(),
             urlToReturn = payment.urlToReturn,
         )
 
@@ -235,11 +234,13 @@ class GPBankIntegrationServiceImpl(
     }
 
     private fun GpbCardPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
-        bankPaymentDetailsMapper.convert(this, getStatus())
+        gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
 
-    private fun GpbCardPaymentStatusResponse.getStatus(): StatusEnum = result?.status ?: StatusEnum.WAIT
+    private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
+        gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
 
-    private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails = bankPaymentDetailsMapper.convert(this, getStatus())
+    private fun Payment.getMainDescription() = generateContractDescription(order!!)
 
-    private fun GpbSbpPaymentStatusResponse.getStatus(): StatusEnum = result.firstOrNull()?.status ?: StatusEnum.WAIT
+    private fun generateContractDescription(order: Order): String =
+        gpbBankIntegrationHelperServiceImpl.makeDescription(order)
 }
