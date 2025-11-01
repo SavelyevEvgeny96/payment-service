@@ -5,25 +5,18 @@ import org.mapstruct.Mapping
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.response.AkbOrderStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
-import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GpbQrResult
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
-import ru.sogaz.site.paymentService.enums.StatusEnum
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 
-@Mapper(uses = [CardDetailsMapper::class, PaymentStatusMapper::class])
+@Mapper(uses = [CardDetailsMapper::class, PaymentStatusMapper::class], imports = [PaymentStatusEnum::class])
 interface BankPaymentDetailsMapper {
-    fun convert(
-        response: GpbCardPaymentStatusResponse,
-        status: StatusEnum,
-    ): BankPaymentDetails
+    @Mapping(target = "status", source = "result.status", defaultValue = "WAIT")
+    @Mapping(target = "cardDetails", source = "gpbCardDetails")
+    fun convert(response: GpbCardPaymentStatusResponse): BankPaymentDetails
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "cardDetails", ignore = true)
-    fun convert(
-        response: GpbSbpPaymentStatusResponse,
-        status: StatusEnum,
-    ): BankPaymentDetails
+    fun convert(result: GpbQrResult?): BankPaymentDetails
 
-    @Mapping(target = "cardDetails", ignore = true)
     fun convert(
         response: AkbOrderStatusResponse,
         status: AkbPaymentStatusEnum,

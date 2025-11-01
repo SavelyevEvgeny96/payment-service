@@ -268,6 +268,7 @@ class PaymentStatusCheckerServiceImpl(
             paymentSystem = paymentSystem,
             issuerName = issuerName,
             paymentType = paymentType,
+            cardId = gpbCardDetails?.cardId,
         )
     }
 
@@ -386,6 +387,7 @@ class PaymentStatusCheckerServiceImpl(
                     paymentStatusResponse?.gpbCardDetails?.paymentSystem,
                     paymentStatusResponse?.gpbCardDetails?.pan,
                     paymentStatusResponse?.gpbCardDetails?.type,
+                    paymentStatusResponse?.gpbCardDetails?.cardId,
                 )
             val exchange = props.exchange
             val routingKey = props.routingKeyStatusPayment

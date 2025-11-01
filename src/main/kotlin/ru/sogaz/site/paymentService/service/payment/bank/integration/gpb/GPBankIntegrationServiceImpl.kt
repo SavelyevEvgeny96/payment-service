@@ -47,6 +47,10 @@ class GPBankIntegrationServiceImpl(
         private const val START_PATH = "/start"
         private const val TOKEN_PATH = "/token"
 
+        private const val TEMPLATE_VERSION = "01"
+        private const val QR_TTL = "60"
+        private const val QR_TYPE = "02"
+
         private const val PAYMENT_PAGE = "payment_page"
         private const val IN_PROGRESS_STATE = "no"
 
@@ -198,7 +202,7 @@ class GPBankIntegrationServiceImpl(
             state = PaymentStatusEnum.REG
             qrcId = response.data.qrcId
             paymentPageUrl = response.data.payload
-            paymentBankId = response.transactionId
+            paymentBankId = response.data.qrcId
         }
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
@@ -220,16 +224,15 @@ class GPBankIntegrationServiceImpl(
 
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails {
         val url = "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$PAYMENT_PATH${paymentBankInfo.paymentBankId}"
-        return restTemplate
-            .postForObject<GpbCardPaymentStatusResponse>(url)
+        postForObject<String>(url).run { logger.info("Full card status: $this") }
+        return postForObject<GpbCardPaymentStatusResponse>(url)
             .toBankPaymentDetails()
     }
 
     private fun requestSBPPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails {
         val url = apiConfigProperties.gpbSbpUrlStatus
         val requestBody = ObjectMapper().writeValueAsString(mapOf("qrcIds" to listOf(paymentBankInfo.qrcId)))
-        return restTemplate
-            .postForObject<GpbSbpPaymentStatusResponse>(url, HttpEntity(requestBody, jsonHeaders))
+        return postForObject<GpbSbpPaymentStatusResponse>(url, HttpEntity(requestBody, jsonHeaders))
             .toBankPaymentDetails()
     }
 
@@ -239,8 +242,5 @@ class GPBankIntegrationServiceImpl(
     private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
         gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
 
-    private fun Payment.getMainDescription() = generateContractDescription(order!!)
-
-    private fun generateContractDescription(order: Order): String =
-        gpbBankIntegrationHelperServiceImpl.makeDescription(order)
+    private fun Payment.getMainDescription() = gpbBankIntegrationHelperServiceImpl.makeDescription(order!!)
 }
