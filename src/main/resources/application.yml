@@ -13,7 +13,12 @@ app:
     exchange: ${ORDERS_EXCHANGE:payments.exchange}
     queue-status-payment: ${QUEUE_STATUS_PAYMENT:payment.status.queue}
     routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT:payment.status.created}
-
+    queue-payment: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
+  listener:
+    batch-size: 100
+    prefetch: 100
+    concurrency: 3
+    max-concurrency: 10
 server:
   port: ${SERVER_PORT:}
   use-forward-headers: true
