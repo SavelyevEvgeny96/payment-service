@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.dto.exceptions
+package ru.sogaz.site.paymentService.exceptions
 
 import ru.sogaz.site.paymentService.enums.ActionType
 

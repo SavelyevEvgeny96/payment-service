@@ -100,7 +100,7 @@ class PaymentStatusServiceImpl(
             .getInstanceByBank(paymentBankInfo.bank)
             .requestPaymentStatus(paymentBankInfo)
 
-    @Transactional
+    @Transactional(rollbackFor = [Exception::class])
     private fun updateStatusesForPayment(
         bankPaymentDetails: BankPaymentDetails,
         payment: Payment,
@@ -121,6 +121,7 @@ class PaymentStatusServiceImpl(
         }
     }
 
+    @Transactional(rollbackFor = [Exception::class])
     private fun handleSuccessPayment(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
@@ -130,7 +131,6 @@ class PaymentStatusServiceImpl(
         deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
     }
 
-    @Transactional
     private fun updateOrderForSuccessPayment(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
@@ -146,19 +146,19 @@ class PaymentStatusServiceImpl(
         }
         order.apply { status = OrderStatus.SUCCESS }
 
-        orderDao.save(order)
         receiptService.generateReceipt(payment)
-        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
         sendToPaidOrdersQueue(order, bankPaymentDetails)
+        orderDao.save(order)
+        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
 
-    @Transactional
+    @Transactional(rollbackFor = [Exception::class])
     private fun deleteWaitingPaymentsFromQueue(paymentBankId: String) {
         waitingPaymentDao.deleteByPaymentBankId(paymentBankId)
         callbackPaymentDao.deleteByPaymentBankId(paymentBankId)
     }
 
-    @Transactional
+    @Transactional(rollbackFor = [Exception::class])
     private fun updateWaitingPaymentsInQueue(paymentBankId: String) {
         waitingPaymentDao.updateTimeByPaymentBankId(paymentBankId)
         callbackPaymentDao.updateTimeByPaymentBankId(paymentBankId)

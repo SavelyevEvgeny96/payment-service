@@ -30,8 +30,9 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.payment.bank.integration.AKBankIntegrationServiceImpl
-import ru.sogaz.site.paymentService.service.payment.bank.integration.GPBankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.payment.bank.integration.akb.AKBankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.payment.bank.integration.gpb.GPBBankIntegrationHelperServiceImpl
+import ru.sogaz.site.paymentService.service.payment.bank.integration.gpb.GPBankIntegrationServiceImpl
 import java.util.UUID
 import kotlin.random.Random
 
@@ -75,6 +76,9 @@ class BankIntegrationServiceTest {
     @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
 
+    @RelaxedMockK
+    private lateinit var gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl
+
     private lateinit var gpBankIntegrationService: GPBankIntegrationServiceImpl
     private lateinit var akBankIntegrationService: AKBankIntegrationServiceImpl
 
@@ -83,7 +87,7 @@ class BankIntegrationServiceTest {
         mockGPBRestTemplate()
         mockAKBRestTemplate()
 
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
+        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, gpbBankIntegrationHelperServiceImpl)
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 
