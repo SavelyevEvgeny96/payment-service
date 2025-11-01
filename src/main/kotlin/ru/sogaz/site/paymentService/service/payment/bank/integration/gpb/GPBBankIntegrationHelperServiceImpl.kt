@@ -6,7 +6,6 @@ import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusRespon
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationHelperServiceImpl
 import java.time.Instant
@@ -16,7 +15,7 @@ import java.time.format.DateTimeFormatter
 
 @Component
 class GPBBankIntegrationHelperServiceImpl(
-    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper
+    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
 ) : BankIntegrationHelperServiceImpl() {
     companion object {
         private const val PAY_ONE_CONTRACT_INFO = "Оплата по договору %s от %s. Платежный сервис, дата операции %s"
@@ -48,17 +47,10 @@ class GPBBankIntegrationHelperServiceImpl(
             .toLocalDate()
             .toContractDateFormat()
 
-    private fun LocalDate.toContractDateFormat(): String =
-        this.format(DDMMYYYY)
+    private fun LocalDate.toContractDateFormat(): String = this.format(DDMMYYYY)
 
-    fun convertToBankPaymentDetails(response: GpbCardPaymentStatusResponse): BankPaymentDetails =
-        bankPaymentDetailsMapper.convert(response, response.getStatus())
+    fun convertToBankPaymentDetails(response: GpbCardPaymentStatusResponse): BankPaymentDetails = bankPaymentDetailsMapper.convert(response)
 
     fun convertToBankPaymentDetails(response: GpbSbpPaymentStatusResponse): BankPaymentDetails =
-        bankPaymentDetailsMapper.convert(response, response.getStatus())
-
-    private fun GpbCardPaymentStatusResponse.getStatus(): StatusEnum = result?.status ?: StatusEnum.WAIT
-
-    private fun GpbSbpPaymentStatusResponse.getStatus(): StatusEnum = result.firstOrNull()?.status ?: StatusEnum.WAIT
-
+        bankPaymentDetailsMapper.convert(response.result.firstOrNull())
 }

@@ -10,14 +10,14 @@ data class GPBPaymentRequest(
     val token: String,
     val merchantId: String,
     val orderId: String,
-    @JsonProperty("back_url_s")
+    @param:JsonProperty("back_url_s")
     val backUrlS: String,
-    @JsonProperty("back_url_f")
+    @param:JsonProperty("back_url_f")
     val backUrlF: String,
     val amount: Int,
     val currency: CurrencyEnum,
     val description: String,
-    @JsonProperty("3ds2")
+    @param:JsonProperty("3ds2")
     val threeDSTwo: ThreeDSTwo,
     val openApiMirPaySupported: Boolean,
     val addCardAllowed: Boolean,
@@ -25,7 +25,7 @@ data class GPBPaymentRequest(
 
 data class State(
     val redirect: String,
-    @JsonProperty("in_progress")
+    @param:JsonProperty("in_progress")
     val inProgress: String,
 )
 

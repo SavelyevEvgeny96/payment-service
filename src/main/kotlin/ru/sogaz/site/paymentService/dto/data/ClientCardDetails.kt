@@ -5,4 +5,5 @@ data class ClientCardDetails(
     val paymentSystem: String?, // Наименование платёжной системы
     val issuerName: String?, // Кем выдана карта (банк-эмитент)
     val paymentType: String?, // Источник совершения операции (из portalType)
+    val cardId: String?,
 )
