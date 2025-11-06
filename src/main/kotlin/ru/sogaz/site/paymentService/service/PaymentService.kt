@@ -17,12 +17,12 @@ import java.util.UUID
 interface PaymentService {
     fun createCardPayment(
         orderId: UUID,
-        payQueryParams: PayQueryParams,
+        payQueryParams: PayQueryParams = PayQueryParams(),
     ): DataPay
 
     fun createSBPPayment(
         orderId: UUID,
-        payQueryParams: PayQueryParams,
+        payQueryParams: PayQueryParams = PayQueryParams(),
         paymentDelay: String? = null,
         processPayments: String? = null,
         paymentStatus: String? = null,

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
+import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -74,6 +76,12 @@ class BankIntegrationServiceTest {
     private lateinit var restTemplate: RestTemplate
 
     @MockK
+    private lateinit var gpbCardPaymentClient: GpbCardPaymentClient
+
+    @MockK
+    private lateinit var gpbSbpPaymentClient: GpbSbpPaymentClient
+
+    @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
 
     @RelaxedMockK
@@ -87,7 +95,7 @@ class BankIntegrationServiceTest {
         mockGPBRestTemplate()
         mockAKBRestTemplate()
 
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, gpbBankIntegrationHelperServiceImpl)
+        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, gpbSbpPaymentClient, gpbCardPaymentClient, gpbBankIntegrationHelperServiceImpl)
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 
@@ -165,16 +173,10 @@ class BankIntegrationServiceTest {
     ).apply { this.subOrders.addAll(subOrders) }
 
     private fun mockGPBRestTemplate() {
-        every { restTemplate.postForObject<GazpromTokenResponse>(any(String::class)) }.returns(GPBTokenResponse)
-        every { restTemplate.postForObject<GazpromCardPaymentResponse>(any(String::class), any()) }.returns(
-            GPBCardPaymentResponse,
-        )
-        every { restTemplate.postForObject<GazpromSBPPaymentResponse>(any(String::class), any()) }.returns(
-            GPBSBPPaymentResponse,
-        )
-        every { restTemplate.postForObject<GPBQRImageResponse>(any(String::class), any()) }.returns(
-            gpbqrImageResponse,
-        )
+        every { gpbCardPaymentClient.getToken(any(String::class)) } returns GPBTokenResponse
+        every { gpbCardPaymentClient.startPayment(any(), any(), any()) } returns GPBCardPaymentResponse
+        every { gpbSbpPaymentClient.startPayment(any(), any()) } returns GPBSBPPaymentResponse
+        every { gpbSbpPaymentClient.getQrImage(any()) } returns gpbqrImageResponse
     }
 
     private fun mockAKBRestTemplate() {
