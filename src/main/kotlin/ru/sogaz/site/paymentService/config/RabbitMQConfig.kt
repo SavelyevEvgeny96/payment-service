@@ -24,10 +24,11 @@ class RabbitMQConfig(
     fun ordersExchange(): TopicExchange = TopicExchange(props.exchange, true, false)
 
     @Bean(name = ["paymentsStatusQueue"])
-    fun paymentsStatusQueue(): Queue = QueueBuilder
-        .durable(props.queueStatusPayment)
-        .withArgument("x-queue-type", "quorum")
-        .build()
+    fun paymentsStatusQueue(): Queue =
+        QueueBuilder
+            .durable(props.queueStatusPayment)
+            .withArgument("x-queue-type", "quorum")
+            .build()
 
     @Bean
     fun ordersBinding(

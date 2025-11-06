@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.bank.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
@@ -84,10 +85,11 @@ class BankIntegrationServiceTest {
 
     @BeforeEach
     fun setUp() {
+        val objectMapper = ObjectMapper()
         mockGPBRestTemplate()
         mockAKBRestTemplate()
-
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, gpbBankIntegrationHelperServiceImpl)
+        gpBankIntegrationService =
+            GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, gpbBankIntegrationHelperServiceImpl, objectMapper)
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 

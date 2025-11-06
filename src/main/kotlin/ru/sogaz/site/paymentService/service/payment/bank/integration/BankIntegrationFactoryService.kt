@@ -19,7 +19,7 @@ class BankIntegrationFactoryService(
     private val apiConfigProperties: ApiConfigProperties,
     private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) {
     @Throws(BusinessException::class)
     fun getInstanceByBank(bankId: String?): BankIntegrationService = BankEnum.from(bankId).run(::getInstanceByBank)
@@ -32,7 +32,7 @@ class BankIntegrationFactoryService(
                     apiConfigProperties,
                     RestTemplate(),
                     gpbBankIntegrationHelperServiceImpl,
-                    objectMapper
+                    objectMapper,
                 )
             BankEnum.AKB_RUS ->
                 AKBankIntegrationServiceImpl(

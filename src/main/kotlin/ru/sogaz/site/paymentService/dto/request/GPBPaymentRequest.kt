@@ -21,7 +21,7 @@ data class GPBPaymentRequest(
     val threeDSTwo: ThreeDSTwo,
     val openApiMirPaySupported: Boolean,
     val addCardAllowed: Boolean,
-    val merchantTrx: String
+    val merchantTrx: String,
 )
 
 data class State(
@@ -33,5 +33,3 @@ data class State(
 data class ThreeDSTwo(
     val supported: Boolean,
 )
-
-

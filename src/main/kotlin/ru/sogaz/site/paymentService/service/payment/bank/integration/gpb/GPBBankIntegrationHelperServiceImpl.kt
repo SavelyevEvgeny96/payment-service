@@ -26,10 +26,12 @@ class GPBBankIntegrationHelperServiceImpl(
         private val DDMMYYYY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     }
 
-    override fun makeDescription(order: Order): DescriptionInfo =
-        buildDescriptionInfo(order)
+    override fun makeDescription(order: Order): DescriptionInfo = buildDescriptionInfo(order)
 
-    private fun buildDescriptionInfo(order: Order, maxLen: Int = 160): DescriptionInfo {
+    private fun buildDescriptionInfo(
+        order: Order,
+        maxLen: Int = 160,
+    ): DescriptionInfo {
         val opDate = LocalDate.now(DEFAULT_ZONE).toContractDateFormat()
 
         // 1) params — всегда по всем саб-ордерам
@@ -37,44 +39,48 @@ class GPBBankIntegrationHelperServiceImpl(
             order.subOrders.mapIndexed { idx, sub -> "param${idx + 1}" to sub.toParamValue() }.toMap()
 
         // 2) описание сразу с лимитом
-        val description: String = when {
-            // 0 саб-ордеров
-            order.subOrders.isEmpty() -> PAY_EMPTY_INFO.format(opDate).take(maxLen)
+        val description: String =
+            when {
+                // 0 саб-ордеров
+                order.subOrders.isEmpty() -> PAY_EMPTY_INFO.format(opDate).take(maxLen)
 
-            // 1 саб-ордер
-            order.subOrders.size == 1 -> order.subOrders.first()
-                .makeDescriptionForOneContract(opDate).take(maxLen)
+                // 1 саб-ордер
+                order.subOrders.size == 1 ->
+                    order.subOrders
+                        .first()
+                        .makeDescriptionForOneContract(opDate)
+                        .take(maxLen)
 
-            else -> {
-                // если есть "главный" — показываем только его (как и раньше)
-                val main = order.subOrders.findLast(SubOrder::mainContractCheck)
-                if (main != null) {
-                    main.makeDescriptionForOneContract(opDate).take(maxLen)
-                } else {
-                    // без главного — добавляем договоры по одному, пока влезают
-                    val basePrefix = "Оплата "
-                    val baseSuffix = ". Платежный сервис, дата операции $opDate"
-                    val parts = order.subOrders.map { sub -> "по договору ${sub.toParamValue()}" }
+                else -> {
+                    // если есть "главный" — показываем только его (как и раньше)
+                    val main = order.subOrders.findLast(SubOrder::mainContractCheck)
+                    if (main != null) {
+                        main.makeDescriptionForOneContract(opDate).take(maxLen)
+                    } else {
+                        // без главного — добавляем договоры по одному, пока влезают
+                        val basePrefix = "Оплата "
+                        val baseSuffix = ". Платежный сервис, дата операции $opDate"
+                        val parts = order.subOrders.map { sub -> "по договору ${sub.toParamValue()}" }
 
-                    // начинаем с первого; если даже он не влез — жёстко обрежем candidate
-                    var acc = StringBuilder(parts.first())
-                    var candidate = basePrefix + acc.toString() + baseSuffix
-                    if (candidate.length > maxLen) return DescriptionInfo(candidate.take(maxLen), params)
+                        // начинаем с первого; если даже он не влез — жёстко обрежем candidate
+                        var acc = StringBuilder(parts.first())
+                        var candidate = basePrefix + acc.toString() + baseSuffix
+                        if (candidate.length > maxLen) return DescriptionInfo(candidate.take(maxLen), params)
 
-                    for (i in 1 until parts.size) {
-                        val tryAcc = StringBuilder(acc).append(", ").append(parts[i]).toString()
-                        val tryCandidate = basePrefix + tryAcc + baseSuffix
-                        if (tryCandidate.length <= maxLen) {
-                            acc = StringBuilder(tryAcc)
-                            candidate = tryCandidate
-                        } else {
-                            break
+                        for (i in 1 until parts.size) {
+                            val tryAcc = StringBuilder(acc).append(", ").append(parts[i]).toString()
+                            val tryCandidate = basePrefix + tryAcc + baseSuffix
+                            if (tryCandidate.length <= maxLen) {
+                                acc = StringBuilder(tryAcc)
+                                candidate = tryCandidate
+                            } else {
+                                break
+                            }
                         }
+                        candidate
                     }
-                    candidate
                 }
             }
-        }
 
         return DescriptionInfo(description = description, params = params)
     }
@@ -93,11 +99,10 @@ class GPBBankIntegrationHelperServiceImpl(
             .toContractDateFormat()
 
     private fun LocalDate.toContractDateFormat(): String = this.format(DDMMYYYY)
-    private fun SubOrder.toParamValue(): String =
-        "${contractId ?: ""} от ${contractDate?.toContractDateFormat() ?: ""}"
 
-    fun convertToBankPaymentDetails(response: GpbCardPaymentStatusResponse): BankPaymentDetails =
-        bankPaymentDetailsMapper.convert(response)
+    private fun SubOrder.toParamValue(): String = "${contractId ?: ""} от ${contractDate?.toContractDateFormat() ?: ""}"
+
+    fun convertToBankPaymentDetails(response: GpbCardPaymentStatusResponse): BankPaymentDetails = bankPaymentDetailsMapper.convert(response)
 
     fun convertToBankPaymentDetails(response: GpbSbpPaymentStatusResponse): BankPaymentDetails =
         bankPaymentDetailsMapper.convert(response.result.firstOrNull())

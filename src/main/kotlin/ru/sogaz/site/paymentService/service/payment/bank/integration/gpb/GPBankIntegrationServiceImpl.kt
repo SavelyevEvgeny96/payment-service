@@ -42,7 +42,7 @@ class GPBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val PAYMENT_PATH = "/payment/"
@@ -111,7 +111,7 @@ class GPBankIntegrationServiceImpl(
         threeDSTwo = cardPayment3ds2,
         openApiMirPaySupported = true,
         addCardAllowed = order.saveCard,
-        params = descriptionInfo.params
+        params = descriptionInfo.params,
     )
 
     private fun formRegisterPaymentRequestUrl(token: String): String =
