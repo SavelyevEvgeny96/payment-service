@@ -30,9 +30,9 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.payment.bank.integration.akb.AKBankIntegrationServiceImpl
-import ru.sogaz.site.paymentService.service.payment.bank.integration.gpb.GPBBankIntegrationHelperServiceImpl
-import ru.sogaz.site.paymentService.service.payment.bank.integration.gpb.GPBankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.akb.AKBankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationHelperServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBankIntegrationServiceImpl
 import java.util.UUID
 import kotlin.random.Random
 

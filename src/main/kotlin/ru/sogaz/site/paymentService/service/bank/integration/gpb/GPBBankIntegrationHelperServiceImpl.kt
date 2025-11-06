@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration.gpb
+package ru.sogaz.site.paymentService.service.bank.integration.gpb
 
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
@@ -7,7 +7,7 @@ import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusRespons
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
-import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationHelperServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationHelperServiceImpl
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

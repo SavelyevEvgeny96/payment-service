@@ -6,7 +6,7 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.MediaTypeValue
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.QRCodeService
-import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFactoryService
 import ru.sogaz.site.qr.generator.client.api.QrCodeControllerApi
 import ru.sogaz.site.qr.generator.client.model.QRCodeRequest
 import ru.sogaz.site.qr.generator.client.model.ResponseQRCodeData
