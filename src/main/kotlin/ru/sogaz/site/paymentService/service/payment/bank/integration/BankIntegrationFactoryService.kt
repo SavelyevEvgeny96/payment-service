@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment.bank.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
@@ -18,6 +19,7 @@ class BankIntegrationFactoryService(
     private val apiConfigProperties: ApiConfigProperties,
     private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
+    private val objectMapper: ObjectMapper
 ) {
     @Throws(BusinessException::class)
     fun getInstanceByBank(bankId: String?): BankIntegrationService = BankEnum.from(bankId).run(::getInstanceByBank)
@@ -30,6 +32,7 @@ class BankIntegrationFactoryService(
                     apiConfigProperties,
                     RestTemplate(),
                     gpbBankIntegrationHelperServiceImpl,
+                    objectMapper
                 )
             BankEnum.AKB_RUS ->
                 AKBankIntegrationServiceImpl(

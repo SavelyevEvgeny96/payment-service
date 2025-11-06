@@ -11,6 +11,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
@@ -41,6 +42,7 @@ class GPBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
+    private val objectMapper: ObjectMapper
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val PAYMENT_PATH = "/payment/"
@@ -76,7 +78,7 @@ class GPBankIntegrationServiceImpl(
             token = exchangeForToken(),
             order = payment.order!!,
             amountData = payment.getAmountData(),
-            description = payment.getMainDescription(),
+            descriptionInfo = payment.getMainDescription(),
             urlToReturn = payment.urlToReturn,
         )
 
@@ -94,21 +96,22 @@ class GPBankIntegrationServiceImpl(
         token: String,
         order: Order,
         amountData: AmountData,
-        description: String,
+        descriptionInfo: DescriptionInfo,
         urlToReturn: UrlToReturn,
     ) = GPBPaymentRequest(
         merchantId = apiConfigProperties.merchantId,
-        orderId = order.id.toString(),
+        merchantTrx = order.id.toString(),
         token = token,
         backUrlS = urlToReturn.success() ?: apiConfigProperties.backUrlS,
         backUrlF = urlToReturn.failed() ?: apiConfigProperties.backUrlF,
         amount = amountData.getAmountInPennies(),
-        description = description,
+        description = descriptionInfo.description,
         currency = amountData.currency,
         state = cardPaymentState,
         threeDSTwo = cardPayment3ds2,
         openApiMirPaySupported = true,
         addCardAllowed = order.saveCard,
+        params = descriptionInfo.params
     )
 
     private fun formRegisterPaymentRequestUrl(token: String): String =
@@ -178,7 +181,7 @@ class GPBankIntegrationServiceImpl(
         url: String,
         request: Any? = null,
     ): T {
-        logger.info("Prepare for POST GPB request: $url with body: $request")
+        logger.info("Prepare for POST GPB request: $url with body: ${objectMapper.writeValueAsString(request)}")
         return withMeasureTime { runCatching { restTemplate.postForObject<T>(url, request) } }
             .also { logger.info("Response from GPB: $it") }
             .getOrThrow()
@@ -223,7 +226,8 @@ class GPBankIntegrationServiceImpl(
         }
 
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails {
-        val url = "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$PAYMENT_PATH${paymentBankInfo.paymentBankId}"
+        val url =
+            "${apiConfigProperties.gpbUrl}${apiConfigProperties.portalId}$PAYMENT_PATH${paymentBankInfo.paymentBankId}"
         postForObject<String>(url).run { logger.info("Full card status: $this") }
         return postForObject<GpbCardPaymentStatusResponse>(url)
             .toBankPaymentDetails()
