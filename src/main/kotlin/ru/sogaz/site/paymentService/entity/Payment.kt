@@ -36,8 +36,7 @@ data class Payment(
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     var type: PaymentTypeEnum? = null,
-//    @Column(name = "depersonalization")
-    @Transient
+    @Column(name = "depersonalization")
     var depersonalization: Boolean = false,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
