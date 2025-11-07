@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
+import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -30,8 +32,9 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.payment.bank.integration.AKBankIntegrationServiceImpl
-import ru.sogaz.site.paymentService.service.payment.bank.integration.GPBankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.akb.AKBankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationHelperServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBankIntegrationServiceImpl
 import java.util.UUID
 import kotlin.random.Random
 
@@ -73,7 +76,16 @@ class BankIntegrationServiceTest {
     private lateinit var restTemplate: RestTemplate
 
     @MockK
+    private lateinit var gpbCardPaymentClient: GpbCardPaymentClient
+
+    @MockK
+    private lateinit var gpbSbpPaymentClient: GpbSbpPaymentClient
+
+    @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
+
+    @RelaxedMockK
+    private lateinit var gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl
 
     private lateinit var gpBankIntegrationService: GPBankIntegrationServiceImpl
     private lateinit var akBankIntegrationService: AKBankIntegrationServiceImpl
@@ -83,7 +95,7 @@ class BankIntegrationServiceTest {
         mockGPBRestTemplate()
         mockAKBRestTemplate()
 
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
+        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, gpbSbpPaymentClient, gpbCardPaymentClient, gpbBankIntegrationHelperServiceImpl)
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 
@@ -105,7 +117,7 @@ class BankIntegrationServiceTest {
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_GPB_SBP_PAYLOAD, Payment::paymentPageUrl)
-            .returns(TEST_GPB_SBP_TRANSACTIONAL_ID, Payment::paymentBankId)
+            .returns(TEST_GPB_SBP_QR_ID, Payment::paymentBankId)
             .returns(TEST_GPB_SBP_QR_ID, Payment::qrcId)
     }
 
@@ -161,16 +173,10 @@ class BankIntegrationServiceTest {
     ).apply { this.subOrders.addAll(subOrders) }
 
     private fun mockGPBRestTemplate() {
-        every { restTemplate.postForObject<GazpromTokenResponse>(any(String::class)) }.returns(GPBTokenResponse)
-        every { restTemplate.postForObject<GazpromCardPaymentResponse>(any(String::class), any()) }.returns(
-            GPBCardPaymentResponse,
-        )
-        every { restTemplate.postForObject<GazpromSBPPaymentResponse>(any(String::class), any()) }.returns(
-            GPBSBPPaymentResponse,
-        )
-        every { restTemplate.postForObject<GPBQRImageResponse>(any(String::class), any()) }.returns(
-            gpbqrImageResponse,
-        )
+        every { gpbCardPaymentClient.getToken(any(String::class)) } returns GPBTokenResponse
+        every { gpbCardPaymentClient.startPayment(any(), any(), any()) } returns GPBCardPaymentResponse
+        every { gpbSbpPaymentClient.startPayment(any(), any()) } returns GPBSBPPaymentResponse
+        every { gpbSbpPaymentClient.getQrImage(any()) } returns gpbqrImageResponse
     }
 
     private fun mockAKBRestTemplate() {

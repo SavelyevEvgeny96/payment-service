@@ -1,8 +1,6 @@
 package ru.sogaz.site.paymentService.mapper.payment
 
 import org.mapstruct.Mapper
-import ru.sogaz.site.paymentService.dto.response.AkbOrderStatusResponse
-import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
@@ -44,24 +42,4 @@ abstract class PaymentStatusMapper {
             AkbPaymentStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS
             else -> PaymentStatusEnum.WAIT
         }
-
-    fun convert(gpbSbpPaymentStatusResponse: GpbSbpPaymentStatusResponse): PaymentStatusEnum =
-        gpbSbpPaymentStatusResponse.result
-            .firstOrNull()
-            ?.status
-            ?.run(::convert)
-            ?: PaymentStatusEnum.WAIT
-
-    fun convert(akbOrderStatusResponse: AkbOrderStatusResponse): PaymentStatusEnum {
-        if (akbOrderStatusResponse.status == AkbPaymentStatusEnum.CLOSED) {
-            return when (akbOrderStatusResponse.prevStatus) {
-                AkbPaymentStatusEnum.PREPARING,
-                AkbPaymentStatusEnum.WAITPUSHTRAN,
-                AkbPaymentStatusEnum.AUTHORIZED,
-                -> return PaymentStatusEnum.WAIT
-                else -> PaymentStatusEnum.FAIL
-            }
-        }
-        return convert(akbOrderStatusResponse.status)
-    }
 }

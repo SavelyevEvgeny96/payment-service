@@ -6,15 +6,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.scheduling.annotation.EnableScheduling
 import ru.sogaz.site.paymentService.properties.AppInfoProperties
 
-@SpringBootApplication
-@ConfigurationPropertiesScan("ru.sogaz.site.paymentService.properties")
-@ComponentScan(basePackages = ["ru.sogaz.site.paymentService"])
-@EnableConfigurationProperties(AppInfoProperties::class)
 @EnableScheduling
+@SpringBootApplication
+@EnableConfigurationProperties(AppInfoProperties::class)
+@ComponentScan(basePackages = ["ru.sogaz.site.paymentService"])
+@EnableFeignClients(basePackages = ["ru.sogaz.site.paymentService.clients"])
+@ConfigurationPropertiesScan("ru.sogaz.site.paymentService.properties")
 open class KotlinApplication
 
 fun main(args: Array<String>) {

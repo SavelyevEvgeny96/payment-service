@@ -18,7 +18,8 @@ import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
-import ru.sogaz.site.paymentService.dto.data.UrlToReturn
+import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
+import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
@@ -74,19 +75,17 @@ class PaymentServiceImpl(
 
     override fun createCardPayment(
         orderId: UUID,
-        urlToReturnS: String?,
-        urlToReturnF: String?,
+        payQueryParams: PayQueryParams
     ): DataPay =
         createPayment(
             orderId,
             PaymentTypeEnum.CARD,
-            UrlToReturn(urlToReturnS, urlToReturnF),
+            payQueryParams,
         )
 
     override fun createSBPPayment(
         orderId: UUID,
-        urlToReturnS: String?,
-        urlToReturnF: String?,
+        payQueryParams: PayQueryParams,
         paymentDelay: String?,
         processPayments: String?,
         paymentStatus: String?,
@@ -94,13 +93,16 @@ class PaymentServiceImpl(
         createPayment(
             orderId,
             PaymentTypeEnum.SBP,
-            UrlToReturn(urlToReturnS, urlToReturnF),
+            payQueryParams,
             GpbSbpHeadersParams(paymentDelay, processPayments, paymentStatus),
         )
 
-    override fun getOrderPaymentPageInfo(orderId: UUID): Response<DataOrderPaymentPageInfo> =
-        orderId
-            .run(infoPageService::getInfo)
+    override fun getOrderPaymentPageInfo(
+        orderId: UUID,
+        pageInfoRequestParams: PageInfoRequestParams,
+    ): Response<DataOrderPaymentPageInfo> =
+        infoPageService
+            .getInfo(orderId, pageInfoRequestParams)
             .wrapToSuccessResponse(SUCCESS_STATUS_CODE_PAY_INFO_PAGE)
 
     override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {
@@ -134,14 +136,14 @@ class PaymentServiceImpl(
     private fun createPayment(
         orderId: UUID,
         paymentTypeEnum: PaymentTypeEnum,
-        urlToReturn: UrlToReturn,
+        payQueryParams: PayQueryParams,
         headersParams: GpbSbpHeadersParams? = null,
     ): DataPay =
         orderDao
             .findById(orderId)
             .run { validateOrder(this, paymentTypeEnum) }
             .apply { bank = resolveCurrentBank(bank) }
-            .run { registerPayment(this, paymentTypeEnum, urlToReturn, headersParams) }
+            .run { registerPayment(this, paymentTypeEnum, payQueryParams, headersParams) }
             .also(::renewOrder)
             .also(waitingPaymentDao::saveWaitingForPayment)
             .toDataPay()
@@ -159,12 +161,12 @@ class PaymentServiceImpl(
     private fun registerPayment(
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
-        urlToReturn: UrlToReturn,
+        payQueryParams: PayQueryParams,
         headersParams: GpbSbpHeadersParams?,
     ): Payment =
         order
             .also(::logOrderInfoBeforeRegistrationPayment)
-            .run { registerPaymentService.register(order, paymentTypeEnum, urlToReturn, headersParams) }
+            .run { registerPaymentService.register(order, paymentTypeEnum, payQueryParams, headersParams) }
             .also(::logRegisteredPaymentInfo)
 
     private fun renewOrder(payment: Payment) =

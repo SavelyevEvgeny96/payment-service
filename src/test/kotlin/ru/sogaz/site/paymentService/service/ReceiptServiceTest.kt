@@ -70,7 +70,6 @@ class ReceiptServiceTest {
         service = initReceiptService()
         initOrdersTestData()
 
-        every { paymentDao.findByOrder(validOrder) } returns validPayment
         every { paymentDao.findByPaymentBankId(any()) } returns validPayment
         every { paymentDao.save(any()) } returnsArgument 0
         every { subOrderDao.getAllSubOrderListByOrderId(validOrder) } returns listOf(validSubOrder)

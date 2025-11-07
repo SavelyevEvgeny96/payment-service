@@ -5,20 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GpbCardPaymentStatusResponse(
-    @JsonProperty("token")
+    @param:JsonProperty("token")
     val id: String,
-    @JsonProperty("result")
+    @param:JsonProperty("result")
     val result: GpbResult?,
-    @JsonProperty("portalType")
+    @param:JsonProperty("portalType")
     val portalType: String?,
-    @JsonProperty("src")
+    @param:JsonProperty("src")
     val gpbCardDetails: GpbCardDetails? = null,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class GpbCardDetails(
-    val type: String? = null,
-    val pan: String? = null,
-    val paymentSystem: String? = null,
-    val issuerName: String? = null,
 )

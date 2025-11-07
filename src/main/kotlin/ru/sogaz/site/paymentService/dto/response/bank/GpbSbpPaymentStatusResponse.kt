@@ -5,6 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GpbSbpPaymentStatusResponse(
-    @JsonProperty("data")
-    val result: List<GpbResult>,
+    @param:JsonProperty("data")
+    val result: List<GpbQrResult>,
 )

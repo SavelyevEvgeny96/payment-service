@@ -6,12 +6,15 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
-import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
+import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
+import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.enums.OrderStatus
+import java.net.URI
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -50,47 +53,25 @@ interface OrderMapper {
     ): Order
 
     @Mapping(target = "orderId", source = "order.id")
-    @Mapping(target = "recipientEmail", source = "order.recipientEmail")
     @Mapping(target = "externalSystemCode", source = "order.clientId")
-    @Mapping(target = "subscriptionId", source = "order.subscriptionId")
     @Mapping(
         target = "paySuccess",
         source = "order.updateDate",
         qualifiedByName = ["localDateTimeToFormattedString"],
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
-    @Mapping(target = "issuerName", source = "bankPaymentDetails.cardDetails.issuerName")
-    @Mapping(target = "paymentType", source = "bankPaymentDetails.cardDetails.paymentType")
-    @Mapping(target = "maskedPan", source = "bankPaymentDetails.cardDetails.maskedPan")
-    @Mapping(target = "paymentSystem", source = "bankPaymentDetails.cardDetails.paymentSystem")
+    @Mapping(target = "keyCard", source = "cardDetails.cardId")
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
-        bankPaymentDetails: BankPaymentDetails,
+        cardDetails: ClientCardDetails?,
     ): PaidOrderMessage
+
+    @Mapping(target = "orderId", source = "order.id")
+    @Mapping(target = "accounts", source = "order.subOrders")
+    fun toOrderPaymentPageInfo(
+        order: Order,
+        paySbp: PaySbp?,
+        urlPayBank: URI,
+    ): DataOrderPaymentPageInfo
 }
-
-// val orderId: String?,
-// val recipientEmail: String?,
-// val externalSystemCode: String? = null,
-// val subscriptionId: String?,
-// val paySuccess: String?,
-// val subOrders: List<SubOrderPayload>?,
-// val issuerName: String?,
-// val paymentType: String?,
-// val maskedPan: String?,
-// val paymentSystem: String?,
-
-// orderId = order.id?.toString(),
-// recipientEmail = order.recipientEmail,
-// externalSystemCode = order.clientId,
-// subscriptionId = order.subscriptionId,
-// paySuccess =
-// order.updateDate
-// ?.atZone(ZoneOffset.UTC)
-// ?.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-// subOrders = subOrderPayloads,
-// bankPaymentDetails.cardDetails?.issuerName,
-// bankPaymentDetails.cardDetails?.paymentSystem,
-// bankPaymentDetails.cardDetails?.maskedPan,
-// bankPaymentDetails.cardDetails?.paymentType,

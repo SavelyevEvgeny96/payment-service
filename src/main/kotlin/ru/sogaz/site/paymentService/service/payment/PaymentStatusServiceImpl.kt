@@ -26,7 +26,7 @@ import ru.sogaz.site.paymentService.mapper.payment.PaymentBankInfoMapper
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.PaymentStatusService
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFactoryService
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -51,7 +51,9 @@ class PaymentStatusServiceImpl(
     companion object {
         private const val UPDATE_STATUS_ERROR_MESSAGE = "Произошла ошибка во время обновления статуса для банковского платежа [bankId: %s]"
         private const val NOT_FIND_ORDER_WARN_MESSAGE = "Не найден заказ для банковского платежа"
-        private const val ORDER_ALREADY_PAID_WARN_MESSAGE = "Заказ [orderId: %s, bank: %s] уже отмечен как оплаченный для банковского платежа"
+        private const val ORDER_ALREADY_PAID_WARN_MESSAGE =
+            "Заказ [orderId: %s, bank: %s] уже " +
+                "отмечен как оплаченный для банковского платежа"
         private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         private const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
@@ -98,7 +100,7 @@ class PaymentStatusServiceImpl(
             .getInstanceByBank(paymentBankInfo.bank)
             .requestPaymentStatus(paymentBankInfo)
 
-    @Transactional
+    @Transactional(rollbackFor = [Exception::class])
     private fun updateStatusesForPayment(
         bankPaymentDetails: BankPaymentDetails,
         payment: Payment,
@@ -119,6 +121,7 @@ class PaymentStatusServiceImpl(
         }
     }
 
+    @Transactional(rollbackFor = [Exception::class])
     private fun handleSuccessPayment(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
@@ -128,7 +131,6 @@ class PaymentStatusServiceImpl(
         deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
     }
 
-    @Transactional
     private fun updateOrderForSuccessPayment(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
@@ -144,19 +146,19 @@ class PaymentStatusServiceImpl(
         }
         order.apply { status = OrderStatus.SUCCESS }
 
-        orderDao.save(order)
         receiptService.generateReceipt(payment)
-        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
         sendToPaidOrdersQueue(order, bankPaymentDetails)
+        orderDao.save(order)
+        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
 
-    @Transactional
+    @Transactional(rollbackFor = [Exception::class])
     private fun deleteWaitingPaymentsFromQueue(paymentBankId: String) {
         waitingPaymentDao.deleteByPaymentBankId(paymentBankId)
         callbackPaymentDao.deleteByPaymentBankId(paymentBankId)
     }
 
-    @Transactional
+    @Transactional(rollbackFor = [Exception::class])
     private fun updateWaitingPaymentsInQueue(paymentBankId: String) {
         waitingPaymentDao.updateTimeByPaymentBankId(paymentBankId)
         callbackPaymentDao.updateTimeByPaymentBankId(paymentBankId)
@@ -170,7 +172,7 @@ class PaymentStatusServiceImpl(
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order) ?: emptyList()
             val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
 
-            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails)
+            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
 
             val exchange = props.exchange
             val routingKey = props.routingKeyStatusPayment

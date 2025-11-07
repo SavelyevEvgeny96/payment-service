@@ -1,6 +1,7 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration
+package ru.sogaz.site.paymentService.service.bank.integration.akb
 
 import org.springframework.http.HttpEntity
+import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.getForObject
@@ -22,16 +23,19 @@ import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationServiceImpl
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.time.measureTimedValue
 
+@Service
 class AKBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,
@@ -80,11 +84,13 @@ class AKBankIntegrationServiceImpl(
             .also(::setSrcToken)
             .apply { paymentPageUrl = preparePushTran(this) }
 
+    override fun provider(): BankEnum = BankEnum.AKB_RUS
+
     private fun buildCardRequest(payment: Payment): AkbCardAndSbpPaymentRequest =
         buildAkbRequest(
             payment.id!!,
             payment.getAmountData(),
-            payment.getDescription(),
+            payment.v4Description(),
             payment.urlToReturn,
             TypeRidEnum.WITH_3DS,
         )
@@ -96,7 +102,7 @@ class AKBankIntegrationServiceImpl(
         buildAkbRequest(
             payment.id!!,
             payment.getAmountData(),
-            payment.getDescription(),
+            payment.v4Description(),
             payment.urlToReturn,
             TypeRidEnum.QRC_PAY,
         )
@@ -125,7 +131,10 @@ class AKBankIntegrationServiceImpl(
         val body = buildPushTranRequest(returnUrl)
         return try {
             val response = postForObject<PreparePushTranResponse>(url, HttpEntity(body, jsonHeaders))
-            response.getQrcPayload(IPS_RU_PARAM_NAME) ?: throw InnerException(getTraceId(), EMPTY_REDIRECT_URL_RESPONSE)
+            response.getQrcPayload(IPS_RU_PARAM_NAME) ?: throw InnerException(
+                getTraceId(),
+                EMPTY_REDIRECT_URL_RESPONSE,
+            )
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), "Ошибка при подготовке push-транзакции: ${ex.message}")
         }
