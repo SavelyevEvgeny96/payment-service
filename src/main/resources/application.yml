@@ -120,3 +120,9 @@ logging:
       sogaz:
         site:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
+  proxy:
+    frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
+    upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
+    max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
+    stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
