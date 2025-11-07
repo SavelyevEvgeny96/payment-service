@@ -26,7 +26,7 @@ import ru.sogaz.site.paymentService.mapper.payment.PaymentBankInfoMapper
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.PaymentStatusService
 import ru.sogaz.site.paymentService.service.ReceiptService
-import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFactoryService
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
