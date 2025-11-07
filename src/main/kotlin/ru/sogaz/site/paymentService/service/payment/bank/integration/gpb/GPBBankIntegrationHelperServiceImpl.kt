@@ -30,7 +30,7 @@ class GPBBankIntegrationHelperServiceImpl(
 
     private fun buildDescriptionInfo(
         order: Order,
-        maxLen: Int = 160,
+        maxLen: Int = 125,
     ): DescriptionInfo {
         val opDate = LocalDate.now(DEFAULT_ZONE).toContractDateFormat()
 
