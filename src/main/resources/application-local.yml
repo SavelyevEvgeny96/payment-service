@@ -20,21 +20,24 @@ api:
     akbUrl: ${api.gateway.dmz}/payment/akb/order
     akbSbpUrl: ${api.gateway.dmz}/payment/akb/order
     akbUrlStatus: ${api.gateway.dmz}/payment/akb/order
-    gpbUrl: ${api.gateway.dmz}/payment/gpb/card/
-    gpbSbpUrl: ${api.gateway.dmz}/payment/gpb/sbp/merchant/qrc-data
-    gpbSbpUrlStatus: ${api.gateway.dmz}/payment/gpb/sbp/merchant/qrc-status
-    gpbSbpQRImageUrl: ${api.gateway.dmz}/payment/gpb/sbp/merchant/qr-image
     callbackUrlSbp: https://example.com/callback
-    paymentAccount:
-    portalId:
     merchantIdSbpGpb:
-    merchantId:
+    paymentAccount:
+    mainPortalId:
+    mainMerchantId:
+    depersonalizedPortalId:
+    depersonalizedMerchantId:
     backUrlS: http://test.k835.sogaz.ru/realty/flat/success/
     backUrlF: http://test.k835.sogaz.ru/realty/flat/
   receipt:
     receiptUrl: http://s00-0000-k835.sogaz.ru/test/payment-receipt-service
   qr:
     baseUrl: https://s00-0000-k835.sogaz.ru/test/qr-generator-service
+  gpb:
+    card:
+      basePath: ${api.gateway.dmz}/payment/gpb/card/
+    sbp:
+      basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
 
 crons:
   waitingPaymentsCheck: "*/30 * * * * *"
