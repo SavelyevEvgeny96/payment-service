@@ -7,8 +7,6 @@ import ru.sogaz.site.paymentService.enums.CurrencyEnum
 data class GPBPaymentRequest(
     val state: State?,
     val params: Map<String, String>? = null,
-    @JsonIgnore
-    val token: String,
     val merchantId: String,
     @param:JsonProperty("back_url_s")
     val backUrlS: String,
@@ -22,6 +20,10 @@ data class GPBPaymentRequest(
     val openApiMirPaySupported: Boolean,
     val addCardAllowed: Boolean,
     val merchantTrx: String,
+    @JsonIgnore
+    val token: String,
+    @JsonIgnore
+    val depersonalization: Boolean = false,
 )
 
 data class State(

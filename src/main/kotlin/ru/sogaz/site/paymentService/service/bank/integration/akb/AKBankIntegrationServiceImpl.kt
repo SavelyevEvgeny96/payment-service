@@ -1,6 +1,7 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration.akb
+package ru.sogaz.site.paymentService.service.bank.integration.akb
 
 import org.springframework.http.HttpEntity
+import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.getForObject
@@ -28,12 +29,13 @@ import ru.sogaz.site.paymentService.enums.TypeRidEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
-import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationServiceImpl
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.time.measureTimedValue
 
+@Service
 class AKBankIntegrationServiceImpl(
     private val apiConfigProperties: ApiConfigProperties,
     private val restTemplate: RestTemplate,

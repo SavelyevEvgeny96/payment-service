@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration
+package ru.sogaz.site.paymentService.service.bank.integration
 
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
