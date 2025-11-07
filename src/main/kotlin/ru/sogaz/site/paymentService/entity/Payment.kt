@@ -36,6 +36,8 @@ data class Payment(
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     var type: PaymentTypeEnum? = null,
+    @Column(name = "depersonalization")
+    var depersonalization: Boolean = false,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
     @Column(name = "payment_pass")
@@ -70,7 +72,7 @@ data class Payment(
             else -> false
         }
 
-    fun isClosed(): Boolean = isInProcess().not()
+    fun isClosed(): Boolean = isInProcess().not() && isSuccess().not()
 
     fun isSuccess(): Boolean = state == PaymentStatusEnum.SUCCESS
 }

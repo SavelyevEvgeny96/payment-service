@@ -10,6 +10,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
+import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
@@ -17,7 +18,7 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
-import ru.sogaz.site.paymentService.service.payment.bank.integration.BankIntegrationFactoryService
+import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFactoryService
 import java.time.LocalDateTime
 
 @Service
@@ -35,11 +36,11 @@ class RegisterPaymentServiceImpl(
     override fun register(
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
-        urlToReturn: UrlToReturn,
+        payQueryParams: PayQueryParams,
         headersParams: GpbSbpHeadersParams?,
     ): Payment =
         try {
-            formPayment(order, paymentTypeEnum, urlToReturn)
+            formPayment(order, paymentTypeEnum, payQueryParams)
                 .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
                 .run { registerInBank(this, headersParams) }
@@ -62,13 +63,14 @@ class RegisterPaymentServiceImpl(
     private fun formPayment(
         order: Order,
         paymentTypeEnum: PaymentTypeEnum,
-        urlToReturn: UrlToReturn,
+        payQueryParams: PayQueryParams,
     ): Payment =
         Payment(
             bank = order.bank,
             order = order,
             type = paymentTypeEnum,
-            urlToReturn = urlToReturn,
+            depersonalization = payQueryParams.depersonalized,
+            urlToReturn = UrlToReturn(payQueryParams.urlToReturn, payQueryParams.urlToReturnF),
             saveCard = order.saveCard,
         )
 

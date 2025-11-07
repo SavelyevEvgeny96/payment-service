@@ -6,16 +6,16 @@ import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PaymentAkbStatusResponse(
-    @JsonProperty("order")
+    @param:JsonProperty("order")
     val order: AkbOrderStatusResponse,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AkbOrderStatusResponse(
-    @JsonProperty("id")
+    @param:JsonProperty("id")
     val id: String,
-    @JsonProperty("status")
+    @param:JsonProperty("status")
     val status: AkbPaymentStatusEnum,
-    @JsonProperty("prevStatus")
+    @param:JsonProperty("prevStatus")
     val prevStatus: AkbPaymentStatusEnum?,
 )

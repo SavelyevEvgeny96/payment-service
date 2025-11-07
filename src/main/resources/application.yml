@@ -48,7 +48,6 @@ spring:
       connectionTimeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
       maxLifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
       idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:10000}
-
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -63,29 +62,28 @@ api:
     akbUrl: ${AKB_URL}
     akbSbpUrl: ${AKB_SBP_URL}
     akbUrlStatus: ${AKB_PAYMENT_URL}
-    gpbUrl: ${GPB_URL}
-    gpbSbpUrl: ${GPB_SBP_URL}
-    gpbSbpUrlStatus: ${GPB_SBP_STATUS_URL}
-    gpbSbpQRImageUrl: ${GPB_SBP_QR_IMAGE_URL}
     callbackUrlSbp: ${CALLBACK_URL_SBP}
-    paymentAccount: ${PAYMENT_ACCOUNT}
-    portalId: ${GPB_PORTAL_ID}
     merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
-    merchantId: ${GPB_MERCHANT_ID}
+    paymentAccount: ${PAYMENT_ACCOUNT}
+    mainPortalId: ${GPB_PORTAL_ID}
+    mainMerchantId: ${GPB_MERCHANT_ID}
+    depersonalizedPortalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
+    depersonalizedMerchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
     backUrlS: ${BACK_URL_SUCCESS}
     backUrlF: ${BACK_URL_FALSE}
   receipt:
     receiptUrl: ${RECEIPT_URL}
   qr:
     baseUrl: ${QR_GENERATOR_URL}
+  gpb:
+    card:
+      basePath: ${GPB_URL}
+    sbp:
+      basePath: ${GPB_SBP_URL}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
   callbackPaymentsCheck: ${CALLBACK_PAYMENTS_CHECK_CRON:*/10 * * * * *}
-
-micronaut:
-  metrics:
-    enabled: true
 
 management:
   endpoints:

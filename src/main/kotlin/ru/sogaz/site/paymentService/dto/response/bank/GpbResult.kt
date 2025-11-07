@@ -6,6 +6,6 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GpbResult(
-    @JsonProperty("status")
+    @param:JsonProperty("status")
     val status: StatusEnum,
 )

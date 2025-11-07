@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.service.payment.bank.integration
+package ru.sogaz.site.paymentService.service.bank.integration
 
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -20,9 +20,6 @@ import java.time.format.DateTimeFormatter
 abstract class BankIntegrationServiceImpl : BankIntegrationService {
     companion object {
         const val ERROR_UNKNOWN_PAYMENT_TYPE = "Unknown payment type"
-        const val TEMPLATE_VERSION = "01"
-        const val QR_TTL = "60"
-        const val QR_TYPE = "02"
 
         private const val ZERO = "0"
         private const val MAX_DESC_LEN = 250

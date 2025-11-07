@@ -36,6 +36,7 @@ class CallbackPaymentsStatusesScheduler(
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
         runCatching { runTask() }
             .also(::logResult)
+        MDC.clear()
     }
 
     private fun runTask() =
