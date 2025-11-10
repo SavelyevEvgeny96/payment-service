@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
@@ -73,8 +74,8 @@ class GPBankIntegrationServiceImpl(
             token = exchangeForToken(payment.depersonalization),
             order = payment.order!!,
             amountData = payment.getAmountData(),
+            descriptionInfo = payment.getMainDescription(),
             depersonalization = payment.depersonalization,
-            description = payment.getMainDescription(),
             urlToReturn = payment.urlToReturn,
         )
 
@@ -93,21 +94,22 @@ class GPBankIntegrationServiceImpl(
         order: Order,
         amountData: AmountData,
         depersonalization: Boolean,
-        description: String,
+        descriptionInfo: DescriptionInfo,
         urlToReturn: UrlToReturn,
     ) = GPBPaymentRequest(
         merchantId = takeMerchantId(depersonalization),
-        orderId = order.id.toString(),
+        merchantTrx = order.id.toString(),
         token = token,
         backUrlS = urlToReturn.success() ?: apiConfigProperties.backUrlS,
         backUrlF = urlToReturn.failed() ?: apiConfigProperties.backUrlF,
         amount = amountData.getAmountInPennies(),
-        description = description,
+        description = descriptionInfo.description,
         currency = amountData.currency,
         state = cardPaymentState,
         threeDSTwo = cardPayment3ds2,
         openApiMirPaySupported = true,
         addCardAllowed = order.saveCard,
+        params = descriptionInfo.params,
         depersonalization = depersonalization,
     )
 

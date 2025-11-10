@@ -20,11 +20,21 @@ class RabbitMQConfig(
     private val connectionFactory: ConnectionFactory,
     private val props: RabbitProperties,
 ) {
+
+    companion object {
+        const val QUEUE_TYPE = "x-queue-type"
+        const val QUORUM = "quorum"
+    }
+
     @Bean
     fun ordersExchange(): TopicExchange = TopicExchange(props.exchange, true, false)
 
     @Bean(name = ["paymentsStatusQueue"])
-    fun paymentsStatusQueue(): Queue = QueueBuilder.durable(props.queueStatusPayment).build()
+    fun paymentsStatusQueue(): Queue =
+        QueueBuilder
+            .durable(props.queueStatusPayment)
+            .withArgument(QUEUE_TYPE, QUORUM)
+            .build()
 
     @Bean
     fun ordersBinding(
@@ -33,7 +43,8 @@ class RabbitMQConfig(
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusPayment)
 
     @Bean
-    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter = Jackson2JsonMessageConverter(objectMapper)
+    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter =
+        Jackson2JsonMessageConverter(objectMapper)
 
     @Bean
     fun rabbitTemplate(messageConverter: MessageConverter): RabbitTemplate =
