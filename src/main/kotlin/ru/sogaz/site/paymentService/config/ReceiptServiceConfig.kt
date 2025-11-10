@@ -11,8 +11,12 @@ open class ReceiptServiceConfig(
     private val receiptProperties: ReceiptProperties,
 ) {
     @Bean
-    fun paymentReceiptControllerApi(): PaymentReceiptControllerApi {
-        val apiClient = ApiClient().setBasePath(receiptProperties.receiptUrl)
-        return PaymentReceiptControllerApi(apiClient)
-    }
+    fun receiptApiClient(): ApiClient =
+        ApiClient().apply {
+            basePath = receiptProperties.receiptUrl
+        }
+
+    @Bean
+    fun paymentReceiptControllerApi(receiptApiClient: ApiClient): PaymentReceiptControllerApi =
+        PaymentReceiptControllerApi(receiptApiClient)
 }
