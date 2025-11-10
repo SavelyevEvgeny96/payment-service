@@ -10,14 +10,13 @@ import java.util.concurrent.TimeUnit
 
 @Configuration
 class OkHttpClientConfig {
-
     @Bean
-    fun okHttpLoggingInterceptor(loggingProperties: LoggingProperties) =
-        OkHttpLoggingInterceptor(loggingProperties)
+    fun okHttpLoggingInterceptor(loggingProperties: LoggingProperties) = OkHttpLoggingInterceptor(loggingProperties)
 
     @Bean
     fun okHttpClient(okHttpLoggingInterceptor: OkHttpLoggingInterceptor): OkHttpClient =
-        OkHttpClient.Builder()
+        OkHttpClient
+            .Builder()
             .addInterceptor(okHttpLoggingInterceptor)
             .connectTimeout(3, TimeUnit.SECONDS)
             .readTimeout(5, TimeUnit.SECONDS)
@@ -25,6 +24,5 @@ class OkHttpClientConfig {
             .build()
 
     @Bean
-    fun feignOkHttpClient(okHttpClient: OkHttpClient): Client =
-        feign.okhttp.OkHttpClient(okHttpClient)
+    fun feignOkHttpClient(okHttpClient: OkHttpClient): Client = feign.okhttp.OkHttpClient(okHttpClient)
 }

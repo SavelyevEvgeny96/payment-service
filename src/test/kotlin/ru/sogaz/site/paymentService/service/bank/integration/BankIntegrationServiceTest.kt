@@ -95,7 +95,13 @@ class BankIntegrationServiceTest {
         mockGPBRestTemplate()
         mockAKBRestTemplate()
 
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(apiConfigProperties, gpbSbpPaymentClient, gpbCardPaymentClient, gpbBankIntegrationHelperServiceImpl)
+        gpBankIntegrationService =
+            GPBankIntegrationServiceImpl(
+                apiConfigProperties,
+                gpbSbpPaymentClient,
+                gpbCardPaymentClient,
+                gpbBankIntegrationHelperServiceImpl,
+            )
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 

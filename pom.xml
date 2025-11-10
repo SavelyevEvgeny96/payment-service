@@ -87,13 +87,6 @@
             <artifactId>kotlin-maven-plugin</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
-
-        <!-- inner libraries -->
-        <dependency>
-            <groupId>ru.sogaz.esb.core</groupId>
-            <artifactId>logger</artifactId>
-            <version>${ru.sogaz.esb.core.logger.version}</version>
-        </dependency>
         <dependency>
             <groupId>ru.sogaz.site</groupId>
             <artifactId>exception-starter</artifactId>
@@ -150,6 +143,10 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
             <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
         </dependency>
 
         <!-- Logger -->
