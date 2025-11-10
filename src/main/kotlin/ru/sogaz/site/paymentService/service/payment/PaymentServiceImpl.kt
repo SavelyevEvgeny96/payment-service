@@ -75,7 +75,7 @@ class PaymentServiceImpl(
 
     override fun createCardPayment(
         orderId: UUID,
-        payQueryParams: PayQueryParams
+        payQueryParams: PayQueryParams,
     ): DataPay =
         createPayment(
             orderId,
