@@ -97,7 +97,7 @@ class OrderController(
         return ResponseEntity.ok(orderService.createOrder(requestWrapper))
     }
 
-    @GetMapping("/order/status/{orderId}")
+    @GetMapping("payment/order/status/{orderId}")
     fun getOrderStatus(
         @PathVariable orderId: String,
     ): Response<DataGetOrderStatus> = orderService.getOrderStatus(orderId)
