@@ -13,8 +13,10 @@ import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 
-@FeignClient(name = "gpb-sbp-payment-client",
-    url = "\${api.gpb.sbp.basePath}")
+@FeignClient(
+    name = "gpb-sbp-payment-client",
+    url = "\${api.gpb.sbp.basePath}",
+)
 interface GpbSbpPaymentClient {
     @PostMapping(value = ["/qrc-data"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun startPayment(
