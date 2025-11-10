@@ -31,8 +31,6 @@ class OrderServiceImpl(
         const val STATUS_CODE_SUCCESS_GET_ORDER_STATUS = 1201503200
         const val LOG_START_GET_ORDER_STATUS = "***** НАЧАЛО ***** метод получения статуса заявки для orderId: "
         const val LOG_END_GET_ORDER_STATUS = "***** КОНЕЦ ***** метод получения статуса заявки  stateId =  "
-        const val LOG_START_ORDER_CREATION = "***** НАЧАЛО ***** создания заявки для TraceId: "
-        const val LOG_END_ORDER_CREATION = "***** КОНЕЦ ***** создания заявки для TraceId: "
         const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с не найден для TraceId: "
         const val ERROR_CLIENT_SYSTEM_NOT_FOUND = "Система клиента не найдена"
     }
@@ -45,7 +43,6 @@ class OrderServiceImpl(
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
     override fun createOrder(requestWrapper: OrderRequest): Response<DataOrder> {
-        logger.info(LOG_START_ORDER_CREATION)
 
         val savedOrder =
             formOrderFromRequest(requestWrapper)
@@ -55,7 +52,6 @@ class OrderServiceImpl(
                     premiumAmount = extractPremiumAmount(this.subOrders).setScale(2, RoundingMode.HALF_UP).toString()
                 }.run(orderDao::save)
 
-        logger.info(LOG_END_ORDER_CREATION)
         return getSuccessResponse(
             getTraceId(),
             STATUS_CODE_SUCCESS,

@@ -14,19 +14,25 @@ import ru.sogaz.site.qr.generator.client.invoker.ApiClient
 class GeneratorConfig(
     val qrConfigProperties: QrConfigProperties,
 ) {
-
     @Bean
     fun restTemplate() = RestTemplate()
 
     @Bean
-    fun qrGeneratorServiceConfig(bankIntegrationFactoryService: BankIntegrationFactoryService): QRCodeService =
+    fun qrApiClient(): ApiClient =
+        ApiClient().apply {
+            basePath = qrConfigProperties.baseUrl
+        }
+
+    @Bean
+    fun qrCodeControllerApi(qrApiClient: ApiClient): QrCodeControllerApi = QrCodeControllerApi(qrApiClient)
+
+    @Bean
+    fun qrGeneratorServiceConfig(
+        qrCodeControllerApi: QrCodeControllerApi,
+        bankIntegrationFactoryService: BankIntegrationFactoryService,
+    ): QRCodeService =
         QRCodeServiceImpl(
-            qrCodeControllerApi = qrCodeControllerApi(),
+            qrCodeControllerApi = qrCodeControllerApi,
             bankIntegrationFactoryService = bankIntegrationFactoryService,
         )
-
-    private fun qrCodeControllerApi() =
-        ApiClient()
-            .apply { basePath = qrConfigProperties.baseUrl }
-            .run(::QrCodeControllerApi)
 }
