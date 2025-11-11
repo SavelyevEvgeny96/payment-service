@@ -17,6 +17,7 @@ data class PaidOrderMessage(
     val maskedPan: String?,
     val paymentSystem: String?,
     val keyCard: String?,
+    var bank: String?,
 ) : Serializable
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

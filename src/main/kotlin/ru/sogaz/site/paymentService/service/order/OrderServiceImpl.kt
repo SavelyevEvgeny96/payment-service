@@ -43,7 +43,6 @@ class OrderServiceImpl(
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
     override fun createOrder(requestWrapper: OrderRequest): Response<DataOrder> {
-
         val savedOrder =
             formOrderFromRequest(requestWrapper)
                 .apply {
