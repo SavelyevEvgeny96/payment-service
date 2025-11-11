@@ -17,6 +17,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.paymentService.dao.BankDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
+import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -27,6 +28,7 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
 import java.math.BigDecimal
+import java.net.URI
 import java.util.UUID
 import kotlin.test.assertEquals
 
@@ -34,9 +36,9 @@ import kotlin.test.assertEquals
 class PaymentServiceTest {
     companion object {
         const val TRACE_ID = "trace-123"
-        const val PAY_CARD_GPB_URL = "pay-card-url"
-        const val PAY_SBP_GPB_URL = "pay-sbp-gpb-url"
         private const val SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE = "ok"
+        private val PAY_CARD_GPB_URL: URI = URI.create("http://www.sogaz.ru")
+        private val PAY_SBP_GPB_URL: URI = URI.create("http://www.sogaz.ru")
     }
 
     @MockK
@@ -96,7 +98,7 @@ class PaymentServiceTest {
         paymentService
             .createCardPayment(validOrderUUID)
             .run(::assertThat)
-            .returns(PAY_CARD_GPB_URL) { it.paymentPageUrl }
+            .returns(PAY_CARD_GPB_URL, DataPay::paymentPageUrl)
         verify { orderDao.save(validOrder) }
         verify { waitingPaymentDao.saveWaitingForPayment(registeredPayment) }
     }
@@ -149,9 +151,9 @@ class PaymentServiceTest {
             true,
         )
 
-    private fun buildGPBRegisteredSBPPayment() = buildRegisteredPayment(PAY_CARD_GPB_URL, PaymentTypeEnum.SBP)
+    private fun buildGPBRegisteredSBPPayment() = buildRegisteredPayment(PAY_CARD_GPB_URL.toString(), PaymentTypeEnum.SBP)
 
-    private fun buildGPBRegisteredCARDPayment() = buildRegisteredPayment(PAY_SBP_GPB_URL, PaymentTypeEnum.CARD)
+    private fun buildGPBRegisteredCARDPayment() = buildRegisteredPayment(PAY_SBP_GPB_URL.toString(), PaymentTypeEnum.CARD)
 
     private fun buildRegisteredPayment(
         paymentPageUrl: String,
