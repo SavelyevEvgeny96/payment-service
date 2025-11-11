@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: nexus.sogaz.ru/postgres:16
+    container_name: payment_service_postgres
+    environment:
+      POSTGRES_DB: payment_service_db
+      POSTGRES_USER: payment_user
+      POSTGRES_PASSWORD: payment_pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+#    command: ["postgres", "-c", "log_statement=all"] # Для включения подробных логов postgres
+    networks:
+      - shedlock-net
+
+  payment-service:
+    # Сначала пробуем загрузить образ
+    image: payment-service-local
+    # А если его нет, то создаем из Dockerfile из той же директории
+    build: .
+    # Подтягиваем переменные окружения из .env, если такой есть в той же директории
+    env_file: .env
+    # Вручную переопределяем по необходимости
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_service_db
+      SPRING_DATASOURCE_USERNAME: payment_user
+      SPRING_DATASOURCE_PASSWORD: payment_pass
+      SPRING_PROFILES_ACTIVE: local
+    deploy:
+      # Указываем запуск с возможностью репликации
+      mode: replicated
+      # После успешного запуска одного экземпляра можем масштабировать командой: `docker-compose scale payment-service=6`
+      replicas: 1
+    depends_on:
+      - postgres
+    networks:
+      - shedlock-net
+
+networks:
+  shedlock-net:
+
+volumes:
+  pgdata:
