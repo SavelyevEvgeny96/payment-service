@@ -6,15 +6,16 @@ import ru.sogaz.site.paymentService.dao.ClientSystemDao
 import ru.sogaz.site.paymentService.entity.ClientSystem
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.ClientSystemRepository
-import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.ERROR_CLIENT_SYSTEM_NOT_FOUND
 
 @Repository
 class ClientSystemDaoImpl(
     private val clientSystemRepository: ClientSystemRepository,
 ) : ClientSystemDao {
     companion object {
-        const val LOG_CLIENT_SYSTEM_NOT_FOUND =
+        private const val LOG_CLIENT_SYSTEM_NOT_FOUND =
             "Не удалось найти систему клиента для externalSystemCode: {} и TraceId: {}"
+
+        private const val ERROR_CLIENT_SYSTEM_NOT_FOUND = "Система клиента не найдена"
     }
 
     private val logger = loggerFor(javaClass)

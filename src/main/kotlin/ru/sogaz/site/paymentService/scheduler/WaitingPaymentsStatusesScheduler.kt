@@ -4,6 +4,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.MDC
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import ru.sogaz.site.filterStarter.services.RequestInfo.SERVICE_NAME
 import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
@@ -34,6 +35,7 @@ class WaitingPaymentsStatusesScheduler(
     @SchedulerLock(name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses", lockAtMostFor = "PT1M")
     fun updateWaitingPaymentsStatuses() {
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
+        MDC.put(SERVICE_NAME, "payment-service")
         runCatching { runTask() }
             .also(::logResult)
         MDC.clear()
