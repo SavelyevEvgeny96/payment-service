@@ -5,7 +5,6 @@ import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import ru.sogaz.site.paymentService.validation.constraint.Email
-
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -17,7 +16,7 @@ data class PaymentCreatedEventDto(
     @field:NotNull
     val timestamp: Instant,
     @field:NotNull
-    val data: PaymentCreatedDataDto
+    val data: PaymentCreatedDataDto,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -37,5 +36,5 @@ data class PaymentCreatedDataDto(
     @field:NotNull
     val dateCreate: Instant,
     @field:NotNull
-    val dateEnd: Instant
+    val dateEnd: Instant,
 )

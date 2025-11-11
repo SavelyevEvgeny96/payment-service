@@ -14,7 +14,6 @@ import ru.sogaz.site.qr.generator.client.invoker.ApiClient
 class GeneratorConfig(
     val qrConfigProperties: QrConfigProperties,
 ) {
-
     @Bean
     fun restTemplate() = RestTemplate()
 

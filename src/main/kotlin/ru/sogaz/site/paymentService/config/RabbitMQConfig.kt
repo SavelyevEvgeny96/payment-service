@@ -25,7 +25,6 @@ class RabbitMQConfig(
     private val props: RabbitProperties,
     private val propsListener: RabbitListenerProps,
 ) {
-
     companion object {
         const val QUEUE_TYPE = "x-queue-type"
         const val QUORUM = "quorum"
@@ -52,11 +51,10 @@ class RabbitMQConfig(
         Jackson2JsonMessageConverter(objectMapper)
 
     @Bean
-    fun rabbitTemplate(messageConverter: MessageConverter): RabbitTemplate =
+    fun rabbitTemplate(@Qualifier("jacksonMessageConverter") messageConverter: MessageConverter): RabbitTemplate =
         RabbitTemplate(connectionFactory).apply {
             this.messageConverter = messageConverter
         }
-
 
     @Bean("batchContainerFactory")
     fun batchContainerFactory(noOpMessageConverter: NoOpMessageConverter): SimpleRabbitListenerContainerFactory =

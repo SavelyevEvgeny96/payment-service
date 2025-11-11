@@ -1,18 +1,19 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
-import ru.sogaz.site.paymentService.dto.rabbit.PaymentCreatedEventDto
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.client.Channel
-import ru.sogaz.site.paymentService.loggerFor
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import ru.sogaz.site.paymentService.config.converters.NoOpMessageConverter
+import ru.sogaz.site.paymentService.dto.rabbit.PaymentCreatedEventDto
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
 
 class RecurringPaymentConsumerImpl(
     private val messageConverter: NoOpMessageConverter,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : RecurringPaymentConsumer {
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
+
     @RabbitListener(
         queues = ["\${app.rabbit.queue-order}"],
         containerFactory = "batchContainerFactory",
@@ -58,6 +59,4 @@ class RecurringPaymentConsumerImpl(
     private fun processBatch(events: List<PaymentCreatedEventDto>) {
         // твоя бизнес-логика, без каналов и сообщений
     }
-
-
 }
