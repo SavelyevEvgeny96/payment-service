@@ -1,128 +1,52 @@
-app:
-  info:
-    application_name: ${PROJECT_NAME:payment service}
-    version: ${PROJECT_VERSION:1.0.0}
-    description: ${PROJECT_DESCRIPTION:Payment Service}
-    artifact_Id: ${PROJECT_ARTIFACTID:payment-service}
-    group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
-    app_profile: ${ENVIRONMENT:local}
-    java-version: ${JAVA_VERSION:21}
-  certs:
-    gpb: ${GPB_CERT}
-  rabbit:
-    exchange: ${ORDERS_EXCHANGE}
-    queue-status-payment: ${QUEUE_STATUS_PAYMENT}
-    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT}
-
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
   forward-headers-strategy: framework
-  main.allow-bean-definition-overriding: true
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
+
   rabbitmq:
     host: ${RABBIT_HOST}
     port: ${RABBIT_PORT}
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
-
     virtual-host: /
     listener:
       simple:
         acknowledge-mode: auto
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
+
   application:
     name: payment-service
+
   profiles:
     active: ${ENVIRONMENT:local}
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      connection-timeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
-      max-lifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
-      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:10000}
+      # ВАЖНО: используем kebab-case и префикс spring.datasource.hikari
+      connection-timeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}  # 30s
+      max-lifetime: ${DB_HIKARI_LIFETIME_MAX:55000}              # < таймаута на стороне БД/LB
+      keepalive-time: ${DB_HIKARI_KEEPALIVE:30000}               # < max-lifetime
+      minimum-idle: ${DB_HIKARI_MIN_IDLE:2}
+      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:60000}              # действует только если minimum-idle < maximum-pool-size
+      # Опционально: мгновенный фейл старта, если БД недоступна
+      initialization-fail-timeout: 1
+
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
+
   output:
     ansi:
       enabled: ALWAYS
-
-api:
-  payment:
-    paymentUrl: ${PAYMENT_URL}
-    sbpPaymentUrl: ${SBP_PAYMENT_URL}
-    akbUrl: ${AKB_URL}
-    akbSbpUrl: ${AKB_SBP_URL}
-    akbUrlStatus: ${AKB_PAYMENT_URL}
-    callbackUrlSbp: ${CALLBACK_URL_SBP}
-    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
-    paymentAccount: ${PAYMENT_ACCOUNT}
-    mainPortalId: ${GPB_PORTAL_ID}
-    mainMerchantId: ${GPB_MERCHANT_ID}
-    depersonalizedPortalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
-    depersonalizedMerchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
-    backUrlS: ${BACK_URL_SUCCESS}
-    backUrlF: ${BACK_URL_FALSE}
-  receipt:
-    receiptUrl: ${RECEIPT_URL}
-  qr:
-    baseUrl: ${QR_GENERATOR_URL}
-  gpb:
-    card:
-      basePath: ${GPB_URL}
-    sbp:
-      basePath: ${GPB_SBP_URL}
-
-crons:
-  waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
-  callbackPaymentsCheck: ${CALLBACK_PAYMENTS_CHECK_CRON:*/10 * * * * *}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  metrics:
-    tags:
-      application: ${HOSTNAME:localhost}
-    export:
-      prometheus:
-        enabled: true
-  endpoint:
-    health:
-      show-details: always
-      probes:
-        enabled: true
-  server:
-    port: ${MANAGEMENT_SERVICE_PORT:8091}
-  health:
-    livenessState:
-      enable: true
-    readinessState:
-      enable: true
-logstash:
-  host: ${LOG_SERVER_HOST}
-  port: ${LOG_SERVER_PORT}
-  level: ${LOG_LEVEL}
-  level_local: ${LOG_LEVEL_LOCAL:INFO}
-
-logging:
-  level:
-    ru:
-      sogaz:
-        site:
-          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
-  proxy:
-    frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
-    upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
-    max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
-    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
-    stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
