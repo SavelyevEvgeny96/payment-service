@@ -181,6 +181,7 @@ class PaymentStatusServiceImpl(
                     .now(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
             logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+            logger.info("Message request queue status: $requestBody")
             rabbitTemplate.convertAndSend(
                 exchange,
                 routingKey,
