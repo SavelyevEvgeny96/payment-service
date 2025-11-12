@@ -40,11 +40,11 @@ class BankDaoImpl(
         if (checkBankPriority == TRUE) {
             val priorityBankName = configDataDao.getConfigValueByKey(BANK_PRIORITY)
             bank = bankRepository.findByBankId(priorityBankName)
-            logger.info("$LOG_INFO_BANK_PRIORITY_TRUE ${bank.bankName}")
+            logger.debug("$LOG_INFO_BANK_PRIORITY_TRUE ${bank.bankName}")
         } else if (bankId.isNullOrBlank()) {
             val reserveBankName = configDataDao.getConfigValueByKey(BANK_RESERVE)
             bank = bankRepository.findByBankId(reserveBankName)
-            logger.info("$LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE ${bank.bankName}")
+            logger.debug("$LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE ${bank.bankName}")
         } else {
             bank = bankRepository.findByBankId(bankId)
         }
@@ -61,11 +61,11 @@ class BankDaoImpl(
 
     private fun findPriorityBank(): BankEnum =
         findBankByChoosingType(BankChoosingTypeEnum.PRIORITY)
-            .also { logger.info("$LOG_INFO_BANK_PRIORITY_TRUE $it") }
+            .also { logger.debug("$LOG_INFO_BANK_PRIORITY_TRUE $it") }
 
     private fun findReserveBank(): BankEnum =
         findBankByChoosingType(BankChoosingTypeEnum.RESERVE)
-            .also { logger.info("$LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE $it") }
+            .also { logger.debug("$LOG_BANK_ID_IS_NULL_SELECTED_BANK_RESERVE $it") }
 
     private fun findBankByChoosingType(choosingType: BankChoosingTypeEnum): BankEnum =
         getConfigData(choosingType.value)

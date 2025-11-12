@@ -55,7 +55,7 @@ class SignatureVerifierImpl(
             }
             true
         } catch (e: Exception) {
-            logger.info(VEREFIELD_FAIL, e)
+            logger.debug(VEREFIELD_FAIL, e)
             false
         }
 }

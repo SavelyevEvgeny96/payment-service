@@ -50,18 +50,18 @@ class CallbackServiceImpl(
 
     override fun processCallback(request: CallbackRequest): Response<CallbackResponse> {
         val traceId = getTraceId()
-        logger.info("$START_METHOD_PROCESS_CALL $traceId")
+        logger.debug("$START_METHOD_PROCESS_CALL $traceId")
         return try {
             val payment = paymentDao.getPaymentFromBankId(request.bankId)
 
             updatePaymentStatus(payment, traceId)
-            logger.info("$UPDATE_PAYMENT_STATUS ${payment.paymentBankId}")
+            logger.debug("$UPDATE_PAYMENT_STATUS ${payment.paymentBankId}")
 
             logOperation(payment, traceId)
-            logger.info("$OPERATION_PAYMENT_SUCCESS ${payment.paymentBankId}")
+            logger.debug("$OPERATION_PAYMENT_SUCCESS ${payment.paymentBankId}")
 
             saveCallbackPayment(payment)
-            logger.info("$CALLBACK_TABLE_SAVE_SUCCESS ${payment.paymentBankId}")
+            logger.debug("$CALLBACK_TABLE_SAVE_SUCCESS ${payment.paymentBankId}")
 
             val response = CallbackResponse(STATUS_OK)
 

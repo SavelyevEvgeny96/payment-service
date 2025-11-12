@@ -106,7 +106,7 @@ class PaymentServiceImpl(
             .wrapToSuccessResponse(SUCCESS_STATUS_CODE_PAY_INFO_PAGE)
 
     override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {
-        logger.info(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
 
         val existedOrderPayment =
             orderDao
@@ -118,7 +118,7 @@ class PaymentServiceImpl(
         val updatedOrder = orderMapper.updateOrder(updatePaymentInvoiceRequest, existedOrderPayment)
         orderDao.save(updatedOrder)
 
-        logger.info(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return getSuccessResponse(
             getTraceId(),
             SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,

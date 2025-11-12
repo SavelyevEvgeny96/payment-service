@@ -111,11 +111,13 @@ management:
 logstash:
   host: ${LOG_SERVER_HOST}
   port: ${LOG_SERVER_PORT}
-  level: ${LOG_LEVEL}
-  level_local: ${LOG_LEVEL_LOCAL:INFO}
+  level: ${LOG_LEVEL:INFO}
+  level_local: ${LOG_LEVEL_LOCAL:DEBUG}
 
 logging:
   level:
+    ru.sogaz.site.loggingStarter: ${LOGGING_LEVEL_LOGGING_STARTER:INFO}
+    ru.sogaz.site.paymentService: ${LOGGING_LEVEL_PAYMENT_SERVICE:DEBUG}
     ru:
       sogaz:
         site:
@@ -126,4 +128,4 @@ logging:
     max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
     log-headers: ${LOGGING_PROXY_LOG_HEADERS:true}
     stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
-    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink}

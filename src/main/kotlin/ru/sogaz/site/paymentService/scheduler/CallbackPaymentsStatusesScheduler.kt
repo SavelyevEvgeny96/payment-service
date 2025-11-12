@@ -58,7 +58,7 @@ class CallbackPaymentsStatusesScheduler(
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {
-            logger.info(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
+            logger.debug(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
         }
     }
 }

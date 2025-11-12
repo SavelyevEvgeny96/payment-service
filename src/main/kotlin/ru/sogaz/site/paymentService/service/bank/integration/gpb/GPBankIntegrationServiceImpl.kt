@@ -195,7 +195,7 @@ class GPBankIntegrationServiceImpl(
                 PaymentTypeEnum.SBP -> requestSBPPaymentStatus(paymentBankInfo)
             }
         } catch (ex: RestClientException) {
-            logger.info("$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}", ex)
+            logger.debug("$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}", ex)
             throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
         }
 

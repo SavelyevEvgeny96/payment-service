@@ -58,12 +58,12 @@ class WaitingPaymentsStatusesScheduler(
         }
 
     private fun logWaitingPayments(payments: List<WaitingPayment>) {
-        logger.info("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
+        logger.debug("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
     }
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {
-            logger.info(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
+            logger.debug(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
         }
     }
 }
