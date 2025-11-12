@@ -11,8 +11,11 @@ import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
+import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import java.net.URI
 import java.time.Instant
@@ -74,4 +77,13 @@ interface OrderMapper {
         paySbp: PaySbp?,
         urlPayBank: URI,
     ): DataOrderPaymentPageInfo
+
+    @Mapping(
+        target = "paymentEndDate",
+        source = "orderEndDate",
+        qualifiedByName = ["instantToLocalDateTime"],
+    )
+    fun fromRequestDto(orderRequest: OrderRequest): Order
+
+    fun fromRequestDto(subOrderRequest: SubOrderRequest): SubOrder
 }

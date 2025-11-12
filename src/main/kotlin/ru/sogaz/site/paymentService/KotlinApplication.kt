@@ -17,7 +17,7 @@ import ru.sogaz.site.paymentService.properties.AppInfoProperties
 @ComponentScan(basePackages = ["ru.sogaz.site.paymentService"])
 @EnableFeignClients(basePackages = ["ru.sogaz.site.paymentService.clients"])
 @ConfigurationPropertiesScan("ru.sogaz.site.paymentService.properties")
-open class KotlinApplication
+class KotlinApplication
 
 fun main(args: Array<String>) {
     runApplication<KotlinApplication>(*args)

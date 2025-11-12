@@ -65,3 +65,76 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+
+api:
+  payment:
+    paymentUrl: ${PAYMENT_URL}
+    sbpPaymentUrl: ${SBP_PAYMENT_URL}
+    akbUrl: ${AKB_URL}
+    akbSbpUrl: ${AKB_SBP_URL}
+    akbUrlStatus: ${AKB_PAYMENT_URL}
+    callbackUrlSbp: ${CALLBACK_URL_SBP}
+    merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
+    paymentAccount: ${PAYMENT_ACCOUNT}
+    mainPortalId: ${GPB_PORTAL_ID}
+    mainMerchantId: ${GPB_MERCHANT_ID}
+    depersonalizedPortalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
+    depersonalizedMerchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
+    backUrlS: ${BACK_URL_SUCCESS}
+    backUrlF: ${BACK_URL_FALSE}
+  receipt:
+    receiptUrl: ${RECEIPT_URL}
+  qr:
+    baseUrl: ${QR_GENERATOR_URL}
+  gpb:
+    card:
+      basePath: ${GPB_URL}
+    sbp:
+      basePath: ${GPB_SBP_URL}
+
+crons:
+  waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
+  callbackPaymentsCheck: ${CALLBACK_PAYMENTS_CHECK_CRON:*/10 * * * * *}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${HOSTNAME:localhost}
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  server:
+    port: ${MANAGEMENT_SERVICE_PORT:8091}
+  health:
+    livenessState:
+      enable: true
+    readinessState:
+      enable: true
+logstash:
+  host: ${LOG_SERVER_HOST}
+  port: ${LOG_SERVER_PORT}
+  level: ${LOG_LEVEL}
+  level_local: ${LOG_LEVEL_LOCAL:INFO}
+
+logging:
+  level:
+    ru:
+      sogaz:
+        site:
+          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
+  proxy:
+    frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
+    upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
+    max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:true}
+    stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken}

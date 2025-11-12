@@ -1,10 +1,12 @@
 package ru.sogaz.site.paymentService.dto.data
 
-data class UrlToReturn(
-    private val urlToReturnS: String? = null,
-    private val urlToReturnF: String? = null,
-) {
-    fun success(): String? = urlToReturnS
+import java.net.URI
 
-    fun failed(): String? = urlToReturnF
+data class UrlToReturn(
+    private val urlToReturnS: URI? = null,
+    private val urlToReturnF: URI? = null,
+) {
+    fun success(): String? = urlToReturnS?.toString()
+
+    fun failed(): String? = urlToReturnF?.toString()
 }
