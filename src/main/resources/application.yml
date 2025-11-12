@@ -45,8 +45,8 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      connectionTimeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
-      maxLifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
+      connection-timeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
+      max-lifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
       idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:10000}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
