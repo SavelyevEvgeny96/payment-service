@@ -205,9 +205,10 @@ class PaymentServiceImpl(
 
     @Throws(BusinessException::class)
     private fun Payment.toDataPay(): DataPay {
-        val url = runCatching { URI.create(paymentPageUrl!!) }
-            .getOrNull()
-            ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
+        val url =
+            runCatching { URI.create(paymentPageUrl!!) }
+                .getOrNull()
+                ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
         return DataPay(url)
     }
 

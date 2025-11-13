@@ -32,7 +32,11 @@ class WaitingPaymentsStatusesScheduler(
     }
 
     @Scheduled(cron = "\${crons.waitingPaymentsCheck}")
-    @SchedulerLock(name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses", lockAtLeastFor = "PT30S", lockAtMostFor = "PT3M")
+    @SchedulerLock(
+        name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses",
+        lockAtLeastFor = "PT30S",
+        lockAtMostFor = "PT3M",
+    )
     fun updateWaitingPaymentsStatuses() {
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
         MDC.put(SERVICE_NAME, "payment-service")

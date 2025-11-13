@@ -85,7 +85,7 @@ class InfoPageServiceTest {
 
         private val payQueryParams =
             PayQueryParams(
-                RETURN_URL
+                RETURN_URL,
             )
     }
 

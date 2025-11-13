@@ -15,18 +15,18 @@ import org.springframework.http.MediaType
                 Schema(
                     example =
                         "{\n" +
-                                "    \"status\": \"ERROR\",\n" +
-                                "    \"code\": \"-11015**401\",\n" +
-                                "    \"traceId\": \"UUID\",\n" +
-                                "    \"innerError\": null,\n" +
-                                "    \"messagesError\": \"Ваш запрос не авторизован\",\n" +
-                                "    \"responseUuid\": \"UUID\",\n" +
-                                "    \"errorsValidate\": null,\n" +
-                                "    \"data\": null\n" +
-                                "    }\n" +
-                                "}",
+                            "    \"status\": \"ERROR\",\n" +
+                            "    \"code\": \"-11015**401\",\n" +
+                            "    \"traceId\": \"UUID\",\n" +
+                            "    \"innerError\": null,\n" +
+                            "    \"messagesError\": \"Ваш запрос не авторизован\",\n" +
+                            "    \"responseUuid\": \"UUID\",\n" +
+                            "    \"errorsValidate\": null,\n" +
+                            "    \"data\": null\n" +
+                            "    }\n" +
+                            "}",
                 ),
         ),
     ],
 )
-annotation class UnauthorizedApiResponse()
+annotation class UnauthorizedApiResponse

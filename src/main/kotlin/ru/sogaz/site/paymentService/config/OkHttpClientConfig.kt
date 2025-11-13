@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit
 
 @Configuration
 class OkHttpClientConfig {
-
     @Bean
     fun okHttpClient(loggingInterceptor: Interceptor): OkHttpClient =
         OkHttpClient
