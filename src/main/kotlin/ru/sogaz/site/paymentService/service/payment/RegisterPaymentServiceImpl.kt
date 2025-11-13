@@ -69,7 +69,7 @@ class RegisterPaymentServiceImpl(
             bank = order.bank,
             order = order,
             type = paymentTypeEnum,
-            depersonalization = payQueryParams.depersonalized,
+            depersonalization = payQueryParams.depersonalization,
             urlToReturn = UrlToReturn(payQueryParams.urlToReturn, payQueryParams.urlToReturnF),
             saveCard = order.saveCard,
         )

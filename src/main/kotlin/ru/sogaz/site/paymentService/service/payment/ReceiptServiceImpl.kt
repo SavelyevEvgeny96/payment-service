@@ -54,7 +54,9 @@ class ReceiptServiceImpl(
 
     override fun generateReceipt(payment: Payment) {
         val traceId = getTraceId()
-
+        if (payment.chequeName.equals(ChequeStateEnum.SENT.name)) {
+            return
+        }
         val order: Order = payment.order!!
 
         val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)

@@ -1,25 +1,16 @@
-package ru.sogaz.site.paymentService.controller
+package ru.sogaz.site.paymentService.api.doc.v1
 
-import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import ru.sogaz.site.paymentService.api.doc.v1.CallbackV1Api
-import ru.sogaz.site.paymentService.dto.request.CallbackRequest
-import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
-import ru.sogaz.site.paymentService.service.CallbackService
-import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.siter.models.resonses.Response
 
-@RestController
-@Tag(name = "Callback", description = "Прием callback-ов от банков")
-class CallbackController(
-    private val gpbCallbackService: GpbCallbackService,
-    private val callbackService: CallbackService,
-) : CallbackV1Api {
-    override fun stateGpbCallback(
+interface CallbackV1Api {
+    @GetMapping("payment/gpb/state")
+    fun stateGpbCallback(
         @RequestParam("trx_id") trxId: String,
         @RequestParam("merch_id") merchId: String?,
         @RequestParam("result_code") resultCode: Int?,
@@ -39,32 +30,10 @@ class CallbackController(
         @RequestParam("ts") ts: String?,
         @RequestParam(value = "signature") signature: String,
         request: HttpServletRequest,
-    ): ResponseEntity<String> {
-        val requestParams =
-            GpbCallbackRequest(
-                trxId,
-                merchId,
-                resultCode,
-                amount,
-                accountId,
-                orderId,
-                rrn,
-                authCode,
-                srcType,
-                maskedPan,
-                isFullyAuthenticated,
-                transmissionDateTime,
-                discountType,
-                discountAmount,
-                paymentSystem,
-                issuerName,
-                ts,
-                signature,
-            )
-        return gpbCallbackService.processCallback(requestParams)
-    }
+    ): ResponseEntity<String>
 
-    override fun stateRussiaCallback(
+    @PostMapping("payment/akb/state")
+    fun stateRussiaCallback(
         @RequestParam("ORDER_ID") orderId: String,
         @RequestParam("ORDER_RID") orderRid: String?,
         @RequestParam("ORDER_STATUS") orderStatus: String?,
@@ -72,15 +41,10 @@ class CallbackController(
         @RequestParam(value = "pmoResultCode", required = false) pmoResultCode: String?,
         @RequestParam(value = "ridByPmo", required = false) ridByPmo: String?,
         request: HttpServletRequest,
-    ): Response<CallbackResponse> {
-        val requestParams =
-            CallbackRequest(
-                bankId = orderId,
-            )
-        return callbackService.processCallback(requestParams)
-    }
+    ): Response<CallbackResponse>
 
-    override fun stateSbpGpbCallback(
+    @GetMapping("payment/sbp/gpb/state")
+    fun stateSbpGpbCallback(
         @RequestParam("transactionId") transactionId: String,
         @RequestParam("qrcId") qrcId: String?,
         @RequestParam("merchantId") merchantId: String?,
@@ -101,11 +65,5 @@ class CallbackController(
         @RequestParam("operDate") operDate: String?,
         @RequestParam("status") status: String?,
         request: HttpServletRequest,
-    ): Response<CallbackResponse> {
-        val requestParams =
-            CallbackRequest(
-                bankId = transactionId,
-            )
-        return callbackService.processCallback(requestParams)
-    }
+    ): Response<CallbackResponse>
 }

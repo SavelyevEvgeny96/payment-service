@@ -13,44 +13,55 @@ app:
     exchange: ${ORDERS_EXCHANGE}
     queue-status-payment: ${QUEUE_STATUS_PAYMENT}
     routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT}
-
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
   forward-headers-strategy: framework
-  main.allow-bean-definition-overriding: true
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
+
   rabbitmq:
     host: ${RABBIT_HOST}
     port: ${RABBIT_PORT}
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
-
     virtual-host: /
     listener:
       simple:
         acknowledge-mode: auto
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
+
   application:
     name: payment-service
+
   profiles:
     active: ${ENVIRONMENT:local}
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      connectionTimeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
-      maxLifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
-      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:10000}
+      # ВАЖНО: используем kebab-case и префикс spring.datasource.hikari
+      connection-timeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}  # 30s
+      max-lifetime: ${DB_HIKARI_LIFETIME_MAX:55000}              # < таймаута на стороне БД/LB
+      keepalive-time: ${DB_HIKARI_KEEPALIVE:30000}               # < max-lifetime
+      minimum-idle: ${DB_HIKARI_MIN_IDLE:2}
+      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:60000}              # действует только если minimum-idle < maximum-pool-size
+      # Опционально: мгновенный фейл старта, если БД недоступна
+      initialization-fail-timeout: 1
+
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
+
   output:
     ansi:
       enabled: ALWAYS

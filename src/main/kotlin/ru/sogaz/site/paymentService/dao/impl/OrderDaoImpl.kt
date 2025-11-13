@@ -9,7 +9,6 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.OrderRepository
-import ru.sogaz.site.paymentService.service.order.OrderServiceImpl.Companion.LOG_ORDER_STATUS_NOT_FOUND
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
@@ -21,7 +20,8 @@ class OrderDaoImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val LOG_ERROR_ORDER_SAVE = "Не удалось сохранить данные по заказу"
+        private const val LOG_ERROR_ORDER_SAVE = "Не удалось сохранить данные по заказу"
+        private const val LOG_ORDER_STATUS_NOT_FOUND = "Статус заказа с не найден для TraceId: "
     }
 
     override fun getOrderId(orderId: String): Order =

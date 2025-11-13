@@ -87,7 +87,7 @@ class GPBBankIntegrationHelperServiceImpl(
 
     private fun SubOrder.makeDescriptionForOneContract(opDate: String): String =
         PAY_ONE_CONTRACT_INFO.format(
-            contractId ?: "",
+            contractNumber ?: "",
             contractDate?.toContractDateFormat() ?: "",
             opDate,
         )
@@ -100,7 +100,7 @@ class GPBBankIntegrationHelperServiceImpl(
 
     private fun LocalDate.toContractDateFormat(): String = this.format(DDMMYYYY)
 
-    private fun SubOrder.toParamValue(): String = "${contractId ?: ""} от ${contractDate?.toContractDateFormat() ?: ""}"
+    private fun SubOrder.toParamValue(): String = "${contractNumber ?: ""} от ${contractDate?.toContractDateFormat() ?: ""}"
 
     fun convertToBankPaymentDetails(response: GpbCardPaymentStatusResponse): BankPaymentDetails = bankPaymentDetailsMapper.convert(response)
 

@@ -15,7 +15,7 @@ import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.findByKey
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaySbp
-import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
+import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
@@ -57,20 +57,20 @@ class InfoPageServiceImpl(
 
     override fun getInfo(
         orderId: UUID,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): DataOrderPaymentPageInfo =
         orderId
             .run(orderDao::findById)
             .orThrow { BusinessException(CODE_ERROR_ORDER_NOT_FOUND_INFO) }
             .also(::checkOrderStatus)
-            .run { getInfo(this, pageInfoRequestParams) }
+            .run { getInfo(this, payQueryParams) }
 
     override fun getInfo(
         order: Order,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): DataOrderPaymentPageInfo =
         order
-            .run { formPaymentPageInfo(this, pageInfoRequestParams) }
+            .run { formPaymentPageInfo(this, payQueryParams) }
             .also(::logPageInfoResult)
 
     private fun checkOrderStatus(order: Order) {
@@ -81,31 +81,31 @@ class InfoPageServiceImpl(
 
     private fun formPaymentPageInfo(
         order: Order,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): DataOrderPaymentPageInfo =
         order
-            .run { formPaySbpInfo(this, pageInfoRequestParams) }
-            .run { formPaymentPageInfo(this, order, pageInfoRequestParams) }
+            .run { formPaySbpInfo(this, payQueryParams) }
+            .run { formPaymentPageInfo(this, order, payQueryParams) }
 
     private fun formPaymentPageInfo(
         paySbp: PaySbp?,
         order: Order,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): DataOrderPaymentPageInfo =
         orderMapper.toOrderPaymentPageInfo(
             order = order,
             paySbp = paySbp,
-            urlPayBank = buildCardPayUri(order.id!!, pageInfoRequestParams),
+            urlPayBank = buildCardPayUri(order.id!!, payQueryParams),
         )
 
     private fun formPaySbpInfo(
         order: Order,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): PaySbp? {
         if (isSBPActive().not()) {
             return null
         }
-        val paySbpLink = buildSbpPayUri(order.id!!, pageInfoRequestParams)
+        val paySbpLink = buildSbpPayUri(order.id!!, payQueryParams)
         return formPaySbpInfo(order, paySbpLink)
     }
 
@@ -146,20 +146,20 @@ class InfoPageServiceImpl(
 
     private fun buildSbpPayUri(
         orderId: UUID,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): URI =
         buildUri(
             "$sbpPayBaseUri$orderId",
-            pageInfoRequestParams.toQueryParams(),
+            payQueryParams.toQueryParams(),
         )
 
     private fun buildCardPayUri(
         orderId: UUID,
-        pageInfoRequestParams: PageInfoRequestParams,
+        payQueryParams: PayQueryParams,
     ): URI =
         buildUri(
             "$cardPayBaseUri$orderId",
-            pageInfoRequestParams.toQueryParams(),
+            payQueryParams.toQueryParams(),
         )
 
     private fun buildUri(
@@ -172,9 +172,9 @@ class InfoPageServiceImpl(
             .toUriString()
             .run(URI::create)
 
-    private fun PageInfoRequestParams.toQueryParams(): MultiValueMap<String, String> = MultiValueMap.fromSingleValue(toMap())
+    private fun PayQueryParams.toQueryParams(): MultiValueMap<String, String> = MultiValueMap.fromSingleValue(toMap())
 
-    private fun PageInfoRequestParams.toMap(): Map<String, String> = objectMapper.convertValue(this)
+    private fun PayQueryParams.toMap(): Map<String, String> = objectMapper.convertValue(this)
 
     private fun logPageInfoResult(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::debug)
 
