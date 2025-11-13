@@ -47,11 +47,12 @@ class RabbitMQConfig(
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusPayment)
 
     @Bean
-    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter =
-        Jackson2JsonMessageConverter(objectMapper)
+    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter = Jackson2JsonMessageConverter(objectMapper)
 
     @Bean
-    fun rabbitTemplate(@Qualifier("jacksonMessageConverter") messageConverter: MessageConverter): RabbitTemplate =
+    fun rabbitTemplate(
+        @Qualifier("jacksonMessageConverter") messageConverter: MessageConverter,
+    ): RabbitTemplate =
         RabbitTemplate(connectionFactory).apply {
             this.messageConverter = messageConverter
         }
