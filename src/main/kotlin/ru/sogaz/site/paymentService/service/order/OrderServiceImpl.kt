@@ -43,7 +43,6 @@ class OrderServiceImpl(
      * @return Объект Payment, содержащий информацию о платежном запросе
      */
     override fun createOrder(requestWrapper: OrderRequest): Response<DataOrder> {
-
         val savedOrder =
             formOrderFromRequest(requestWrapper)
                 .apply {
@@ -106,9 +105,9 @@ class OrderServiceImpl(
 
     override fun getOrderStatus(orderId: String): Response<DataGetOrderStatus> {
         val traceId = getTraceId()
-        logger.info("$LOG_START_GET_ORDER_STATUS $orderId")
+        logger.debug("$LOG_START_GET_ORDER_STATUS $orderId")
         val orderStatusId = orderDao.getOrderId(orderId).status
-        logger.info("$LOG_END_GET_ORDER_STATUS $orderStatusId")
+        logger.debug("$LOG_END_GET_ORDER_STATUS $orderStatusId")
         return getSuccessResponse(traceId, STATUS_CODE_SUCCESS_GET_ORDER_STATUS, DataGetOrderStatus(orderStatusId.name))
     }
 }

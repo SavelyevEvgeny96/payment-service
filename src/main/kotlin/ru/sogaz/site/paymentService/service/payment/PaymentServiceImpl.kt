@@ -75,7 +75,7 @@ class PaymentServiceImpl(
 
     override fun createCardPayment(
         orderId: UUID,
-        payQueryParams: PayQueryParams
+        payQueryParams: PayQueryParams,
     ): DataPay =
         createPayment(
             orderId,
@@ -201,12 +201,12 @@ class PaymentServiceImpl(
     private fun logOrderInfoBeforeRegistrationPayment(order: Order) =
         LOG_ORDER_INFO_BEFORE_REGISTRATION
             .format(order.id, order.bank)
-            .run(logger::info)
+            .run(logger::debug)
 
     private fun logRegisteredPaymentInfo(payment: Payment) =
         LOG_PAYMENT_INFO_AFTER_REGISTRATION
             .format(payment.order?.id, payment.bank)
-            .run(logger::info)
+            .run(logger::debug)
 
     @Throws(BusinessException::class)
     private fun Payment.toDataPay(): DataPay {

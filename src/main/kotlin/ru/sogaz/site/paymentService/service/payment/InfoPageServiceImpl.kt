@@ -132,7 +132,7 @@ class InfoPageServiceImpl(
         } catch (ex: Exception) {
             LOG_ERROR_TO_GET_QR_FROM_BANK
                 .format(order.bank, ex.message)
-                .run(logger::info)
+                .run(logger::debug)
             null
         }
     }
@@ -176,7 +176,7 @@ class InfoPageServiceImpl(
 
     private fun PageInfoRequestParams.toMap(): Map<String, String> = objectMapper.convertValue(this)
 
-    private fun logPageInfoResult(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::info)
+    private fun logPageInfoResult(pageInfo: DataOrderPaymentPageInfo) = getLogMessageForPageInfo(pageInfo).run(logger::debug)
 
     private fun getLogMessageForPageInfo(pageInfo: DataOrderPaymentPageInfo) =
         if (isNull(pageInfo.paySbp)) {

@@ -126,6 +126,12 @@ logging:
     frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
     upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
     max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
-    log-headers: ${LOGGING_PROXY_LOG_HEADERS:true}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
     stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
-    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink, qrCode, content}
+
+  rabbit:
+    enabled: ${LOGGING_RABBIT_ENABLED:true}
+    log-body: ${LOGGING_RABBIT_LOG_BODY:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:true}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:true}

@@ -180,7 +180,7 @@ class PaymentStatusServiceImpl(
                 OffsetDateTime
                     .now(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+            logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
             rabbitTemplate.convertAndSend(
                 exchange,
                 routingKey,
@@ -192,7 +192,7 @@ class PaymentStatusServiceImpl(
                 message
             }
 
-            logger.debug(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
+            logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
         } catch (e: Exception) {
             throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
