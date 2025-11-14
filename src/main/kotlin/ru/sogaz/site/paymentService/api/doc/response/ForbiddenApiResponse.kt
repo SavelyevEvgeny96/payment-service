@@ -29,4 +29,4 @@ import org.springframework.http.MediaType
         ),
     ],
 )
-annotation class ForbiddenApiResponse()
+annotation class ForbiddenApiResponse

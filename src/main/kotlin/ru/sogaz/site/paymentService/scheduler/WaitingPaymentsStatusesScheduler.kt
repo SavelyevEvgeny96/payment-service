@@ -32,7 +32,11 @@ class WaitingPaymentsStatusesScheduler(
     }
 
     @Scheduled(cron = "\${crons.waitingPaymentsCheck}")
-    @SchedulerLock(name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses", lockAtLeastFor = "PT30S", lockAtMostFor = "PT3M")
+    @SchedulerLock(
+        name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses",
+        lockAtLeastFor = "PT30S",
+        lockAtMostFor = "PT3M",
+    )
     fun updateWaitingPaymentsStatuses() {
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
         MDC.put(SERVICE_NAME, "payment-service")
@@ -60,12 +64,12 @@ class WaitingPaymentsStatusesScheduler(
         }
 
     private fun logWaitingPayments(payments: List<WaitingPayment>) {
-        logger.info("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
+        logger.debug("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
     }
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {
-            logger.info(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
+            logger.debug(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
         }
     }
 }

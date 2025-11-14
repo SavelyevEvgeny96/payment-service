@@ -32,7 +32,11 @@ class CallbackPaymentsStatusesScheduler(
     }
 
     @Scheduled(cron = "\${crons.callbackPaymentsCheck}")
-    @SchedulerLock(name = "CallbackPaymentsStatusesScheduler_updateCallbackPaymentsStatuses", lockAtLeastFor = "PT1S", lockAtMostFor = "PT1M")
+    @SchedulerLock(
+        name = "CallbackPaymentsStatusesScheduler_updateCallbackPaymentsStatuses",
+        lockAtLeastFor = "PT1S",
+        lockAtMostFor = "PT1M",
+    )
     fun updateCallbackPaymentsStatuses() {
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
         MDC.put(SERVICE_NAME, "payment-service")
@@ -60,7 +64,7 @@ class CallbackPaymentsStatusesScheduler(
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {
-            logger.info(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
+            logger.debug(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
         }
     }
 }

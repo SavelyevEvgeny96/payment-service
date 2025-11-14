@@ -27,7 +27,7 @@ class SubOrderServiceImpl(
     private val logger = loggerFor(javaClass)
 
     override fun updateSubOrder(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): SubOrder {
-        logger.info(LOG_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         val subOrders = subOrderDao.findAllByOrderId(updatePaymentInvoiceRequest.orderId)
 
         val existedSubOrder =
@@ -37,7 +37,7 @@ class SubOrderServiceImpl(
                 else -> throw BusinessException(CODE_ERROR_UPDATED_SUB_ORDER_CROSS_SELL, getTraceId())
             }
         val updatedSubOrder = subOrderMapper.updateSubOrder(updatePaymentInvoiceRequest, existedSubOrder)
-        logger.info(LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return subOrderDao.save(updatedSubOrder)
     }
 }

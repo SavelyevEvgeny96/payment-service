@@ -102,7 +102,7 @@ class PaymentServiceImpl(
             .getInfo(orderId, payQueryParams)
 
     override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {
-        logger.info(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
 
         val existedOrderPayment =
             orderDao
@@ -114,7 +114,7 @@ class PaymentServiceImpl(
         val updatedOrder = orderMapper.updateOrder(updatePaymentInvoiceRequest, existedOrderPayment)
         orderDao.save(updatedOrder)
 
-        logger.info(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return getSuccessResponse(
             getTraceId(),
             ServiceStatuses.SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,
@@ -196,18 +196,19 @@ class PaymentServiceImpl(
     private fun logOrderInfoBeforeRegistrationPayment(order: Order) =
         LOG_ORDER_INFO_BEFORE_REGISTRATION
             .format(order.id, order.bank)
-            .run(logger::info)
+            .run(logger::debug)
 
     private fun logRegisteredPaymentInfo(payment: Payment) =
         LOG_PAYMENT_INFO_AFTER_REGISTRATION
             .format(payment.order?.id, payment.bank)
-            .run(logger::info)
+            .run(logger::debug)
 
     @Throws(BusinessException::class)
     private fun Payment.toDataPay(): DataPay {
-        val url = runCatching { URI.create(paymentPageUrl!!) }
-            .getOrNull()
-            ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
+        val url =
+            runCatching { URI.create(paymentPageUrl!!) }
+                .getOrNull()
+                ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
         return DataPay(url)
     }
 
