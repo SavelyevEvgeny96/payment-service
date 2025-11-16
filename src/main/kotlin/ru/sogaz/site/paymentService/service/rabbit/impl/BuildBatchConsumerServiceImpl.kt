@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.service.rabbit.impl
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.rabbit.PaymentCreatedEventDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.payment.PaymentMapper
@@ -11,6 +12,7 @@ import java.time.ZoneOffset
 
 @Service
 class BuildBatchConsumerServiceImpl(
+    private val paymentDao: PaymentDao,
     private val paymentMapper: PaymentMapper,
 ) : BuildBatchConsumerService {
     companion object {
@@ -23,7 +25,8 @@ class BuildBatchConsumerServiceImpl(
     override fun upsertBatch(batch: List<PaymentCreatedEventDto>) {
         val nowIso = OffsetDateTime.now(ZoneOffset.UTC).toString()
         val payments = batch.map(paymentMapper::toPayment)
+        val listPaymentId = paymentDao.batchInsertPayment(payments)
         logger.info(LOG_START.format(batch.size))
-        logger.info("payments: $payments")
+        logger.info("listPaymentId: $listPaymentId")
     }
 }

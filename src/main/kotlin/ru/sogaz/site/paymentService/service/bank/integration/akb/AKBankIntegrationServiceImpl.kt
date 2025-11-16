@@ -66,7 +66,7 @@ class AKBankIntegrationServiceImpl(
     private val logger = loggerFor(javaClass)
 
     @Throws(RestClientException::class)
-    override fun registerCardPayment(payment: Payment): Payment =
+    override fun registerCardPayment(payment: Payment,orderId: UUID?): Payment =
         payment
             .run(::buildCardRequest)
             .run(::postForCardPaymentData)

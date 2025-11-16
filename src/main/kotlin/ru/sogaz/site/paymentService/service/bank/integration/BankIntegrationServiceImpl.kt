@@ -7,6 +7,7 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.BankEnum
@@ -16,6 +17,7 @@ import ru.sogaz.site.paymentService.service.BankIntegrationService
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 abstract class BankIntegrationServiceImpl : BankIntegrationService {
     companion object {
@@ -40,14 +42,15 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
     override fun registerPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
+        order: Order?
     ): Payment =
         when (payment.type) {
-            PaymentTypeEnum.CARD -> registerCardPayment(payment)
+            PaymentTypeEnum.CARD -> registerCardPayment(payment,order)
             PaymentTypeEnum.SBP -> registerSBPPayment(payment, headersParams)
             else -> throw InnerException(getTraceId(), ERROR_UNKNOWN_PAYMENT_TYPE)
         }
 
-    abstract fun registerCardPayment(payment: Payment): Payment
+    abstract fun registerCardPayment(payment: Payment,orderId: Order?): Payment
 
     abstract fun registerSBPPayment(
         payment: Payment,

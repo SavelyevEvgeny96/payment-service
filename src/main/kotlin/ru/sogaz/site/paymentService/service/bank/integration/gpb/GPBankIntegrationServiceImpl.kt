@@ -36,6 +36,7 @@ import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationServiceImpl
+import java.util.*
 
 @Service
 class GPBankIntegrationServiceImpl(
@@ -63,16 +64,19 @@ class GPBankIntegrationServiceImpl(
     override fun provider(): BankEnum = BankEnum.GPB
 
     @Throws(BankIntegrationException::class, RestClientException::class)
-    override fun registerCardPayment(payment: Payment): Payment =
+    override fun registerCardPayment(payment: Payment, order: Order?): Payment =
         payment
-            .run(::buildPaymentCardRequest)
+            .run {
+
+                buildPaymentCardRequest(this, (order))
+            }
             .run(::postForCardPaymentLink)
             .run { payment.fillFromResponse(this) }
 
-    private fun buildPaymentCardRequest(payment: Payment): GPBPaymentRequest =
-        buildPaymentCardRequest(
+    private fun buildPaymentCardRequest(payment: Payment, order: Order?): GPBPaymentRequest =
+        buildPaymentCardRequestFromGpb(
             token = exchangeForToken(payment.depersonalization),
-            order = payment.order!!,
+            order = order,
             amountData = payment.getAmountData(),
             descriptionInfo = payment.getMainDescription(),
             depersonalization = payment.depersonalization,
@@ -89,16 +93,16 @@ class GPBankIntegrationServiceImpl(
         }
     }
 
-    private fun buildPaymentCardRequest(
+    private fun buildPaymentCardRequestFromGpb(
         token: String,
-        order: Order,
+        order: Order?,
         amountData: AmountData,
         depersonalization: Boolean,
         descriptionInfo: DescriptionInfo,
         urlToReturn: UrlToReturn,
     ) = GPBPaymentRequest(
         merchantId = takeMerchantId(depersonalization),
-        merchantTrx = order.id.toString(),
+        merchantTrx = order?.id.toString(),
         token = token,
         backUrlS = urlToReturn.success() ?: apiConfigProperties.backUrlS,
         backUrlF = urlToReturn.failed() ?: apiConfigProperties.backUrlF,
@@ -108,7 +112,7 @@ class GPBankIntegrationServiceImpl(
         state = cardPaymentState,
         threeDSTwo = cardPayment3ds2,
         openApiMirPaySupported = true,
-        addCardAllowed = order.saveCard,
+        addCardAllowed = order?.saveCard,
         params = descriptionInfo.params,
         depersonalization = depersonalization,
     )
@@ -217,7 +221,7 @@ class GPBankIntegrationServiceImpl(
     private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
         gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
 
-    private fun Payment.getMainDescription() = gpbBankIntegrationHelperServiceImpl.makeDescription(order!!)
+    private fun Payment.getMainDescription() = gpbBankIntegrationHelperServiceImpl.makeDescription(order)
 
     private fun takePortalId(depersonalization: Boolean) =
         apiConfigProperties.mainPortalId

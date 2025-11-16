@@ -18,7 +18,7 @@ data class GPBPaymentRequest(
     @param:JsonProperty("3ds2")
     val threeDSTwo: ThreeDSTwo,
     val openApiMirPaySupported: Boolean,
-    val addCardAllowed: Boolean,
+    val addCardAllowed: Boolean?,
     val merchantTrx: String,
     @JsonIgnore
     val token: String,

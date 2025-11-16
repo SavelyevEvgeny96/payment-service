@@ -27,9 +27,8 @@ data class Payment(
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
     var state: PaymentStatusEnum = PaymentStatusEnum.NEW,
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    var order: Order? = null,
+    @Column(name = "order_id")
+    var order:  UUID? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,
@@ -40,6 +39,8 @@ data class Payment(
     var depersonalization: Boolean = false,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
+    @Column(name = "key_card")
+    var keyCard: String? = null,
     @Column(name = "payment_pass")
     var paymentPass: String? = null,
     @Column(name = "payment_bank_id")
@@ -68,7 +69,8 @@ data class Payment(
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
             PaymentStatusEnum.CALLBACK,
-            -> true
+                -> true
+
             else -> false
         }
 
