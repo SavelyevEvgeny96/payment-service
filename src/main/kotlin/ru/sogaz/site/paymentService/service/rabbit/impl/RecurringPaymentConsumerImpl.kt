@@ -6,7 +6,7 @@ import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.config.converters.NoOpMessageConverter
-import ru.sogaz.site.paymentService.dto.rabbit.PaymentCreatedEventDto
+import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
@@ -33,12 +33,12 @@ class RecurringPaymentConsumerImpl(
         channel: Channel,
     ) {
         val started = System.nanoTime()
-        val payloads = mutableListOf<Pair<Long, PaymentCreatedEventDto>>() // tag + dto
+        val payloads = mutableListOf<Pair<Long, OrderPayloadDto>>() // tag + dto
 
         messages.forEach { msg ->
             val tag = msg.messageProperties.deliveryTag
             try {
-                val dto = objectMapper.readValue(msg.body, PaymentCreatedEventDto::class.java)
+                val dto = objectMapper.readValue(msg.body, OrderPayloadDto::class.java)
                 payloads += tag to dto
             } catch (ex: Exception) {
                 logger.error("Ошибка парсинга сообщения: ${msg.messageProperties.messageId} (tag=$tag)", ex)

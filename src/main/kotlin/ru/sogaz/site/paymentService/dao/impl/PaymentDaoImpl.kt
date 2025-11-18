@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.dao.impl
 
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
@@ -10,7 +11,6 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import java.sql.ResultSet
-import org.springframework.jdbc.core.RowMapper
 import java.time.Instant
 import java.util.*
 import kotlin.collections.ArrayList
@@ -55,8 +55,7 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_GET_PAYMENT_SAVE ${e.message}")
         }
 
-    override fun findByStatuses(statuses: List<PaymentStatusEnum>): List<Payment> =
-        paymentRepository.findByStatuses(statuses)
+    override fun findByStatuses(statuses: List<PaymentStatusEnum>): List<Payment> = paymentRepository.findByStatuses(statuses)
 
     override fun batchInsertPayment(payments: List<Payment>): List<UUID> {
         if (payments.isEmpty()) return emptyList()
@@ -94,5 +93,3 @@ class PaymentDaoImpl(
         return jdbcTemplate.query(sql, mapper, *args.toTypedArray())
     }
 }
-
-

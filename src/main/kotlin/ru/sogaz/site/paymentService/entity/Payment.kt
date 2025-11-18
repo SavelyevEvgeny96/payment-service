@@ -27,8 +27,11 @@ data class Payment(
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
     var state: PaymentStatusEnum = PaymentStatusEnum.NEW,
-    @Column(name = "order_id")
-    var order:  UUID? = null,
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    var order: Order? = null,
+    @Column(name = "order_id_recurrent")
+    var orderIdRecurrent: UUID? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,
@@ -69,7 +72,7 @@ data class Payment(
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
             PaymentStatusEnum.CALLBACK,
-                -> true
+            -> true
 
             else -> false
         }

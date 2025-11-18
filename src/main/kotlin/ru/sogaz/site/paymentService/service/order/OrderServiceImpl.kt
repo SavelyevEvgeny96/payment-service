@@ -46,15 +46,7 @@ class OrderServiceImpl(
      */
     override fun createOrder(requestWrapper: OrderRequest): Response<DataOrder> {
         logger.info(LOG_START_ORDER_CREATION)
-
-        val savedOrder =
-            formOrderFromRequest(requestWrapper)
-                .apply {
-                    val subOrdersFromRequest = formSubOrdersFromRequest(requestWrapper, this)
-                    subOrders.addAll(subOrdersFromRequest)
-                    premiumAmount = extractPremiumAmount(this.subOrders).setScale(2, RoundingMode.HALF_UP).toString()
-                }.run(orderDao::save)
-
+        val savedOrder = saveEntityFromRequest(requestWrapper)
         logger.info(LOG_END_ORDER_CREATION)
         return getSuccessResponse(
             getTraceId(),
@@ -62,6 +54,14 @@ class OrderServiceImpl(
             formDataOrder(savedOrder.id),
         )
     }
+
+    override fun saveEntityFromRequest(requestWrapper: OrderRequest): Order =
+        formOrderFromRequest(requestWrapper)
+            .apply {
+                val subOrdersFromRequest = formSubOrdersFromRequest(requestWrapper, this)
+                subOrders.addAll(subOrdersFromRequest)
+                premiumAmount = extractPremiumAmount(this.subOrders).setScale(2, RoundingMode.HALF_UP).toString()
+            }.run(orderDao::save)
 
     private fun formOrderFromRequest(requestWrapper: OrderRequest): Order =
         Order(
@@ -75,6 +75,7 @@ class OrderServiceImpl(
             saveCard = requestWrapper.saveCard,
             policyholder = requestWrapper.policyholder,
             unifiedId = requestWrapper.unifiedId,
+            orderIdRecurrent = requestWrapper.orderIdRecurrent,
         )
 
     private fun formSubOrdersFromRequest(
@@ -98,6 +99,9 @@ class OrderServiceImpl(
             premiumAmount = subOrderRequest.premiumAmount.toString(),
             policyDate = subOrderRequest.policyDate,
             contractDate = subOrderRequest.contractDate,
+            managerEmail = subOrderRequest.managerEmail,
+            channel = subOrderRequest.channel
+
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }

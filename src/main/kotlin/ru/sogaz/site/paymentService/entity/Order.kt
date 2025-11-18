@@ -58,6 +58,8 @@ data class Order(
     val subscriptionId: String = "",
     @Column(name = "client_id")
     val clientId: String? = null,
+    @Column(name = "order_id_recurrent")
+    val orderIdRecurrent: UUID? = null,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,

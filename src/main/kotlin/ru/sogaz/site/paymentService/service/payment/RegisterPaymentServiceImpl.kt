@@ -20,7 +20,6 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFactoryService
 import java.time.LocalDateTime
-import java.util.*
 
 @Service
 class RegisterPaymentServiceImpl(
@@ -44,7 +43,7 @@ class RegisterPaymentServiceImpl(
             formPayment(order, paymentTypeEnum, payQueryParams)
                 .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
-                .run { registerInBank(this, headersParams, order) }
+                .run { registerInBank(this, headersParams) }
                 .apply { paymentStarted = LocalDateTime.now() }
                 .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
@@ -57,7 +56,6 @@ class RegisterPaymentServiceImpl(
                     saveHistory(order, ex.actionType)
                     throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, getTraceId())
                 }
-
                 else -> throw InnerException(getTraceId(), ERROR_PAYMENT_PROCESSING)
             }
         }
@@ -84,9 +82,8 @@ class RegisterPaymentServiceImpl(
     private fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        order: Order?
     ): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
-            .registerPayment(payment, headersParams, order)
+            .registerPayment(payment, headersParams)
 }

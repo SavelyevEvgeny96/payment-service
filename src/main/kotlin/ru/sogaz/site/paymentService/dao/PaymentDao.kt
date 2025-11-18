@@ -12,5 +12,6 @@ interface PaymentDao {
     fun save(payment: Payment): Payment
 
     fun findByStatuses(statuses: List<PaymentStatusEnum>): List<Payment>
-    fun batchInsertPayment(payments: List<Payment>):List<UUID>
+
+    fun batchInsertPayment(payments: List<Payment>): List<UUID>
 }
