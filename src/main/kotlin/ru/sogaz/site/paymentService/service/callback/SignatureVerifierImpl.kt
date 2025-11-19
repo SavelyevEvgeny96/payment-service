@@ -57,12 +57,9 @@ class SignatureVerifierImpl(
     ): Boolean =
         try {
             synchronized(preconfiguredSignature) {
-                preconfiguredSignature.apply {
-                    updateRequestDto(this, httpServletRequest)
-                    verify(signature)
-                }
+                updateRequestDto(preconfiguredSignature, httpServletRequest)
+                preconfiguredSignature.verify(signature)
             }
-            true
         } catch (e: Exception) {
             logger.debug(VEREFIELD_FAIL, e)
             false
@@ -74,7 +71,7 @@ class SignatureVerifierImpl(
     ) {
         val urlBytes = gpbConfigProperties.callbackUrl.toByteArray(Charsets.UTF_8)
         signature.update(urlBytes)
-        val queryStr = httpServletRequest.queryString
+        val queryStr = "?" + httpServletRequest.queryString
         val paramStr = queryStr.substringBefore(SIGNATURE_PARAMETER)
         val paramBytes = paramStr.toByteArray(Charsets.UTF_8)
         signature.update(paramBytes)

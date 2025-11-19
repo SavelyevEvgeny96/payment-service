@@ -21,13 +21,15 @@ class SignatureVerifierConfig {
     }
 
     @Bean
+    fun preconfiguredSignature(gpbConfigProperties: GpbConfigProperties): Signature =
+        Signature.getInstance(CONST_INSTANCE).apply {
+            initVerify(loadPublicKey(gpbConfigProperties))
+        }
+
+    @Bean
     fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier {
         val pattern = Pattern.compile("%[0-9a-fA-F]{2}")
-        val signature =
-            Signature.getInstance(CONST_INSTANCE).apply {
-                initVerify(loadPublicKey(gpbConfigProperties))
-            }
-        return SignatureVerifierImpl(signature, pattern, gpbConfigProperties)
+        return SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties), pattern, gpbConfigProperties)
     }
 
     private fun loadPublicKey(gpbConfigProperties: GpbConfigProperties): PublicKey =
