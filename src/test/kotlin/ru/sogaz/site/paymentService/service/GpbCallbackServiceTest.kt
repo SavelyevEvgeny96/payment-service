@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service
 
+import jakarta.servlet.http.HttpServletRequest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -24,6 +25,7 @@ class GpbCallbackServiceTest {
     private val paymentOperationHistoryDao = mock<PaymentOperationHistoryDao>()
     private val apiConfigProperties = mock<ApiConfigProperties>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
+    private val httpServletRequest = mock<HttpServletRequest>()
 
     private val service =
         GpbCallbackServiceImpl(
@@ -73,11 +75,11 @@ class GpbCallbackServiceTest {
                 paymentBankId = testRequest.trxId
                 this.order = order
             }
-        `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(any(), any())).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(orderDao.findById(any())).thenReturn(order)
 
-        val response = service.processCallback(testRequest)
+        val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>1</code>")
         verify(paymentDao).save(payment)
@@ -91,10 +93,10 @@ class GpbCallbackServiceTest {
                 order = null
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
 
-        val response = service.processCallback(testRequest)
+        val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>2</code>")
     }
@@ -107,11 +109,11 @@ class GpbCallbackServiceTest {
                 order = Order().apply { id = UUID.randomUUID() }
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest)).thenReturn(true)
+        `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
         `when`(payment.order?.id?.let { orderDao.findById(it) }).thenReturn(null)
 
-        val response = service.processCallback(testRequest)
+        val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>2</code>")
     }

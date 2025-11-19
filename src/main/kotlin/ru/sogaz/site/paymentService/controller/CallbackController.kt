@@ -61,7 +61,7 @@ class CallbackController(
                 ts,
                 signature,
             )
-        return gpbCallbackService.processCallback(requestParams)
+        return gpbCallbackService.processCallback(requestParams, request)
     }
 
     override fun stateRussiaCallback(

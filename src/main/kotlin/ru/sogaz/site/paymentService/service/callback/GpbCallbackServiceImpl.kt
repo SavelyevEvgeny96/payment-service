@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.callback
 
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
@@ -45,18 +46,21 @@ class GpbCallbackServiceImpl(
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
     }
 
-    override fun processCallback(request: GpbCallbackRequest): ResponseEntity<String> {
+    override fun processCallback(
+        requestDto: GpbCallbackRequest,
+        httpServletRequest: HttpServletRequest,
+    ): ResponseEntity<String> {
         return try {
             val traceId = getTraceId()
             logger.debug(START_METHOD_PROCESS_CALL + traceId)
 
-            if (!signatureVerifier.verifySignature(request)) {
-                logger.debug(ERROR_TRX_ID + request.trxId)
+            if (!signatureVerifier.verifySignature(requestDto, httpServletRequest)) {
+                logger.debug(ERROR_TRX_ID + requestDto.trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
             }
 
             val payment =
-                paymentDao.findByPaymentBankId(request.trxId)
+                paymentDao.findByPaymentBankId(requestDto.trxId)
 
             if (payment.order == null ||
                 payment.order
@@ -79,10 +83,10 @@ class GpbCallbackServiceImpl(
 
             createSuccessResponse()
         } catch (e: InnerException) {
-            logger.error(ERROR_TRX_ID + request.trxId)
+            logger.error(ERROR_TRX_ID + requestDto.trxId)
             createErrorResponse(NOT_FOUND)
         } catch (e: Exception) {
-            logger.error(ERROR_TRX_ID + request.trxId)
+            logger.error(ERROR_TRX_ID + requestDto.trxId)
             createErrorResponse(INTERNAL_SERVER_ERROR)
         }
     }
