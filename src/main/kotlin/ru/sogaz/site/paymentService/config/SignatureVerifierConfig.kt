@@ -21,15 +21,19 @@ class SignatureVerifierConfig {
     }
 
     @Bean
-    fun preconfiguredSignature(gpbConfigProperties: GpbConfigProperties): Signature =
-        Signature.getInstance(CONST_INSTANCE).apply {
-            initVerify(loadPublicKey(gpbConfigProperties))
-        }
+    fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier {
+        val pattern = Pattern.compile("%[0-9a-fA-F]{2}")
+        val signature =
+            Signature.getInstance(CONST_INSTANCE).apply {
+                initVerify(loadPublicKey(gpbConfigProperties))
+            }
+        return SignatureVerifierImpl(signature, pattern, gpbConfigProperties)
+    }
 
     private fun loadPublicKey(gpbConfigProperties: GpbConfigProperties): PublicKey =
         try {
             val keyBytes =
-                gpbConfigProperties.gpb
+                gpbConfigProperties.certs
                     .replace("\"", "")
                     .replace("\\n", "\n")
                     .replace("-----BEGIN CERTIFICATE-----", "")
@@ -47,10 +51,4 @@ class SignatureVerifierConfig {
         } catch (e: Exception) {
             throw IllegalStateException(KEY_ERROR, e)
         }
-
-    @Bean
-    fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier {
-        val pattern = Pattern.compile("%[0-9a-fA-F]{2}")
-        return SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties), pattern)
-    }
 }

@@ -6,9 +6,9 @@ spring:
     password: dev
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=payments
+    url: jdbc:postgresql://localhost:5432/payment
     username: postgres
-    password: 123456
+    password: 1234
 
 api:
   host: http://localhost:${server.port}
@@ -48,8 +48,9 @@ app:
     exchange: payments.exchange
     queue-status-payment: payment.status.queue
     routing-key-status-payment: payment.status.created
-  certs:
-    gpb: -----CERTIFICATE-----
+  gpb:
+    certs: ${GPB_CERT:"qx1LDt7avZ2mtsMIiR3EJSrfy30%2BO7LCYEuaHaQ486ofy5K6V1eXvRoKiQxYxnUOJk39bOTA%2F3TfGsnrjVOPD1CjCsulQbsCIDg9Topx7fUQrcS%2BeEv5MBY6V23LtzJVy4SOf6bYf7ABueRlCsMKjI9e7FunnIizJyU%2BWcTTjsBoYvVy5GvI%2FDc%2BwamLvZtQrlWNhyAkodSU6oUmHOIdqw4z0nZZ5YMQ49kwcmjqSqjL3dCHJDe5PQi9yCVj6w6JBX6NUmSaF7MU4GGUrZMr%2FXWXQT5cYxoX18Mfmsz%2BCCosb1otRRkPy1mBRI8kA%2BqcoUbs%2BGV5p8MiS14hWMJXvw%3D%3D"}
+    callback_url: https://test-pay.sogaz.ru/payment/gpb/state
 
 logstash:
   host: localhost

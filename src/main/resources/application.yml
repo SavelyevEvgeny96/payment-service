@@ -7,8 +7,9 @@ app:
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
     app_profile: ${ENVIRONMENT:local}
     java-version: ${JAVA_VERSION:21}
-  certs:
-    gpb: ${GPB_CERT}
+  gpb:
+    certs: ${GPB_CERT}
+    callback_url: ${GPB_CALLBACK_URL}
   rabbit:
     exchange: ${ORDERS_EXCHANGE}
     queue-status-payment: ${QUEUE_STATUS_PAYMENT}
