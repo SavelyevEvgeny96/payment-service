@@ -30,8 +30,6 @@ data class Payment(
     @ManyToOne
     @JoinColumn(name = "order_id")
     var order: Order? = null,
-    @Column(name = "order_id_recurrent")
-    var orderIdRecurrent: UUID? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,

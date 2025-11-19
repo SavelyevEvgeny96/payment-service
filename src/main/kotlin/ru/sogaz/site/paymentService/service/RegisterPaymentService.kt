@@ -13,4 +13,10 @@ interface RegisterPaymentService {
         payQueryParams: PayQueryParams = PayQueryParams(),
         headersParams: GpbSbpHeadersParams? = null,
     ): Payment
+
+    fun registerInBank(
+        payment: Payment,
+        headersParams: GpbSbpHeadersParams?,
+        recurrent: Boolean
+    ): Payment
 }

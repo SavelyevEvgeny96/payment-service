@@ -11,20 +11,10 @@ interface OrderPayloadMapper {
     @BeanMapping(
         ignoreUnmappedSourceProperties = [
             "metaInfo",
-            "bank",
             "paymentType",
-            "keyCard",
         ],
     )
     @Mapping(target = "orders", source = "subOrders")
-    @Mapping(target = "orderEndDate", source = "orderEndDate")
-    @Mapping(target = "recipientEmail", source = "recipientEmail")
-    @Mapping(target = "recipientUserId", source = "recipientUserId")
-    @Mapping(target = "unifiedId", source = "unifiedId")
-    @Mapping(target = "recipientPhone", source = "recipientPhone")
-    @Mapping(target = "subscriptionId", source = "subscriptionId")
-    @Mapping(target = "policyholder", source = "policyholder")
-    @Mapping(target = "orderIdRecurrent", source = "orderIdRecurrent")
     @Mapping(target = "urlToReturn", ignore = true)
     @Mapping(target = "urlToDecline", ignore = true)
     @Mapping(target = "saveCard", ignore = true)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.validation.constraint.Email
 import ru.sogaz.site.paymentService.validation.constraint.UniqueMainContract
 import java.time.Instant
@@ -16,13 +17,13 @@ data class OrderPayloadDto(
     var subscriptionId: String, // id подписки
     @field:Email
     var recipientEmail: String?, // email страхователя
-    @field:NotBlank
-    var bank: String,
+    @field:NotNull
+    var bank: BankEnum? = null,
     @field:NotBlank
     var paymentType: String?,
     var recipientPhone: String?, // телефон страхователя
     var recipientUserId: String?, // ID личного кабинета
-    var keyCard: String?, // ключ карты (если recurrent=true)
+    var keyCard: String? = null, // ключ карты
     var orderEndDate: Instant?, // срок актуальности заказа
     var unifiedId: String? = null, // золотой ID
     var policyholder: String? = null,

@@ -76,6 +76,8 @@ class OrderServiceImpl(
             policyholder = requestWrapper.policyholder,
             unifiedId = requestWrapper.unifiedId,
             orderIdRecurrent = requestWrapper.orderIdRecurrent,
+            bank = requestWrapper.bank,
+            keyCard = requestWrapper.keyCard
         )
 
     private fun formSubOrdersFromRequest(
@@ -100,8 +102,7 @@ class OrderServiceImpl(
             policyDate = subOrderRequest.policyDate,
             contractDate = subOrderRequest.contractDate,
             managerEmail = subOrderRequest.managerEmail,
-            channel = subOrderRequest.channel
-
+            channel = subOrderRequest.channel,
         )
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }

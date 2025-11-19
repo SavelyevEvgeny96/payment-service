@@ -205,7 +205,7 @@ class PaymentServiceImpl(
 
     private fun logRegisteredPaymentInfo(payment: Payment) =
         LOG_PAYMENT_INFO_AFTER_REGISTRATION
-            .format(payment.order?.id, payment.bank)
+            .format(payment.id, payment.bank)
             .run(logger::info)
 
     @Throws(BusinessException::class)

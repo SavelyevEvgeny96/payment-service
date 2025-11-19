@@ -4,6 +4,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Future
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.validation.constraint.Email
 import ru.sogaz.site.paymentService.validation.constraint.UniqueMainContract
 import java.time.Instant
@@ -38,4 +39,7 @@ data class OrderRequest(
     var clientId: String? = null,
     var policyholder: String? = null,
     var orderIdRecurrent: UUID? = null,
+    @field:NotNull
+    var bank: BankEnum? = null,
+    var keyCard: String? = null
 )
