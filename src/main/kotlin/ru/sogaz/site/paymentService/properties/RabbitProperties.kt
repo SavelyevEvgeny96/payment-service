@@ -7,7 +7,8 @@ import ru.sogaz.site.paymentService.loggerFor
 @ConfigurationProperties(prefix = "app.rabbit")
 class RabbitProperties {
     private val logger = loggerFor(javaClass)
-    lateinit var exchange: String
+    lateinit var exchangeOrder: String
+    lateinit var exchangePayment: String
     lateinit var queueStatusPayment: String
     lateinit var queueStatusOrderPaid: String
     lateinit var queueStatusOrderUnpaid: String
@@ -19,7 +20,8 @@ class RabbitProperties {
     @PostConstruct
     fun postConstruct() {
         logger.info("PostConstruct:")
-        logger.info("exchange = $exchange")
+        logger.info("exchangeOrder = $exchangeOrder")
+        logger.info("exchangePayment = $exchangePayment")
         logger.info("queueStatusPayment = $queueStatusPayment")
         logger.info("routingKeyStatusPayment = $routingKeyStatusPayment")
         logger.info("paymentCreateQueue = $paymentCreateQueue")
