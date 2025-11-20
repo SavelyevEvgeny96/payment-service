@@ -32,9 +32,8 @@ class BuildBatchConsumerServiceImpl(
     private val orderService: OrderService,
     private val paymentMapper: PaymentMapper,
     private val registerPaymentService: RegisterPaymentService,
-    private val waitingPaymentDao: WaitingPaymentDao,
-    private val rabbitTemplate: RabbitTemplate,
-    private val props: RabbitProperties
+    private val waitingPaymentDao: WaitingPaymentDao
+
 ) : BuildBatchConsumerService {
 
     companion object {
@@ -123,23 +122,4 @@ class BuildBatchConsumerServiceImpl(
                     )
                 }
             }
-    private fun sendMessagePaid(){
-        val exchange = props.exchange
-        val routingKey = props.routingKeyStatusOrderPaid
-        val timestamp =
-            OffsetDateTime
-                .now(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
-        rabbitTemplate.convertAndSend(
-            exchange,
-            routingKey,
-            requestBody,
-        ) { message ->
-            message.messageProperties.headers["author"] = "payService"
-            message.messageProperties.headers["flowCode"] = "ResultPay"
-            message.messageProperties.headers["timestamp"] = timestamp
-            message
-        }
-    }
 }
