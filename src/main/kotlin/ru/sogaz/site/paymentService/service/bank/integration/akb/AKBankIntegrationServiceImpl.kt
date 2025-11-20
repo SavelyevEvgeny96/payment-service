@@ -73,7 +73,7 @@ class AKBankIntegrationServiceImpl(
             .run { payment.fillFromResponse(this) }
 
     override fun registerCardPaymentRecurrent(payment: Payment): Payment {
-        TODO("Not yet implemented")
+        return payment
     }
 
     @Throws(RestClientException::class)

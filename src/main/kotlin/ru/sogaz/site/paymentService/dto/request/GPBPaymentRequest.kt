@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.dto.request
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 
@@ -25,6 +26,7 @@ data class GPBPaymentRequest(
     @JsonIgnore
     val depersonalization: Boolean = false,
     var recurrent: Boolean? = null,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val src: Src? = null,
     val returnUrl: String? = null
 )

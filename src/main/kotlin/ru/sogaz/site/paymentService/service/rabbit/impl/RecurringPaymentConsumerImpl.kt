@@ -33,10 +33,10 @@ class RecurringPaymentConsumerImpl(
 
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
 
-    @RabbitListener(
-        queues = ["\${app.rabbit.payment-created-queue}"],
-        containerFactory = "batchContainerFactory",
-    )
+//    @RabbitListener(
+//        queues = ["\${app.rabbit.payment-created-queue}"],
+//        containerFactory = "batchContainerFactory",
+//    )
     override fun handleBatch(
         messages: List<Message>,
         channel: Channel,

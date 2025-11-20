@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -83,6 +84,8 @@ class BankIntegrationServiceTest {
 
     @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
+    @MockK
+    private lateinit var paymentDao: PaymentDao
 
     @RelaxedMockK
     private lateinit var gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl
@@ -101,6 +104,7 @@ class BankIntegrationServiceTest {
                 gpbSbpPaymentClient,
                 gpbCardPaymentClient,
                 gpbBankIntegrationHelperServiceImpl,
+                paymentDao
             )
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
@@ -108,7 +112,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register CARD payment in GPB test`() {
         generateValidPayment(BankEnum.GPB, PaymentTypeEnum.CARD)
-            .run(gpBankIntegrationService::registerPayment)
+            .run { gpBankIntegrationService.registerPayment(this, null, false) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_GPB_PAYMENT_PAGE_URL, Payment::paymentPageUrl)
@@ -119,7 +123,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register SBP payment in GPB test`() {
         generateValidPayment(BankEnum.GPB, PaymentTypeEnum.SBP)
-            .run(gpBankIntegrationService::registerPayment)
+            .run { gpBankIntegrationService.registerPayment(this, null, false) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_GPB_SBP_PAYLOAD, Payment::paymentPageUrl)
@@ -130,7 +134,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register CARD payment in AKB test`() {
         generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.CARD)
-            .run(akBankIntegrationService::registerPayment)
+            .run { gpBankIntegrationService.registerPayment(this, null, false) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_AKB_HPP_URL, Payment::paymentPageUrl)
@@ -142,7 +146,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register SBP payment in AKB test`() {
         generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.SBP)
-            .run(akBankIntegrationService::registerPayment)
+            .run { gpBankIntegrationService.registerPayment(this, null, false) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(AKB_QRC_PAYLOAD, Payment::paymentPageUrl)
