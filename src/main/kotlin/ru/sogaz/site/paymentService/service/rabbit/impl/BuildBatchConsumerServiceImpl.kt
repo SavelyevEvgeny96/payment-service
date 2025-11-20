@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
+import com.rabbitmq.client.Channel
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -7,6 +8,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.BatchRecurrentResult
 import ru.sogaz.site.paymentService.dto.data.SinglePaymentResult
+import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -25,6 +27,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+
 @Service
 class BuildBatchConsumerServiceImpl(
     private val paymentDao: PaymentDao,
@@ -33,40 +36,39 @@ class BuildBatchConsumerServiceImpl(
     private val paymentMapper: PaymentMapper,
     private val registerPaymentService: RegisterPaymentService,
     private val waitingPaymentDao: WaitingPaymentDao
-
 ) : BuildBatchConsumerService {
 
     companion object {
         private const val LOG_START = "Старт batch upsertOrders: size=%d"
-        private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %d"
-        private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %d"
+        private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
+        private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %s"
     }
 
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
 
-    override fun upsertBatch(batch: List<OrderPayloadDto>): BatchRecurrentResult {
+    override fun upsertBatch(batch: List<TaggedPayload>, channel: Channel): BatchRecurrentResult {
         logger.info(LOG_START.format(batch.size))
 
         val paid = mutableListOf<UUID>()
         val unpaid = mutableListOf<UUID>()
 
         batch.forEach { payload ->
-
-                val result = processSinglePayload(payload)
-
-                val orderIdRecurrent = result.orderIdRecurrent
-                if (orderIdRecurrent != null) {
-                    if (result.status == PaymentStatusEnum.REG) {
-                        paid += orderIdRecurrent
-                    } else {
-                        unpaid += orderIdRecurrent
-                    }
+            val result = processSinglePayload(payload.dto)
+            val orderIdRecurrent = result.orderIdRecurrent
+            if (orderIdRecurrent != null) {
+                if (result.status == PaymentStatusEnum.REG) {
+                    paid += orderIdRecurrent
                 } else {
-                    logger.warn(
-                        "orderIdRecurrent is null for payload orderIdRecurrent=${payload.orderIdRecurrent} " +
-                                "status=${result.status}"
-                    )
+                    unpaid += orderIdRecurrent
                 }
+            } else {
+                logger.warn(
+                    "orderIdRecurrent is null for payload orderIdRecurrent=${payload.dto.orderIdRecurrent} " +
+                            "status=${result.status}"
+                )
+            }
+            // 4) ACK за успешно распарсенное сообщение
+            channel.basicAck(payload.tag, false)
         }
 
         return BatchRecurrentResult(
@@ -112,7 +114,6 @@ class BuildBatchConsumerServiceImpl(
                 paymentStarted = LocalDateTime.now()
             }
             .run(paymentDao::save)
-            .also(waitingPaymentDao::saveWaitingForPayment)
             .also { paymentUpdate ->
                 if (paymentUpdate.state == PaymentStatusEnum.REG) {
                     logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
@@ -121,5 +122,5 @@ class BuildBatchConsumerServiceImpl(
                         PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id)
                     )
                 }
-            }
+            }.also(waitingPaymentDao::saveWaitingForPayment)
 }

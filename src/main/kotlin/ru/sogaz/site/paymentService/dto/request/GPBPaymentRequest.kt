@@ -21,7 +21,7 @@ data class GPBPaymentRequest(
     val addCardAllowed: Boolean? = null,
     val merchantTrx: String,
     @JsonIgnore
-    val token: String,
+    val token: String?,
     @JsonIgnore
     val depersonalization: Boolean = false,
     var recurrent: Boolean? = null,

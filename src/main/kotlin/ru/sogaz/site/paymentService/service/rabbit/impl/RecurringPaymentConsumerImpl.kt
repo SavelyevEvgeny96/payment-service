@@ -54,8 +54,7 @@ class RecurringPaymentConsumerImpl(
 
         // 2) Обрабатываем батч в сервисе
         val batchResult = runCatching {
-            val dtos = payloads.map { it.dto }
-            buildBatchConsumerService.upsertBatch(dtos)
+            buildBatchConsumerService.upsertBatch(payloads,channel)
         }.onFailure { ex ->
             logger.error("Ошибка при обработке батча: ${ex.message}", ex)
         }.getOrNull() ?: return
@@ -63,11 +62,6 @@ class RecurringPaymentConsumerImpl(
         // 3) Отправляем статусы paid/unpaid
         sendMessagePaid(batchResult.paid)
         sendMessageUnpaid(batchResult.unpaid)
-
-        // 4) ACK за все успешно распарсенные сообщения
-        payloads.forEach { payload ->
-            channel.basicAck(payload.tag, false)
-        }
 
         val tookMs = (System.nanoTime() - started) / 1_000_000
         logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))

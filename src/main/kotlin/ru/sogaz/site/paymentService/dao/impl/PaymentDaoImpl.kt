@@ -65,7 +65,7 @@ class PaymentDaoImpl(
 
         val sql =
             """
-            INSERT INTO orders (
+            INSERT INTO payments (
                 order_id,
                 create_date,
                 update_date,

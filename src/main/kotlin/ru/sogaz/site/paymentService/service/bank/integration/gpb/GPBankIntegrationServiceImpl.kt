@@ -9,6 +9,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
@@ -45,6 +46,7 @@ class GPBankIntegrationServiceImpl(
     private val gpbSbpPaymentClient: GpbSbpPaymentClient,
     private val gpbCardPaymentClient: GpbCardPaymentClient,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
+    private val paymentDao: PaymentDao
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val TEMPLATE_VERSION = "01"
@@ -89,14 +91,21 @@ class GPBankIntegrationServiceImpl(
             urlToReturn = payment.urlToReturn,
         )
 
-    private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest =
-        buildPaymentCardRequestRecurrent(
-            token = exchangeForToken(payment.depersonalization),
+    private fun saveToken(payment: Payment): String? {
+        payment.paymentBankId = exchangeForToken(payment.depersonalization)
+        payment.run(paymentDao::save)
+        return payment.paymentBankId
+    }
+
+    private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest {
+        return buildPaymentCardRequestRecurrent(
+            token = saveToken(payment),
             payment = payment,
             amountData = payment.getAmountData(),
             descriptionInfo = payment.getMainDescription(),
             depersonalization = payment.depersonalization,
         )
+    }
 
     private fun exchangeForToken(depersonalization: Boolean): String {
         try {
@@ -133,7 +142,7 @@ class GPBankIntegrationServiceImpl(
     )
 
     private fun buildPaymentCardRequestRecurrent(
-        token: String,
+        token: String?,
         payment: Payment,
         amountData: AmountData,
         depersonalization: Boolean,
@@ -161,6 +170,7 @@ class GPBankIntegrationServiceImpl(
             request.token,
             request,
         )
+
     private fun postForCardPaymentLinkRecurrent(request: GPBPaymentRequest): RegisterCardResponseDto =
         gpbCardPaymentClient.startPaymentRecurrent(
             takePortalId(request.depersonalization),
@@ -222,6 +232,7 @@ class GPBankIntegrationServiceImpl(
             paymentPageUrl = response.options.paymentPageUrl
             paymentBankId = response.token
         }
+
     private fun Payment.fillBankRegistration(response: RegisterCardResponseDto) =
         this.apply {
             state = if (response.result?.status == "SUCCESS")
@@ -229,6 +240,7 @@ class GPBankIntegrationServiceImpl(
             else
                 PaymentStatusEnum.FAIL
         }
+
     private fun Payment.fillFromResponse(response: GazpromSBPPaymentResponse) =
         this.apply {
             state = PaymentStatusEnum.REG
