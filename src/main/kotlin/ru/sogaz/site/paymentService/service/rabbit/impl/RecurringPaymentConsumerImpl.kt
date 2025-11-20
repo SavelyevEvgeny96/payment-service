@@ -20,7 +20,6 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 @Service
 class RecurringPaymentConsumerImpl(
-    private val messageConverter: NoOpMessageConverter, // пока не используем, но оставим
     private val objectMapper: ObjectMapper,
     private val buildBatchConsumerService: BuildBatchConsumerService,
     private val rabbitTemplate: RabbitTemplate,
