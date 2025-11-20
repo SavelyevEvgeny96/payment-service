@@ -40,7 +40,7 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
     override fun registerPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean
+        recurrent: Boolean,
     ): Payment =
         when {
             payment.type == PaymentTypeEnum.CARD && recurrent -> registerCardPaymentRecurrent(payment)
@@ -50,7 +50,9 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         }
 
     abstract fun registerCardPayment(payment: Payment): Payment
+
     abstract fun registerCardPaymentRecurrent(payment: Payment): Payment
+
     abstract fun registerSBPPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,

@@ -25,7 +25,8 @@ data class GPBPaymentRequest(
     @JsonIgnore
     val depersonalization: Boolean = false,
     var recurrent: Boolean? = null,
-    val src: Src? = null
+    val src: Src? = null,
+    val returnUrl: String? = null
 )
 
 data class State(
@@ -36,7 +37,7 @@ data class State(
 
 data class Src(
     val type: String,
-    val cardId: String?
+    val cardId: String?,
 )
 
 data class ThreeDSTwo(

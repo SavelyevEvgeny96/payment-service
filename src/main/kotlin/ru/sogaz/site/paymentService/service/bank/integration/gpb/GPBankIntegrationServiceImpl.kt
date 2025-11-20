@@ -27,6 +27,7 @@ import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
@@ -61,6 +62,7 @@ class GPBankIntegrationServiceImpl(
     }
 
     private val logger = loggerFor(javaClass)
+
     override fun provider(): BankEnum = BankEnum.GPB
 
     @Throws(BankIntegrationException::class, RestClientException::class)
@@ -74,8 +76,8 @@ class GPBankIntegrationServiceImpl(
     override fun registerCardPaymentRecurrent(payment: Payment): Payment =
         payment
             .run(::buildPaymentCardRequestRecurrent)
-            .run(::postForCardPaymentLink)
-            .run { payment.fillFromResponse(this) }
+            .run(::postForCardPaymentLinkRecurrent)
+            .run { payment.fillBankRegistration(this) }
 
     private fun buildPaymentCardRequest(payment: Payment): GPBPaymentRequest =
         buildPaymentCardRequest(
@@ -94,7 +96,7 @@ class GPBankIntegrationServiceImpl(
             amountData = payment.getAmountData(),
             descriptionInfo = payment.getMainDescription(),
             depersonalization = payment.depersonalization,
-            )
+        )
 
     private fun exchangeForToken(depersonalization: Boolean): String {
         try {
@@ -150,10 +152,17 @@ class GPBankIntegrationServiceImpl(
         depersonalization = depersonalization,
         src = Src(type = "card_id", cardId = payment.keyCard),
         recurrent = true,
+        returnUrl = apiConfigProperties.returnUrl
     )
 
     private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
         gpbCardPaymentClient.startPayment(
+            takePortalId(request.depersonalization),
+            request.token,
+            request,
+        )
+    private fun postForCardPaymentLinkRecurrent(request: GPBPaymentRequest): RegisterCardResponseDto =
+        gpbCardPaymentClient.startPaymentRecurrent(
             takePortalId(request.depersonalization),
             request.token,
             request,
@@ -213,7 +222,13 @@ class GPBankIntegrationServiceImpl(
             paymentPageUrl = response.options.paymentPageUrl
             paymentBankId = response.token
         }
-
+    private fun Payment.fillBankRegistration(response: RegisterCardResponseDto) =
+        this.apply {
+            state = if (response.result?.status == "SUCCESS")
+                PaymentStatusEnum.REG
+            else
+                PaymentStatusEnum.FAIL
+        }
     private fun Payment.fillFromResponse(response: GazpromSBPPaymentResponse) =
         this.apply {
             state = PaymentStatusEnum.REG

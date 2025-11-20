@@ -77,7 +77,8 @@ class OrderServiceImpl(
             unifiedId = requestWrapper.unifiedId,
             orderIdRecurrent = requestWrapper.orderIdRecurrent,
             bank = requestWrapper.bank,
-            keyCard = requestWrapper.keyCard
+            keyCard = requestWrapper.keyCard,
+
         )
 
     private fun formSubOrdersFromRequest(

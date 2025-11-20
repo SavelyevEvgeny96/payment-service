@@ -41,5 +41,5 @@ data class OrderRequest(
     var orderIdRecurrent: UUID? = null,
     @field:NotNull
     var bank: BankEnum? = null,
-    var keyCard: String? = null
+    var keyCard: String? = null,
 )

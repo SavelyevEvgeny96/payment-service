@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
+import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
@@ -83,9 +84,10 @@ class RegisterPaymentServiceImpl(
     override fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean
+        recurrent: Boolean,
     ): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
-            .registerPayment(payment, headersParams,recurrent)
+            .registerPayment(payment, headersParams, recurrent)
+
 }

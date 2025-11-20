@@ -10,7 +10,7 @@ interface BankIntegrationService {
     fun registerPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams? = null,
-        recurrent: Boolean
+        recurrent: Boolean,
     ): Payment
 
     fun getQRCodeImageData(payment: Payment): GPBQRImageResponse

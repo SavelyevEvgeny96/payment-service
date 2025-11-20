@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.service
 
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
+import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
@@ -17,6 +18,6 @@ interface RegisterPaymentService {
     fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean
+        recurrent: Boolean,
     ): Payment
 }
