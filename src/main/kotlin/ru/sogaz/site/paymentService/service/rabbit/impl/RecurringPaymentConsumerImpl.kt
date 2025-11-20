@@ -107,7 +107,7 @@ class RecurringPaymentConsumerImpl(
             logger.info("Нет orderId для отправки в очередь routingKey=$routingKey")
             return
         }
-        val exchange = props.exchange
+        val exchange = props.exchangeOrder
         val timestamp = OffsetDateTime
             .now(ZoneOffset.UTC)
             .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
