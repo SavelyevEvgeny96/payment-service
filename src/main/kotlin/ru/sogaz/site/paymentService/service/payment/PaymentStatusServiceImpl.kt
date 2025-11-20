@@ -55,7 +55,7 @@ class PaymentStatusServiceImpl(
             "Заказ [orderId: %s, bank: %s] уже " +
                 "отмечен как оплаченный для банковского платежа"
         private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
-        private const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
+        const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
     }
 

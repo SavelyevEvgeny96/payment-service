@@ -1,9 +1,12 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
+import ru.sogaz.site.paymentService.dto.data.BatchRecurrentResult
+import ru.sogaz.site.paymentService.dto.data.SinglePaymentResult
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -11,11 +14,17 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderPayloadMapper
 import ru.sogaz.site.paymentService.mapper.payment.PaymentMapper
+import ru.sogaz.site.paymentService.properties.RabbitListenerProps
+import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
+import ru.sogaz.site.paymentService.service.payment.PaymentStatusServiceImpl.Companion.START_LOG_MESSAGE_QUEUE
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
 import java.time.LocalDateTime
-
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 @Service
 class BuildBatchConsumerServiceImpl(
     private val paymentDao: PaymentDao,
@@ -24,25 +33,51 @@ class BuildBatchConsumerServiceImpl(
     private val paymentMapper: PaymentMapper,
     private val registerPaymentService: RegisterPaymentService,
     private val waitingPaymentDao: WaitingPaymentDao,
+    private val rabbitTemplate: RabbitTemplate,
+    private val props: RabbitProperties
 ) : BuildBatchConsumerService {
 
     companion object {
         private const val LOG_START = "Старт batch upsertOrders: size=%d"
-        private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %d "
-        private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %d  "
+        private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %d"
+        private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %d"
     }
 
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
 
-    override fun upsertBatch(batch: List<OrderPayloadDto>) {
+    override fun upsertBatch(batch: List<OrderPayloadDto>): BatchRecurrentResult {
         logger.info(LOG_START.format(batch.size))
+
+        val paid = mutableListOf<UUID>()
+        val unpaid = mutableListOf<UUID>()
+
         batch.forEach { payload ->
-            processSinglePayload(payload)
+
+                val result = processSinglePayload(payload)
+
+                val orderIdRecurrent = result.orderIdRecurrent
+                if (orderIdRecurrent != null) {
+                    if (result.status == PaymentStatusEnum.REG) {
+                        paid += orderIdRecurrent
+                    } else {
+                        unpaid += orderIdRecurrent
+                    }
+                } else {
+                    logger.warn(
+                        "orderIdRecurrent is null for payload orderIdRecurrent=${payload.orderIdRecurrent} " +
+                                "status=${result.status}"
+                    )
+                }
         }
+
+        return BatchRecurrentResult(
+            paid = paid,
+            unpaid = unpaid
+        )
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    private fun processSinglePayload(payload: OrderPayloadDto) {
+    private fun processSinglePayload(payload: OrderPayloadDto): SinglePaymentResult {
         // 1) DTO → Request → Order
         val order = buildAndSaveOrder(payload)
 
@@ -53,6 +88,12 @@ class BuildBatchConsumerServiceImpl(
         val registeredPayment = registerAndPersistPayment(payment)
 
         logger.info("Created payment ${registeredPayment.id} for order ${order.id}")
+
+        // 4) Возвращаем status + orderIdRecurrent
+        return SinglePaymentResult(
+            orderIdRecurrent = registeredPayment.order?.orderIdRecurrent,
+            status = registeredPayment.state
+        )
     }
 
     private fun buildAndSaveOrder(payload: OrderPayloadDto) =
@@ -82,4 +123,23 @@ class BuildBatchConsumerServiceImpl(
                     )
                 }
             }
+    private fun sendMessagePaid(){
+        val exchange = props.exchange
+        val routingKey = props.routingKeyStatusOrderPaid
+        val timestamp =
+            OffsetDateTime
+                .now(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+        rabbitTemplate.convertAndSend(
+            exchange,
+            routingKey,
+            requestBody,
+        ) { message ->
+            message.messageProperties.headers["author"] = "payService"
+            message.messageProperties.headers["flowCode"] = "ResultPay"
+            message.messageProperties.headers["timestamp"] = timestamp
+            message
+        }
+    }
 }

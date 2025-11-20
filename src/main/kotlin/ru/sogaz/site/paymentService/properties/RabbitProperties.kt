@@ -9,7 +9,11 @@ class RabbitProperties {
     private val logger = loggerFor(javaClass)
     lateinit var exchange: String
     lateinit var queueStatusPayment: String
+    lateinit var queueStatusOrderPaid: String
+    lateinit var queueStatusOrderUnpaid: String
     lateinit var routingKeyStatusPayment: String
+    lateinit var routingKeyStatusOrderPaid: String
+    lateinit var routingKeyStatusOrderUnpaid: String
     lateinit var paymentCreateQueue: String
 
     @PostConstruct
@@ -19,5 +23,9 @@ class RabbitProperties {
         logger.info("queueStatusPayment = $queueStatusPayment")
         logger.info("routingKeyStatusPayment = $routingKeyStatusPayment")
         logger.info("paymentCreateQueue = $paymentCreateQueue")
+        logger.info("queueStatusOrderPaid = $queueStatusOrderPaid")
+        logger.info("queueStatusOrderUnpaid = $queueStatusOrderUnpaid")
+        logger.info("routingKeyStatusOrderPaid = $routingKeyStatusOrderPaid")
+        logger.info("routingKeyStatusOrderUnpaid = $routingKeyStatusOrderUnpaid")
     }
 }

@@ -33,6 +33,20 @@ class RabbitMQConfig(
     @Bean
     fun ordersExchange(): TopicExchange = TopicExchange(props.exchange, true, false)
 
+    @Bean(name = ["orderStatusPaidQueue"])
+    fun orderStatusPaidQueue(): Queue =
+        QueueBuilder
+            .durable(props.queueStatusOrderPaid)
+            .withArgument(QUEUE_TYPE, QUORUM)
+            .build()
+
+    @Bean(name = ["orderStatusUnpaidQueue"])
+    fun orderStatusUnpaidQueue(): Queue =
+        QueueBuilder
+            .durable(props.queueStatusOrderUnpaid)
+            .withArgument(QUEUE_TYPE, QUORUM)
+            .build()
+
     @Bean(name = ["paymentsStatusQueue"])
     fun paymentsStatusQueue(): Queue =
         QueueBuilder
@@ -41,13 +55,26 @@ class RabbitMQConfig(
             .build()
 
     @Bean
-    fun ordersBinding(
+    fun paymentsStatusBinding(
         @Qualifier("paymentsStatusQueue") queue: Queue,
         exchange: TopicExchange,
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusPayment)
 
     @Bean
-    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter = Jackson2JsonMessageConverter(objectMapper)
+    fun orderStatusUnpaidBinding(
+        @Qualifier("orderStatusUnpaid") queue: Queue,
+        exchange: TopicExchange,
+    ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusOrderUnpaid)
+
+    @Bean
+    fun orderStatusPaidBinding(
+        @Qualifier("orderStatusPaidQueue") queue: Queue,
+        exchange: TopicExchange,
+    ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusOrderPaid)
+
+    @Bean
+    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter =
+        Jackson2JsonMessageConverter(objectMapper)
 
     @Bean
     fun rabbitTemplate(
