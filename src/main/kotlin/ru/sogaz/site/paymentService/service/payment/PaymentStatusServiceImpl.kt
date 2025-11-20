@@ -174,7 +174,7 @@ class PaymentStatusServiceImpl(
 
             val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
 
-            val exchange = props.exchange
+            val exchange = props.exchangePayment
             val routingKey = props.routingKeyStatusPayment
             val timestamp =
                 OffsetDateTime

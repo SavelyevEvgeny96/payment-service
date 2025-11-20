@@ -10,9 +10,15 @@ app:
   certs:
     gpb: ${GPB_CERT}
   rabbit:
-    exchange: ${ORDERS_EXCHANGE:payments.exchange}
-    queue-status-payment: ${QUEUE_STATUS_PAYMENT:payment.status.queue}
+    exchange-order: ${ORDERS_EXCHANGE:order.exchange}
+    exchange-payment: ${ORDERS_EXCHANGE:payment.exchange}
+    payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
+    payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
+    order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
+    order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}
     routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT:payment.status.created}
+    routing-key-status-order-paid: ${ROUTING_KEY_STATUS_ORDER_PAID:order.paid.created}
+    routing-key-status-order-unpaid: ${ROUTING_KEY_STATUS_ORDER_UNPAID:order.unpaid.created}
     queue-payment: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
   listener:
     batch-size: 100
@@ -64,6 +70,7 @@ api:
   payment:
     paymentUrl: ${PAYMENT_URL}
     sbpPaymentUrl: ${SBP_PAYMENT_URL}
+    returnUrl: ${RETURN_URL}
     akbUrl: ${AKB_URL}
     akbSbpUrl: ${AKB_SBP_URL}
     akbUrlStatus: ${AKB_PAYMENT_URL}

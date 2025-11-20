@@ -36,24 +36,24 @@ class RabbitMQConfig(
     @Bean(name = ["ordersExchange"])
     fun ordersExchange(): TopicExchange = TopicExchange(props.exchangePayment, true, false)
 
-    @Bean(name = ["orderStatusPaidQueue"])
-    fun orderStatusPaidQueue(): Queue =
+    @Bean(name = ["orderPaidStatusQueue"])
+    fun orderPaidStatusQueue(): Queue =
         QueueBuilder
-            .durable(props.queueStatusOrderPaid)
+            .durable(props.orderPaidStatusQueue)
             .withArgument(QUEUE_TYPE, QUORUM)
             .build()
 
-    @Bean(name = ["orderStatusUnpaidQueue"])
-    fun orderStatusUnpaidQueue(): Queue =
+    @Bean(name = ["orderUnpaidStatusQueue"])
+    fun orderUnpaidStatusQueue(): Queue =
         QueueBuilder
-            .durable(props.queueStatusOrderUnpaid)
+            .durable(props.orderUnpaidStatusQueue)
             .withArgument(QUEUE_TYPE, QUORUM)
             .build()
 
     @Bean(name = ["paymentsStatusQueue"])
     fun paymentsStatusQueue(): Queue =
         QueueBuilder
-            .durable(props.queueStatusPayment)
+            .durable(props.paymentStatusQueue)
             .withArgument(QUEUE_TYPE, QUORUM)
             .build()
 
@@ -65,13 +65,13 @@ class RabbitMQConfig(
 
     @Bean
     fun orderStatusUnpaidBinding(
-        @Qualifier("orderStatusUnpaid") queue: Queue,
+        @Qualifier("orderUnpaidStatusQueue") queue: Queue,
         @Qualifier("ordersExchange") exchange: TopicExchange,
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusOrderUnpaid)
 
     @Bean
     fun orderStatusPaidBinding(
-        @Qualifier("orderStatusPaidQueue") queue: Queue,
+        @Qualifier("orderPaidStatusQueue") queue: Queue,
         @Qualifier("ordersExchange") exchange: TopicExchange,
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusOrderPaid)
 
