@@ -4,7 +4,6 @@ import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.entity.Order
-import ru.sogaz.siter.models.resonses.Response
 
 interface OrderService {
     /**
@@ -13,9 +12,8 @@ interface OrderService {
      * @param requestWrapper Данные о заказе(содержит внутри лист PaymentRequest)
      * @return Объект Response с информацией о платеже
      */
-    fun createOrder(requestWrapper: OrderRequest): Response<DataOrder>
-
-    fun getOrderStatus(orderId: String): Response<DataGetOrderStatus>
+    fun createOrder(orderRequest: OrderRequest): DataOrder
 
     fun saveEntityFromRequest(requestWrapper: OrderRequest): Order
+    fun getOrderStatus(orderId: String): DataGetOrderStatus
 }

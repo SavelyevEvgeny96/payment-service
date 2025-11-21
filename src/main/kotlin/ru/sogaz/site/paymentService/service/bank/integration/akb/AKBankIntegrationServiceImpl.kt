@@ -156,14 +156,14 @@ class AKBankIntegrationServiceImpl(
         url: String,
         request: Any? = null,
     ): T {
-        logger.info("Prepare for POST AKB request: $url with body: $request")
+        logger.debug("Prepare for POST AKB request: $url with body: $request")
         return withMeasureTime { restTemplate.postForObject<T>(url, request) }
-            .also { logger.info("Successfully processing request for AKB with response: $it") }
+            .also { logger.debug("Successfully processing request for AKB with response: $it") }
     }
 
     private inline fun <reified T> withMeasureTime(block: () -> T): T {
         val (value: T, timeTaken) = measureTimedValue(block)
-        logger.info("${timeTaken.inWholeSeconds} whole seconds taken for AKB request")
+        logger.debug("${timeTaken.inWholeSeconds} whole seconds taken for AKB request")
         return value
     }
 

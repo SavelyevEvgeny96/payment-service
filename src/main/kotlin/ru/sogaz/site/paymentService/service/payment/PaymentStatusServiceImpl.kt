@@ -49,7 +49,8 @@ class PaymentStatusServiceImpl(
     private val orderMapper: OrderMapper,
 ) : PaymentStatusService {
     companion object {
-        private const val UPDATE_STATUS_ERROR_MESSAGE = "Произошла ошибка во время обновления статуса для банковского платежа [bankId: %s]"
+        private const val UPDATE_STATUS_ERROR_MESSAGE =
+            "Произошла ошибка во время обновления статуса для банковского платежа [bankId: %s]"
         private const val NOT_FIND_ORDER_WARN_MESSAGE = "Не найден заказ для банковского платежа"
         private const val ORDER_ALREADY_PAID_WARN_MESSAGE =
             "Заказ [orderId: %s, bank: %s] уже " +
@@ -147,7 +148,7 @@ class PaymentStatusServiceImpl(
         order.apply { status = OrderStatus.SUCCESS }
 
         receiptService.generateReceipt(payment)
-        sendToPaidOrdersQueue(order, bankPaymentDetails)
+        sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
         orderDao.save(order)
         operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
@@ -165,6 +166,7 @@ class PaymentStatusServiceImpl(
     }
 
     private fun sendToPaidOrdersQueue(
+        payment: Payment,
         order: Order,
         bankPaymentDetails: BankPaymentDetails,
     ) {
@@ -173,7 +175,7 @@ class PaymentStatusServiceImpl(
             val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
 
             val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
-
+            requestBody.bank = payment.bank?.name
             val exchange = props.exchangePayment
             val routingKey = props.routingKeyStatusPayment
             val timestamp =
@@ -181,6 +183,7 @@ class PaymentStatusServiceImpl(
                     .now(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
             logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+            logger.info("Message request queue status: $requestBody")
             rabbitTemplate.convertAndSend(
                 exchange,
                 routingKey,

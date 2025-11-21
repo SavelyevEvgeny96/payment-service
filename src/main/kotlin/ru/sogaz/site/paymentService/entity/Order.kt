@@ -55,9 +55,9 @@ data class Order(
     @Column(name = "save_card")
     var saveCard: Boolean = false,
     @Column(name = "subscription_id")
-    val subscriptionId: String = "",
+    var subscriptionId: String = "",
     @Column(name = "client_id")
-    val clientId: String? = null,
+    var clientId: String? = null,
     @Column(name = "order_id_recurrent")
     val orderIdRecurrent: UUID? = null,
     @CreationTimestamp

@@ -2,7 +2,6 @@ package ru.sogaz.site.paymentService.service
 
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
-import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
@@ -30,10 +29,10 @@ interface PaymentService {
 
     fun getOrderPaymentPageInfo(
         orderId: UUID,
-        pageInfoRequestParams: PageInfoRequestParams,
-    ): Response<DataOrderPaymentPageInfo>
+        payQueryParams: PayQueryParams = PayQueryParams(),
+    ): DataOrderPaymentPageInfo
 
     fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse>
 
-    fun updateStatus(paymentBankId: String): Response<ResponseStatusPay>
+    fun updateStatus(paymentBankId: String): ResponseStatusPay
 }

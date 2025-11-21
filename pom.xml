@@ -87,13 +87,6 @@
             <artifactId>kotlin-maven-plugin</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
-
-        <!-- inner libraries -->
-        <dependency>
-            <groupId>ru.sogaz.esb.core</groupId>
-            <artifactId>logger</artifactId>
-            <version>${ru.sogaz.esb.core.logger.version}</version>
-        </dependency>
         <dependency>
             <groupId>ru.sogaz.site</groupId>
             <artifactId>exception-starter</artifactId>
@@ -112,7 +105,7 @@
         <dependency>
             <groupId>ru.sogaz.site</groupId>
             <artifactId>logging-starter</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.4-dev</version>
         </dependency>
 
         <dependency>
@@ -150,6 +143,10 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
             <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
         </dependency>
 
         <!-- Logger -->
@@ -212,6 +209,21 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
 

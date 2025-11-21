@@ -18,7 +18,6 @@ import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
-import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
@@ -32,8 +31,7 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.orThrow
-import ru.sogaz.site.paymentService.properties.ServiceStatuses.Companion.SUCCESS_STATUS_CODE_PAY_INFO_PAGE
-import ru.sogaz.site.paymentService.properties.ServiceStatuses.Companion.SUCCESS_STATUS_CODE_UPDATE_PAYMENT_STATUS
+import ru.sogaz.site.paymentService.properties.ServiceStatuses
 import ru.sogaz.site.paymentService.service.InfoPageService
 import ru.sogaz.site.paymentService.service.PaymentService
 import ru.sogaz.site.paymentService.service.PaymentStatusService
@@ -41,6 +39,7 @@ import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.SubOrderService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
+import java.net.URI
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -60,8 +59,6 @@ class PaymentServiceImpl(
     private val paymentStatusService: PaymentStatusService,
 ) : PaymentService {
     companion object {
-        const val SUCCESS_UPDATE_CODE_PAYMENT_INVOICE = 1101580200
-
         const val SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE = "ok"
         const val SBP_ACTIVE_CONFIG_NAME = "sbpActive"
         const val LOG_ORDER_INFO_BEFORE_REGISTRATION = "Для регистрации платежа по заказу с id: %s был выбран банк: %s"
@@ -99,14 +96,13 @@ class PaymentServiceImpl(
 
     override fun getOrderPaymentPageInfo(
         orderId: UUID,
-        pageInfoRequestParams: PageInfoRequestParams,
-    ): Response<DataOrderPaymentPageInfo> =
+        payQueryParams: PayQueryParams,
+    ): DataOrderPaymentPageInfo =
         infoPageService
-            .getInfo(orderId, pageInfoRequestParams)
-            .wrapToSuccessResponse(SUCCESS_STATUS_CODE_PAY_INFO_PAGE)
+            .getInfo(orderId, payQueryParams)
 
     override fun updatePaymentInvoice(updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest): Response<UpdatePaymentInvoiceResponse> {
-        logger.info(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
 
         val existedOrderPayment =
             orderDao
@@ -118,20 +114,19 @@ class PaymentServiceImpl(
         val updatedOrder = orderMapper.updateOrder(updatePaymentInvoiceRequest, existedOrderPayment)
         orderDao.save(updatedOrder)
 
-        logger.info(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
+        logger.debug(LOG_SUCCESS_UPDATE_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return getSuccessResponse(
             getTraceId(),
-            SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,
+            ServiceStatuses.SUCCESS_UPDATE_CODE_PAYMENT_INVOICE,
             UpdatePaymentInvoiceResponse(SUCCESS_UPDATE_PAYMENT_INVOICE_MESSAGE),
         )
     }
 
-    override fun updateStatus(paymentBankId: String): Response<ResponseStatusPay> =
+    override fun updateStatus(paymentBankId: String): ResponseStatusPay =
         paymentBankId
             .run(paymentStatusService::updateStatus)
             .orThrow { throw BusinessException(CODE_ERROR_PAYMENT_STATUS_BANK) }
             .toResponseStatusPay()
-            .wrapToSuccessResponse(SUCCESS_STATUS_CODE_UPDATE_PAYMENT_STATUS)
 
     private fun createPayment(
         orderId: UUID,
@@ -201,16 +196,19 @@ class PaymentServiceImpl(
     private fun logOrderInfoBeforeRegistrationPayment(order: Order) =
         LOG_ORDER_INFO_BEFORE_REGISTRATION
             .format(order.id, order.bank)
-            .run(logger::info)
+            .run(logger::debug)
 
     private fun logRegisteredPaymentInfo(payment: Payment) =
         LOG_PAYMENT_INFO_AFTER_REGISTRATION
-            .format(payment.id, payment.bank)
-            .run(logger::info)
+            .format(payment.order?.id, payment.bank)
+            .run(logger::debug)
 
     @Throws(BusinessException::class)
     private fun Payment.toDataPay(): DataPay {
-        val url = paymentPageUrl ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
+        val url =
+            runCatching { URI.create(paymentPageUrl!!) }
+                .getOrNull()
+                ?: throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE)
         return DataPay(url)
     }
 
@@ -219,6 +217,4 @@ class PaymentServiceImpl(
             paymentStatus = state,
             cheque = chequeName == ChequeStateEnum.SENT.name,
         )
-
-    private fun <T : Any> T.wrapToSuccessResponse(status: Int) = getSuccessResponse(getTraceId(), status, this)
 }

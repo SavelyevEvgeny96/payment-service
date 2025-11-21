@@ -7,8 +7,9 @@ app:
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
     app_profile: ${ENVIRONMENT:local}
     java-version: ${JAVA_VERSION:21}
-  certs:
-    gpb: ${GPB_CERT}
+  gpb:
+    certs: ${GPB_CERT}
+    callback_url: ${GPB_CALLBACK_URL}
   rabbit:
     exchange-order: ${ORDERS_EXCHANGE:order.exchange}
     exchange-payment: ${ORDERS_EXCHANGE:payment.exchange}
@@ -32,6 +33,9 @@ server:
   main.allow-bean-definition-overriding: true
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
+
   rabbitmq:
     host: ${RABBIT_HOST}
     port: ${RABBIT_PORT}
@@ -56,9 +60,15 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      connectionTimeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}
-      maxLifetime: ${DB_HIKARI_LIFETIME_MAX:60000}
-      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:10000}
+      # ВАЖНО: используем kebab-case и префикс spring.datasource.hikari
+      connection-timeout: ${DB_HIKARI_CONNECTION_TIMEOUT:30000}  # 30s
+      max-lifetime: ${DB_HIKARI_LIFETIME_MAX:55000}              # < таймаута на стороне БД/LB
+      keepalive-time: ${DB_HIKARI_KEEPALIVE:30000}               # < max-lifetime
+      minimum-idle: ${DB_HIKARI_MIN_IDLE:2}
+      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:60000}              # действует только если minimum-idle < maximum-pool-size
+      # Опционально: мгновенный фейл старта, если БД недоступна
+      initialization-fail-timeout: 1
+
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
@@ -123,12 +133,27 @@ management:
 logstash:
   host: ${LOG_SERVER_HOST}
   port: ${LOG_SERVER_PORT}
-  level: ${LOG_LEVEL}
-  level_local: ${LOG_LEVEL_LOCAL:INFO}
+  level: ${LOG_LEVEL:INFO}
+  level_local: ${LOG_LEVEL_LOCAL:DEBUG}
 
 logging:
   level:
+    ru.sogaz.site.loggingStarter: ${LOGGING_LEVEL_LOGGING_STARTER:INFO}
+    ru.sogaz.site.paymentService: ${LOGGING_LEVEL_PAYMENT_SERVICE:DEBUG}
     ru:
       sogaz:
         site:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
+  proxy:
+    frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
+    upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
+    max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
+    stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink, qrCode, content}
+
+  rabbit:
+    enabled: ${LOGGING_RABBIT_ENABLED:true}
+    log-body: ${LOGGING_RABBIT_LOG_BODY:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:true}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:true}
