@@ -59,7 +59,7 @@ data class Order(
     @Column(name = "client_id")
     var clientId: String? = null,
     @Column(name = "order_id_recurrent")
-    val orderIdRecurrent: UUID? = null,
+    var orderIdRecurrent: UUID? = null,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
