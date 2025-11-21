@@ -6,7 +6,6 @@ import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
-import ru.sogaz.site.paymentService.config.converters.NoOpMessageConverter
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
@@ -18,14 +17,14 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
+
 @Service
 class RecurringPaymentConsumerImpl(
     private val objectMapper: ObjectMapper,
     private val buildBatchConsumerService: BuildBatchConsumerService,
     private val rabbitTemplate: RabbitTemplate,
-    private val props: RabbitProperties
+    private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
-
     companion object {
         private const val BATCH_SUMMARY =
             "Итог обработки пачки: количество=%d, длительность(мс)=%d"
@@ -33,10 +32,10 @@ class RecurringPaymentConsumerImpl(
 
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
 
-//    @RabbitListener(
-//        queues = ["\${app.rabbit.payment-created-queue}"],
-//        containerFactory = "batchContainerFactory",
-//    )
+    @RabbitListener(
+        queues = ["\${app.rabbit.payment-created-queue}"],
+        containerFactory = "batchContainerFactory",
+    )
     override fun handleBatch(
         messages: List<Message>,
         channel: Channel,
@@ -44,8 +43,9 @@ class RecurringPaymentConsumerImpl(
         val started = System.nanoTime()
 
         // 1) Парсим сообщения → оставляем только валидные
-        val payloads: List<TaggedPayload> = messages
-            .mapNotNull(::toTaggedPayload)
+        val payloads: List<TaggedPayload> =
+            messages
+                .mapNotNull(::toTaggedPayload)
 
         if (payloads.isEmpty()) {
             logger.warn("Нет валидных сообщений для обработки в батче")
@@ -53,11 +53,12 @@ class RecurringPaymentConsumerImpl(
         }
 
         // 2) Обрабатываем батч в сервисе
-        val batchResult = runCatching {
-            buildBatchConsumerService.upsertBatch(payloads,channel)
-        }.onFailure { ex ->
-            logger.error("Ошибка при обработке батча: ${ex.message}", ex)
-        }.getOrNull() ?: return
+        val batchResult =
+            runCatching {
+                buildBatchConsumerService.upsertBatch(payloads, channel)
+            }.onFailure { ex ->
+                logger.error("Ошибка при обработке батча: ${ex.message}", ex)
+            }.getOrNull() ?: return
 
         // 3) Отправляем статусы paid/unpaid
         sendMessagePaid(batchResult.paid)
@@ -79,7 +80,7 @@ class RecurringPaymentConsumerImpl(
             val props = msg.messageProperties
             logger.error(
                 "Ошибка парсинга сообщения: ${props.messageId} (tag=${props.deliveryTag})",
-                ex
+                ex,
             )
         }.getOrNull()
 
@@ -102,9 +103,10 @@ class RecurringPaymentConsumerImpl(
             return
         }
         val exchange = props.exchangeOrder
-        val timestamp = OffsetDateTime
-            .now(ZoneOffset.UTC)
-            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        val timestamp =
+            OffsetDateTime
+                .now(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
         rabbitTemplate.convertAndSend(
             exchange,

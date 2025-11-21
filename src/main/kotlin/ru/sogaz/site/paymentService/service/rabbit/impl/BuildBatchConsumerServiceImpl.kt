@@ -1,9 +1,9 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
 import com.rabbitmq.client.Channel
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.BatchRecurrentResult
@@ -16,16 +16,10 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderPayloadMapper
 import ru.sogaz.site.paymentService.mapper.payment.PaymentMapper
-import ru.sogaz.site.paymentService.properties.RabbitListenerProps
-import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
-import ru.sogaz.site.paymentService.service.payment.PaymentStatusServiceImpl.Companion.START_LOG_MESSAGE_QUEUE
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Service
@@ -35,9 +29,9 @@ class BuildBatchConsumerServiceImpl(
     private val orderService: OrderService,
     private val paymentMapper: PaymentMapper,
     private val registerPaymentService: RegisterPaymentService,
-    private val waitingPaymentDao: WaitingPaymentDao
+    private val waitingPaymentDao: WaitingPaymentDao,
+    private val orderDao: OrderDao,
 ) : BuildBatchConsumerService {
-
     companion object {
         private const val LOG_START = "Старт batch upsertOrders: size=%d"
         private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
@@ -46,7 +40,10 @@ class BuildBatchConsumerServiceImpl(
 
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
 
-    override fun upsertBatch(batch: List<TaggedPayload>, channel: Channel): BatchRecurrentResult {
+    override fun upsertBatch(
+        batch: List<TaggedPayload>,
+        channel: Channel,
+    ): BatchRecurrentResult {
         logger.info(LOG_START.format(batch.size))
 
         val paid = mutableListOf<UUID>()
@@ -64,7 +61,7 @@ class BuildBatchConsumerServiceImpl(
             } else {
                 logger.warn(
                     "orderIdRecurrent is null for payload orderIdRecurrent=${payload.dto.orderIdRecurrent} " +
-                            "status=${result.status}"
+                        "status=${result.status}",
                 )
             }
             // 4) ACK за успешно распарсенное сообщение
@@ -73,7 +70,7 @@ class BuildBatchConsumerServiceImpl(
 
         return BatchRecurrentResult(
             paid = paid,
-            unpaid = unpaid
+            unpaid = unpaid,
         )
     }
 
@@ -93,7 +90,7 @@ class BuildBatchConsumerServiceImpl(
         // 4) Возвращаем status + orderIdRecurrent
         return SinglePaymentResult(
             orderIdRecurrent = registeredPayment.order?.orderIdRecurrent,
-            status = registeredPayment.state
+            status = registeredPayment.state,
         )
     }
 
@@ -101,25 +98,27 @@ class BuildBatchConsumerServiceImpl(
         payload
             .run(orderPayloadMapper::toRequest)
             .run(orderService::makeOrderByRequest)
+            .run(orderDao::save)
 
-    private fun buildAndSavePayment(order: Order, payload: OrderPayloadDto) =
-        order
-            .let { paymentMapper.orderToPayment(it, payload) }
-            .run(paymentDao::save)
+    private fun buildAndSavePayment(
+        order: Order,
+        payload: OrderPayloadDto,
+    ) = order
+        .let { paymentMapper.orderToPayment(it, payload) }
+        .run(paymentDao::save)
 
     private fun registerAndPersistPayment(payment: Payment): Payment =
         registerPaymentService
             .registerInBank(payment, null, true)
             .apply {
                 paymentStarted = LocalDateTime.now()
-            }
-            .run(paymentDao::save)
+            }.run(paymentDao::save)
             .also { paymentUpdate ->
                 if (paymentUpdate.state == PaymentStatusEnum.REG) {
                     logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
                 } else {
                     logger.error(
-                        PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id)
+                        PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id),
                     )
                 }
             }.also(waitingPaymentDao::saveWaitingForPayment)

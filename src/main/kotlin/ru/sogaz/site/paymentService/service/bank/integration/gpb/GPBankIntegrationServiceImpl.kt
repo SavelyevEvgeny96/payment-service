@@ -46,7 +46,7 @@ class GPBankIntegrationServiceImpl(
     private val gpbSbpPaymentClient: GpbSbpPaymentClient,
     private val gpbCardPaymentClient: GpbCardPaymentClient,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
-    private val paymentDao: PaymentDao
+    private val paymentDao: PaymentDao,
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val TEMPLATE_VERSION = "01"
@@ -97,15 +97,14 @@ class GPBankIntegrationServiceImpl(
         return payment.paymentBankId
     }
 
-    private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest {
-        return buildPaymentCardRequestRecurrent(
+    private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest =
+        buildPaymentCardRequestRecurrent(
             token = saveToken(payment),
             payment = payment,
             amountData = payment.getAmountData(),
             descriptionInfo = payment.getMainDescription(),
             depersonalization = payment.depersonalization,
         )
-    }
 
     private fun exchangeForToken(depersonalization: Boolean): String {
         try {
@@ -161,7 +160,7 @@ class GPBankIntegrationServiceImpl(
         depersonalization = depersonalization,
         src = Src(type = "card_id", cardId = payment.keyCard),
         recurrent = true,
-        returnUrl = apiConfigProperties.returnUrl
+        returnUrl = apiConfigProperties.returnUrl,
     )
 
     private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
@@ -235,10 +234,12 @@ class GPBankIntegrationServiceImpl(
 
     private fun Payment.fillBankRegistration(response: RegisterCardResponseDto) =
         this.apply {
-            state = if (response.result?.status == "SUCCESS")
-                PaymentStatusEnum.REG
-            else
-                PaymentStatusEnum.FAIL
+            state =
+                if (response.result?.status == "SUCCESS") {
+                    PaymentStatusEnum.REG
+                } else {
+                    PaymentStatusEnum.FAIL
+                }
         }
 
     private fun Payment.fillFromResponse(response: GazpromSBPPaymentResponse) =

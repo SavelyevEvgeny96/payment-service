@@ -13,6 +13,8 @@ interface OrderService {
      * @return Объект Response с информацией о платеже
      */
     fun createOrder(orderRequest: OrderRequest): DataOrder
+
     fun makeOrderByRequest(orderRequest: OrderRequest): Order
+
     fun getOrderStatus(orderId: String): DataGetOrderStatus
 }

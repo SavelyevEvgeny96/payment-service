@@ -76,8 +76,7 @@ class RabbitMQConfig(
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusOrderPaid)
 
     @Bean
-    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter =
-        Jackson2JsonMessageConverter(objectMapper)
+    fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter = Jackson2JsonMessageConverter(objectMapper)
 
     @Bean
     fun rabbitTemplate(
@@ -99,7 +98,6 @@ class RabbitMQConfig(
             setConcurrentConsumers(propsListener.concurrency)
             setMaxConcurrentConsumers(propsListener.maxConcurrency)
             setAcknowledgeMode(AcknowledgeMode.MANUAL)
-            setChannelTransacted(true)
             setDefaultRequeueRejected(false)
             setMessageConverter(noOpMessageConverter)
         }

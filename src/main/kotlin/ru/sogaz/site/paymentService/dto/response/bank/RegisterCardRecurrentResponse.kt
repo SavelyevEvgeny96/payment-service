@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.dto.response.bank
 data class RegisterCardResponseDto(
     val token: String?,
     val state: String?,
-    val result: ResultDto?
+    val result: ResultDto?,
 ) {
     data class ResultDto(
         val status: String?,
@@ -13,6 +13,6 @@ data class RegisterCardResponseDto(
         val rrn: String?,
         val approvalCode: String?,
         val orderStatus: String?,
-        val orderStatusChangedAt: Long?
+        val orderStatusChangedAt: Long?,
     )
 }

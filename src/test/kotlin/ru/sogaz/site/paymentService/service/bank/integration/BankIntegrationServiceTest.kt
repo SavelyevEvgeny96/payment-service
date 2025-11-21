@@ -84,6 +84,7 @@ class BankIntegrationServiceTest {
 
     @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
+
     @MockK
     private lateinit var paymentDao: PaymentDao
 
@@ -104,7 +105,7 @@ class BankIntegrationServiceTest {
                 gpbSbpPaymentClient,
                 gpbCardPaymentClient,
                 gpbBankIntegrationHelperServiceImpl,
-                paymentDao
+                paymentDao,
             )
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
@@ -134,7 +135,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register CARD payment in AKB test`() {
         generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.CARD)
-            .run { gpBankIntegrationService.registerPayment(this, null, false) }
+            .run { akBankIntegrationService.registerPayment(this, null, false) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_AKB_HPP_URL, Payment::paymentPageUrl)
@@ -146,7 +147,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register SBP payment in AKB test`() {
         generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.SBP)
-            .run { gpBankIntegrationService.registerPayment(this, null, false) }
+            .run { akBankIntegrationService.registerPayment(this, null, false) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(AKB_QRC_PAYLOAD, Payment::paymentPageUrl)

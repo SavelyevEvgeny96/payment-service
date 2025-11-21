@@ -28,7 +28,7 @@ data class GPBPaymentRequest(
     var recurrent: Boolean? = null,
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val src: Src? = null,
-    val returnUrl: String? = null
+    val returnUrl: String? = null,
 )
 
 data class State(

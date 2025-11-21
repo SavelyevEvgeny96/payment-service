@@ -72,9 +72,7 @@ class AKBankIntegrationServiceImpl(
             .run(::postForCardPaymentData)
             .run { payment.fillFromResponse(this) }
 
-    override fun registerCardPaymentRecurrent(payment: Payment): Payment {
-        return payment
-    }
+    override fun registerCardPaymentRecurrent(payment: Payment): Payment = payment
 
     @Throws(RestClientException::class)
     override fun registerSBPPayment(

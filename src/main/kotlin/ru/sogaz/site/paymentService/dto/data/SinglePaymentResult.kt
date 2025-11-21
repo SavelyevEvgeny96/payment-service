@@ -5,5 +5,5 @@ import java.util.*
 
 data class SinglePaymentResult(
     val orderIdRecurrent: UUID?,
-    val status: PaymentStatusEnum
+    val status: PaymentStatusEnum,
 )
