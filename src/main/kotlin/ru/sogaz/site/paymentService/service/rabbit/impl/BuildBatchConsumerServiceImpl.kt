@@ -100,7 +100,7 @@ class BuildBatchConsumerServiceImpl(
     private fun buildAndSaveOrder(payload: OrderPayloadDto) =
         payload
             .run(orderPayloadMapper::toRequest)
-            .run(orderService::saveEntityFromRequest)
+            .run(orderService::makeOrderByRequest)
 
     private fun buildAndSavePayment(order: Order, payload: OrderPayloadDto) =
         order

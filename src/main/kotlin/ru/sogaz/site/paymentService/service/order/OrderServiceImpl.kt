@@ -36,7 +36,7 @@ class OrderServiceImpl(
             .run(orderDao::save)
             .toDataOrder()
 
-    private fun makeOrderByRequest(orderRequest: OrderRequest): Order =
+    override fun makeOrderByRequest(orderRequest: OrderRequest): Order =
         orderRequest
             .run(orderMapper::fromRequestDto)
             .apply {
