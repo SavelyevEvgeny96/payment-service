@@ -25,14 +25,14 @@ interface GpbCardPaymentClient {
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun startPayment(
         @PathVariable portalId: String,
-        @PathVariable token: String?,
+        @PathVariable token: String,
         @RequestBody request: GPBPaymentRequest,
     ): GazpromCardPaymentResponse
 
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun startPaymentRecurrent(
         @PathVariable portalId: String,
-        @PathVariable token: String?,
+        @PathVariable token: String,
         @RequestBody request: GPBPaymentRequest,
     ): RegisterCardResponseDto
 

@@ -91,11 +91,11 @@ class GPBankIntegrationServiceImpl(
             urlToReturn = payment.urlToReturn,
         )
 
-    private fun saveToken(payment: Payment): String? {
-        payment.paymentBankId = exchangeForToken(payment.depersonalization)
-        payment.run(paymentDao::save)
-        return payment.paymentBankId
-    }
+    private fun saveToken(payment: Payment): String =
+        exchangeForToken(payment.depersonalization).also { token ->
+            payment.paymentBankId = token
+            payment.run(paymentDao::save)
+        }
 
     private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest =
         buildPaymentCardRequestRecurrent(
@@ -141,7 +141,7 @@ class GPBankIntegrationServiceImpl(
     )
 
     private fun buildPaymentCardRequestRecurrent(
-        token: String?,
+        token: String,
         payment: Payment,
         amountData: AmountData,
         depersonalization: Boolean,

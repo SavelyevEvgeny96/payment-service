@@ -16,7 +16,7 @@ interface RegisterPaymentService {
 
     fun registerInBank(
         payment: Payment,
-        headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean,
+        headersParams: GpbSbpHeadersParams? = null,
+        recurrent: Boolean = false,
     ): Payment
 }

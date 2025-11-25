@@ -9,7 +9,7 @@ interface OrderService {
     /**
      * Метод для создания платежа.
      * Проверяет данные о платеже, валидирует их и создает запись о платеже.
-     * @param requestWrapper Данные о заказе(содержит внутри лист PaymentRequest)
+     * @param orderRequest Данные о заказе(содержит внутри лист PaymentRequest)
      * @return Объект Response с информацией о платеже
      */
     fun createOrder(orderRequest: OrderRequest): DataOrder

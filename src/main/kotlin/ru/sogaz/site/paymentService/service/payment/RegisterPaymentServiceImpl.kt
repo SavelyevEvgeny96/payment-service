@@ -43,7 +43,7 @@ class RegisterPaymentServiceImpl(
             formPayment(order, paymentTypeEnum, payQueryParams)
                 .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
-                .run { registerInBank(this, headersParams, false) }
+                .run { registerInBank(this, headersParams) }
                 .apply { paymentStarted = LocalDateTime.now() }
                 .run(paymentDao::save)
                 .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
