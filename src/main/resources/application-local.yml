@@ -50,9 +50,44 @@ app:
     queue-status-payment: payment.status.queue
     routing-key-status-payment: payment.status.created
   gpb:
-    certs:
+    certs: ${GPB_CERT:-----BEGIN CERTIFICATE-----
+      MIIGazCCBVOgAwIBAgIMWjPU+0NRR/wHAB9LMA0GCSqGSIb3DQEBCwUAMFMxCzAJ
+      BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSkwJwYDVQQDEyBH
+      bG9iYWxTaWduIEdDQyBSMyBEViBUTFMgQ0EgMjAyMDAeFw0yNDA5MTcxMTI3MDRa
+      Fw0yNTEwMTkxMTEwMzZaMCAxHjAcBgNVBAMTFWx0LnBnYS5nYXpwcm9tYmFuay5y
+      dTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANAL8knDwfFGe2oL3vGj
+      mx3Wkbpv0XfqW+kkHZB1y7WY5u95+MqLEiZQuPW3Zl9CYOOztDvp82vWNhkL0z4A
+      ZGVEI7m3RYQ1BmUlpH1z0KH+Jq+2FkKgCiuIg0W/8rJAeqPkRGgq0hmEE7U5wO26
+      4IRHN3wGSuVs44XsRaZddqL1O/8aMuzsGLcDUAuXVktyIJmdj5/h/aJS3MWQzPFx
+      Wze3cCCIkimCps+dx0/1IY4Dcok1NvT99x77d41sdCJRBleoJglG24RSG14Hfm2m
+      a0FNAp8871n8CLPt0/a4ZL6JrB+VaSg86fegPqm69BcLW5M9Jumyri+4tLK4D6yd
+      82ECAwEAAaOCA3AwggNsMA4GA1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMIGT
+      BggrBgEFBQcBAQSBhjCBgzBGBggrBgEFBQcwAoY6aHR0cDovL3NlY3VyZS5nbG9i
+      YWxzaWduLmNvbS9jYWNlcnQvZ3NnY2NyM2R2dGxzY2EyMDIwLmNydDA5BggrBgEF
+      BQcwAYYtaHR0cDovL29jc3AuZ2xvYmFsc2lnbi5jb20vZ3NnY2NyM2R2dGxzY2Ey
+      MDIwMFYGA1UdIARPME0wQQYJKwYBBAGgMgEKMDQwMgYIKwYBBQUHAgEWJmh0dHBz
+      Oi8vd3d3Lmdsb2JhbHNpZ24uY29tL3JlcG9zaXRvcnkvMAgGBmeBDAECATBBBgNV
+      HR8EOjA4MDagNKAyhjBodHRwOi8vY3JsLmdsb2JhbHNpZ24uY29tL2dzZ2NjcjNk
+      dnRsc2NhMjAyMC5jcmwwOwYDVR0RBDQwMoIVbHQucGdhLmdhenByb21iYW5rLnJ1
+      ghl3d3cubHQucGdhLmdhenByb21iYW5rLnJ1MB0GA1UdJQQWMBQGCCsGAQUFBwMB
+      BggrBgEFBQcDAjAfBgNVHSMEGDAWgBQNmMBzf6u9vdlHS0mtCkoMrD7HfDAdBgNV
+      HQ4EFgQUCIAU86cFNgjBZ+3AoZpiRywe8KkwggF9BgorBgEEAdZ5AgQCBIIBbQSC
+      AWkBZwB1AK8YGijWjKPgqYpMnGerCfi7vCK6rryxOKOhndP5tgMNAAABkf+8dqwA
+      AAQDAEYwRAIgS5xgZaJfG/Hs/4PeiSeThC5x3KCWEqPnWCm6yGqkeNsCIE565xY5
+      4Ktr+wgDd0LjC0psA8Gqx6ZAYqdhNZM/X1jDAHYAEvFONL1TckyEBhnDjz96E/jn
+      tWKHiJxtMAWE6+WGJjoAAAGR/7x25gAABAMARzBFAiEAwkjW+SRcmHF4lnJZMKAY
+      jN+lyFpYupY/sWR83FYdQh4CIFROUPaZzQAVdk46jvmDAjjrl2g+L33DCX7Fgt4/
+      6AJcAHYAGgT/SdBUHUCv9qDDv/HYxGcvTuzuI0BomGsXQC7ciX0AAAGR/7x2gwAA
+      BAMARzBFAiEA85XehwROKMuucoEfoOohfL+1ADFRujnej/jX0HDUFsoCIGMWX0Wm
+      KrRIQys2P+Qbaj3noncu4qGkiKYpPwj6fLscMA0GCSqGSIb3DQEBCwUAA4IBAQAz
+      KLxwsux4dAi+MNVb1erZhcX4oWrn1uMqsq/Jtt8srCdLXsHQStBJlo5WLCmqV5Hc
+      qh4jLg0PtI4e1zDTBmp0MfatnzQHOLCX6rD/EZaumgmyz2Cs7GNgxyJX5Dz7Ng7O
+      N68arL4jt/hVg2NqR9lt6gHdI2bHvpNiJM25eLuyEFFNC9SOhDAokCt58wR9qNYD
+      /dhIA2XoCVJ5UoQSFbmf2ZaGkv9iYdK4/jyP3cbStP/++aMN33fnCqFNj4j/vn6/
+      BfD5x0tdOZKn0v2yj0B9K3JRnMD3GlRi7qLtq8dTrVXd0BFurTpdOAvhpvrjVElo
+      Kuq9my9avEA+i8VCLLFx
+      -----END CERTIFICATE-----}
     callback_url: https://test-pay.sogaz.ru/payment/gpb/state
-
 logstash:
   host: localhost
   port: 12201

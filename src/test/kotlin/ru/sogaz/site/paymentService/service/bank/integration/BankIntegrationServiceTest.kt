@@ -33,6 +33,7 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.akb.AKBankIntegrationServiceImpl
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationHelperServiceImpl
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBankIntegrationServiceImpl
@@ -86,6 +87,9 @@ class BankIntegrationServiceTest {
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
 
     @MockK
+    private lateinit var tokenService: TokenService
+
+    @MockK
     private lateinit var paymentDao: PaymentDao
 
     @RelaxedMockK
@@ -106,6 +110,7 @@ class BankIntegrationServiceTest {
                 gpbCardPaymentClient,
                 gpbBankIntegrationHelperServiceImpl,
                 paymentDao,
+                tokenService,
             )
         akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
