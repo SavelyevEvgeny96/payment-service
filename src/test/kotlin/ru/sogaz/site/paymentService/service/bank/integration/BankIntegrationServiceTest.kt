@@ -85,8 +85,7 @@ class BankIntegrationServiceTest {
 
     @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
-
-    @MockK
+    @RelaxedMockK
     private lateinit var tokenService: TokenService
 
     @MockK

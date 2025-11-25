@@ -39,7 +39,6 @@ data class OrderRequest(
     var clientId: String? = null,
     var policyholder: String? = null,
     var orderIdRecurrent: UUID? = null,
-    @field:NotNull
     var bank: BankEnum? = null,
     var keyCard: String? = null,
 )
