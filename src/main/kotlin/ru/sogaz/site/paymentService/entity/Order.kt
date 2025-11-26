@@ -58,6 +58,12 @@ data class Order(
     var subscriptionId: String = "",
     @Column(name = "client_id")
     var clientId: String? = null,
+    @Column(name = "queue_status_result_name")
+    var queueStatusResultName: String? = null,
+    @Column(name = "skip_sending_queue")
+    var skipSendingQueue: Boolean? = null,
+    @Column(name = "skip_sending_receipt")
+    var skipSendingReceipt: Boolean? = null,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,
