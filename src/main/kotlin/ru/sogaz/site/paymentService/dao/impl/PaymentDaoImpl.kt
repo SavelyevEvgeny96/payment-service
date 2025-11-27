@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService.dao.impl
 
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
@@ -8,9 +10,14 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
+import java.sql.ResultSet
+import java.time.Instant
+import java.util.UUID
+import kotlin.collections.ArrayList
 
 @Repository
 class PaymentDaoImpl(
+    private val jdbcTemplate: JdbcTemplate,
     private val paymentRepository: PaymentRepository,
 ) : PaymentDao {
     companion object {
@@ -49,4 +56,40 @@ class PaymentDaoImpl(
         }
 
     override fun findByStatuses(statuses: List<PaymentStatusEnum>): List<Payment> = paymentRepository.findByStatuses(statuses)
+
+    override fun batchInsertPayment(payments: List<Payment>): List<UUID> {
+        if (payments.isEmpty()) return emptyList()
+
+        val tuple = "(" + List(6) { "?" }.joinToString(", ") + ", 'NEW')"
+        val valuesSql = payments.joinToString(",") { tuple }
+
+        val sql =
+            """
+            INSERT INTO payments (
+                order_id,
+                create_date,
+                update_date,
+                bank,
+                type,
+                key_card,
+                state
+            VALUES $valuesSql
+            RETURNING id
+            """.trimIndent()
+
+        val args = ArrayList<Any?>(payments.size * 14)
+        payments.forEach { p ->
+            args += p.order
+            args += p.createDate?.let { Instant.from(it) } // create_date
+            args += p.updateDate.let { Instant.from(it) } // update_date
+            args += p.bank // bank
+            args += p.type
+            args += p.keyCard
+        }
+        val mapper =
+            RowMapper { rs: ResultSet, _: Int ->
+                rs.getObject("id", UUID::class.java)
+            }
+        return jdbcTemplate.query(sql, mapper, *args.toTypedArray())
+    }
 }

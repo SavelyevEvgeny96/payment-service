@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.service.bank.integration.gpb
 
-import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -9,6 +8,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
@@ -19,6 +19,7 @@ import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBStatusSBPRequest
+import ru.sogaz.site.paymentService.dto.request.Src
 import ru.sogaz.site.paymentService.dto.request.State
 import ru.sogaz.site.paymentService.dto.request.ThreeDSTwo
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -26,15 +27,18 @@ import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.HeaderStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
+import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationServiceImpl
 
 @Service
@@ -43,6 +47,8 @@ class GPBankIntegrationServiceImpl(
     private val gpbSbpPaymentClient: GpbSbpPaymentClient,
     private val gpbCardPaymentClient: GpbCardPaymentClient,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
+    private val paymentDao: PaymentDao,
+    private val tokenService: TokenService, // ⬅ новый сервис токенов
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val TEMPLATE_VERSION = "01"
@@ -50,17 +56,22 @@ class GPBankIntegrationServiceImpl(
         private const val QR_TYPE = "02"
 
         private const val PAYMENT_PAGE = "payment_page"
+        private const val URL_ONLY = "url_only"
         private const val IN_PROGRESS_STATE = "no"
-
+        private val map = mapOf("card_on_file" to "MIT")
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции:"
-
         private val cardPaymentState = State(redirect = PAYMENT_PAGE, inProgress = IN_PROGRESS_STATE)
+        private val cardPaymentStateRecurrent = State(redirect = URL_ONLY, inProgress = IN_PROGRESS_STATE)
         private val cardPayment3ds2 = ThreeDSTwo(true)
     }
 
     private val logger = loggerFor(javaClass)
 
     override fun provider(): BankEnum = BankEnum.GPB
+
+    // --------------------------------------------------------------------------------------------
+    // CARD PAYMENT
+    // --------------------------------------------------------------------------------------------
 
     @Throws(BankIntegrationException::class, RestClientException::class)
     override fun registerCardPayment(payment: Payment): Payment =
@@ -69,9 +80,16 @@ class GPBankIntegrationServiceImpl(
             .run(::postForCardPaymentLink)
             .run { payment.fillFromResponse(this) }
 
+    @Throws(BankIntegrationException::class, RestClientException::class)
+    override fun registerCardPaymentRecurrent(payment: Payment): Payment =
+        payment
+            .run(::buildPaymentCardRequestRecurrent)
+            .run(::postForCardPaymentLinkRecurrent)
+            .run { payment.fillBankRegistration(this) }
+
     private fun buildPaymentCardRequest(payment: Payment): GPBPaymentRequest =
         buildPaymentCardRequest(
-            token = exchangeForToken(payment.depersonalization),
+            token = tokenService.exchangeForToken(payment.depersonalization),
             order = payment.order!!,
             amountData = payment.getAmountData(),
             descriptionInfo = payment.getMainDescription(),
@@ -79,15 +97,14 @@ class GPBankIntegrationServiceImpl(
             urlToReturn = payment.urlToReturn,
         )
 
-    private fun exchangeForToken(depersonalization: Boolean): String {
-        try {
-            return depersonalization
-                .run(::takePortalId)
-                .run { gpbCardPaymentClient.getToken(this).token }
-        } catch (ex: Exception) {
-            throw BankIntegrationException(ActionType.GET_ACCESS_TOKEN_ERROR)
-        }
-    }
+    private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest =
+        buildPaymentCardRequestRecurrent(
+            token = tokenService.saveToken(payment),
+            payment = payment,
+            amountData = payment.getAmountData(),
+            descriptionInfo = payment.getMainDescription(),
+            depersonalization = payment.depersonalization,
+        )
 
     private fun buildPaymentCardRequest(
         token: String,
@@ -97,7 +114,7 @@ class GPBankIntegrationServiceImpl(
         descriptionInfo: DescriptionInfo,
         urlToReturn: UrlToReturn,
     ) = GPBPaymentRequest(
-        merchantId = takeMerchantId(depersonalization),
+        merchantId = tokenService.takeMerchantId(depersonalization),
         merchantTrx = order.id.toString(),
         token = token,
         backUrlS = urlToReturn.success() ?: apiConfigProperties.backUrlS,
@@ -113,14 +130,51 @@ class GPBankIntegrationServiceImpl(
         depersonalization = depersonalization,
     )
 
+    private fun buildPaymentCardRequestRecurrent(
+        token: String,
+        payment: Payment,
+        amountData: AmountData,
+        depersonalization: Boolean,
+        descriptionInfo: DescriptionInfo,
+    ) = GPBPaymentRequest(
+        merchantId = tokenService.takeMerchantId(depersonalization),
+        merchantTrx = payment.id.toString(),
+        token = token,
+        amount = amountData.getAmountInPennies(),
+        description = descriptionInfo.description,
+        currency = amountData.currency,
+        state = cardPaymentStateRecurrent,
+        threeDSTwo = cardPayment3ds2,
+        openApiMirPaySupported = true,
+        params = map,
+        depersonalization = depersonalization,
+        src = Src(type = "card_id", cardId = payment.keyCard),
+        recurrent = true,
+        returnUrl = apiConfigProperties.returnUrl,
+    )
+
     private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
         gpbCardPaymentClient.startPayment(
-            takePortalId(request.depersonalization),
+            tokenService.takePortalId(request.depersonalization),
             request.token,
             request,
         )
 
-    @Throws(RestClientException::class)
+    private fun postForCardPaymentLinkRecurrent(request: GPBPaymentRequest): RegisterCardResponseDto =
+        gpbCardPaymentClient.startPaymentRecurrent(
+            tokenService.takePortalId(request.depersonalization),
+            request.token,
+            request,
+        )
+
+    override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
+        gpbSbpPaymentClient.getQrImage(
+            GPBQRImageRequest(payment.qrcId!!),
+        )
+    // --------------------------------------------------------------------------------------------
+    // SBP PAYMENT
+    // --------------------------------------------------------------------------------------------
+
     override fun registerSBPPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
@@ -131,10 +185,7 @@ class GPBankIntegrationServiceImpl(
             .run { payment.fillFromResponse(this) }
 
     private fun buildPaymentSBPRequest(payment: Payment): GPBSBPPaymentRequest =
-        buildPaymentSBPRequest(
-            payment.getAmountData(),
-            payment.v4Description(),
-        )
+        buildPaymentSBPRequest(payment.getAmountData(), payment.v4Description())
 
     private fun buildPaymentSBPRequest(
         amountData: AmountData,
@@ -160,33 +211,45 @@ class GPBankIntegrationServiceImpl(
             .run { gpbSbpPaymentClient.startPayment(this, request) }
 
     private fun sbpHeaders(headersParams: GpbSbpHeadersParams?) =
-        HttpHeaders()
-            .apply {
-                contentType = MediaType.APPLICATION_JSON
-                set("paymentDelay", headersParams?.paymentDelay)
-                set("processPayments", headersParams?.processPayments)
-                set("paymentStatus", headersParams?.paymentStatus)
-            }
+        HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+            set(HeaderStatusEnum.PAYMENT_DELAY.value, headersParams?.paymentDelay)
+            set(HeaderStatusEnum.PROCESS_PAYMENTS.value, headersParams?.processPayments)
+            set(HeaderStatusEnum.PAYMENT_STATUS.value, headersParams?.paymentStatus)
+        }
+
+    // --------------------------------------------------------------------------------------------
+    // FILL RESPONSE
+    // --------------------------------------------------------------------------------------------
 
     private fun Payment.fillFromResponse(response: GazpromCardPaymentResponse) =
-        this.apply {
+        apply {
             state = PaymentStatusEnum.REG
             paymentPageUrl = response.options.paymentPageUrl
             paymentBankId = response.token
         }
 
+    private fun Payment.fillBankRegistration(response: RegisterCardResponseDto) =
+        apply {
+            state =
+                if (response.result?.status == StatusEnum.SUCCESS.value) {
+                    PaymentStatusEnum.REG
+                } else {
+                    PaymentStatusEnum.FAIL
+                }
+        }
+
     private fun Payment.fillFromResponse(response: GazpromSBPPaymentResponse) =
-        this.apply {
+        apply {
             state = PaymentStatusEnum.REG
             qrcId = response.data.qrcId
             paymentPageUrl = response.data.payload
             paymentBankId = response.data.qrcId
         }
 
-    override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
-        payment.qrcId!!
-            .run(::GPBQRImageRequest)
-            .run(gpbSbpPaymentClient::getQrImage)
+    // --------------------------------------------------------------------------------------------
+    // STATUS
+    // --------------------------------------------------------------------------------------------
 
     override fun requestPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
         try {
@@ -200,15 +263,15 @@ class GPBankIntegrationServiceImpl(
         }
 
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
-        paymentBankInfo.depersonalization
-            .run(::takePortalId)
-            .run { gpbCardPaymentClient.getPaymentStatus(this, paymentBankInfo.paymentBankId) }
-            .toBankPaymentDetails()
+        gpbCardPaymentClient
+            .getPaymentStatus(
+                tokenService.takePortalId(paymentBankInfo.depersonalization),
+                paymentBankInfo.paymentBankId,
+            ).toBankPaymentDetails()
 
     private fun requestSBPPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
-        paymentBankInfo.paymentBankId
-            .run(::GPBStatusSBPRequest)
-            .run(gpbSbpPaymentClient::getPaymentStatus)
+        gpbSbpPaymentClient
+            .getPaymentStatus(GPBStatusSBPRequest(paymentBankInfo.paymentBankId))
             .toBankPaymentDetails()
 
     private fun GpbCardPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
@@ -218,12 +281,4 @@ class GPBankIntegrationServiceImpl(
         gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
 
     private fun Payment.getMainDescription() = gpbBankIntegrationHelperServiceImpl.makeDescription(order!!)
-
-    private fun takePortalId(depersonalization: Boolean) =
-        apiConfigProperties.mainPortalId
-            .butIf(depersonalization) { apiConfigProperties.depersonalizedPortalId }
-
-    private fun takeMerchantId(depersonalization: Boolean) =
-        apiConfigProperties.mainMerchantId
-            .butIf(depersonalization) { apiConfigProperties.depersonalizedMerchantId }
 }

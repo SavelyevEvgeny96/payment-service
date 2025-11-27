@@ -40,6 +40,8 @@ data class Payment(
     var depersonalization: Boolean = false,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
+    @Column(name = "key_card")
+    var keyCard: String? = null,
     @Column(name = "payment_pass")
     var paymentPass: String? = null,
     @Column(name = "payment_bank_id")
@@ -69,6 +71,7 @@ data class Payment(
             PaymentStatusEnum.WAIT,
             PaymentStatusEnum.CALLBACK,
             -> true
+
             else -> false
         }
 

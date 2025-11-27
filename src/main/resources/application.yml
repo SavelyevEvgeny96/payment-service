@@ -11,13 +11,26 @@ app:
     certs: ${GPB_CERT}
     callback_url: ${GPB_CALLBACK_URL}
   rabbit:
-    exchange: ${ORDERS_EXCHANGE}
-    queue-status-payment: ${QUEUE_STATUS_PAYMENT}
-    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT}
+    exchange-order: ${ORDERS_EXCHANGE:order.exchange}
+    exchange-payment: ${ORDERS_EXCHANGE:payment.exchange}
+    payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
+    payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
+    order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
+    order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}
+    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT:payment.status.created}
+    routing-key-status-order-paid: ${ROUTING_KEY_STATUS_ORDER_PAID:order.paid.created}
+    routing-key-status-order-unpaid: ${ROUTING_KEY_STATUS_ORDER_UNPAID:order.unpaid.created}
+    queue-payment: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
+  listener:
+    batch-size: 100
+    prefetch: 100
+    concurrency: 3
+    max-concurrency: 10
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
   forward-headers-strategy: framework
+  main.allow-bean-definition-overriding: true
 
 spring:
   main:
@@ -28,22 +41,19 @@ spring:
     port: ${RABBIT_PORT}
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
+
     virtual-host: /
     listener:
       simple:
         acknowledge-mode: auto
-
   jackson:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
-
   application:
     name: payment-service
-
   profiles:
     active: ${ENVIRONMENT:local}
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
@@ -62,7 +72,6 @@ spring:
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
-
   output:
     ansi:
       enabled: ALWAYS
@@ -71,6 +80,7 @@ api:
   payment:
     paymentUrl: ${PAYMENT_URL}
     sbpPaymentUrl: ${SBP_PAYMENT_URL}
+    returnUrl: ${RETURN_URL}
     akbUrl: ${AKB_URL}
     akbSbpUrl: ${AKB_SBP_URL}
     akbUrlStatus: ${AKB_PAYMENT_URL}

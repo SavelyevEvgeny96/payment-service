@@ -58,7 +58,7 @@ class GpbCallbackServiceTest {
             ts = "20240524 14:16:50",
             signature =
                 "Q6WBwrZr%2BW%2BcBlZ1pBgdRcOgr2aAh8cognmOjK7iqmcl5VWIQb0x%2Br8M9COnvaNsQlbuWkc62e2EdxfHqr" +
-                    "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
+                        "6SLcLduOxPQhCan6qKDkAMUuPZYbS1ycISo",
         )
 
     @Test
@@ -103,16 +103,17 @@ class GpbCallbackServiceTest {
 
     @Test
     fun `processCallback should fail when orderId not Found`() {
-        val payment =
-            Payment().apply {
-                paymentBankId = testRequest.trxId
-                order = Order().apply { id = UUID.randomUUID() }
-            }
+        val payment = Payment().apply {
+            paymentBankId = testRequest.trxId
+            order = Order().apply { id = UUID.randomUUID() }
+        }
 
-        `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
-        `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(payment.order?.id?.let { orderDao.findById(it) }).thenReturn(null)
-
+        val orderId = payment.order?.id
+        if (orderId != null) {
+            `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
+            `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
+            `when`(orderDao.findById(orderId)).thenReturn(null) // правильно
+        }
         val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>2</code>")

@@ -20,6 +20,7 @@ class ApiConfigProperties {
     lateinit var depersonalizedMerchantId: String
     lateinit var backUrlF: String
     lateinit var backUrlS: String
+    lateinit var returnUrl: String
     lateinit var akbUrl: String
     lateinit var akbSbpUrl: String
 
@@ -37,5 +38,6 @@ class ApiConfigProperties {
         logger.info("backUrlS = $backUrlS")
         logger.info("akbSbpUrl = $akbSbpUrl")
         logger.info("akbUrl = $akbUrl")
+        logger.info("returnUrl = $returnUrl")
     }
 }
