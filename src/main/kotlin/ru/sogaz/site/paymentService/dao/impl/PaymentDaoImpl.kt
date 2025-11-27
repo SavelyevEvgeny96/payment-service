@@ -12,7 +12,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import java.sql.ResultSet
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 import kotlin.collections.ArrayList
 
 @Repository

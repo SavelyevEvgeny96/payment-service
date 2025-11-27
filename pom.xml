@@ -358,6 +358,22 @@
                     <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
+            <!-- Ktlint static code analyzer -->
+            <plugin>
+                <groupId>com.github.gantsign.maven</groupId>
+                <artifactId>ktlint-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <id>format-and-check</id>
+                        <goals>
+                            <goal>format</goal>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Плагин для расчёта покрытия кода тестами -->
             <plugin>
                 <groupId>org.jacoco</groupId>

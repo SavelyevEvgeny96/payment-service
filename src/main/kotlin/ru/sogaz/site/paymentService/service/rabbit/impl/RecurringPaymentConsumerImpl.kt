@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 
 @Service
 class RecurringPaymentConsumerImpl(

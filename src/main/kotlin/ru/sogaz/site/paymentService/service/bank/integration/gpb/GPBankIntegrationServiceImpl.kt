@@ -31,6 +31,7 @@ import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.HeaderStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
@@ -212,9 +213,9 @@ class GPBankIntegrationServiceImpl(
     private fun sbpHeaders(headersParams: GpbSbpHeadersParams?) =
         HttpHeaders().apply {
             contentType = MediaType.APPLICATION_JSON
-            set("paymentDelay", headersParams?.paymentDelay)
-            set("processPayments", headersParams?.processPayments)
-            set("paymentStatus", headersParams?.paymentStatus)
+            set(HeaderStatusEnum.PAYMENT_DELAY.value, headersParams?.paymentDelay)
+            set(HeaderStatusEnum.PROCESS_PAYMENTS.value, headersParams?.processPayments)
+            set(HeaderStatusEnum.PAYMENT_STATUS.value, headersParams?.paymentStatus)
         }
 
     // --------------------------------------------------------------------------------------------

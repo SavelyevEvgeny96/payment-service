@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.mapper.order.OrderMapper
+import ru.sogaz.site.paymentService.mapper.order.OrderManualMapper
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
@@ -19,7 +19,7 @@ import java.math.RoundingMode
 @Service
 class OrderServiceImpl(
     private val orderDao: OrderDao,
-    private val orderMapper: OrderMapper,
+    private val orderManualMapper: OrderManualMapper,
 ) : OrderService {
     @Value("\${api.payment.paymentUrl}")
     lateinit var payBasePath: String
@@ -37,21 +37,14 @@ class OrderServiceImpl(
             .toDataOrder()
 
     override fun makeOrderByRequest(orderRequest: OrderRequest): Order =
-        orderRequest
-            .run(orderMapper::fromRequestDto)
+        orderManualMapper
+            .mapRequestToOrder(orderRequest)
             .apply {
-                val subOrdersFromRequest = formSubOrdersFromRequest(orderRequest, this)
-                subOrders.addAll(subOrdersFromRequest)
-                premiumAmount = extractPremiumAmount(this.subOrders).setScale(2, RoundingMode.HALF_UP).toString()
+                premiumAmount =
+                    extractPremiumAmount(subOrders)
+                        .setScale(2, RoundingMode.HALF_UP)
+                        .toString()
             }
-
-    private fun formSubOrdersFromRequest(
-        orderRequest: OrderRequest,
-        order: Order,
-    ): List<SubOrder> =
-        orderRequest.orders
-            .map(orderMapper::fromRequestDto)
-            .onEach { it.order = order }
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }
 
