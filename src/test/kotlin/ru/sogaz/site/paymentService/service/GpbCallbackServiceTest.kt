@@ -63,7 +63,6 @@ class GpbCallbackServiceTest {
 
     @Test
     fun `processCallback should return success response when all steps are successful`() {
-        val ordersId = "ORDER_123"
         val order =
             Order().apply {
                 id = UUID.randomUUID()
@@ -75,10 +74,12 @@ class GpbCallbackServiceTest {
                 paymentBankId = testRequest.trxId
                 this.order = order
             }
-        `when`(signatureVerifier.verifySignature(any(), any())).thenReturn(true)
-        `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(orderDao.findById(any())).thenReturn(order)
-
+        val orderId = payment.order?.id
+        if (orderId != null) {
+            `when`(signatureVerifier.verifySignature(any(), any())).thenReturn(true)
+            `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
+            `when`(orderDao.findById(orderId)).thenReturn(order)
+        }
         val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>1</code>")
@@ -109,10 +110,12 @@ class GpbCallbackServiceTest {
                 order = Order().apply { id = UUID.randomUUID() }
             }
 
-        `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
-        `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
-        `when`(payment.order?.id?.let { orderDao.findById(it) }).thenReturn(null)
-
+        val orderId = payment.order?.id
+        if (orderId != null) {
+            `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
+            `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
+            `when`(orderDao.findById(orderId)).thenReturn(null) // правильно
+        }
         val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>2</code>")

@@ -10,6 +10,7 @@ import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
+import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 
 @FeignClient(
     name = "gpb-card-payment-client",
@@ -27,6 +28,13 @@ interface GpbCardPaymentClient {
         @PathVariable token: String,
         @RequestBody request: GPBPaymentRequest,
     ): GazpromCardPaymentResponse
+
+    @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun startPaymentRecurrent(
+        @PathVariable portalId: String,
+        @PathVariable token: String,
+        @RequestBody request: GPBPaymentRequest,
+    ): RegisterCardResponseDto
 
     @GetMapping(value = ["/{portalId}/payment/{paymentBankId}"])
     fun getPaymentStatus(

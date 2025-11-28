@@ -58,6 +58,8 @@ data class Order(
     var subscriptionId: String = "",
     @Column(name = "client_id")
     var clientId: String? = null,
+    @Column(name = "order_id_recurrent")
+    var orderIdRecurrent: UUID? = null,
     @Column(name = "queue_status_result_name")
     var queueStatusResultName: String? = null,
     @Column(name = "skip_sending_queue")
