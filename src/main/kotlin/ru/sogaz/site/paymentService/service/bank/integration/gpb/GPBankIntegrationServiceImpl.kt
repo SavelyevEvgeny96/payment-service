@@ -37,6 +37,7 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationServiceImpl
@@ -47,7 +48,7 @@ class GPBankIntegrationServiceImpl(
     private val gpbSbpPaymentClient: GpbSbpPaymentClient,
     private val gpbCardPaymentClient: GpbCardPaymentClient,
     private val gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl,
-    private val paymentDao: PaymentDao,
+    private val gpBPaymentRequestMapper: GPBPaymentRequestMapper,
     private val tokenService: TokenService, // ⬅ новый сервис токенов
 ) : BankIntegrationServiceImpl() {
     companion object {
@@ -83,28 +84,10 @@ class GPBankIntegrationServiceImpl(
     @Throws(BankIntegrationException::class, RestClientException::class)
     override fun registerCardPaymentRecurrent(payment: Payment): Payment =
         payment
-            .run(::buildPaymentCardRequestRecurrent)
+            .let { gpBPaymentRequestMapper.toRecurrentRequest(it) }
             .run(::postForCardPaymentLinkRecurrent)
             .run { payment.fillBankRegistration(this) }
 
-    private fun buildPaymentCardRequest(payment: Payment): GPBPaymentRequest =
-        buildPaymentCardRequest(
-            token = tokenService.exchangeForToken(payment.depersonalization),
-            order = payment.order!!,
-            amountData = payment.getAmountData(),
-            descriptionInfo = payment.getMainDescription(),
-            depersonalization = payment.depersonalization,
-            urlToReturn = payment.urlToReturn,
-        )
-
-    private fun buildPaymentCardRequestRecurrent(payment: Payment): GPBPaymentRequest =
-        buildPaymentCardRequestRecurrent(
-            token = tokenService.saveToken(payment),
-            payment = payment,
-            amountData = payment.getAmountData(),
-            descriptionInfo = payment.getMainDescription(),
-            depersonalization = payment.depersonalization,
-        )
 
     private fun buildPaymentCardRequest(
         token: String,
@@ -280,5 +263,4 @@ class GPBankIntegrationServiceImpl(
     private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
         gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
 
-    private fun Payment.getMainDescription() = gpbBankIntegrationHelperServiceImpl.makeDescription(order!!)
 }
