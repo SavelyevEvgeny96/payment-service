@@ -8,7 +8,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.any
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
@@ -48,7 +47,7 @@ class RegisterPaymentServiceImplTest {
     fun `registerInBank should delegate call to BankIntegrationService`() {
         // given
         val payment = Payment(bank = BankEnum.GPB, type = PaymentTypeEnum.CARD)
-        val headers = GpbSbpHeadersParams("h1","h2","h3")
+        val headers = GpbSbpHeadersParams("h1", "h2", "h3")
         val recurrent = true
         val expectedPayment = Payment(bank = BankEnum.GPB, type = PaymentTypeEnum.CARD)
 

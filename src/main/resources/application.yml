@@ -67,7 +67,7 @@ spring:
       minimum-idle: ${DB_HIKARI_MIN_IDLE:2}
       idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:60000}              # действует только если minimum-idle < maximum-pool-size
       # Опционально: мгновенный фейл старта, если БД недоступна
-      initialization-fail-timeout: 1
+      initialization-fail-timeout: ${DB_HIKARI_INITIALIZATION_FAIL_TIMEOUT:1}
 
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
@@ -140,10 +140,8 @@ logging:
   level:
     ru.sogaz.site.loggingStarter: ${LOGGING_LEVEL_LOGGING_STARTER:INFO}
     ru.sogaz.site.paymentService: ${LOGGING_LEVEL_PAYMENT_SERVICE:DEBUG}
-    ru:
-      sogaz:
-        site:
-          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
+    com.zaxxer.hikari: ${LOGGING_LEVEL_HIKARI:INFO}
+
   proxy:
     frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
     upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}

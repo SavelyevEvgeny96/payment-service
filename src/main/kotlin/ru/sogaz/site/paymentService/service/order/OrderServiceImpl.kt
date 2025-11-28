@@ -44,7 +44,6 @@ class OrderServiceImpl(
         return "payment.status.$normalizedClientId.created"
     }
 
-
     override fun makeOrderByRequest(orderRequest: OrderRequest): Order =
         orderManualMapper
             .mapRequestToOrder(orderRequest)
@@ -54,7 +53,6 @@ class OrderServiceImpl(
                     extractPremiumAmount(subOrders)
                         .setScale(2, RoundingMode.HALF_UP)
                         .toString()
-
             }
 
     private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }

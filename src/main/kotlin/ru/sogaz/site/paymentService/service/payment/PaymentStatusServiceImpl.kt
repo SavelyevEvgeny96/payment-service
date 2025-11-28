@@ -178,7 +178,7 @@ class PaymentStatusServiceImpl(
 
             val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
             requestBody.bank = payment.bank?.name
-            val exchange = props.exchange
+            val exchange = props.exchangePayment
             val routingKey =
                 order.queueStatusResultName
                     ?.takeIf { it.isNotBlank() }
