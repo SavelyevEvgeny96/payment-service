@@ -48,7 +48,7 @@ class RegisterPaymentServiceImplTest {
     fun `registerInBank should delegate call to BankIntegrationService`() {
         // given
         val payment = Payment(bank = BankEnum.GPB, type = PaymentTypeEnum.CARD)
-        val headers = GpbSbpHeadersParams(any(), any(), any())
+        val headers = GpbSbpHeadersParams("h1","h2","h3")
         val recurrent = true
         val expectedPayment = Payment(bank = BankEnum.GPB, type = PaymentTypeEnum.CARD)
 
