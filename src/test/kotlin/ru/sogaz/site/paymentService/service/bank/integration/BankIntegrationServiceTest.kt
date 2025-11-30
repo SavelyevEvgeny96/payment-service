@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.bank.integration
 
+import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
@@ -8,11 +9,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mapstruct.factory.Mappers
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
-import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -32,6 +33,8 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
+import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapper
+import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapperImpl
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.akb.AKBankIntegrationServiceImpl
@@ -57,18 +60,17 @@ class BankIntegrationServiceTest {
         private const val GPB_QR_MEDIA_TYPE = "image/png"
 
         private val GPBTokenResponse = GazpromTokenResponse(TEST_GPB_TOKEN)
-        private val GPBCardPaymentResponse = GazpromCardPaymentResponse(TEST_GPB_TOKEN, Options(TEST_GPB_PAYMENT_PAGE_URL))
+        private val GPBCardPaymentResponse =
+            GazpromCardPaymentResponse(TEST_GPB_TOKEN, Options(TEST_GPB_PAYMENT_PAGE_URL))
         private val GPBSBPPaymentResponse =
             GazpromSBPPaymentResponse(SBPData(TEST_GPB_SBP_QR_ID, TEST_GPB_SBP_PAYLOAD), TEST_GPB_SBP_TRANSACTIONAL_ID)
-        private val akbOrderInfo = AkbOrderInfo(id = TEST_AKB_ORDER_ID.toInt(), hppUrl = TEST_AKB_HPP_URL, password = TEST_AKB_PASSWORD)
+        private val akbOrderInfo =
+            AkbOrderInfo(id = TEST_AKB_ORDER_ID.toInt(), hppUrl = TEST_AKB_HPP_URL, password = TEST_AKB_PASSWORD)
         private val akbOrderResponse = AkbOrderResponse(akbOrderInfo)
         private val preparePushTranResponse =
-            PreparePushTranResponse(
-                mutableMapOf(
-                    "ipsRu" to IpsRuData(AKB_QRC_PAYLOAD, AKB_REDIRECT_URL),
-                ),
-            )
-        private val gpbqrImageResponse = GPBQRImageResponse(QRCoreData(QRImageData(GPB_QR_CONTENT, GPB_QR_MEDIA_TYPE)))
+            PreparePushTranResponse(mutableMapOf("ipsRu" to IpsRuData(AKB_QRC_PAYLOAD, AKB_REDIRECT_URL)))
+        private val gpbqrImageResponse =
+            GPBQRImageResponse(QRCoreData(QRImageData(GPB_QR_CONTENT, GPB_QR_MEDIA_TYPE)))
     }
 
     @RelaxedMockK
@@ -89,19 +91,25 @@ class BankIntegrationServiceTest {
     @RelaxedMockK
     private lateinit var tokenService: TokenService
 
-    @MockK
-    private lateinit var paymentDao: PaymentDao
-
     @RelaxedMockK
     private lateinit var gpbBankIntegrationHelperServiceImpl: GPBBankIntegrationHelperServiceImpl
 
     private lateinit var gpBankIntegrationService: GPBankIntegrationServiceImpl
     private lateinit var akBankIntegrationService: AKBankIntegrationServiceImpl
 
+    private lateinit var gPBPaymentRequestMapper: GPBPaymentRequestMapper
+
     @BeforeEach
     fun setUp() {
+        MockKAnnotations.init(this, relaxUnitFun = true)
         mockGPBRestTemplate()
         mockAKBRestTemplate()
+        gPBPaymentRequestMapper =
+            Mappers.getMapper(GPBPaymentRequestMapper::class.java) as GPBPaymentRequestMapperImpl
+
+        gPBPaymentRequestMapper.tokenService = tokenService
+        gPBPaymentRequestMapper.gpbBankIntegrationHelper = gpbBankIntegrationHelperServiceImpl
+        gPBPaymentRequestMapper.apiConfigProperties = apiConfigProperties
 
         gpBankIntegrationService =
             GPBankIntegrationServiceImpl(
@@ -109,10 +117,12 @@ class BankIntegrationServiceTest {
                 gpbSbpPaymentClient,
                 gpbCardPaymentClient,
                 gpbBankIntegrationHelperServiceImpl,
-                paymentDao,
+                gPBPaymentRequestMapper,
                 tokenService,
             )
-        akBankIntegrationService = AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
+
+        akBankIntegrationService =
+            AKBankIntegrationServiceImpl(apiConfigProperties, restTemplate, bankPaymentDetailsMapper)
     }
 
     @Test
@@ -185,6 +195,7 @@ class BankIntegrationServiceTest {
         amount: Int = Random.nextInt(1, 10000),
         subOrders: List<SubOrder> = listOf(),
     ) = Order(
+        id = UUID.randomUUID(),
         premiumAmount = amount.toString(),
     ).apply { this.subOrders.addAll(subOrders) }
 

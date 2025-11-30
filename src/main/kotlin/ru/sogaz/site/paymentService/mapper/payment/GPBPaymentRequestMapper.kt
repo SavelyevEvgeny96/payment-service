@@ -15,13 +15,13 @@ import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrat
 @Mapper(componentModel = "spring")
 abstract class GPBPaymentRequestMapper {
     @Autowired
-    protected lateinit var tokenService: TokenService
+    lateinit var tokenService: TokenService
 
     @Autowired
-    protected lateinit var apiConfigProperties: ApiConfigProperties
+    lateinit var apiConfigProperties: ApiConfigProperties
 
     @Autowired
-    protected lateinit var gpbBankIntegrationHelper: GPBBankIntegrationHelperServiceImpl
+    lateinit var gpbBankIntegrationHelper: GPBBankIntegrationHelperServiceImpl
 
     companion object {
         private const val PAYMENT_PAGE = "payment_page"

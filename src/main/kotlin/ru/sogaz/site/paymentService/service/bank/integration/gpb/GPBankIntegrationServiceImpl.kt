@@ -10,24 +10,18 @@ import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
-import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
-import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBStatusSBPRequest
-import ru.sogaz.site.paymentService.dto.request.Src
-import ru.sogaz.site.paymentService.dto.request.State
-import ru.sogaz.site.paymentService.dto.request.ThreeDSTwo
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
-import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.HeaderStatusEnum
@@ -54,15 +48,7 @@ class GPBankIntegrationServiceImpl(
         private const val TEMPLATE_VERSION = "01"
         private const val QR_TTL = "60"
         private const val QR_TYPE = "02"
-
-        private const val PAYMENT_PAGE = "payment_page"
-        private const val URL_ONLY = "url_only"
-        private const val IN_PROGRESS_STATE = "no"
-        private val map = mapOf("card_on_file" to "MIT")
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции:"
-        private val cardPaymentState = State(redirect = PAYMENT_PAGE, inProgress = IN_PROGRESS_STATE)
-        private val cardPaymentStateRecurrent = State(redirect = URL_ONLY, inProgress = IN_PROGRESS_STATE)
-        private val cardPayment3ds2 = ThreeDSTwo(true)
     }
 
     private val logger = loggerFor(javaClass)
@@ -86,53 +72,6 @@ class GPBankIntegrationServiceImpl(
             .let { gpBPaymentRequestMapper.toRecurrentRequest(it) }
             .run(::postForCardPaymentLinkRecurrent)
             .run { payment.fillBankRegistration(this) }
-
-    private fun buildPaymentCardRequest(
-        token: String,
-        order: Order,
-        amountData: AmountData,
-        depersonalization: Boolean,
-        descriptionInfo: DescriptionInfo,
-        urlToReturn: UrlToReturn,
-    ) = GPBPaymentRequest(
-        merchantId = tokenService.takeMerchantId(depersonalization),
-        merchantTrx = order.id.toString(),
-        token = token,
-        backUrlS = urlToReturn.success() ?: apiConfigProperties.backUrlS,
-        backUrlF = urlToReturn.failed() ?: apiConfigProperties.backUrlF,
-        amount = amountData.getAmountInPennies(),
-        description = descriptionInfo.description,
-        currency = amountData.currency,
-        state = cardPaymentState,
-        threeDSTwo = cardPayment3ds2,
-        openApiMirPaySupported = true,
-        addCardAllowed = order.saveCard,
-        params = descriptionInfo.params,
-        depersonalization = depersonalization,
-    )
-
-    private fun buildPaymentCardRequestRecurrent(
-        token: String,
-        payment: Payment,
-        amountData: AmountData,
-        depersonalization: Boolean,
-        descriptionInfo: DescriptionInfo,
-    ) = GPBPaymentRequest(
-        merchantId = tokenService.takeMerchantId(depersonalization),
-        merchantTrx = payment.id.toString(),
-        token = token,
-        amount = amountData.getAmountInPennies(),
-        description = descriptionInfo.description,
-        currency = amountData.currency,
-        state = cardPaymentStateRecurrent,
-        threeDSTwo = cardPayment3ds2,
-        openApiMirPaySupported = true,
-        params = map,
-        depersonalization = depersonalization,
-        src = Src(type = "card_id", cardId = payment.keyCard),
-        recurrent = true,
-        returnUrl = apiConfigProperties.returnUrl,
-    )
 
     private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
         gpbCardPaymentClient.startPayment(
