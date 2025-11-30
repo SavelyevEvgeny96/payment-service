@@ -83,6 +83,10 @@ interface OrderMapper {
         source = "orderEndDate",
         qualifiedByName = ["instantToLocalDateTime"],
     )
+    @Mapping(
+        target = "recurrent",
+        expression = "java(orderRequest.getOrderIdRecurrent() != null)",
+    )
     fun fromRequestDto(orderRequest: OrderRequest): Order
 
     fun fromRequestDto(subOrderRequest: SubOrderRequest): SubOrder

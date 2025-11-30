@@ -54,7 +54,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "src", expression = "java(new Src(\"card_id\", payment.getKeyCard()))")
     @Mapping(target = "recurrent", constant = "true")
-    @Mapping(target = "returnUrl", expression = "java(payment.getUrlToReturn().success())")
+    @Mapping(target = "returnUrl", expression = "java(apiConfigProperties.getReturnUrl())")
     abstract fun toRecurrentRequest(payment: Payment): GPBPaymentRequest
 
     @Mapping(target = "merchantId", expression = "java(getMerchantId(payment))")
