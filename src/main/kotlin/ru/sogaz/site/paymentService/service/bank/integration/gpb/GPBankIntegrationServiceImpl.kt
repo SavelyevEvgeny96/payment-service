@@ -8,7 +8,6 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
-import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
@@ -77,7 +76,7 @@ class GPBankIntegrationServiceImpl(
     @Throws(BankIntegrationException::class, RestClientException::class)
     override fun registerCardPayment(payment: Payment): Payment =
         payment
-            .run(::buildPaymentCardRequest)
+            .let { gpBPaymentRequestMapper.toCardRequest(it) }
             .run(::postForCardPaymentLink)
             .run { payment.fillFromResponse(this) }
 
@@ -87,7 +86,6 @@ class GPBankIntegrationServiceImpl(
             .let { gpBPaymentRequestMapper.toRecurrentRequest(it) }
             .run(::postForCardPaymentLinkRecurrent)
             .run { payment.fillBankRegistration(this) }
-
 
     private fun buildPaymentCardRequest(
         token: String,
@@ -262,5 +260,4 @@ class GPBankIntegrationServiceImpl(
 
     private fun GpbSbpPaymentStatusResponse.toBankPaymentDetails(): BankPaymentDetails =
         gpbBankIntegrationHelperServiceImpl.convertToBankPaymentDetails(this)
-
 }
