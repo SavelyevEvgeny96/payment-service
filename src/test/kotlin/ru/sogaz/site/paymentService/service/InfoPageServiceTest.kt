@@ -16,15 +16,18 @@ import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.FileQR
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.data.SubOrderInfo
+import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.MediaTypeValue
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.service.payment.InfoPageServiceImpl
 import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
+import java.math.BigDecimal
 import java.net.URI
 import java.util.UUID
 
@@ -174,7 +177,7 @@ class InfoPageServiceTest {
     @Test
     fun `getOrderPaymentPageInfo should return valid dataOrderPaymentPageInfo with qr requested from bank`() {
         setSbpActiveConfigValue(true)
-        every { registerPaymentService.register(any(), PaymentTypeEnum.SBP, any()) }.returns(Payment(qrcId = "qr-id"))
+        every { registerPaymentService.register(any(), PaymentTypeEnum.SBP, any()) }.returns(createTestPayment())
         every { qrCodeService.requestFileQRFromBank(any()) } returns validFileQR
 
         validOrderUUID
@@ -225,6 +228,33 @@ class InfoPageServiceTest {
             subOrders.add(firstSubOrder)
             subOrders.add(secondSubOrder)
         }
+
+    private fun createTestPayment(
+        bank: BankEnum = BankEnum.GPB,
+        type: PaymentTypeEnum = PaymentTypeEnum.CARD,
+        depersonalization: Boolean = false,
+    ): Payment {
+        val order =
+            Order().apply {
+                id = UUID.randomUUID()
+                premiumAmount = BigDecimal("1000.00").toString()
+                saveCard = false
+            }
+
+        return Payment(
+            id = UUID.randomUUID(),
+            order = order,
+            bank = bank,
+            type = type,
+            qrcId = "qr-id",
+            depersonalization = depersonalization,
+            urlToReturn =
+                UrlToReturn(
+                    urlToReturnS = null,
+                    urlToReturnF = null,
+                ),
+        )
+    }
 
     private fun initPayURITemplate() =
         URI.create("$BASE_PAYMENT_CARD_PAY_PATH$validOrderUUID?urlToReturn=$RETURN_URL&depersonalization=false")

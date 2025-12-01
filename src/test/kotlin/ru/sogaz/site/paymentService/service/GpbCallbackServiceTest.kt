@@ -11,11 +11,15 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.callback.GpbCallbackServiceImpl
+import java.math.BigDecimal
 import java.util.UUID
 
 class GpbCallbackServiceTest {
@@ -68,13 +72,8 @@ class GpbCallbackServiceTest {
                 id = UUID.randomUUID()
             }
 
-        val payment =
-            Payment().apply {
-                id = UUID.randomUUID()
-                paymentBankId = testRequest.trxId
-                this.order = order
-            }
-        val orderId = payment.order?.id
+        val payment = createTestPayment()
+        val orderId = payment.order.id
         if (orderId != null) {
             `when`(signatureVerifier.verifySignature(any(), any())).thenReturn(true)
             `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
@@ -89,10 +88,7 @@ class GpbCallbackServiceTest {
     @Test
     fun `processCallback should fail when orderId is Null`() {
         val payment =
-            Payment().apply {
-                paymentBankId = testRequest.trxId
-                order = null
-            }
+            createTestPayment()
 
         `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
         `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
@@ -105,12 +101,9 @@ class GpbCallbackServiceTest {
     @Test
     fun `processCallback should fail when orderId not Found`() {
         val payment =
-            Payment().apply {
-                paymentBankId = testRequest.trxId
-                order = Order().apply { id = UUID.randomUUID() }
-            }
+            createTestPayment()
 
-        val orderId = payment.order?.id
+        val orderId = payment.order.id
         if (orderId != null) {
             `when`(signatureVerifier.verifySignature(testRequest, httpServletRequest)).thenReturn(true)
             `when`(paymentDao.findByPaymentBankId(testRequest.trxId)).thenReturn(payment)
@@ -119,5 +112,31 @@ class GpbCallbackServiceTest {
         val response = service.processCallback(testRequest, httpServletRequest)
 
         assertThat(response.body).contains("<code>2</code>")
+    }
+
+    private fun createTestPayment(
+        bank: BankEnum = BankEnum.GPB,
+        type: PaymentTypeEnum = PaymentTypeEnum.CARD,
+        depersonalization: Boolean = false,
+    ): Payment {
+        val order =
+            Order().apply {
+                id = UUID.randomUUID()
+                premiumAmount = BigDecimal("1000.00").toString()
+                saveCard = false
+            }
+
+        return Payment(
+            id = UUID.randomUUID(),
+            order = order,
+            bank = bank,
+            type = type,
+            depersonalization = depersonalization,
+            urlToReturn =
+                UrlToReturn(
+                    urlToReturnS = null,
+                    urlToReturnF = null,
+                ),
+        )
     }
 }

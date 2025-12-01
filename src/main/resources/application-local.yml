@@ -46,7 +46,7 @@ crons:
 
 app:
   rabbit:
-    exchange: payments.exchange
+    exchange: payment.exchange
     queue-status-payment: payment.status.queue
     routing-key-status-payment: payment.status.created
   gpb:
