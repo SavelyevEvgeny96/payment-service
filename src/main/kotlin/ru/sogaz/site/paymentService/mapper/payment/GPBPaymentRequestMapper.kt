@@ -7,7 +7,6 @@ import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.State
 import ru.sogaz.site.paymentService.dto.request.ThreeDSTwo
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationGenerateDescriptionServiceImpl
@@ -21,7 +20,7 @@ abstract class GPBPaymentRequestMapper {
     lateinit var apiConfigProperties: ApiConfigProperties
 
     @Autowired
-    lateinit var gpbBankIntegrationHelper: GPBBankIntegrationGenerateDescriptionServiceImpl
+    lateinit var gPBBankIntegrationGenerateDescriptionServiceImpl: GPBBankIntegrationGenerateDescriptionServiceImpl
 
     companion object {
         private const val PAYMENT_PAGE = "payment_page"
@@ -45,7 +44,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "merchantTrx", expression = "java(payment.getId().toString())")
     @Mapping(target = "token", expression = "java(tokenService.saveToken(payment))")
     @Mapping(target = "amount", expression = "java(getAmount(payment))")
-    @Mapping(target = "currency", expression = "java(getCurrency(payment))")
+    @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "description", expression = "java(getDescription(payment))")
     @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
@@ -61,7 +60,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "merchantTrx", expression = "java(payment.getOrder().getId().toString())")
     @Mapping(target = "token", expression = "java(tokenService.exchangeForToken(payment.getDepersonalization()))")
     @Mapping(target = "amount", expression = "java(getAmount(payment))")
-    @Mapping(target = "currency", expression = "java(getCurrency(payment))")
+    @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "description", expression = "java(getDescription(payment))")
     @Mapping(target = "state", expression = "java(cardPaymentState)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
@@ -75,17 +74,17 @@ abstract class GPBPaymentRequestMapper {
     abstract fun toCardRequest(payment: Payment): GPBPaymentRequest
 
     protected fun getAmount(payment: Payment): Int =
-        payment.order!!
+        payment.order
             .premiumAmount
             .toBigDecimal()
             .movePointRight(2)
             .intValueExact()
 
-    protected fun getCurrency(payment: Payment) = CurrencyEnum.RUB
+    protected fun getDescription(payment: Payment): String =
+        gPBBankIntegrationGenerateDescriptionServiceImpl.makeDescription(payment.order).description
 
-    protected fun getDescription(payment: Payment): String = gpbBankIntegrationHelper.makeDescription(payment.order!!).description
-
-    protected fun getParams(payment: Payment): Map<String, String> = gpbBankIntegrationHelper.makeDescription(payment.order!!).params
+    protected fun getParams(payment: Payment): Map<String, String> =
+        gPBBankIntegrationGenerateDescriptionServiceImpl.makeDescription(payment.order).params
 
     protected fun getMerchantId(payment: Payment): String = tokenService.takeMerchantId(payment.depersonalization)
 

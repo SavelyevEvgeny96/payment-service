@@ -89,10 +89,10 @@ class BankIntegrationServiceTest {
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
 
     @RelaxedMockK
-    private lateinit var tokenService: TokenService
+    lateinit var gpbBankIntegrationGenerateDescriptionServiceImpl: GPBBankIntegrationGenerateDescriptionServiceImpl
 
     @RelaxedMockK
-    private lateinit var gpbBankIntegrationGenerateRequestParamsServiceImpl: GPBBankIntegrationGenerateDescriptionServiceImpl
+    private lateinit var tokenService: TokenService
 
     private lateinit var gpBankIntegrationService: GPBankIntegrationServiceImpl
     private lateinit var akBankIntegrationService: AKBankIntegrationServiceImpl
@@ -111,23 +111,24 @@ class BankIntegrationServiceTest {
             Mappers.getMapper(GPBPaymentRequestMapper::class.java) as GPBPaymentRequestMapperImpl
 
         gPBPaymentRequestMapper.tokenService = tokenService
-        gPBPaymentRequestMapper.gpbBankIntegrationHelper = gpbBankIntegrationGenerateRequestParamsServiceImpl
         gPBPaymentRequestMapper.apiConfigProperties = apiConfigProperties
-
+        gPBPaymentRequestMapper.gPBBankIntegrationGenerateDescriptionServiceImpl =
+            gpbBankIntegrationGenerateDescriptionServiceImpl
 
         // создаём маппер статусов банка
         bankPaymentDetailsMapper =
             Mappers.getMapper(BankPaymentDetailsMapper::class.java)
 
         // сервис GPB
-        gpBankIntegrationService = GPBankIntegrationServiceImpl(
-            apiConfigProperties,
-            gpbSbpPaymentClient,
-            gpbCardPaymentClient,
-            bankPaymentDetailsMapper,
-            gPBPaymentRequestMapper,
-            tokenService,
-        )
+        gpBankIntegrationService =
+            GPBankIntegrationServiceImpl(
+                apiConfigProperties,
+                gpbSbpPaymentClient,
+                gpbCardPaymentClient,
+                bankPaymentDetailsMapper,
+                gPBPaymentRequestMapper,
+                tokenService,
+            )
 
         // сервис АКБ
         akBankIntegrationService =
@@ -137,6 +138,7 @@ class BankIntegrationServiceTest {
                 bankPaymentDetailsMapper,
             )
     }
+
     @Test
     fun `successfully register CARD payment in GPB test`() {
         generateValidPayment(BankEnum.GPB, PaymentTypeEnum.CARD)
