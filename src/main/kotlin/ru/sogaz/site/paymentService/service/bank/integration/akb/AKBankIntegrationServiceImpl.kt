@@ -129,7 +129,7 @@ class AKBankIntegrationServiceImpl(
      */
     private fun preparePushTran(payment: Payment): String {
         val url = "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$PUSH_TRAN_SUFFIX${payment.paymentPass}"
-        val returnUrl = payment.urlToReturn.success() ?: apiConfigProperties.backUrlS
+        val returnUrl = payment.urlToReturn?.success() ?: apiConfigProperties.backUrlS
         val body = buildPushTranRequest(returnUrl)
         return try {
             val response = postForObject<PreparePushTranResponse>(url, HttpEntity(body, jsonHeaders))
@@ -177,15 +177,15 @@ class AKBankIntegrationServiceImpl(
         paymentId: UUID,
         amountData: AmountData,
         description: String,
-        urlToReturn: UrlToReturn,
+        urlToReturn: UrlToReturn?,
         typeRid: TypeRidEnum,
     ) = OrderDto(
         typeRid = typeRid,
         ridByMerchant = paymentId.toString(),
         amount = amountData.getAmount(),
         currency = amountData.currency,
-        hppRedirectUrl = urlToReturn.success() ?: apiConfigProperties.backUrlS,
-        adviceIfaceAddress = urlToReturn.success() ?: apiConfigProperties.backUrlS,
+        hppRedirectUrl = urlToReturn?.success() ?: apiConfigProperties.backUrlS,
+        adviceIfaceAddress = urlToReturn?.success() ?: apiConfigProperties.backUrlS,
         description = description,
         descriptionHtml = description,
         expTime = plus15MinutesFromNow().takeIf { typeRid == TypeRidEnum.QRC_PAY },

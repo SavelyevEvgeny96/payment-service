@@ -61,7 +61,7 @@ data class Payment(
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
     @Transient
-    var urlToReturn: UrlToReturn = UrlToReturn(),
+    var urlToReturn: UrlToReturn? = null,
     @Transient
     var saveCard: Boolean = false,
 ) {
