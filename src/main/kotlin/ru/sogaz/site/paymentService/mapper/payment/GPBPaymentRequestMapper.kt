@@ -89,10 +89,10 @@ abstract class GPBPaymentRequestMapper {
     protected fun getMerchantId(payment: Payment): String = tokenService.takeMerchantId(payment.depersonalization)
 
     protected fun backUrlS(payment: Payment): String =
-        payment.urlToReturn.success()?.takeIf { it.isNotBlank() }
+        payment.urlToReturn?.success()?.takeIf { it.isNotBlank() }
             ?: apiConfigProperties.backUrlS
 
     protected fun backUrlF(payment: Payment): String =
-        payment.urlToReturn.failed()?.takeIf { it.isNotBlank() }
+        payment.urlToReturn?.failed()?.takeIf { it.isNotBlank() }
             ?: apiConfigProperties.backUrlF
 }
