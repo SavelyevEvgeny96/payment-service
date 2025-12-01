@@ -36,10 +36,19 @@ class OrderServiceImpl(
             .run(orderDao::save)
             .toDataOrder()
 
+    private fun buildQueueStatusResultName(clientId: String?): String? {
+        if (clientId.isNullOrBlank()) return null
+
+        val normalizedClientId = clientId.replace(Regex("[^A-Za-zА-Яа-яЁё0-9]"), ".")
+
+        return "payment.status.$normalizedClientId.created"
+    }
+
     override fun makeOrderByRequest(orderRequest: OrderRequest): Order =
         orderManualMapper
             .mapRequestToOrder(orderRequest)
             .apply {
+                queueStatusResultName = buildQueueStatusResultName(clientId)
                 premiumAmount =
                     extractPremiumAmount(subOrders)
                         .setScale(2, RoundingMode.HALF_UP)
