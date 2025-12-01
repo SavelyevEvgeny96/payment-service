@@ -10,7 +10,7 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
-import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationHelperServiceImpl
+import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationGenerateDescriptionServiceImpl
 
 @Mapper(componentModel = "spring")
 abstract class GPBPaymentRequestMapper {
@@ -21,7 +21,7 @@ abstract class GPBPaymentRequestMapper {
     lateinit var apiConfigProperties: ApiConfigProperties
 
     @Autowired
-    lateinit var gpbBankIntegrationHelper: GPBBankIntegrationHelperServiceImpl
+    lateinit var gpbBankIntegrationHelper: GPBBankIntegrationGenerateDescriptionServiceImpl
 
     companion object {
         private const val PAYMENT_PAGE = "payment_page"
