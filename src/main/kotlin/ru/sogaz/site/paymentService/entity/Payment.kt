@@ -29,7 +29,7 @@ data class Payment(
     var state: PaymentStatusEnum = PaymentStatusEnum.NEW,
     @ManyToOne
     @JoinColumn(name = "order_id")
-    var order: Order? = null,
+    var order: Order,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,

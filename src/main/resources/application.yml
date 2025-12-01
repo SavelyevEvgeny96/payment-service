@@ -80,7 +80,7 @@ api:
   payment:
     paymentUrl: ${PAYMENT_URL}
     sbpPaymentUrl: ${SBP_PAYMENT_URL}
-    returnUrl: ${RETURN_URL}
+    returnUrl: ${RETURN_URL:http://www.sogaz.ru/}
     akbUrl: ${AKB_URL}
     akbSbpUrl: ${AKB_SBP_URL}
     akbUrlStatus: ${AKB_PAYMENT_URL}

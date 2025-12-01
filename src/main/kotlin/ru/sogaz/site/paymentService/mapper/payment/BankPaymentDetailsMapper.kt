@@ -9,7 +9,11 @@ import ru.sogaz.site.paymentService.dto.response.bank.GpbQrResult
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 
-@Mapper(uses = [CardDetailsMapper::class, PaymentStatusMapper::class], imports = [PaymentStatusEnum::class])
+@Mapper(
+    componentModel = "spring",
+    uses = [CardDetailsMapper::class, PaymentStatusMapper::class],
+    imports = [PaymentStatusEnum::class],
+)
 interface BankPaymentDetailsMapper {
     @Mapping(target = "status", source = "result.status", defaultValue = "WAIT")
     @Mapping(target = "cardDetails", source = "gpbCardDetails")

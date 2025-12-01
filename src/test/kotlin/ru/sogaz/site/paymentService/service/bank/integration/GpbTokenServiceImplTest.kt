@@ -10,13 +10,19 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.BankIntegrationTokenService
+import java.math.BigDecimal
+import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
 class GpbTokenServiceImplTest {
@@ -74,7 +80,7 @@ class GpbTokenServiceImplTest {
 
     @Test
     fun `saveToken - saves token inside payment and calls dao`() {
-        val payment = Payment().apply { depersonalization = false }
+        val payment = createTestPayment()
 
         every { gpbCardPaymentClient.getToken("MAIN_PORTAL") } returns GazpromTokenResponse("TOKEN_777")
         every { paymentDao.save(any()) } returns payment
@@ -117,5 +123,31 @@ class GpbTokenServiceImplTest {
     fun `takeMerchantId - depersonalized`() {
         val result = service.takeMerchantId(true)
         assertThat(result).isEqualTo("DEP_MERCHANT")
+    }
+
+    private fun createTestPayment(
+        bank: BankEnum = BankEnum.GPB,
+        type: PaymentTypeEnum = PaymentTypeEnum.CARD,
+        depersonalization: Boolean = false,
+    ): Payment {
+        val order =
+            Order().apply {
+                id = UUID.randomUUID()
+                premiumAmount = BigDecimal("1000.00").toString()
+                saveCard = false
+            }
+
+        return Payment(
+            id = UUID.randomUUID(),
+            order = order,
+            bank = bank,
+            type = type,
+            depersonalization = depersonalization,
+            urlToReturn =
+                UrlToReturn(
+                    urlToReturnS = null,
+                    urlToReturnF = null,
+                ),
+        )
     }
 }
