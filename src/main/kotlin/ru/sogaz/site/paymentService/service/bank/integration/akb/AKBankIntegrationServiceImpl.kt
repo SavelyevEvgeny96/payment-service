@@ -72,6 +72,8 @@ class AKBankIntegrationServiceImpl(
             .run(::postForCardPaymentData)
             .run { payment.fillFromResponse(this) }
 
+    override fun registerCardPaymentRecurrent(payment: Payment): Payment = payment
+
     @Throws(RestClientException::class)
     override fun registerSBPPayment(
         payment: Payment,
@@ -127,7 +129,7 @@ class AKBankIntegrationServiceImpl(
      */
     private fun preparePushTran(payment: Payment): String {
         val url = "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$PUSH_TRAN_SUFFIX${payment.paymentPass}"
-        val returnUrl = payment.urlToReturn.success() ?: apiConfigProperties.backUrlS
+        val returnUrl = payment.urlToReturn?.success() ?: apiConfigProperties.backUrlS
         val body = buildPushTranRequest(returnUrl)
         return try {
             val response = postForObject<PreparePushTranResponse>(url, HttpEntity(body, jsonHeaders))
@@ -152,14 +154,14 @@ class AKBankIntegrationServiceImpl(
         url: String,
         request: Any? = null,
     ): T {
-        logger.info("Prepare for POST AKB request: $url with body: $request")
+        logger.debug("Prepare for POST AKB request: $url with body: $request")
         return withMeasureTime { restTemplate.postForObject<T>(url, request) }
-            .also { logger.info("Successfully processing request for AKB with response: $it") }
+            .also { logger.debug("Successfully processing request for AKB with response: $it") }
     }
 
     private inline fun <reified T> withMeasureTime(block: () -> T): T {
         val (value: T, timeTaken) = measureTimedValue(block)
-        logger.info("${timeTaken.inWholeSeconds} whole seconds taken for AKB request")
+        logger.debug("${timeTaken.inWholeSeconds} whole seconds taken for AKB request")
         return value
     }
 
@@ -175,15 +177,15 @@ class AKBankIntegrationServiceImpl(
         paymentId: UUID,
         amountData: AmountData,
         description: String,
-        urlToReturn: UrlToReturn,
+        urlToReturn: UrlToReturn?,
         typeRid: TypeRidEnum,
     ) = OrderDto(
         typeRid = typeRid,
         ridByMerchant = paymentId.toString(),
         amount = amountData.getAmount(),
         currency = amountData.currency,
-        hppRedirectUrl = urlToReturn.success() ?: apiConfigProperties.backUrlS,
-        adviceIfaceAddress = urlToReturn.success() ?: apiConfigProperties.backUrlS,
+        hppRedirectUrl = urlToReturn?.success() ?: apiConfigProperties.backUrlS,
+        adviceIfaceAddress = urlToReturn?.success() ?: apiConfigProperties.backUrlS,
         description = description,
         descriptionHtml = description,
         expTime = plus15MinutesFromNow().takeIf { typeRid == TypeRidEnum.QRC_PAY },

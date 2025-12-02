@@ -56,6 +56,7 @@ class RegisterPaymentServiceImpl(
                     saveHistory(order, ex.actionType)
                     throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, getTraceId())
                 }
+
                 else -> throw InnerException(getTraceId(), ERROR_PAYMENT_PROCESSING)
             }
         }
@@ -79,11 +80,12 @@ class RegisterPaymentServiceImpl(
         actionType: ActionType,
     ) = paymentOperationHistoryDao.saveForOrder(order, actionType.value)
 
-    private fun registerInBank(
+    override fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
+        recurrent: Boolean,
     ): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
-            .registerPayment(payment, headersParams)
+            .registerPayment(payment, headersParams, recurrent)
 }

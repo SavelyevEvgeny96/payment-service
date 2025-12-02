@@ -105,7 +105,7 @@
         <dependency>
             <groupId>ru.sogaz.site</groupId>
             <artifactId>logging-starter</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.5-dev</version>
         </dependency>
 
         <dependency>
@@ -209,6 +209,21 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -342,6 +357,22 @@
                     <forkCount>5</forkCount>
                     <reuseForks>true</reuseForks>
                 </configuration>
+            </plugin>
+            <!-- Ktlint static code analyzer -->
+            <plugin>
+                <groupId>com.github.gantsign.maven</groupId>
+                <artifactId>ktlint-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <id>format-and-check</id>
+                        <goals>
+                            <goal>format</goal>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!-- Плагин для расчёта покрытия кода тестами -->
             <plugin>

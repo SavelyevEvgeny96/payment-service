@@ -4,6 +4,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.MDC
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import ru.sogaz.site.filterStarter.services.RequestInfo.SERVICE_NAME
 import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
@@ -31,9 +32,14 @@ class CallbackPaymentsStatusesScheduler(
     }
 
     @Scheduled(cron = "\${crons.callbackPaymentsCheck}")
-    @SchedulerLock(name = "CallbackPaymentsStatusesScheduler_updateCallbackPaymentsStatuses", lockAtMostFor = "PT1M")
+    @SchedulerLock(
+        name = "CallbackPaymentsStatusesScheduler_updateCallbackPaymentsStatuses",
+        lockAtLeastFor = "PT1S",
+        lockAtMostFor = "PT1M",
+    )
     fun updateCallbackPaymentsStatuses() {
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
+        MDC.put(SERVICE_NAME, "payment-service")
         runCatching { runTask() }
             .also(::logResult)
         MDC.clear()
@@ -58,7 +64,7 @@ class CallbackPaymentsStatusesScheduler(
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {
-            logger.info(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
+            logger.debug(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
         }
     }
 }
