@@ -61,8 +61,7 @@ class RecurringPaymentConsumerImpl(
             }.getOrNull() ?: return
 
         // 3) Отправляем статусы paid/unpaid
-        sendMessagePaid(batchResult.paid)
-        sendMessageUnpaid(batchResult.unpaid)
+        sendMessagePaid(batchResult.paymentsResult)
 
         val tookMs = (System.nanoTime() - started) / 1_000_000
         logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
@@ -88,10 +87,6 @@ class RecurringPaymentConsumerImpl(
 
     private fun sendMessagePaid(orderIds: List<UUID?>) {
         sendOrderStatus(props.routingKeyStatusOrderPaid, orderIds)
-    }
-
-    private fun sendMessageUnpaid(orderIds: List<UUID?>) {
-        sendOrderStatus(props.routingKeyStatusOrderUnpaid, orderIds)
     }
 
     private fun sendOrderStatus(

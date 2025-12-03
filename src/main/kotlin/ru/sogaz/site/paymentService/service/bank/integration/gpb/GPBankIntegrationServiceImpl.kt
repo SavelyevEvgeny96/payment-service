@@ -69,10 +69,14 @@ class GPBankIntegrationServiceImpl(
 
     @Throws(BankIntegrationException::class, RestClientException::class)
     override fun registerCardPaymentRecurrent(payment: Payment): Payment =
-        payment
-            .let { gpBPaymentRequestMapper.toRecurrentRequest(it) }
-            .run(::postForCardPaymentLinkRecurrent)
-            .run { payment.fillBankRegistration(this) }
+        gpBPaymentRequestMapper
+            .toRecurrentRequest(payment)
+        .takeIf { it.token.isNotBlank() }                       // идём дальше только если токен есть
+            ?.let(::postForCardPaymentLinkRecurrent)           // вызываем банк
+            ?.let { payment.fillBankRegistration(it) }         // мапим ответ банка в payment
+            ?: payment.apply {                                 // если токена нет — сразу FAIL
+                state = PaymentStatusEnum.FAIL
+            }
 
     private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
         gpbCardPaymentClient.startPayment(

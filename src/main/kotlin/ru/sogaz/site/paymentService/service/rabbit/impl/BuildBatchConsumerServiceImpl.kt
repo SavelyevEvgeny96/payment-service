@@ -46,22 +46,20 @@ class BuildBatchConsumerServiceImpl(
     ): BatchRecurrentResult {
         logger.info(LOG_START.format(batch.size))
 
-        val paid = mutableListOf<UUID>()
-        val unpaid = mutableListOf<UUID>()
+        val paymentsResult = mutableListOf<UUID>()
+
 
         batch.forEach { payload ->
             val result = processSinglePayload(payload.dto)
             val orderIdRecurrent = result.orderIdRecurrent
             if (orderIdRecurrent != null) {
                 if (result.status == PaymentStatusEnum.REG) {
-                    paid += orderIdRecurrent
-                } else {
-                    unpaid += orderIdRecurrent
+                    paymentsResult += orderIdRecurrent
                 }
             } else {
                 logger.warn(
                     "orderIdRecurrent is null for payload orderIdRecurrent=${payload.dto.orderIdRecurrent} " +
-                        "status=${result.status}",
+                            "status=${result.status}",
                 )
             }
             // 4) ACK за успешно распарсенное сообщение
@@ -69,8 +67,7 @@ class BuildBatchConsumerServiceImpl(
         }
 
         return BatchRecurrentResult(
-            paid = paid,
-            unpaid = unpaid,
+            paymentsResult = paymentsResult
         )
     }
 
@@ -89,7 +86,7 @@ class BuildBatchConsumerServiceImpl(
 
         // 4) Возвращаем status + orderIdRecurrent
         return SinglePaymentResult(
-            orderIdRecurrent = registeredPayment.order?.orderIdRecurrent,
+            orderIdRecurrent = registeredPayment.order.orderIdRecurrent,
             status = registeredPayment.state,
         )
     }
@@ -108,18 +105,30 @@ class BuildBatchConsumerServiceImpl(
         .run(paymentDao::save)
 
     private fun registerAndPersistPayment(payment: Payment): Payment =
-        registerPaymentService
-            .registerInBank(payment, null, true)
-            .apply {
-                paymentStarted = LocalDateTime.now()
-            }.run(paymentDao::save)
-            .also { paymentUpdate ->
-                if (paymentUpdate.state == PaymentStatusEnum.REG) {
-                    logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
-                } else {
-                    logger.error(
-                        PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id),
-                    )
+        if (payment.paymentBankId.isNullOrBlank()) {
+            // токена нет — ничего не регаем в банке, не трогаем paymentStarted,
+            // не кладём в waiting, просто ставим FAIL и сохраняем
+            payment
+                .apply { state = PaymentStatusEnum.FAIL }
+                .run(paymentDao::save)
+                .also { paymentUpdate ->
+                    logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
                 }
-            }.also(waitingPaymentDao::saveWaitingForPayment)
+        } else {
+            // токен есть — обычный путь
+            registerPaymentService
+                .registerInBank(payment, null, true)
+                .apply {
+                    paymentStarted = LocalDateTime.now()
+                }
+                .run(paymentDao::save)
+                .also { paymentUpdate ->
+                    if (paymentUpdate.state == PaymentStatusEnum.REG) {
+                        logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
+                    } else {
+                        logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
+                    }
+                }
+                .also(waitingPaymentDao::saveWaitingForPayment)
+        }
 }

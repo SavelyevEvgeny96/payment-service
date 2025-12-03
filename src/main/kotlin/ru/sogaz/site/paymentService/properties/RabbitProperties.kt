@@ -12,10 +12,9 @@ class RabbitProperties {
     lateinit var paymentStatusQueue: String
     lateinit var paymentCreatedQueue: String
     lateinit var orderPaidStatusQueue: String
-    lateinit var orderUnpaidStatusQueue: String
     lateinit var routingKeyStatusPayment: String
     lateinit var routingKeyStatusOrderPaid: String
-    lateinit var routingKeyStatusOrderUnpaid: String
+
 
     @PostConstruct
     fun postConstruct() {
@@ -26,8 +25,7 @@ class RabbitProperties {
         logger.info("paymentCreatedQueue = $paymentCreatedQueue")
         logger.info("routingKeyStatusPayment = $routingKeyStatusPayment")
         logger.info("orderPaidStatusQueue = $orderPaidStatusQueue")
-        logger.info("orderUnpaidStatusQueue = $orderUnpaidStatusQueue")
         logger.info("routingKeyStatusOrderPaid = $routingKeyStatusOrderPaid")
-        logger.info("routingKeyStatusOrderUnpaid = $routingKeyStatusOrderUnpaid")
+
     }
 }

@@ -43,13 +43,6 @@ class RabbitMQConfig(
             .withArgument(QUEUE_TYPE, QUORUM)
             .build()
 
-    @Bean(name = ["orderUnpaidStatusQueue"])
-    fun orderUnpaidStatusQueue(): Queue =
-        QueueBuilder
-            .durable(props.orderUnpaidStatusQueue)
-            .withArgument(QUEUE_TYPE, QUORUM)
-            .build()
-
     @Bean(name = ["paymentsStatusQueue"])
     fun paymentsStatusQueue(): Queue =
         QueueBuilder
@@ -62,12 +55,6 @@ class RabbitMQConfig(
         @Qualifier("paymentsStatusQueue") queue: Queue,
         @Qualifier("paymentsExchange") exchange: TopicExchange,
     ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusPayment)
-
-    @Bean
-    fun orderStatusUnpaidBinding(
-        @Qualifier("orderUnpaidStatusQueue") queue: Queue,
-        @Qualifier("ordersExchange") exchange: TopicExchange,
-    ): Binding = bind(queue).to(exchange).with(props.routingKeyStatusOrderUnpaid)
 
     @Bean
     fun orderStatusPaidBinding(
