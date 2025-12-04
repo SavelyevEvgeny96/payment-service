@@ -1,10 +1,12 @@
 package ru.sogaz.site.paymentService.service.payment
 
+import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -49,13 +51,14 @@ class PaymentStatusServiceImpl(
     private val orderMapper: OrderMapper,
 ) : PaymentStatusService {
     companion object {
-        private const val UPDATE_STATUS_ERROR_MESSAGE = "Произошла ошибка во время обновления статуса для банковского платежа [bankId: %s]"
+        private const val UPDATE_STATUS_ERROR_MESSAGE =
+            "Произошла ошибка во время обновления статуса для банковского платежа [bankId: %s]"
         private const val NOT_FIND_ORDER_WARN_MESSAGE = "Не найден заказ для банковского платежа"
         private const val ORDER_ALREADY_PAID_WARN_MESSAGE =
             "Заказ [orderId: %s, bank: %s] уже " +
                 "отмечен как оплаченный для банковского платежа"
         private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
-        private const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
+        const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
     }
 
@@ -147,7 +150,7 @@ class PaymentStatusServiceImpl(
         order.apply { status = OrderStatus.SUCCESS }
 
         receiptService.generateReceipt(payment)
-        sendToPaidOrdersQueue(order, bankPaymentDetails)
+        sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
         orderDao.save(order)
         operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
@@ -165,6 +168,7 @@ class PaymentStatusServiceImpl(
     }
 
     private fun sendToPaidOrdersQueue(
+        payment: Payment,
         order: Order,
         bankPaymentDetails: BankPaymentDetails,
     ) {
@@ -173,27 +177,37 @@ class PaymentStatusServiceImpl(
             val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
 
             val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
+            requestBody.bank = payment.bank?.name
+            val exchange = props.exchangePayment
+            val routingKey =
+                order.queueStatusResultName
+                    ?.takeIf { it.isNotBlank() }
+                    ?: props.routingKeyStatusPayment
 
-            val exchange = props.exchange
-            val routingKey = props.routingKeyStatusPayment
+            val cd = CorrelationData(order.id.toString())
             val timestamp =
                 OffsetDateTime
                     .now(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
-            logger.info("Message request queue status: $requestBody")
+            logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+            logger.debug("Message request queue status: $requestBody")
             rabbitTemplate.convertAndSend(
                 exchange,
                 routingKey,
                 requestBody,
-            ) { message ->
-                message.messageProperties.headers["author"] = "payService"
-                message.messageProperties.headers["flowCode"] = "ResultPay"
-                message.messageProperties.headers["timestamp"] = timestamp
-                message
-            }
+                { message ->
+                    message.messageProperties.headers["author"] = "payService"
+                    message.messageProperties.headers["flowCode"] = "ResultPay"
+                    message.messageProperties.headers["timestamp"] = timestamp
+                    message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
+                    message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
+                    message.messageProperties.correlationId = order.id.toString()
+                    message
+                },
+                cd,
+            )
 
-            logger.info(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
+            logger.debug(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
         } catch (e: Exception) {
             throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
         }

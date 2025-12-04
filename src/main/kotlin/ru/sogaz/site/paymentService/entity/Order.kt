@@ -55,9 +55,19 @@ data class Order(
     @Column(name = "save_card")
     var saveCard: Boolean = false,
     @Column(name = "subscription_id")
-    val subscriptionId: String = "",
+    var subscriptionId: String = "",
     @Column(name = "client_id")
-    val clientId: String? = null,
+    var clientId: String? = null,
+    @Column(name = "recurrent")
+    var recurrent: Boolean? = null,
+    @Column(name = "order_id_recurrent")
+    var orderIdRecurrent: UUID? = null,
+    @Column(name = "queue_status_result_name")
+    var queueStatusResultName: String? = null,
+    @Column(name = "skip_sending_queue")
+    var skipSendingQueue: Boolean? = null,
+    @Column(name = "skip_sending_receipt")
+    var skipSendingReceipt: Boolean? = null,
     @CreationTimestamp
     @Column(name = "create_date", updatable = false)
     var createDate: LocalDateTime? = null,

@@ -1,23 +1,17 @@
 package ru.sogaz.site.paymentService.service.bank.integration.gpb
 
 import org.springframework.stereotype.Component
-import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DescriptionInfo
-import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
-import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
-import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
-import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationHelperServiceImpl
+import ru.sogaz.site.paymentService.service.GPBBankIntegrationGenerateDescriptionService
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Component
-class GPBBankIntegrationHelperServiceImpl(
-    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
-) : BankIntegrationHelperServiceImpl() {
+class GPBBankIntegrationGenerateDescriptionServiceImpl : GPBBankIntegrationGenerateDescriptionService {
     companion object {
         private const val PAY_ONE_CONTRACT_INFO = "Оплата по договору %s от %s. Платежный сервис, дата операции %s"
         private const val PAY_EMPTY_INFO = "Нет основного договора, дата операции %s"
@@ -87,7 +81,7 @@ class GPBBankIntegrationHelperServiceImpl(
 
     private fun SubOrder.makeDescriptionForOneContract(opDate: String): String =
         PAY_ONE_CONTRACT_INFO.format(
-            contractId ?: "",
+            contractNumber ?: "",
             contractDate?.toContractDateFormat() ?: "",
             opDate,
         )
@@ -100,10 +94,5 @@ class GPBBankIntegrationHelperServiceImpl(
 
     private fun LocalDate.toContractDateFormat(): String = this.format(DDMMYYYY)
 
-    private fun SubOrder.toParamValue(): String = "${contractId ?: ""} от ${contractDate?.toContractDateFormat() ?: ""}"
-
-    fun convertToBankPaymentDetails(response: GpbCardPaymentStatusResponse): BankPaymentDetails = bankPaymentDetailsMapper.convert(response)
-
-    fun convertToBankPaymentDetails(response: GpbSbpPaymentStatusResponse): BankPaymentDetails =
-        bankPaymentDetailsMapper.convert(response.result.firstOrNull())
+    private fun SubOrder.toParamValue(): String = "${contractNumber ?: ""} от ${contractDate?.toContractDateFormat() ?: ""}"
 }

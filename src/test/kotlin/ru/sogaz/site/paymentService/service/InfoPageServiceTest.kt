@@ -16,15 +16,18 @@ import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.FileQR
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.data.SubOrderInfo
-import ru.sogaz.site.paymentService.dto.request.PageInfoRequestParams
+import ru.sogaz.site.paymentService.dto.data.UrlToReturn
+import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.MediaTypeValue
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.service.payment.InfoPageServiceImpl
 import ru.sogaz.site.paymentService.service.payment.PaymentServiceImpl
+import java.math.BigDecimal
 import java.net.URI
 import java.util.UUID
 
@@ -83,8 +86,8 @@ class InfoPageServiceTest {
                 insuranceProgram = SECOND_SUB_ORDER_INSURANCE_PROGRAM,
             )
 
-        private val pageInfoRequestParams =
-            PageInfoRequestParams(
+        private val payQueryParams =
+            PayQueryParams(
                 RETURN_URL,
             )
     }
@@ -127,7 +130,7 @@ class InfoPageServiceTest {
     @Test
     fun `getOrderPaymentPageInfo should return valid urlPayBank`() {
         validOrderUUID
-            .run { infoPageService.getInfo(this, pageInfoRequestParams) }
+            .run { infoPageService.getInfo(this, payQueryParams) }
             .run(::assertThat)
             .returns(validOrderUUID, DataOrderPaymentPageInfo::orderId)
             .returns(payURITemplate, DataOrderPaymentPageInfo::urlPayBank)
@@ -136,7 +139,7 @@ class InfoPageServiceTest {
     @Test
     fun `getOrderPaymentPageInfo should return valid accounts`() {
         validOrderUUID
-            .run { infoPageService.getInfo(this, pageInfoRequestParams) }
+            .run { infoPageService.getInfo(this, payQueryParams) }
             .run(::assertThat)
             .returns(validOrderUUID, DataOrderPaymentPageInfo::orderId)
             .returns(ORDER_TEST_AMOUNT, DataOrderPaymentPageInfo::premiumAmount)
@@ -148,7 +151,7 @@ class InfoPageServiceTest {
         every { orderDao.findById(validOrderUUID) } returns Order(id = validOrderUUID)
 
         validOrderUUID
-            .run { infoPageService.getInfo(this, pageInfoRequestParams) }
+            .run { infoPageService.getInfo(this, payQueryParams) }
             .run(::assertThat)
             .returns(validOrderUUID, DataOrderPaymentPageInfo::orderId)
             .returns("", DataOrderPaymentPageInfo::premiumAmount)
@@ -161,7 +164,7 @@ class InfoPageServiceTest {
         every { qrCodeService.generateFileQR(any<URI>()) } returns validFileQR
 
         validOrderUUID
-            .run { infoPageService.getInfo(this, pageInfoRequestParams) }
+            .run { infoPageService.getInfo(this, payQueryParams) }
             .run(::assertThat)
             .returns(validOrderUUID, DataOrderPaymentPageInfo::orderId)
             .extracting<PaySbp>(DataOrderPaymentPageInfo::paySbp)
@@ -174,11 +177,11 @@ class InfoPageServiceTest {
     @Test
     fun `getOrderPaymentPageInfo should return valid dataOrderPaymentPageInfo with qr requested from bank`() {
         setSbpActiveConfigValue(true)
-        every { registerPaymentService.register(any(), PaymentTypeEnum.SBP, any()) }.returns(Payment(qrcId = "qr-id"))
+        every { registerPaymentService.register(any(), PaymentTypeEnum.SBP, any()) }.returns(createTestPayment())
         every { qrCodeService.requestFileQRFromBank(any()) } returns validFileQR
 
         validOrderUUID
-            .run { infoPageService.getInfo(this, pageInfoRequestParams) }
+            .run { infoPageService.getInfo(this, payQueryParams) }
             .run(::assertThat)
             .returns(validOrderUUID, DataOrderPaymentPageInfo::orderId)
             .extracting<PaySbp>(DataOrderPaymentPageInfo::paySbp)
@@ -191,7 +194,7 @@ class InfoPageServiceTest {
     @Test
     fun `getOrderPaymentPageInfo should return valid dataOrderPaymentPageInfo without sbp pay info`() {
         validOrderUUID
-            .run { infoPageService.getInfo(this, pageInfoRequestParams) }
+            .run { infoPageService.getInfo(this, payQueryParams) }
             .run(::assertThat)
             .returns(validOrderUUID, DataOrderPaymentPageInfo::orderId)
             .returns(null) { it.paySbp?.urlPay }
@@ -225,6 +228,33 @@ class InfoPageServiceTest {
             subOrders.add(firstSubOrder)
             subOrders.add(secondSubOrder)
         }
+
+    private fun createTestPayment(
+        bank: BankEnum = BankEnum.GPB,
+        type: PaymentTypeEnum = PaymentTypeEnum.CARD,
+        depersonalization: Boolean = false,
+    ): Payment {
+        val order =
+            Order().apply {
+                id = UUID.randomUUID()
+                premiumAmount = BigDecimal("1000.00").toString()
+                saveCard = false
+            }
+
+        return Payment(
+            id = UUID.randomUUID(),
+            order = order,
+            bank = bank,
+            type = type,
+            qrcId = "qr-id",
+            depersonalization = depersonalization,
+            urlToReturn =
+                UrlToReturn(
+                    urlToReturnS = null,
+                    urlToReturnF = null,
+                ),
+        )
+    }
 
     private fun initPayURITemplate() =
         URI.create("$BASE_PAYMENT_CARD_PAY_PATH$validOrderUUID?urlToReturn=$RETURN_URL&depersonalization=false")

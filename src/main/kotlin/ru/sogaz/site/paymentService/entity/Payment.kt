@@ -29,7 +29,7 @@ data class Payment(
     var state: PaymentStatusEnum = PaymentStatusEnum.NEW,
     @ManyToOne
     @JoinColumn(name = "order_id")
-    var order: Order? = null,
+    var order: Order,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
     var bank: BankEnum? = null,
@@ -40,6 +40,8 @@ data class Payment(
     var depersonalization: Boolean = false,
     @Column(name = "qrc_id")
     var qrcId: String? = null,
+    @Column(name = "key_card")
+    var keyCard: String? = null,
     @Column(name = "payment_pass")
     var paymentPass: String? = null,
     @Column(name = "payment_bank_id")
@@ -59,7 +61,7 @@ data class Payment(
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
     @Transient
-    var urlToReturn: UrlToReturn = UrlToReturn(),
+    var urlToReturn: UrlToReturn? = null,
     @Transient
     var saveCard: Boolean = false,
 ) {
@@ -69,6 +71,7 @@ data class Payment(
             PaymentStatusEnum.WAIT,
             PaymentStatusEnum.CALLBACK,
             -> true
+
             else -> false
         }
 

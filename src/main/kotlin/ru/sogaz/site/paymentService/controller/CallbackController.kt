@@ -3,10 +3,9 @@ package ru.sogaz.site.paymentService.controller
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import ru.sogaz.site.paymentService.api.doc.v1.CallbackV1Api
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
@@ -19,9 +18,8 @@ import ru.sogaz.siter.models.resonses.Response
 class CallbackController(
     private val gpbCallbackService: GpbCallbackService,
     private val callbackService: CallbackService,
-) {
-    @GetMapping("payment/gpb/state")
-    fun stateGpbCallback(
+) : CallbackV1Api {
+    override fun stateGpbCallback(
         @RequestParam("trx_id") trxId: String,
         @RequestParam("merch_id") merchId: String?,
         @RequestParam("result_code") resultCode: Int?,
@@ -63,11 +61,10 @@ class CallbackController(
                 ts,
                 signature,
             )
-        return gpbCallbackService.processCallback(requestParams)
+        return gpbCallbackService.processCallback(requestParams, request)
     }
 
-    @PostMapping("payment/akb/state")
-    fun stateRussiaCallback(
+    override fun stateRussiaCallback(
         @RequestParam("ORDER_ID") orderId: String,
         @RequestParam("ORDER_RID") orderRid: String?,
         @RequestParam("ORDER_STATUS") orderStatus: String?,
@@ -83,8 +80,7 @@ class CallbackController(
         return callbackService.processCallback(requestParams)
     }
 
-    @GetMapping("payment/sbp/gpb/state")
-    fun stateSbpGpbCallback(
+    override fun stateSbpGpbCallback(
         @RequestParam("transactionId") transactionId: String,
         @RequestParam("qrcId") qrcId: String?,
         @RequestParam("merchantId") merchantId: String?,

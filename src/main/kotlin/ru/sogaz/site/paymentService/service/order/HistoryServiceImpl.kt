@@ -40,6 +40,6 @@ class HistoryServiceImpl(
                 it,
             )
         }
-        logger.info(LOG_OPERATION_HISTORY_ADDED.format(order.id, traceId))
+        logger.debug(LOG_OPERATION_HISTORY_ADDED.format(order.id, traceId))
     }
 }

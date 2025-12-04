@@ -4,9 +4,11 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Future
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.validation.constraint.Email
 import ru.sogaz.site.paymentService.validation.constraint.UniqueMainContract
 import java.time.Instant
+import java.util.UUID
 
 /**
  * @property orders Лист данных по отдельному payments(каждый payments имеет отдельную запись в таблице subOrder)
@@ -20,20 +22,23 @@ import java.time.Instant
 data class OrderRequest(
     @get:Valid
     @field:UniqueMainContract(message = "{validation.orderPaymentRequest.uniqueMainContract}")
-    val orders: List<SubOrderRequest> = emptyList(),
+    var orders: MutableList<SubOrderRequest> = mutableListOf(),
     @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
     @field:Future(message = "{validation.orderPaymentRequest.date.future}")
-    val orderEndDate: Instant? = null,
+    var orderEndDate: Instant? = null,
     @field:NotBlank(message = "{validation.orderRequest.notBlank}")
     @field:Email(message = "{validation.orderPaymentRequest.recipientEmail.email}")
-    val recipientEmail: String = "",
-    val recipientUserId: String? = null,
-    val unifiedId: String? = null,
-    val recipientPhone: String? = null,
-    val urlToReturn: String? = null,
-    val urlToDecline: String? = null,
-    val saveCard: Boolean = false,
-    val subscriptionId: String = "",
+    var recipientEmail: String = "",
+    var recipientUserId: String? = null,
+    var unifiedId: String? = null,
+    var recipientPhone: String? = null,
+    var urlToReturn: String? = null,
+    var urlToDecline: String? = null,
+    var saveCard: Boolean = false,
+    var subscriptionId: String = "",
     var clientId: String? = null,
-    val policyholder: String? = null,
+    var policyholder: String? = null,
+    var orderIdRecurrent: UUID? = null,
+    var bank: BankEnum? = null,
+    var keyCard: String? = null,
 )

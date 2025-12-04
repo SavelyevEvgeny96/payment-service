@@ -7,12 +7,24 @@ app:
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
     app_profile: ${ENVIRONMENT:local}
     java-version: ${JAVA_VERSION:21}
-  certs:
-    gpb: ${GPB_CERT}
+  gpb:
+    certs: ${GPB_CERT}
+    callback_url: ${GPB_CALLBACK_URL}
   rabbit:
-    exchange: ${ORDERS_EXCHANGE}
-    queue-status-payment: ${QUEUE_STATUS_PAYMENT}
-    routing-key-status-payment: ${ROUTING_KEY_STATUS_PAYMENT}
+    exchange-order: ${ORDER_EXCHANGE:order.exchange}
+    exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
+    payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
+    payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
+    order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
+    order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}
+    routing-key-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_QUEUE:payment.status.created}
+    routing-key-status-order-paid: ${ROUTING_KEY_ORDER_PAID_STATUS_QUEUE:order.paid.created}
+    routing-key-status-order-unpaid: ${ROUTING_KEY_ORDER_UNPAID_STATUS_QUEUE:order.unpaid.created}
+  listener:
+    batch-size: 100
+    prefetch: 100
+    concurrency: 3
+    max-concurrency: 10
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
@@ -27,22 +39,19 @@ spring:
     port: ${RABBIT_PORT}
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
+
     virtual-host: /
     listener:
       simple:
         acknowledge-mode: auto
-
   jackson:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
-
   application:
     name: payment-service
-
   profiles:
     active: ${ENVIRONMENT:local}
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
@@ -56,12 +65,11 @@ spring:
       minimum-idle: ${DB_HIKARI_MIN_IDLE:2}
       idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:60000}              # действует только если minimum-idle < maximum-pool-size
       # Опционально: мгновенный фейл старта, если БД недоступна
-      initialization-fail-timeout: 1
+      initialization-fail-timeout: ${DB_HIKARI_INITIALIZATION_FAIL_TIMEOUT:1}
 
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
     enabled: true
-
   output:
     ansi:
       enabled: ALWAYS
@@ -70,6 +78,7 @@ api:
   payment:
     paymentUrl: ${PAYMENT_URL}
     sbpPaymentUrl: ${SBP_PAYMENT_URL}
+    returnUrl: ${RETURN_URL:https://www.sogaz.ru/}
     akbUrl: ${AKB_URL}
     akbSbpUrl: ${AKB_SBP_URL}
     akbUrlStatus: ${AKB_PAYMENT_URL}
@@ -122,19 +131,25 @@ management:
 logstash:
   host: ${LOG_SERVER_HOST}
   port: ${LOG_SERVER_PORT}
-  level: ${LOG_LEVEL}
-  level_local: ${LOG_LEVEL_LOCAL:INFO}
+  level: ${LOG_LEVEL:INFO}
+  level_local: ${LOG_LEVEL_LOCAL:DEBUG}
 
 logging:
   level:
-    ru:
-      sogaz:
-        site:
-          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:}
+    ru.sogaz.site.loggingStarter: ${LOGGING_LEVEL_LOGGING_STARTER:INFO}
+    ru.sogaz.site.paymentService: ${LOGGING_LEVEL_PAYMENT_SERVICE:DEBUG}
+    com.zaxxer.hikari: ${LOGGING_LEVEL_HIKARI:INFO}
+
   proxy:
     frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
     upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
     max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
-    log-headers: ${LOGGING_PROXY_LOG_HEADERS:true}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
     stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
-    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink, qrCode, content}
+
+  rabbit:
+    enabled: ${LOGGING_RABBIT_ENABLED:true}
+    log-body: ${LOGGING_RABBIT_LOG_BODY:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:true}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:true}

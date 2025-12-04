@@ -4,6 +4,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.MDC
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import ru.sogaz.site.filterStarter.services.RequestInfo.SERVICE_NAME
 import ru.sogaz.site.filterStarter.services.RequestInfo.TRACE_ID
 import ru.sogaz.site.paymentService.dao.ConfigDataDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
@@ -31,9 +32,14 @@ class WaitingPaymentsStatusesScheduler(
     }
 
     @Scheduled(cron = "\${crons.waitingPaymentsCheck}")
-    @SchedulerLock(name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses", lockAtMostFor = "PT1M")
+    @SchedulerLock(
+        name = "WaitingPaymentsStatusesScheduler_updateWaitingPaymentsStatuses",
+        lockAtLeastFor = "PT30S",
+        lockAtMostFor = "PT3M",
+    )
     fun updateWaitingPaymentsStatuses() {
         MDC.put(TRACE_ID, UUID.randomUUID().toString())
+        MDC.put(SERVICE_NAME, "payment-service")
         runCatching { runTask() }
             .also(::logResult)
         MDC.clear()
@@ -58,12 +64,12 @@ class WaitingPaymentsStatusesScheduler(
         }
 
     private fun logWaitingPayments(payments: List<WaitingPayment>) {
-        logger.info("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
+        logger.debug("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
     }
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {
-            logger.info(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
+            logger.debug(LOG_CRITICAL_TASK_ERROR, result.exceptionOrNull())
         }
     }
 }
