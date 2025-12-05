@@ -47,8 +47,6 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "description", expression = "java(getDescription(payment))")
     @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
-    @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
-    @Mapping(target = "openApiMirPaySupported", constant = "true")
     @Mapping(target = "params", expression = "java(map)")
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "src", expression = "java(new Src(\"card_id\", payment.getKeyCard()))")
