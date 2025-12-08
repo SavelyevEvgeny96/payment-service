@@ -71,10 +71,11 @@ class GPBankIntegrationServiceImpl(
     override fun registerCardPaymentRecurrent(payment: Payment): Payment =
         gpBPaymentRequestMapper
             .toRecurrentRequest(payment)
-        .takeIf { it.token.isNotBlank() }                       // идём дальше только если токен есть
-            ?.let(::postForCardPaymentLinkRecurrent)           // вызываем банк
-            ?.let { payment.fillBankRegistration(it) }         // мапим ответ банка в payment
-            ?: payment.apply {                                 // если токена нет — сразу FAIL
+            .takeIf { it.token.isNotBlank() } // идём дальше только если токен есть
+            ?.let(::postForCardPaymentLinkRecurrent) // вызываем банк
+            ?.let { payment.fillBankRegistration(it) } // мапим ответ банка в payment
+            ?: payment.apply {
+                // если токена нет — сразу FAIL
                 state = PaymentStatusEnum.FAIL
             }
 

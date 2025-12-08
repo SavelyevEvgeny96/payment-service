@@ -48,7 +48,6 @@ class BuildBatchConsumerServiceImpl(
 
         val paymentsResult = mutableListOf<UUID>()
 
-
         batch.forEach { payload ->
             val result = processSinglePayload(payload.dto)
             val orderIdRecurrent = result.orderIdRecurrent
@@ -59,7 +58,7 @@ class BuildBatchConsumerServiceImpl(
             } else {
                 logger.warn(
                     "orderIdRecurrent is null for payload orderIdRecurrent=${payload.dto.orderIdRecurrent} " +
-                            "status=${result.status}",
+                        "status=${result.status}",
                 )
             }
             // 4) ACK за успешно распарсенное сообщение
@@ -67,7 +66,7 @@ class BuildBatchConsumerServiceImpl(
         }
 
         return BatchRecurrentResult(
-            paymentsResult = paymentsResult
+            paymentsResult = paymentsResult,
         )
     }
 
@@ -120,15 +119,13 @@ class BuildBatchConsumerServiceImpl(
                 .registerInBank(payment, null, true)
                 .apply {
                     paymentStarted = LocalDateTime.now()
-                }
-                .run(paymentDao::save)
+                }.run(paymentDao::save)
                 .also { paymentUpdate ->
                     if (paymentUpdate.state == PaymentStatusEnum.REG) {
                         logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
                     } else {
                         logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
                     }
-                }
-                .also(waitingPaymentDao::saveWaitingForPayment)
+                }.also(waitingPaymentDao::saveWaitingForPayment)
         }
 }

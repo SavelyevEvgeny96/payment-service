@@ -13,7 +13,7 @@ spring:
 api:
   host: http://localhost:${server.port}
   gateway:
-    dmz: http://test-gateway-site-dmz.sogaz.ru
+    dmz: https://test-gateway-site-dmz.sogaz.ru
   payment:
     paymentUrl: ${api.host}/payment/pay/
     sbpPaymentUrl: ${api.host}/payment/paySbp/

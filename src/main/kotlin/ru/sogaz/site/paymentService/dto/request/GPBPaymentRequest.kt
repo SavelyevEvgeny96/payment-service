@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class GPBPaymentRequest(
     val state: State?,
     val params: Map<String, String>? = null,
@@ -17,8 +18,8 @@ data class GPBPaymentRequest(
     val currency: CurrencyEnum,
     val description: String,
     @param:JsonProperty("3ds2")
-    val threeDSTwo: ThreeDSTwo,
-    val openApiMirPaySupported: Boolean,
+    val threeDSTwo: ThreeDSTwo? = null,
+    val openApiMirPaySupported: Boolean? = null,
     val addCardAllowed: Boolean? = null,
     val merchantTrx: String,
     @JsonIgnore

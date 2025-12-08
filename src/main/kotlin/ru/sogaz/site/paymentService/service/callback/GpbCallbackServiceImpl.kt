@@ -62,9 +62,7 @@ class GpbCallbackServiceImpl(
             val payment =
                 paymentDao.findByPaymentBankId(requestDto.trxId)
 
-            if (payment.order == null ||
-                payment.order
-                    ?.id
+            if (payment.order.id
                     ?.let {
                         orderDao.findById(it)
                     } == null

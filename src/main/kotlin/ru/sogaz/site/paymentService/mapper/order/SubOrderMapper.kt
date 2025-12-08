@@ -5,7 +5,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
-import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
+import ru.sogaz.site.paymentService.dto.request.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.SubOrder
 
