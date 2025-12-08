@@ -40,18 +40,14 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
     override fun registerPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean,
     ): Payment =
         when {
-            payment.type == PaymentTypeEnum.CARD && recurrent -> registerCardPaymentRecurrent(payment)
             payment.type == PaymentTypeEnum.CARD -> registerCardPayment(payment)
             payment.type == PaymentTypeEnum.SBP -> registerSBPPayment(payment, headersParams)
             else -> throw InnerException(getTraceId(), ERROR_UNKNOWN_PAYMENT_TYPE)
         }
 
     abstract fun registerCardPayment(payment: Payment): Payment
-
-    abstract fun registerCardPaymentRecurrent(payment: Payment): Payment
 
     abstract fun registerSBPPayment(
         payment: Payment,

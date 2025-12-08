@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
@@ -72,17 +73,23 @@ class GPBankIntegrationServiceImpl(
             .run(::postForCardPaymentLink)
             .run { payment.fillFromResponse(this) }
 
-    @Throws(BankIntegrationException::class, RestClientException::class)
-    override fun registerCardPaymentRecurrent(payment: Payment): Payment =
+    override fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData =
         gpBPaymentRequestMapper
             .toRecurrentRequest(payment)
-            .takeIf { it.token.isNotBlank() } // идём дальше только если токен есть
-            ?.let(::postForCardPaymentLinkRecurrent) // вызываем банк
-            ?.let { payment.fillBankRegistration(it) } // мапим ответ банка в payment
-            ?: payment.apply {
-                // если токена нет — сразу FAIL
-                state = PaymentStatusEnum.FAIL
+            .takeIf { it.token.isNotBlank() } // есть токен -> идём в банк
+            ?.let(::postForCardPaymentLinkRecurrent) // RegisterCardResponseDto
+            ?.let { bankResp ->
+                // тут мы ещё держим и payment, и ответ банка
+                val updatedPayment = payment.fillBankRegistration(bankResp) // проставили всё в сущность
+                PaymentRecurrentRegisterData(
+                    payment = updatedPayment,
+                    bankResponse = bankResp,
+                )
             }
+            ?: PaymentRecurrentRegisterData(
+                payment = payment.apply { state = PaymentStatusEnum.FAIL }, // токена нет
+                bankResponse = null,
+            )
 
     private fun postForCardPaymentLink(request: GPBPaymentRequest): GazpromCardPaymentResponse =
         gpbCardPaymentClient.startPayment(
@@ -93,14 +100,19 @@ class GPBankIntegrationServiceImpl(
 
     private fun postForCardPaymentLinkRecurrent(request: GPBPaymentRequest): RegisterCardResponseDto =
         try {
-            gpbCardPaymentClient.startPaymentRecurrent(
-                tokenService.takePortalId(request.depersonalization),
-                request.token,
-                request,
+            registerCardMapper.mapErrorBody(
+                gpbCardPaymentClient.startPaymentRecurrent(
+                    tokenService.takePortalId(request.depersonalization),
+                    request.token,
+                    request,
+                )
             )
         } catch (ex: FeignException) {
+            var raw = RegisterCardResponseDto()
             val body = ex.contentUTF8()
-            val raw = objectMapper.readValue(body, RegisterCardResponseDto::class.java)
+            if (body.isNotBlank()) {
+                raw = objectMapper.readValue(body, RegisterCardResponseDto::class.java)
+            }
             registerCardMapper.mapErrorBody(raw)
         }
 

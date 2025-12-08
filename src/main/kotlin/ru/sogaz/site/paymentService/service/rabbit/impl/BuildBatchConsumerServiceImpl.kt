@@ -6,8 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
-import ru.sogaz.site.paymentService.dto.data.BatchRecurrentResult
-import ru.sogaz.site.paymentService.dto.data.SinglePaymentResult
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.entity.Order
@@ -20,7 +19,6 @@ import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Service
 class BuildBatchConsumerServiceImpl(
@@ -43,35 +41,22 @@ class BuildBatchConsumerServiceImpl(
     override fun upsertBatch(
         batch: List<TaggedPayload>,
         channel: Channel,
-    ): BatchRecurrentResult {
+    ): List<PaymentRecurrentRegisterData> {
         logger.info(LOG_START.format(batch.size))
 
-        val paymentsResult = mutableListOf<UUID>()
-
-        batch.forEach { payload ->
-            val result = processSinglePayload(payload.dto)
-            val orderIdRecurrent = result.orderIdRecurrent
-            if (orderIdRecurrent != null) {
-                if (result.status == PaymentStatusEnum.REG) {
-                    paymentsResult += orderIdRecurrent
-                }
-            } else {
-                logger.warn(
-                    "orderIdRecurrent is null for payload orderIdRecurrent=${payload.dto.orderIdRecurrent} " +
-                        "status=${result.status}",
-                )
+        val results =
+            batch.map { payload ->
+                processSinglePayload(payload.dto) // -> PaymentRecurrentRegisterData
+                    .also {
+                        // после успешной обработки
+                        channel.basicAck(payload.tag, false) // подтверждаем сообщение
+                    }
             }
-            // 4) ACK за успешно распарсенное сообщение
-            channel.basicAck(payload.tag, false)
-        }
-
-        return BatchRecurrentResult(
-            paymentsResult = paymentsResult,
-        )
+        return results
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    private fun processSinglePayload(payload: OrderPayloadDto): SinglePaymentResult {
+    private fun processSinglePayload(payload: OrderPayloadDto): PaymentRecurrentRegisterData {
         // 1) DTO → Request → Order
         val order = buildAndSaveOrder(payload)
 
@@ -81,13 +66,10 @@ class BuildBatchConsumerServiceImpl(
         // 3) Регистрация в банке + обновление/логирование
         val registeredPayment = registerAndPersistPayment(payment)
 
-        logger.info("Created payment ${registeredPayment.id} for order ${order.id}")
+        logger.info("Created payment ${registeredPayment.payment.id} for order ${order.id}")
 
-        // 4) Возвращаем status + orderIdRecurrent
-        return SinglePaymentResult(
-            orderIdRecurrent = registeredPayment.order.orderIdRecurrent,
-            status = registeredPayment.state,
-        )
+        // 4) PaymentRecurrentRegisterData
+        return registeredPayment
     }
 
     private fun buildAndSaveOrder(payload: OrderPayloadDto) =
@@ -103,30 +85,38 @@ class BuildBatchConsumerServiceImpl(
         .let { paymentMapper.orderToPayment(it, payload) }
         .run(paymentDao::save)
 
-    private fun registerAndPersistPayment(payment: Payment): Payment =
+    private fun registerAndPersistPayment(payment: Payment): PaymentRecurrentRegisterData =
         registerPaymentService
-            .registerInBank(payment, null, true)
+            .registerInBankRecurrent(payment) // -> PaymentRecurrentRegisterData
             .let { registered ->
-                if (registered.paymentBankId.isNullOrBlank()) {
+                val registeredPayment = registered.payment
+
+                if (registeredPayment.paymentBankId.isNullOrBlank()) {
                     // токена нет -> не трогаем paymentStarted, не кладём в waiting, ставим FAIL
-                    registered
-                        .apply { state = PaymentStatusEnum.FAIL }
-                        .run(paymentDao::save)
-                        .also { saved ->
-                            logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
-                        }
+                    registeredPayment.state = PaymentStatusEnum.FAIL
+
+                    val saved = paymentDao.save(registeredPayment)
+
+                    logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
+
+                    // возвращаем тот же wrapper, но с уже сохранённым payment
+                    registered.copy(payment = saved)
                 } else {
                     // токен есть -> обычный поток
-                    registered
-                        .apply { paymentStarted = LocalDateTime.now() }
-                        .run(paymentDao::save)
-                        .also { paymentUpdate ->
-                            if (paymentUpdate.state == PaymentStatusEnum.REG) {
-                                logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
-                            } else {
-                                logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
-                            }
-                        }.also(waitingPaymentDao::saveWaitingForPayment)
+                    registeredPayment.paymentStarted = LocalDateTime.now()
+
+                    val saved = paymentDao.save(registeredPayment)
+
+                    if (saved.state == PaymentStatusEnum.REG) {
+                        logger.info(PAYMENT_RECURRENT_SUCCESS.format(saved.id))
+                    } else {
+                        logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
+                    }
+
+                    waitingPaymentDao.saveWaitingForPayment(saved)
+
+                    // снова: обновляем payment внутри wrapper-а
+                    registered.copy(payment = saved)
                 }
             }
 }

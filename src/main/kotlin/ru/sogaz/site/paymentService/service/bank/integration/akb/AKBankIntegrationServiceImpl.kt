@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -71,8 +72,6 @@ class AKBankIntegrationServiceImpl(
             .run(::buildCardRequest)
             .run(::postForCardPaymentData)
             .run { payment.fillFromResponse(this) }
-
-    override fun registerCardPaymentRecurrent(payment: Payment): Payment = payment
 
     @Throws(RestClientException::class)
     override fun registerSBPPayment(
@@ -202,6 +201,10 @@ class AKBankIntegrationServiceImpl(
         return restTemplate
             .getForObject<PaymentAkbStatusResponse>(url)
             .toBankPaymentDetails()
+    }
+
+    override fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData {
+        TODO("Not yet implemented")
     }
 
     private fun formUrl(paymentBankInfo: PaymentBankInfo): String =

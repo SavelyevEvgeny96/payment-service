@@ -60,8 +60,10 @@ class RecurringPaymentConsumerImpl(
                 logger.error("Ошибка при обработке батча: ${ex.message}", ex)
             }.getOrNull() ?: return
 
-        // 3) Отправляем статусы paid/unpaid
-        sendMessagePaid(batchResult.paymentsResult)
+        logger.info(batchResult.toString())
+
+//        // 3) Отправляем статусы paid/unpaid
+//        sendMessagePaid(batchResult.paymentsResult)
 
         val tookMs = (System.nanoTime() - started) / 1_000_000
         logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
