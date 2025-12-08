@@ -104,28 +104,29 @@ class BuildBatchConsumerServiceImpl(
         .run(paymentDao::save)
 
     private fun registerAndPersistPayment(payment: Payment): Payment =
-        if (payment.paymentBankId.isNullOrBlank()) {
-            // токена нет — ничего не регаем в банке, не трогаем paymentStarted,
-            // не кладём в waiting, просто ставим FAIL и сохраняем
-            payment
-                .apply { state = PaymentStatusEnum.FAIL }
-                .run(paymentDao::save)
-                .also { paymentUpdate ->
-                    logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
+        registerPaymentService
+            .registerInBank(payment, null, true)
+            .let { registered ->
+                if (registered.paymentBankId.isNullOrBlank()) {
+                    // токена нет -> не трогаем paymentStarted, не кладём в waiting, ставим FAIL
+                    registered
+                        .apply { state = PaymentStatusEnum.FAIL }
+                        .run(paymentDao::save)
+                        .also { saved ->
+                            logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
+                        }
+                } else {
+                    // токен есть -> обычный поток
+                    registered
+                        .apply { paymentStarted = LocalDateTime.now() }
+                        .run(paymentDao::save)
+                        .also { paymentUpdate ->
+                            if (paymentUpdate.state == PaymentStatusEnum.REG) {
+                                logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
+                            } else {
+                                logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
+                            }
+                        }.also(waitingPaymentDao::saveWaitingForPayment)
                 }
-        } else {
-            // токен есть — обычный путь
-            registerPaymentService
-                .registerInBank(payment, null, true)
-                .apply {
-                    paymentStarted = LocalDateTime.now()
-                }.run(paymentDao::save)
-                .also { paymentUpdate ->
-                    if (paymentUpdate.state == PaymentStatusEnum.REG) {
-                        logger.info(PAYMENT_RECURRENT_SUCCESS.format(paymentUpdate.id))
-                    } else {
-                        logger.error(PAYMENT_RECURRENT_FALSE.format(paymentUpdate.id))
-                    }
-                }.also(waitingPaymentDao::saveWaitingForPayment)
-        }
+            }
 }

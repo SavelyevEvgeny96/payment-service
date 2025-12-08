@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService.service.bank.integration.gpb
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import feign.FeignException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -32,6 +34,7 @@ import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapper
+import ru.sogaz.site.paymentService.mapper.payment.RegisterCardMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationServiceImpl
@@ -44,6 +47,8 @@ class GPBankIntegrationServiceImpl(
     private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
     private val gpBPaymentRequestMapper: GPBPaymentRequestMapper,
     private val tokenService: TokenService, // ⬅ новый сервис токенов
+    private val objectMapper: ObjectMapper,
+    private val registerCardMapper: RegisterCardMapper,
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val TEMPLATE_VERSION = "01"
@@ -87,19 +92,25 @@ class GPBankIntegrationServiceImpl(
         )
 
     private fun postForCardPaymentLinkRecurrent(request: GPBPaymentRequest): RegisterCardResponseDto =
-        gpbCardPaymentClient.startPaymentRecurrent(
-            tokenService.takePortalId(request.depersonalization),
-            request.token,
-            request,
-        )
+        try {
+            gpbCardPaymentClient.startPaymentRecurrent(
+                tokenService.takePortalId(request.depersonalization),
+                request.token,
+                request,
+            )
+        } catch (ex: FeignException) {
+            val body = ex.contentUTF8()
+            val raw = objectMapper.readValue(body, RegisterCardResponseDto::class.java)
+            registerCardMapper.mapErrorBody(raw)
+        }
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
         gpbSbpPaymentClient.getQrImage(
             GPBQRImageRequest(payment.qrcId!!),
         )
-    // --------------------------------------------------------------------------------------------
-    // SBP PAYMENT
-    // --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// SBP PAYMENT
+// --------------------------------------------------------------------------------------------
 
     override fun registerSBPPayment(
         payment: Payment,
@@ -144,9 +155,9 @@ class GPBankIntegrationServiceImpl(
             set(HeaderStatusEnum.PAYMENT_STATUS.value, headersParams?.paymentStatus)
         }
 
-    // --------------------------------------------------------------------------------------------
-    // FILL RESPONSE
-    // --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// FILL RESPONSE
+// --------------------------------------------------------------------------------------------
 
     private fun Payment.fillFromResponse(response: GazpromCardPaymentResponse) =
         apply {
@@ -173,9 +184,9 @@ class GPBankIntegrationServiceImpl(
             paymentBankId = response.data.qrcId
         }
 
-    // --------------------------------------------------------------------------------------------
-    // STATUS
-    // --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// STATUS
+// --------------------------------------------------------------------------------------------
 
     override fun requestPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
         try {
