@@ -92,14 +92,13 @@ class BuildBatchConsumerServiceImpl(
                 val registeredPayment = registered.payment
 
                 if (registeredPayment.paymentBankId.isNullOrBlank()) {
-                    // токена нет -> не трогаем paymentStarted, не кладём в waiting, ставим FAIL
+                    // токена нет -> не трогаем paymentStarted, ставим FAIL
                     registeredPayment.state = PaymentStatusEnum.FAIL
 
                     val saved = paymentDao.save(registeredPayment)
 
                     logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
 
-                    // возвращаем тот же wrapper, но с уже сохранённым payment
                     registered.copy(payment = saved)
                 } else {
                     // токен есть -> обычный поток
@@ -112,10 +111,6 @@ class BuildBatchConsumerServiceImpl(
                     } else {
                         logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
                     }
-
-                    waitingPaymentDao.saveWaitingForPayment(saved)
-
-                    // снова: обновляем payment внутри wrapper-а
                     registered.copy(payment = saved)
                 }
             }

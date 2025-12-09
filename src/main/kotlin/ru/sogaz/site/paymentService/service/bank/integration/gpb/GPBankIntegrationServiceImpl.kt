@@ -100,12 +100,10 @@ class GPBankIntegrationServiceImpl(
 
     private fun postForCardPaymentLinkRecurrent(request: GPBPaymentRequest): RegisterCardResponseDto =
         try {
-            registerCardMapper.mapErrorBody(
-                gpbCardPaymentClient.startPaymentRecurrent(
-                    tokenService.takePortalId(request.depersonalization),
-                    request.token,
-                    request,
-                )
+            gpbCardPaymentClient.startPaymentRecurrent(
+                tokenService.takePortalId(request.depersonalization),
+                request.token,
+                request,
             )
         } catch (ex: FeignException) {
             var raw = RegisterCardResponseDto()

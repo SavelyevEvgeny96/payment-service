@@ -19,4 +19,6 @@ interface SubOrderMapper {
     ): SubOrder
 
     fun toSubOrderPayload(subOrder: SubOrder): SubOrderPayload
+
+    fun toPayloadList(src: List<SubOrder>): List<SubOrderPayload>
 }

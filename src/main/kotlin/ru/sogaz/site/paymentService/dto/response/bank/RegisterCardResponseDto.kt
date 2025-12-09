@@ -15,7 +15,6 @@ data class RegisterCardResponseDto(
     var error: String? = null,
     var side: String? = null,
 ) {
-
     data class ResultDto(
         val status: String?,
         val extendedCode: String?,
