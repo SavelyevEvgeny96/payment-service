@@ -58,15 +58,15 @@ class RegisterPaymentServiceImplTest {
         // mock factory to return bankIntegrationService
         every { bankIntegrationFactoryService.getInstanceByBank(payment.bank) } returns bankIntegrationService
         // mock bank integration service to return expected payment
-        every { bankIntegrationService.registerPayment(payment, headers, recurrent) } returns expectedPayment
+        every { bankIntegrationService.registerPayment(payment, headers) } returns expectedPayment
 
         // when
-        val result = registerPaymentService.registerInBank(payment, headers, recurrent)
+        val result = registerPaymentService.registerInBank(payment, headers)
 
         // then
         assertThat(result).isEqualTo(expectedPayment)
         verify(exactly = 1) { bankIntegrationFactoryService.getInstanceByBank(payment.bank) }
-        verify(exactly = 1) { bankIntegrationService.registerPayment(payment, headers, recurrent) }
+        verify(exactly = 1) { bankIntegrationService.registerPayment(payment, headers) }
     }
 
     private fun createTestPayment(

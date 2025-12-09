@@ -4,24 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
-import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
-import ru.sogaz.site.paymentService.dto.request.PaidOrderMessage
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
-import ru.sogaz.site.paymentService.properties.RabbitListenerProps
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.service.payment.PaymentStatusServiceImpl.Companion.START_LOG_MESSAGE_QUEUE
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 @Service
 class RecurringPaymentConsumerImpl(
@@ -29,7 +20,7 @@ class RecurringPaymentConsumerImpl(
     private val buildBatchConsumerService: BuildBatchConsumerService,
     private val paidOrderMessageMapper: PaidOrderMessageMapper,
     private val sendMessageProducer: SendMessageProducer,
-    private val props: RabbitProperties
+    private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
     companion object {
         private const val BATCH_SUMMARY =
@@ -57,13 +48,12 @@ class RecurringPaymentConsumerImpl(
         }
 
         // 2) Обрабатываем батч в сервисе
-        val batchResult = runCatching {
-            buildBatchConsumerService.upsertBatch(payloads, channel)   // List<PaymentRecurrentRegisterData>
-        }
-            .onFailure { ex ->
+        val batchResult =
+            runCatching {
+                buildBatchConsumerService.upsertBatch(payloads, channel) // List<PaymentRecurrentRegisterData>
+            }.onFailure { ex ->
                 logger.error("Ошибка при обработке батча: ${ex.message}", ex)
-            }
-            .getOrNull() ?: return
+            }.getOrNull() ?: return
 
         // 3) Мапим и шлём каждое сообщение с его routingKey
         batchResult.forEach { regData ->
@@ -75,23 +65,23 @@ class RecurringPaymentConsumerImpl(
                         ?.also { routingKey ->
                             logger.info(
                                 "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                        "routingKey=$routingKey"
-                            )
+                                    "routingKey=$routingKey",
+                            ) // отправляем в очередь для внешних систем
                             sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
                                 routingKey,
                                 message,
-                                props.exchangePayment
-                            )
+                                props.exchangePayment,
+                            ) // отправляем в очередь для ordering-service
                             sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
                                 props.routingKeyStatusOrderPaid,
-                                message, props.exchangeOrder
+                                message,
+                                props.exchangeOrder,
                             )
                             logger.info(
                                 "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                        "routingKey=${props.routingKeyStatusOrderPaid}"
+                                    "routingKey=${props.routingKeyStatusOrderPaid}",
                             )
                         }
-
                 }
         }
 
@@ -114,6 +104,4 @@ class RecurringPaymentConsumerImpl(
                 ex,
             )
         }.getOrNull()
-
-
 }

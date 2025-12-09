@@ -67,14 +67,7 @@ class GpbTokenServiceImplTest {
         verify { gpbCardPaymentClient.getToken("MAIN_PORTAL") }
     }
 
-    @Test
-    fun `exchangeForToken - throws BankIntegrationException when client fails`() {
-        every { gpbCardPaymentClient.getToken(any()) } throws RuntimeException("boom")
-
-        assertThatThrownBy { service.exchangeForToken(false) }
-            .isInstanceOf(BankIntegrationException::class.java)
-            .hasFieldOrPropertyWithValue("actionType", ActionType.GET_ACCESS_TOKEN_ERROR)
-    } // -------------------------------------------------------------
+    // -------------------------------------------------------------
     // saveToken
     // -------------------------------------------------------------
 

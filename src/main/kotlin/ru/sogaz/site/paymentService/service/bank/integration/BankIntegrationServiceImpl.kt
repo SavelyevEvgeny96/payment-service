@@ -41,9 +41,9 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
     ): Payment =
-        when {
-            payment.type == PaymentTypeEnum.CARD -> registerCardPayment(payment)
-            payment.type == PaymentTypeEnum.SBP -> registerSBPPayment(payment, headersParams)
+        when (payment.type) {
+            PaymentTypeEnum.CARD -> registerCardPayment(payment)
+            PaymentTypeEnum.SBP -> registerSBPPayment(payment, headersParams)
             else -> throw InnerException(getTraceId(), ERROR_UNKNOWN_PAYMENT_TYPE)
         }
 
