@@ -4,25 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
 import ru.sogaz.site.paymentService.properties.RabbitProperties
-import ru.sogaz.site.paymentService.service.payment.PaymentStatusServiceImpl.Companion.START_LOG_MESSAGE_QUEUE
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.UUID
+import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 
 @Service
 class RecurringPaymentConsumerImpl(
     private val objectMapper: ObjectMapper,
     private val buildBatchConsumerService: BuildBatchConsumerService,
-    private val rabbitTemplate: RabbitTemplate,
+    private val paidOrderMessageMapper: PaidOrderMessageMapper,
+    private val sendMessageProducer: SendMessageProducer,
     private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
     companion object {
@@ -43,9 +40,7 @@ class RecurringPaymentConsumerImpl(
         val started = System.nanoTime()
 
         // 1) Парсим сообщения → оставляем только валидные
-        val payloads: List<TaggedPayload> =
-            messages
-                .mapNotNull(::toTaggedPayload)
+        val payloads = messages.mapNotNull(::toTaggedPayload)
 
         if (payloads.isEmpty()) {
             logger.warn("Нет валидных сообщений для обработки в батче")
@@ -55,14 +50,40 @@ class RecurringPaymentConsumerImpl(
         // 2) Обрабатываем батч в сервисе
         val batchResult =
             runCatching {
-                buildBatchConsumerService.upsertBatch(payloads, channel)
+                buildBatchConsumerService.upsertBatch(payloads, channel) // List<PaymentRecurrentRegisterData>
             }.onFailure { ex ->
                 logger.error("Ошибка при обработке батча: ${ex.message}", ex)
             }.getOrNull() ?: return
 
-        // 3) Отправляем статусы paid/unpaid
-        sendMessagePaid(batchResult.paid)
-        sendMessageUnpaid(batchResult.unpaid)
+        // 3) Мапим и шлём каждое сообщение с его routingKey
+        batchResult.forEach { regData ->
+            paidOrderMessageMapper
+                .toPaidOrderMessage(regData)
+                .let { message ->
+                    regData.payment.order.queueStatusResultName
+                        ?.takeIf { it.isNotBlank() }
+                        ?.also { routingKey ->
+                            logger.info(
+                                "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
+                                    "routingKey=$routingKey",
+                            ) // отправляем в очередь для внешних систем
+                            sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
+                                routingKey,
+                                message,
+                                props.exchangePayment,
+                            ) // отправляем в очередь для ordering-service
+                            sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
+                                props.routingKeyStatusOrderPaid,
+                                message,
+                                props.exchangeOrder,
+                            )
+                            logger.info(
+                                "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
+                                    "routingKey=${props.routingKeyStatusOrderPaid}",
+                            )
+                        }
+                }
+        }
 
         val tookMs = (System.nanoTime() - started) / 1_000_000
         logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
@@ -83,40 +104,4 @@ class RecurringPaymentConsumerImpl(
                 ex,
             )
         }.getOrNull()
-
-    // --- Отправка сообщений о статусе ---
-
-    private fun sendMessagePaid(orderIds: List<UUID?>) {
-        sendOrderStatus(props.routingKeyStatusOrderPaid, orderIds)
-    }
-
-    private fun sendMessageUnpaid(orderIds: List<UUID?>) {
-        sendOrderStatus(props.routingKeyStatusOrderUnpaid, orderIds)
-    }
-
-    private fun sendOrderStatus(
-        routingKey: String,
-        orderIds: List<UUID?>,
-    ) {
-        if (orderIds.isEmpty()) {
-            logger.info("Нет orderId для отправки в очередь routingKey=$routingKey")
-            return
-        }
-        val exchange = props.exchangeOrder
-        val timestamp =
-            OffsetDateTime
-                .now(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        logger.info(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
-        rabbitTemplate.convertAndSend(
-            exchange,
-            routingKey,
-            orderIds,
-        ) { message ->
-            message.messageProperties.headers["author"] = "payService"
-            message.messageProperties.headers["flowCode"] = "ResultPay"
-            message.messageProperties.headers["timestamp"] = timestamp
-            message
-        }
-    }
 }

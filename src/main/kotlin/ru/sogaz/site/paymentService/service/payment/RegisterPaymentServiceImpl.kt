@@ -9,6 +9,7 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
@@ -83,9 +84,13 @@ class RegisterPaymentServiceImpl(
     override fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean,
     ): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
-            .registerPayment(payment, headersParams, recurrent)
+            .registerPayment(payment, headersParams)
+
+    override fun registerInBankRecurrent(payment: Payment): PaymentRecurrentRegisterData =
+        bankIntegrationFactoryService
+            .getInstanceByBank(payment.bank)
+            .registerCardPaymentRecurrentWithDetails(payment)
 }

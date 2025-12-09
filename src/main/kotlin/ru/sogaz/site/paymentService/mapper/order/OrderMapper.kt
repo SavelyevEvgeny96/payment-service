@@ -8,10 +8,10 @@ import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
 import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
-import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.data.PaySbp
-import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.PaidOrderMessage
+import ru.sogaz.site.paymentService.dto.request.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
