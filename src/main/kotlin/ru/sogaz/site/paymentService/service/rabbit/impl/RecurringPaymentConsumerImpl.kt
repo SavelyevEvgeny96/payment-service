@@ -60,28 +60,32 @@ class RecurringPaymentConsumerImpl(
             paidOrderMessageMapper
                 .toPaidOrderMessage(regData)
                 .let { message ->
-                    regData.payment.order.queueStatusResultName
-                        ?.takeIf { it.isNotBlank() }
-                        ?.also { routingKey ->
-                            logger.info(
-                                "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                    "routingKey=$routingKey",
-                            ) // отправляем в очередь для внешних систем
-                            sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
-                                routingKey,
-                                message,
-                                props.exchangePayment,
-                            ) // отправляем в очередь для ordering-service
-                            sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
-                                props.routingKeyStatusOrderPaid,
-                                message,
-                                props.exchangeOrder,
-                            )
-                            logger.info(
-                                "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                    "routingKey=${props.routingKeyStatusOrderPaid}",
-                            )
-                        }
+                    if (message.status?.contains("error") == true) {
+                        regData.payment.order.queueStatusResultName
+                            ?.takeIf { it.isNotBlank() }
+                            ?.also { routingKey ->
+                                logger.info(
+                                    "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
+                                        "routingKey=$routingKey",
+                                ) // отправляем в очередь для внешних систем
+                                sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
+                                    routingKey,
+                                    message,
+                                    props.exchangePayment,
+                                ) // отправляем в очередь для ordering-service
+                                sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
+                                    props.routingKeyStatusOrderPaid,
+                                    message,
+                                    props.exchangeOrder,
+                                )
+                                logger.info(
+                                    "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
+                                        "routingKey=${props.routingKeyStatusOrderPaid}",
+                                )
+                            }
+                    } else {
+                        // success  сделать тогда  когда чеки переедут в ордеринг тогда уберем условие .contains("error")
+                    }
                 }
         }
 

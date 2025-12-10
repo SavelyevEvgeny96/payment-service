@@ -10,15 +10,12 @@ import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.entity.Order
-import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderPayloadMapper
 import ru.sogaz.site.paymentService.mapper.payment.PaymentMapper
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
 import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
-import java.time.LocalDateTime
 
 @Service
 class BuildBatchConsumerServiceImpl(
@@ -32,8 +29,6 @@ class BuildBatchConsumerServiceImpl(
 ) : BuildBatchConsumerService {
     companion object {
         private const val LOG_START = "Старт batch upsertOrders: size=%d"
-        private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
-        private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %s"
     }
 
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
@@ -64,7 +59,9 @@ class BuildBatchConsumerServiceImpl(
         val payment = buildAndSavePayment(order, payload)
 
         // 3) Регистрация в банке + обновление/логирование
-        val registeredPayment = registerAndPersistPayment(payment)
+        val registeredPayment =
+            registerPaymentService
+                .registerInBankRecurrent(payment)
 
         logger.info("Created payment ${registeredPayment.payment.id} for order ${order.id}")
 
@@ -84,34 +81,4 @@ class BuildBatchConsumerServiceImpl(
     ) = order
         .let { paymentMapper.orderToPayment(it, payload) }
         .run(paymentDao::save)
-
-    private fun registerAndPersistPayment(payment: Payment): PaymentRecurrentRegisterData =
-        registerPaymentService
-            .registerInBankRecurrent(payment) // -> PaymentRecurrentRegisterData
-            .let { registered ->
-                val registeredPayment = registered.payment
-
-                if (registeredPayment.paymentBankId.isNullOrBlank()) {
-                    // токена нет -> не трогаем paymentStarted, ставим FAIL
-                    registeredPayment.state = PaymentStatusEnum.FAIL
-
-                    val saved = paymentDao.save(registeredPayment)
-
-                    logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
-
-                    registered.copy(payment = saved)
-                } else {
-                    // токен есть -> обычный поток
-                    registeredPayment.paymentStarted = LocalDateTime.now()
-
-                    val saved = paymentDao.save(registeredPayment)
-
-                    if (saved.state == PaymentStatusEnum.REG) {
-                        logger.info(PAYMENT_RECURRENT_SUCCESS.format(saved.id))
-                    } else {
-                        logger.error(PAYMENT_RECURRENT_FALSE.format(saved.id))
-                    }
-                    registered.copy(payment = saved)
-                }
-            }
 }
