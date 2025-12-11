@@ -32,6 +32,14 @@ class OrderDaoImpl(
             throw BusinessException(CODE_ERROR_GET_STATUS_ORDER, getTraceId())
         }
 
+    override fun getOrderId(uuid: UUID): Order =
+        try {
+            orderRepository.findById(uuid).get()
+        } catch (e: Exception) {
+            logger.error(LOG_ORDER_STATUS_NOT_FOUND, e)
+            throw BusinessException(CODE_ERROR_GET_STATUS_ORDER, getTraceId())
+        }
+
     override fun findById(orderId: UUID): Order? =
         orderRepository
             .findById(orderId)

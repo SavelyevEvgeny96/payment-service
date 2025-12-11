@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mapstruct.factory.Mappers
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
@@ -33,6 +34,9 @@ class OrderServiceTest {
     @MockK
     private lateinit var orderDao: OrderDao
 
+    @MockK
+    private lateinit var paymentDao: PaymentDao
+
     private lateinit var orderMapper: OrderMapper
     private lateinit var orderManualMapper: OrderManualMapper
     private lateinit var orderService: OrderService
@@ -52,6 +56,7 @@ class OrderServiceTest {
             OrderServiceImpl(
                 orderDao = orderDao,
                 orderManualMapper = orderManualMapper,
+                paymentDao = paymentDao,
             )
     }
 
@@ -135,5 +140,6 @@ class OrderServiceTest {
         OrderServiceImpl(
             orderDao = orderDao,
             orderManualMapper = orderManualMapper,
+            paymentDao = paymentDao,
         )
 }
