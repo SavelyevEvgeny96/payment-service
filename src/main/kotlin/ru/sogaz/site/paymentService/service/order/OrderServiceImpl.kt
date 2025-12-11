@@ -90,7 +90,7 @@ class OrderServiceImpl(
             regCard = true,
             skipSendingReceipt = true,
             skipSendingQueue = false,
-            queueStatusResultName = "payment.status.reg.$clientId.created",
+            queueStatusResultName = "order.status.reg.$clientId.created",
             bank = BankEnum.GPB,
         ).run(orderDao::save)
 
