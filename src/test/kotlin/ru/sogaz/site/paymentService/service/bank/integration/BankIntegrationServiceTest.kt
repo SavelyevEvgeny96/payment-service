@@ -18,6 +18,8 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
+import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -90,6 +92,12 @@ class BankIntegrationServiceTest {
     private lateinit var restTemplate: RestTemplate
 
     @MockK
+    private lateinit var orderDao: OrderDao
+
+    @MockK
+    private lateinit var paymentDao: PaymentDao
+
+    @MockK
     private lateinit var gpbCardPaymentClient: GpbCardPaymentClient
 
     @MockK
@@ -143,6 +151,8 @@ class BankIntegrationServiceTest {
                 tokenService,
                 objectMapper,
                 registerCardMapper,
+                orderDao,
+                paymentDao,
             )
 
         // сервис АКБ
