@@ -18,7 +18,7 @@ import ru.sogaz.site.paymentService.service.AuthorizationService
 import ru.sogaz.site.paymentService.service.CardRegistryService
 
 @RestController
-@Tag(name = "Order", description = "Управление заказами")
+@Tag(name = "Card registration", description = "Регистрация карт")
 @Validated
 class CardRegistryController(
     private val cardRegistryService: CardRegistryService,
