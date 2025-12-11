@@ -30,6 +30,7 @@ data class GPBPaymentRequest(
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val src: Src? = null,
     val returnUrl: String? = null,
+    var cardRegistration: Boolean? = null,
 )
 
 data class State(

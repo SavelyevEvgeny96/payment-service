@@ -71,6 +71,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "params", expression = "java(getParams(payment))")
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "recurrent", constant = "false")
+    @Mapping(target = "cardRegistration", source = "payment.order.regCard")
     abstract fun toCardRequest(payment: Payment): GPBPaymentRequest
 
     protected fun getAmount(payment: Payment): Int =

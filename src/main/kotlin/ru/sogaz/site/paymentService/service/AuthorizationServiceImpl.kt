@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.validation
+package ru.sogaz.site.paymentService.service
 
 import com.auth0.jwt.exceptions.JWTDecodeException
 import ru.sogaz.site.jwt.starter.dto.JwtClaims
@@ -9,10 +9,10 @@ import ru.sogaz.site.paymentService.exceptions.ForbiddenBusinessException
 import ru.sogaz.site.paymentService.exceptions.UnauthorizedBusinessException
 import ru.sogaz.site.paymentService.loggerFor
 
-class PermissionValidator(
+class AuthorizationServiceImpl(
     private val clientSystemDao: ClientSystemDao,
     private val jwtService: JwtService,
-) {
+) : AuthorizationService {
     companion object {
         private const val CLIENT_ID = "clientId"
     }
@@ -20,10 +20,10 @@ class PermissionValidator(
     private val logger = loggerFor(javaClass)
 
     @Throws(UnauthorizedBusinessException::class, ForbiddenBusinessException::class)
-    fun checkPermission(
+    override fun checkPermissionByClientId(
         authorizationHeader: String?,
-        errorCode: Int? = null,
-    ): ClientSystem? =
+        errorCode: Int?,
+    ): ClientSystem =
         try {
             jwtService
                 .getClaims(authorizationHeader)
@@ -38,6 +38,5 @@ class PermissionValidator(
         errorCode: Int? = null,
     ) = jwtClaims
         .getClaim<String>(CLIENT_ID)
-        .run(clientSystemDao::findBySystemCode)
-        .also { if (it == null) throw ForbiddenBusinessException(errorCode) }
+        .run(clientSystemDao::findBySystemCode) ?: throw ForbiddenBusinessException(errorCode)
 }

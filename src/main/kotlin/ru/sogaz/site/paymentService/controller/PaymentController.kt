@@ -13,8 +13,8 @@ import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.dto.response.ResponseStatusPay
 import ru.sogaz.site.paymentService.dto.response.UpdatePaymentInvoiceResponse
 import ru.sogaz.site.paymentService.properties.ServiceStatuses.Companion.SUCCESS_STATUS_CODE_UPDATE_PAYMENT_STATUS
+import ru.sogaz.site.paymentService.service.AuthorizationService
 import ru.sogaz.site.paymentService.service.PaymentService
-import ru.sogaz.site.paymentService.validation.PermissionValidator
 import ru.sogaz.siter.models.resonses.Response
 
 /**
@@ -25,7 +25,7 @@ import ru.sogaz.siter.models.resonses.Response
 @Tag(name = "Payment", description = "Работа с платежами")
 class PaymentController(
     private val paymentService: PaymentService,
-    private val permissionValidator: PermissionValidator,
+    private val authorizationService: AuthorizationService,
 ) : WrapResponseController(),
     PaymentStatusV1Api,
     PaymentInvoiceV1Api {
@@ -40,7 +40,7 @@ class PaymentController(
         @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
         @RequestBody updatePaymentInvoiceRequest: UpdatePaymentInvoiceRequest,
     ): Response<UpdatePaymentInvoiceResponse> {
-        permissionValidator.checkPermission(authorization, CODE_ERROR_FORBIDDEN_PAYMENT_INVOICE)
+        authorizationService.checkPermissionByClientId(authorization, CODE_ERROR_FORBIDDEN_PAYMENT_INVOICE)
         return paymentService.updatePaymentInvoice(updatePaymentInvoiceRequest)
     }
 }
