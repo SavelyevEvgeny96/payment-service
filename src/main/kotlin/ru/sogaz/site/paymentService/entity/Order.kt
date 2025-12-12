@@ -54,6 +54,8 @@ data class Order(
     var keyCard: String? = null,
     @Column(name = "save_card")
     var saveCard: Boolean = false,
+    @Column(name = "reg_card")
+    var regCard: Boolean = false,
     @Column(name = "subscription_id")
     var subscriptionId: String = "",
     @Column(name = "client_id")
@@ -77,4 +79,7 @@ data class Order(
 ) {
     @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
     val subOrders: MutableList<SubOrder> = mutableListOf()
+
+    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    val payments: MutableList<Payment> = mutableListOf()
 }

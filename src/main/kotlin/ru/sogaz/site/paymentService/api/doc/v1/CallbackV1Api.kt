@@ -43,7 +43,7 @@ interface CallbackV1Api {
         request: HttpServletRequest,
     ): Response<CallbackResponse>
 
-    @GetMapping("payment/sbp/gpb/state")
+    @PostMapping("payment/sbp/gpb/state")
     fun stateSbpGpbCallback(
         @RequestParam("transactionId") transactionId: String,
         @RequestParam("qrcId") qrcId: String?,

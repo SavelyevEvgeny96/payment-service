@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 
 interface OrderService {
@@ -17,4 +18,14 @@ interface OrderService {
     fun makeOrderByRequest(orderRequest: OrderRequest): Order
 
     fun getOrderStatus(orderId: String): DataGetOrderStatus
+
+    fun createRegestryOrder(
+        unifiedId: String,
+        payQueryParams: PayQueryParams,
+        clientId: String,
+    ): Order
+
+    fun cancelOrder(order: Order)
+
+    fun cancelOrderIfPaymentFail(order: Order)
 }

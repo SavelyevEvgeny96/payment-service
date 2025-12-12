@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.service
 
 import io.mockk.every
+import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
@@ -35,7 +36,6 @@ class ReceiptServiceTest {
         private const val SUCCESS_STATUS = "SUCCESS"
         private const val FAILED_STATUS = "FAILED"
         private const val TEST_CLIENT_EMAIL = "test@example.com"
-        private const val ATOL_SYSTEM = "Atol"
         private const val TEST_POLICY_NUMBER = "POL123"
         private const val TEST_CONTRACT_ID = "CONT123"
         private const val TEST_AMOUNT = "1000.00"
@@ -60,14 +60,15 @@ class ReceiptServiceTest {
     @MockK
     private lateinit var receiptProperty: ReceiptProperties
 
+    @InjectMockKs
     private lateinit var service: ReceiptServiceImpl
+
     private lateinit var validOrder: Order
     private lateinit var validSubOrder: SubOrder
     private lateinit var validPayment: Payment
 
     @BeforeEach
     fun beforeEach() {
-        service = initReceiptService()
         initOrdersTestData()
 
         every { paymentDao.findByPaymentBankId(any()) } returns validPayment
@@ -83,11 +84,12 @@ class ReceiptServiceTest {
 
         service.generateReceipt(validPayment)
 
-        verify(atLeast = 1) { paymentReceiptControllerApi.createPaymentCheck(capture(requestSlot)) }
+        verify(exactly = 1) { paymentReceiptControllerApi.createPaymentCheck(capture(requestSlot)) }
         requestSlot.captured
             .run(::assertThat)
             .returns(TEST_CLIENT_EMAIL) { it.client.email }
-            .returns(ATOL_SYSTEM) { it.system }
+            .returns(validPayment.depersonalization) { it.depersonalization }
+            .returns(TEST_AMOUNT) { it.total.toString() }
     }
 
     @Test
@@ -144,13 +146,4 @@ class ReceiptServiceTest {
         .code(code)
         .traceId("222")
         .data(PaymentReceiptCreateResponse().state("222").externalId("222"))
-
-    private fun initReceiptService() =
-        ReceiptServiceImpl(
-            paymentDao = paymentDao,
-            subOrderDao = subOrderDao,
-            chequeSentDao = chequeSentDao,
-            operationHistoryDao = operationHistoryDao,
-            paymentReceiptControllerApi = paymentReceiptControllerApi,
-        )
 }

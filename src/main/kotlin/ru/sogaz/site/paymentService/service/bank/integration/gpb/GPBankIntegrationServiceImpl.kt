@@ -20,7 +20,6 @@ import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
-import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBStatusSBPRequest
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
@@ -168,37 +167,12 @@ class GPBankIntegrationServiceImpl(
     override fun registerSBPPayment(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-    ): Payment =
-        payment
-            .run(::buildPaymentSBPRequest)
-            .run { postForSBPPaymentData(this, headersParams) }
-            .run { payment.fillFromResponse(this) }
-
-    private fun buildPaymentSBPRequest(payment: Payment): GPBSBPPaymentRequest =
-        buildPaymentSBPRequest(payment.getAmountData(), payment.v4Description())
-
-    private fun buildPaymentSBPRequest(
-        amountData: AmountData,
-        description: String,
-    ) = GPBSBPPaymentRequest(
-        amount = amountData.getAmount(),
-        account = apiConfigProperties.paymentAccount,
-        merchantId = apiConfigProperties.merchantIdSbpGpb,
-        templateVersion = TEMPLATE_VERSION,
-        qrTtl = QR_TTL,
-        callbackMerchantNotifications = apiConfigProperties.callbackUrlSbp,
-        qrcType = QR_TYPE,
-        paymentPurpose = description,
-        currency = amountData.currency,
-    )
-
-    private fun postForSBPPaymentData(
-        request: GPBSBPPaymentRequest,
-        headersParams: GpbSbpHeadersParams?,
-    ): GazpromSBPPaymentResponse =
-        headersParams
-            .run(::sbpHeaders)
-            .run { gpbSbpPaymentClient.startPayment(this, request) }
+    ): Payment {
+        val sbpRequest = gpBPaymentRequestMapper.toSbpRequest(payment, apiConfigProperties)
+        val sbpHeaders = sbpHeaders(headersParams)
+        val response = gpbSbpPaymentClient.startPayment(sbpHeaders, sbpRequest)
+        return payment.fillFromResponse(response)
+    }
 
     private fun sbpHeaders(headersParams: GpbSbpHeadersParams?) =
         HttpHeaders().apply {
