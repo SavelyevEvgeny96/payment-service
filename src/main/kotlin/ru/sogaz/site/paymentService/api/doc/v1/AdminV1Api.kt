@@ -29,7 +29,8 @@ interface AdminV1Api {
         Parameter(
             name = "paymentStatus",
             description = "Статус после автооплаты",
-            examples = [ExampleObject("PERFORMED"), ExampleObject("ERROR"), ExampleObject("DRAFT")],
+            example = "PERFORMED",
+            examples = [ExampleObject(value = "PERFORMED"), ExampleObject(value = "ERROR"), ExampleObject(value = "DRAFT")],
         ),
     )
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по СБП", useReturnTypeSchema = false)

@@ -37,9 +37,7 @@ class ReceiptServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
-        const val ITEM_NAME_PREFIX = "Страховая премия"
-        const val POLICY_NUMBER_PREFIX = " по страховому полису № "
-        const val CONTRACT_ID_PREFIX = " по страховому договору № "
+        private const val RECEIPT_CONTRACT_NUMBER = "Страховая премия по договору №"
         const val LOG_RECEIPT_SUCCESS = "Чек успешно сгенерирован для заказа %s. TraceId: %s"
         const val LOG_RECEIPT_FAILED = "Ошибка при генерации чека. TraceId: %s"
         const val LOG_RECEIPT_API_ERROR = "Ошибка API при генерации чека. Status: %s. TraceId: %s"
@@ -134,16 +132,7 @@ class ReceiptServiceImpl(
         vat = VatRequest().type("none")
     }
 
-    private fun buildItemName(subOrder: SubOrder): String =
-        buildString {
-            append(ITEM_NAME_PREFIX)
-            if (!subOrder.policyNumber.isNullOrEmpty()) {
-                append(POLICY_NUMBER_PREFIX.format(subOrder.policyNumber))
-            }
-            if (!subOrder.contractId.isNullOrEmpty()) {
-                append(CONTRACT_ID_PREFIX.format(subOrder.contractId))
-            }
-        }
+    private fun buildItemName(subOrder: SubOrder): String = "$RECEIPT_CONTRACT_NUMBER${subOrder.contractNumber}"
 
     private fun handleReceiptError(
         order: Order,
