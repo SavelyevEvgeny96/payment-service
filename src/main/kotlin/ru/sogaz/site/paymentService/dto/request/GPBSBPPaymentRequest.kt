@@ -12,4 +12,5 @@ data class GPBSBPPaymentRequest(
     val paymentPurpose: String?,
     val callbackMerchantNotifications: String,
     val qrTtl: String,
+    val subscriptionPurpose: String?,
 )
