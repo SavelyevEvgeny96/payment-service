@@ -2,11 +2,14 @@ package ru.sogaz.site.paymentService.mapper.payment
 
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
+import org.mapstruct.Named
 import org.springframework.beans.factory.annotation.Autowired
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.GPBSBPPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.State
 import ru.sogaz.site.paymentService.dto.request.ThreeDSTwo
 import ru.sogaz.site.paymentService.entity.Payment
+import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationGenerateDescriptionServiceImpl
@@ -27,6 +30,8 @@ abstract class GPBPaymentRequestMapper {
         private const val URL_ONLY = "url_only"
         private const val IN_PROGRESS_STATE = "no"
 
+        private const val SUBSCRIPTION_PURPOSE_PATTERN = "Подписка по договору страхования № %s"
+
         @JvmField
         val map = mapOf("card_on_file" to "MIT")
 
@@ -38,6 +43,25 @@ abstract class GPBPaymentRequestMapper {
 
         @JvmField
         val cardPayment3ds2 = ThreeDSTwo(true)
+
+        @JvmStatic
+        @Named("getPaymentAmount")
+        protected fun getPaymentAmount(payment: Payment): Int =
+            payment.order
+                .premiumAmount
+                .toBigDecimal()
+                .movePointRight(2)
+                .intValueExact()
+
+        @JvmStatic
+        @Named("getSubscriptionPurpose")
+        protected fun getSubscriptionPurpose(payment: Payment): String {
+            val mainSubOrder = getMainSubOrder(payment)
+            return SUBSCRIPTION_PURPOSE_PATTERN.format(mainSubOrder?.contractNumber)
+        }
+
+        @JvmStatic
+        private fun getMainSubOrder(payment: Payment): SubOrder? = payment.order.subOrders.findLast(SubOrder::mainContractCheck)
     }
 
     @Mapping(target = "merchantId", expression = "java(getMerchantId(payment))")
@@ -70,6 +94,26 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "recurrent", constant = "false")
     abstract fun toCardRequest(payment: Payment): GPBPaymentRequest
+
+    @Mapping(target = "currency", constant = "RUB")
+    @Mapping(target = "templateVersion", constant = "01")
+    @Mapping(target = "qrTtl", constant = "60")
+    @Mapping(target = "qrcType", constant = "02")
+    @Mapping(target = "account", source = "properties.paymentAccount")
+    @Mapping(target = "merchantId", source = "properties.merchantIdSbpGpb")
+    @Mapping(target = "callbackMerchantNotifications", source = "properties.callbackUrlSbp")
+    @Mapping(target = "paymentPurpose", expression = "java(getDescription(payment))")
+    @Mapping(target = "amount", source = "payment", qualifiedByName = ["getPaymentAmount"])
+    @Mapping(
+        target = "subscriptionPurpose",
+        conditionExpression = "java(payment.getSaveCard())",
+        source = "payment",
+        qualifiedByName = ["getSubscriptionPurpose"],
+    )
+    abstract fun toSbpRequest(
+        payment: Payment,
+        properties: ApiConfigProperties,
+    ): GPBSBPPaymentRequest
 
     protected fun getAmount(payment: Payment): Int =
         payment.order
