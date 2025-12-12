@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
@@ -57,6 +58,7 @@ class GPBankIntegrationServiceImpl(
     private val registerCardMapper: RegisterCardMapper,
     private val orderDao: OrderDao,
     private val paymentDao: PaymentDao,
+    private val waitingPaymentDao: WaitingPaymentDao,
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val TEMPLATE_VERSION = "01"
@@ -125,7 +127,9 @@ class GPBankIntegrationServiceImpl(
             }
         // 3) Общий save для платежа
         paymentDao.save(payment)
-        // 4) Возвращаем собранный результат
+        // 4)сохраняем в таблицу для фоновой задачи по проверке статусов платежа если статус ошибочный
+        waitingPaymentDao.saveWaitingForPayment(payment)
+        // 5) Возвращаем собранный результат
         return result
     }
 
@@ -156,6 +160,7 @@ class GPBankIntegrationServiceImpl(
         gpbSbpPaymentClient.getQrImage(
             GPBQRImageRequest(payment.qrcId!!),
         )
+
 // --------------------------------------------------------------------------------------------
 // SBP PAYMENT
 // --------------------------------------------------------------------------------------------

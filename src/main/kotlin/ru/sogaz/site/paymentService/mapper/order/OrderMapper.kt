@@ -64,6 +64,7 @@ interface OrderMapper {
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
     @Mapping(target = "keyCard", source = "cardDetails.cardId")
+    @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
@@ -90,4 +91,12 @@ interface OrderMapper {
     fun fromRequestDto(orderRequest: OrderRequest): Order
 
     fun fromRequestDto(subOrderRequest: SubOrderRequest): SubOrder
+
+    @Named("statusIfRecurrent")
+    fun statusIfRecurrent(order: Order): String? =
+        if (order.recurrent == true) {
+            order.status.name.lowercase(java.util.Locale.ROOT)
+        } else {
+            null
+        }
 }
