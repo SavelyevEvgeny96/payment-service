@@ -20,6 +20,7 @@ import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -98,6 +99,9 @@ class BankIntegrationServiceTest {
     private lateinit var paymentDao: PaymentDao
 
     @MockK
+    private lateinit var waitingPaymentDao: WaitingPaymentDao
+
+    @MockK
     private lateinit var gpbCardPaymentClient: GpbCardPaymentClient
 
     @MockK
@@ -153,6 +157,7 @@ class BankIntegrationServiceTest {
                 registerCardMapper,
                 orderDao,
                 paymentDao,
+                waitingPaymentDao,
             )
 
         // сервис АКБ

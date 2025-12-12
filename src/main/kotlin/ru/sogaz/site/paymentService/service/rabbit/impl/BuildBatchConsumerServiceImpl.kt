@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
-import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
@@ -24,7 +23,6 @@ class BuildBatchConsumerServiceImpl(
     private val orderService: OrderService,
     private val paymentMapper: PaymentMapper,
     private val registerPaymentService: RegisterPaymentService,
-    private val waitingPaymentDao: WaitingPaymentDao,
     private val orderDao: OrderDao,
 ) : BuildBatchConsumerService {
     companion object {
