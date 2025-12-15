@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
-import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo

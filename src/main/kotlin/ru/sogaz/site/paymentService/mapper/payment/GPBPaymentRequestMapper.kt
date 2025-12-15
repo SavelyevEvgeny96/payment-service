@@ -89,7 +89,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "state", expression = "java(cardPaymentState)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
     @Mapping(target = "openApiMirPaySupported", constant = "true")
-    @Mapping(target = "addCardAllowed", expression = "java(payment.getOrder().getSaveCard())")
+    @Mapping(target = "addCardAllowed", expression = "java(getCardAllowed(payment))")
     @Mapping(target = "backUrlS", expression = "java(backUrlS(payment))")
     @Mapping(target = "backUrlF", expression = "java(backUrlF(payment))")
     @Mapping(target = "params", expression = "java(getParams(payment))")
@@ -117,6 +117,13 @@ abstract class GPBPaymentRequestMapper {
         payment: Payment,
         properties: ApiConfigProperties,
     ): GPBSBPPaymentRequest
+
+    protected fun getCardAllowed(payment: Payment): Boolean? {
+        if (!payment.order.regCard) {
+            return payment.order.saveCard
+        }
+        return null
+    }
 
     protected fun getAmount(payment: Payment): Int =
         payment.order
