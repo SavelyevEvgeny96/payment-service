@@ -21,7 +21,6 @@ import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
 class CardRegistryServiceImplTest {
-
     @MockK
     private lateinit var orderService: OrderService
 
@@ -43,7 +42,7 @@ class CardRegistryServiceImplTest {
             orderService.createRegestryOrder(
                 any(String::class),
                 any(PayQueryParams::class),
-                any(String::class)
+                any(String::class),
             )
         }.returns(order)
         justRun { orderService.cancelOrderIfPaymentFail(any(Order::class)) }
