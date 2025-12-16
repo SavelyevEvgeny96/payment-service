@@ -16,6 +16,7 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 )
 interface BankPaymentDetailsMapper {
     @Mapping(target = "status", source = "result.status", defaultValue = "WAIT")
+    @Mapping(target = "extendedCode", source = "result.extendedCode")
     @Mapping(target = "cardDetails", source = "gpbCardDetails")
     fun convert(response: GpbCardPaymentStatusResponse): BankPaymentDetails
 
