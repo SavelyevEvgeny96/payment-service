@@ -37,6 +37,10 @@ interface OrderMapper {
             dateTime
                 .atZone(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+        @JvmStatic
+        @Named("statusIfRecurrent")
+        fun statusIfRecurrent(order: Order): String? = if (order.recurrent == true) order.status.value else null
     }
 
     @Mapping(target = "id", ignore = true)
@@ -91,12 +95,4 @@ interface OrderMapper {
     fun fromRequestDto(orderRequest: OrderRequest): Order
 
     fun fromRequestDto(subOrderRequest: SubOrderRequest): SubOrder
-
-    @Named("statusIfRecurrent")
-    fun statusIfRecurrent(order: Order): String? =
-        if (order.recurrent == true) {
-            order.status.toString().lowercase(java.util.Locale.ROOT)
-        } else {
-            null
-        }
 }
