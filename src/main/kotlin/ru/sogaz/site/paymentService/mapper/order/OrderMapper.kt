@@ -95,7 +95,7 @@ interface OrderMapper {
     @Named("statusIfRecurrent")
     fun statusIfRecurrent(order: Order): String? =
         if (order.recurrent == true) {
-            order.status.name.lowercase(java.util.Locale.ROOT)
+            order.status.toString().lowercase(java.util.Locale.ROOT)
         } else {
             null
         }
