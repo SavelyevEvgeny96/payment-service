@@ -1,12 +1,14 @@
 package ru.sogaz.site.paymentService.enums
 
-enum class OrderStatus {
-    NEW,
-    UPDATE,
-    OVERDUE,
-    MARKEDDEL,
-    SUCCESS,
-    CANCELED,
+enum class OrderStatus(
+    val value: String,
+) {
+    NEW("new"),
+    UPDATE("update"),
+    OVERDUE("overdue"),
+    MARKEDDEL("markeddel"),
+    SUCCESS("success"),
+    CANCELED("canceled"),
     ;
 
     fun isPaidFor() = this == SUCCESS
