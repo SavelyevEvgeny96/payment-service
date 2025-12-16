@@ -30,7 +30,12 @@ class CardRegistryController(
     )
     @Parameters(
         Parameter(name = "unifiedId", description = "Идентификатор единого профиля клиента", required = true),
-        Parameter(name = "urlToReturn", description = "Ссылка для редиректа после успешной оплаты", example = "http://www.sogaz.ru", required = true),
+        Parameter(
+            name = "urlToReturn",
+            description = "Ссылка для редиректа после успешной оплаты",
+            example = "http://www.sogaz.ru",
+            required = true,
+        ),
         Parameter(name = "urlToReturnS", description = "Ссылка для редиректа после успешной оплаты", required = true),
         Parameter(name = "urlToReturnF", description = "Ссылка для редиректа после неуспешной оплаты", required = true),
         Parameter(name = "depersonalization", description = "Флаг необходимости анонимизированной оплаты", example = "true"),
@@ -41,6 +46,7 @@ class CardRegistryController(
         @PathVariable unifiedId: String,
         @Parameter(hidden = true)
         payQueryParams: PayQueryParams,
+        @Parameter(hidden = true)
         @RequestHeader(HttpHeaders.AUTHORIZATION, required = true) token: String,
     ): RedirectView {
         // проверка JWT токена: в gwt
