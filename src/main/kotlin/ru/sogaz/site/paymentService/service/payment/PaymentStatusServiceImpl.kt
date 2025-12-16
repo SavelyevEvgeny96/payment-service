@@ -144,9 +144,8 @@ class PaymentStatusServiceImpl(
             return
         }
         order.apply { status = OrderStatus.SUCCESS }
-
-        receiptService.generateReceipt(payment)
         sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
+        receiptService.generateReceipt(payment)
         orderDao.save(order)
         operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
@@ -172,7 +171,7 @@ class PaymentStatusServiceImpl(
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order) ?: emptyList()
             val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
 
-            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
+            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails)
             requestBody.bank = payment.bank?.name
             val exchange = props.exchangePayment
             val routingKey =

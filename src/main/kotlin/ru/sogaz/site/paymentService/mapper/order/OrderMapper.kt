@@ -6,7 +6,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
-import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
+import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
@@ -17,6 +17,7 @@ import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.OrderStatus
+import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import java.net.URI
 import java.time.Instant
 import java.time.LocalDateTime
@@ -37,6 +38,13 @@ interface OrderMapper {
             dateTime
                 .atZone(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+        @JvmStatic
+        @Named("extendedCodeToErrorText")
+        fun extendedCodeToErrorText(code: String?): String? {
+            if (code.isNullOrBlank() || code == "OK") return null
+            return PaymentExtendedCodeMessage.fromCode(code)
+        }
 
         @JvmStatic
         @Named("statusIfRecurrent")
@@ -67,12 +75,17 @@ interface OrderMapper {
         qualifiedByName = ["localDateTimeToFormattedString"],
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
-    @Mapping(target = "keyCard", source = "cardDetails.cardId")
+    @Mapping(target = "keyCard", source = "bankPaymentDetails.cardDetails.cardId")
     @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
+    @Mapping(
+        target = "errorText",
+        source = "bankPaymentDetails.extendedCode",
+        qualifiedByName = ["extendedCodeToErrorText"],
+    )
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
-        cardDetails: ClientCardDetails?,
+        bankPaymentDetails: BankPaymentDetails?,
     ): PaidOrderMessage
 
     @Mapping(target = "orderId", source = "order.id")

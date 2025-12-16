@@ -8,4 +8,6 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 data class GpbResult(
     @param:JsonProperty("status")
     val status: StatusEnum,
+    @param:JsonProperty("extendedCode")
+    val extendedCode: String?,
 )
