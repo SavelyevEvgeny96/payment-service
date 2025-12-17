@@ -46,6 +46,7 @@ class CardRegistryController(
         @PathVariable unifiedId: String,
         @Parameter(hidden = true)
         payQueryParams: PayQueryParams,
+        @Parameter(hidden = true)
         @RequestHeader(HttpHeaders.AUTHORIZATION, required = true) token: String,
     ): RedirectView {
         // проверка JWT токена: в gwt

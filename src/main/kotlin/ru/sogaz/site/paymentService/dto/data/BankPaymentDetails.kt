@@ -7,4 +7,5 @@ data class BankPaymentDetails(
     val status: PaymentStatusEnum,
     val extendedCode: String?,
     val cardDetails: ClientCardDetails? = null,
+    val extendedCode: String?,
 )
