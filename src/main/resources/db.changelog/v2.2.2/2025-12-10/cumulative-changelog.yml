@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-insert-client-system-table
+      author: Blazhin Max
+      changes:
+        - tagDatabase:
+            tag: backend-006-insert-client-system-table
+  - include:
+      file: db.changelog/v2.2.2/2025-12-10/DATA/insert_client_system.sql
+
