@@ -125,14 +125,19 @@ class PaymentStatusServiceImpl(
         bankPaymentDetails: BankPaymentDetails,
     ) {
         when {
-            payment.isSuccess() -> handleSuccessPayment(payment, bankPaymentDetails)
+            payment.isSuccess() || payment.isFail() && payment.order.recurrent == true ->
+                handleSuccessOrFailRecurrentPayment(
+                    payment,
+                    bankPaymentDetails,
+                )
+
             payment.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
             else -> deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
         }
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    private fun handleSuccessPayment(
+    private fun handleSuccessOrFailRecurrentPayment(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
@@ -150,9 +155,12 @@ class PaymentStatusServiceImpl(
             logger.warn("${ORDER_ALREADY_PAID_WARN_MESSAGE.format(order.id, payment.bank)} ${payment.paymentBankId}")
             return
         }
-        order.apply { status = OrderStatus.SUCCESS }
-
-
+        if (payment.isFail()) {
+            order.apply { status = OrderStatus.CANCELED }
+        } else {
+            order.apply { status = OrderStatus.SUCCESS }
+        }
+        sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
         if (order.skipSendingQueue != true) {
             when (order.regCard) {
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
@@ -161,7 +169,6 @@ class PaymentStatusServiceImpl(
         }
 
         order.skipSendingReceipt?.ifFalse { receiptService.generateReceipt(payment) }
-
         orderDao.save(order)
         operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
@@ -187,7 +194,7 @@ class PaymentStatusServiceImpl(
             val subOrders = subOrderDao.getAllSubOrderListByOrderId(order) ?: emptyList()
             val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
 
-            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails.cardDetails)
+            val requestBody = orderMapper.toPaidOrderMessage(order, subOrderPayloads, bankPaymentDetails)
             requestBody.bank = payment.bank?.name
             val exchange = props.exchangePayment
             val routingKey =
