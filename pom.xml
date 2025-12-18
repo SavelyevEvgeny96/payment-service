@@ -118,6 +118,11 @@
             <artifactId>jwt-starter</artifactId>
             <version>1.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>ru.sogaz.site</groupId>
+            <artifactId>monitoring-starter</artifactId>
+            <version>1.0.1</version>
+        </dependency>
 
         <!-- Shedlock -->
         <dependency>

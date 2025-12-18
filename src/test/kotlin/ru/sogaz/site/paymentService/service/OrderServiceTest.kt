@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mapstruct.factory.Mappers
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
@@ -20,6 +19,7 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.mapper.order.OrderManualMapper
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.service.order.OrderServiceImpl
+import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalizeServiceImpl
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -34,12 +34,10 @@ class OrderServiceTest {
     @MockK
     private lateinit var orderDao: OrderDao
 
-    @MockK
-    private lateinit var paymentDao: PaymentDao
-
     private lateinit var orderMapper: OrderMapper
     private lateinit var orderManualMapper: OrderManualMapper
     private lateinit var orderService: OrderService
+    private lateinit var queueStatusResultNameNormalizeService: QueueStatusResultNameNormalizeService
 
     @BeforeEach
     fun beforeEach() {
@@ -51,12 +49,13 @@ class OrderServiceTest {
         orderMapper = Mappers.getMapper(OrderMapper::class.java)
         orderManualMapper = OrderManualMapper(orderMapper)
 
+        queueStatusResultNameNormalizeService = QueueStatusResultNameNormalizeServiceImpl()
         // Сервис с внедренным OrderManualMapper
         orderService =
             OrderServiceImpl(
                 orderDao = orderDao,
                 orderManualMapper = orderManualMapper,
-                paymentDao = paymentDao,
+                queueStatusResultNameNormalizeService = queueStatusResultNameNormalizeService,
             )
     }
 
@@ -140,6 +139,6 @@ class OrderServiceTest {
         OrderServiceImpl(
             orderDao = orderDao,
             orderManualMapper = orderManualMapper,
-            paymentDao = paymentDao,
+            queueStatusResultNameNormalizeService = queueStatusResultNameNormalizeService,
         )
 }

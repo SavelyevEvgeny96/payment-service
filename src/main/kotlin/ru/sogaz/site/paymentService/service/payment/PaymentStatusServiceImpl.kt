@@ -152,7 +152,6 @@ class PaymentStatusServiceImpl(
         }
         order.apply { status = OrderStatus.SUCCESS }
 
-
         if (order.skipSendingQueue != true) {
             when (order.regCard) {
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
