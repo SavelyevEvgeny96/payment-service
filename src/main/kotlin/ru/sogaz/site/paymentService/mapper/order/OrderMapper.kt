@@ -6,7 +6,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
-import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
+import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
@@ -67,12 +67,13 @@ interface OrderMapper {
         qualifiedByName = ["localDateTimeToFormattedString"],
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
-    @Mapping(target = "keyCard", source = "cardDetails.cardId")
+    @Mapping(target = "keyCard", source = "bankPaymentDetails.cardDetails.cardId")
     @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
+    @Mapping(target = "errorText", source = "bankPaymentDetails.extendedCode")
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
-        cardDetails: ClientCardDetails?,
+        bankPaymentDetails: BankPaymentDetails?,
     ): PaidOrderMessage
 
     @Mapping(target = "orderId", source = "order.id")
