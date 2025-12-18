@@ -1,10 +1,10 @@
 package ru.sogaz.site.paymentService.service.order
 
-import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
 
-@Service
-class QueueStatusResultNameNormalizeServiceImpl : QueueStatusResultNameNormalizeService {
+class QueueStatusResultNameNormalizeServiceImpl(
+    private val regex: Regex,
+) : QueueStatusResultNameNormalizeService {
     companion object {
         const val PAYMENT_STATUS_PATTERN = "payment.status.%s.created"
         const val ORDER_STATUS_PATTERN = "order.status.reg.%s.created"
@@ -18,7 +18,7 @@ class QueueStatusResultNameNormalizeServiceImpl : QueueStatusResultNameNormalize
             return null
         }
 
-        val normalizedString = clientId.replace(Regex("[^A-Za-zА-Яа-яЁё0-9]"), ".")
+        val normalizedString = clientId.replace(regex, ".")
 
         return String.format(PAYMENT_STATUS_PATTERN, normalizedString)
     }
