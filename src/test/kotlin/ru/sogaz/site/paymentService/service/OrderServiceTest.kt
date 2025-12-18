@@ -19,7 +19,6 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.mapper.order.OrderManualMapper
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.service.order.OrderServiceImpl
-import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalizeServiceImpl
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -34,10 +33,12 @@ class OrderServiceTest {
     @MockK
     private lateinit var orderDao: OrderDao
 
+    @MockK
+    private lateinit var queueStatusResultNameNormalizeService: QueueStatusResultNameNormalizeService
+
     private lateinit var orderMapper: OrderMapper
     private lateinit var orderManualMapper: OrderManualMapper
     private lateinit var orderService: OrderService
-    private lateinit var queueStatusResultNameNormalizeService: QueueStatusResultNameNormalizeService
 
     @BeforeEach
     fun beforeEach() {
@@ -49,7 +50,7 @@ class OrderServiceTest {
         orderMapper = Mappers.getMapper(OrderMapper::class.java)
         orderManualMapper = OrderManualMapper(orderMapper)
 
-        queueStatusResultNameNormalizeService = QueueStatusResultNameNormalizeServiceImpl()
+//        queueStatusResultNameNormalizeService = QueueStatusResultNameNormalizeServiceImpl()
         // Сервис с внедренным OrderManualMapper
         orderService =
             OrderServiceImpl(
@@ -111,6 +112,8 @@ class OrderServiceTest {
                 urlToDecline = "https://decline",
                 clientId = "CLIENT-1",
             )
+
+        every { queueStatusResultNameNormalizeService.buildQueueStatusResultName(any(), any()) }.returns("CLIENT.1")
 
         // act
         val order = orderService.makeOrderByRequest(orderReq)

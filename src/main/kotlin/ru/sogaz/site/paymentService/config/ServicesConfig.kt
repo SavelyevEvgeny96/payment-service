@@ -7,7 +7,6 @@ import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalize
 
 @Configuration
 class ServicesConfig {
-
     @Bean
     fun queueStatusResultNameNormalizeService(): QueueStatusResultNameNormalizeService {
         val regex = Regex("[^A-Za-zА-Яа-яЁё0-9]")
