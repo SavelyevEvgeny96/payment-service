@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.service.payment
 
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
-import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
@@ -126,10 +125,11 @@ class PaymentStatusServiceImpl(
         bankPaymentDetails: BankPaymentDetails,
     ) {
         when {
-            payment.isSuccess() || payment.isFail() && payment.order.recurrent == true -> handleSuccessOrFailRecurrentPayment(
-                payment,
-                bankPaymentDetails
-            )
+            payment.isSuccess() || payment.isFail() && payment.order.recurrent == true ->
+                handleSuccessOrFailRecurrentPayment(
+                    payment,
+                    bankPaymentDetails,
+                )
 
             payment.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
             else -> deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)

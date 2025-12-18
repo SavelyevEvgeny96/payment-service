@@ -69,8 +69,8 @@ data class Payment(
         when (state) {
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
-            PaymentStatusEnum.CALLBACK
-                -> true
+            PaymentStatusEnum.CALLBACK,
+            -> true
 
             else -> false
         }
@@ -78,5 +78,6 @@ data class Payment(
     fun isClosed(): Boolean = isInProcess().not() && isSuccess().not()
 
     fun isSuccess(): Boolean = state == PaymentStatusEnum.SUCCESS
+
     fun isFail(): Boolean = state == PaymentStatusEnum.FAIL
 }

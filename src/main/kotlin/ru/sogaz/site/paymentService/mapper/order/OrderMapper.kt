@@ -17,7 +17,6 @@ import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.OrderStatus
-import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import java.net.URI
 import java.time.Instant
 import java.time.LocalDateTime
@@ -38,13 +37,6 @@ interface OrderMapper {
             dateTime
                 .atZone(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-        @JvmStatic
-        @Named("extendedCodeToErrorText")
-        fun extendedCodeToErrorText(code: String?): String? {
-            if (code.isNullOrBlank() || code == "OK") return null
-            return PaymentExtendedCodeMessage.fromCode(code)
-        }
 
         @JvmStatic
         @Named("statusIfRecurrent")
@@ -77,11 +69,7 @@ interface OrderMapper {
     @Mapping(target = "subOrders", source = "subOrderPayloads")
     @Mapping(target = "keyCard", source = "bankPaymentDetails.cardDetails.cardId")
     @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
-    @Mapping(
-        target = "errorText",
-        source = "bankPaymentDetails.extendedCode",
-        qualifiedByName = ["extendedCodeToErrorText"],
-    )
+    @Mapping(target = "errorText", source = "bankPaymentDetails.extendedCode")
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,

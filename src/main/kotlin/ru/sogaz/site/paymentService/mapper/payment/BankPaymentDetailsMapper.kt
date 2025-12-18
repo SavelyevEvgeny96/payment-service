@@ -14,13 +14,12 @@ import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 @Mapper(
     componentModel = "spring",
     uses = [CardDetailsMapper::class, PaymentStatusMapper::class],
-    imports = [PaymentStatusEnum::class, PaymentExtendedCodeMessage::class],
+    imports = [PaymentStatusEnum::class],
 )
 interface BankPaymentDetailsMapper {
     @Mapping(target = "status", source = "result.status", defaultValue = "WAIT")
     @Mapping(target = "extendedCode", source = "result.extendedCode", qualifiedByName = ["mapExtendedCode"])
     @Mapping(target = "cardDetails", source = "gpbCardDetails")
-    @Mapping(target = "extendedCode", source = "result.extendedCode")
     fun convert(response: GpbCardPaymentStatusResponse): BankPaymentDetails
 
     fun convert(result: GpbQrResult?): BankPaymentDetails
@@ -33,6 +32,9 @@ interface BankPaymentDetailsMapper {
     companion object {
         @JvmStatic
         @Named("mapExtendedCode")
-        fun mapExtendedCode(code: String?): String? = PaymentExtendedCodeMessage.fromCode(code)
+        fun mapExtendedCode(code: String?): String? {
+            if (code.isNullOrBlank() || code == "OK") return null
+            return PaymentExtendedCodeMessage.fromCode(code)
+        }
     }
 }

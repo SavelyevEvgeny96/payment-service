@@ -6,6 +6,5 @@ data class BankPaymentDetails(
     val id: String,
     val status: PaymentStatusEnum,
     val extendedCode: String?,
-    val cardDetails: ClientCardDetails? = null
-
+    val cardDetails: ClientCardDetails? = null,
 )
