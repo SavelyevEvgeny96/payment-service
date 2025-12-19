@@ -8,10 +8,10 @@ import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
 import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
-import ru.sogaz.site.paymentService.dto.data.PaidOrderMessage
 import ru.sogaz.site.paymentService.dto.data.PaySbp
-import ru.sogaz.site.paymentService.dto.data.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.PaidOrderMessage
+import ru.sogaz.site.paymentService.dto.request.SubOrderPayload
 import ru.sogaz.site.paymentService.dto.request.SubOrderRequest
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
 import ru.sogaz.site.paymentService.entity.Order
@@ -64,6 +64,7 @@ interface OrderMapper {
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
     @Mapping(target = "keyCard", source = "cardDetails.cardId")
+    @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
@@ -90,4 +91,12 @@ interface OrderMapper {
     fun fromRequestDto(orderRequest: OrderRequest): Order
 
     fun fromRequestDto(subOrderRequest: SubOrderRequest): SubOrder
+
+    @Named("statusIfRecurrent")
+    fun statusIfRecurrent(order: Order): String? =
+        if (order.recurrent == true) {
+            order.status.name.lowercase(java.util.Locale.ROOT)
+        } else {
+            null
+        }
 }

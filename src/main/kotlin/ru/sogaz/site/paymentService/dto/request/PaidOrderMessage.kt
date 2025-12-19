@@ -1,8 +1,7 @@
-package ru.sogaz.site.paymentService.dto.data
+package ru.sogaz.site.paymentService.dto.request
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import java.io.Serializable
-import java.time.Instant
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class PaidOrderMessage(
@@ -16,8 +15,10 @@ data class PaidOrderMessage(
     val paymentType: String?,
     val maskedPan: String?,
     val paymentSystem: String?,
+    val status: String?,
     val keyCard: String?,
     var bank: String?,
+    val errorText: String?,
 ) : Serializable
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -30,6 +31,6 @@ data class SubOrderPayload(
     val typeInsurance: String?,
     val premiumAmount: String?,
     val channel: String?,
-    val policyDate: Instant?,
-    val contractDate: Instant?,
+    val policyDate: String?,
+    val contractDate: String?,
 ) : Serializable

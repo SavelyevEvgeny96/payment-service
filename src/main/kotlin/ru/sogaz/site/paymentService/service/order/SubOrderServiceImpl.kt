@@ -7,6 +7,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors.C
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.SubOrderDao
 import ru.sogaz.site.paymentService.dto.request.UpdatePaymentInvoiceRequest
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.SubOrderMapper
@@ -22,6 +23,7 @@ class SubOrderServiceImpl(
         private const val NON_CROSS_SELL_SUB_ORDER_LIST_SIZE = 1
         const val LOG_UPDATE_SUB_ORDER_PAYMENT_INVOICE = "Начало обновления информации о заказе с orderId = "
         const val LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE = "Успешное обновление информации о заказе с orderId = "
+        const val DOC_TYPE_REGISTRY_CARD = "Регистрация карты"
     }
 
     private val logger = loggerFor(javaClass)
@@ -40,4 +42,16 @@ class SubOrderServiceImpl(
         logger.debug(LOG_SUCCESS_UPDATE_SUB_ORDER_PAYMENT_INVOICE + updatePaymentInvoiceRequest.orderId)
         return subOrderDao.save(updatedSubOrder)
     }
+
+    override fun createSuborder(
+        order: Order,
+        clientId: String,
+    ): SubOrder =
+        SubOrder(
+            order = order,
+            docType = DOC_TYPE_REGISTRY_CARD,
+            premiumAmount = "1",
+            mainContractCheck = true,
+            channel = clientId,
+        ).run(subOrderDao::save)
 }

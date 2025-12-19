@@ -6,9 +6,14 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
 import ru.sogaz.site.payment.receipt.client.model.ClientInfo
 import ru.sogaz.site.payment.receipt.client.model.PaymentItemRequest
+import ru.sogaz.site.payment.receipt.client.model.PaymentItemRequest.PaymentMethodEnum
 import ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest
+import ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest.TypeEnum
 import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest
+import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest.SystemEnum
+import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest.VersionEnum
 import ru.sogaz.site.payment.receipt.client.model.VatRequest
+import ru.sogaz.site.payment.receipt.client.model.VatRequest.TypeEnum.NONE
 import ru.sogaz.site.paymentService.dao.ChequeSentDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
@@ -19,11 +24,11 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.ChequeStateEnum
-import ru.sogaz.site.paymentService.enums.PaymentMethodEnum
 import ru.sogaz.site.paymentService.enums.PaymentObjectEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.ReceiptService
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Service
@@ -55,7 +60,7 @@ class ReceiptServiceImpl(
         if (payment.chequeName.equals(ChequeStateEnum.SENT.name)) {
             return
         }
-        val order: Order = payment.order!!
+        val order: Order = payment.order
 
         val subOrders = subOrderDao.getAllSubOrderListByOrderId(order)
 
@@ -63,19 +68,21 @@ class ReceiptServiceImpl(
         val totalAmount = order.makeReceiptAmount()
         val requestBody = PaymentReceiptCreateRequest()
 
+        requestBody.orderId = order.id!!
+        requestBody.depersonalization = payment.depersonalization
         order.recipientEmail?.let { ClientInfo().email(it) }?.let { requestBody.client(it) }
         requestBody.items.add(receiptItems.first().items.first())
         requestBody.payments.add(
             totalAmount.let {
                 PaymentPaymentRequest().apply {
-                    type = "1"
+                    type = TypeEnum._1
                     sum = it
                 }
             },
         )
-        requestBody.system = "Atol"
+        requestBody.system = SystemEnum.ATOL
         requestBody.total = totalAmount
-        requestBody.version = "v4"
+        requestBody.version = VersionEnum.V4
 
         try {
             val response = paymentReceiptControllerApi.createPaymentCheck(requestBody)
@@ -121,15 +128,15 @@ class ReceiptServiceImpl(
 
     private fun buildPaymentItemRequest(
         itemName: String,
-        amount: Double,
+        amount: BigDecimal,
     ) = PaymentItemRequest().apply {
         name = itemName
         price = amount
-        quantity = 1.00
+        quantity = BigDecimal.ONE
         sum = amount
-        paymentMethod = PaymentMethodEnum.FULL_PAYMENT.value
+        paymentMethod = PaymentMethodEnum.FULL_PAYMENT
         paymentObject = PaymentObjectEnum.PAYMENT_OBJECT_SERVICE.value
-        vat = VatRequest().type("none")
+        vat = VatRequest().type(NONE)
     }
 
     private fun buildItemName(subOrder: SubOrder): String = "$RECEIPT_CONTRACT_NUMBER${subOrder.contractNumber}"
@@ -179,29 +186,29 @@ class ReceiptServiceImpl(
         operationHistoryDao.saveForOrder(order, ActionType.PAYMENT_ERROR.value)
     }
 
-    private fun SubOrder.makeReceiptAmount(): Double =
+    private fun SubOrder.makeReceiptAmount(): BigDecimal =
         try {
             this.premiumAmount!!
                 .replace(" ", "")
                 .replace(",", ".")
-                .toDouble()
+                .toBigDecimal()
                 .also(::checkAmount)
         } catch (e: NumberFormatException) {
-            throw InnerException(getTraceId(), ERROR_INCORRECT_SUM + this)
+            throw InnerException(getTraceId(), ERROR_INCORRECT_SUM + this.premiumAmount)
         }
 
-    private fun Order.makeReceiptAmount(): Double =
+    private fun Order.makeReceiptAmount(): BigDecimal =
         try {
             this.premiumAmount
                 .replace(" ", "")
                 .replace(",", ".")
-                .toDouble()
+                .toBigDecimal()
                 .also(::checkAmount)
         } catch (e: NumberFormatException) {
-            throw InnerException(getTraceId(), ERROR_INCORRECT_SUM + this)
+            throw InnerException(getTraceId(), ERROR_INCORRECT_SUM + this.premiumAmount)
         }
 
-    private fun checkAmount(amount: Double) {
+    private fun checkAmount(amount: BigDecimal) {
         val parts = amount.toString().split(".")
         if (parts.size > 1 && parts[1].length > 2) {
             throw InnerException(getTraceId(), ERROR_FRACTION_SUM)

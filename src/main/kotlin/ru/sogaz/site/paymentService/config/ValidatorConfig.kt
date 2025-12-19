@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.jwt.starter.service.JwtService
 import ru.sogaz.site.paymentService.dao.ClientSystemDao
-import ru.sogaz.site.paymentService.validation.PermissionValidator
+import ru.sogaz.site.paymentService.service.AuthorizationServiceImpl
 
 @Configuration
 open class ValidatorConfig {
@@ -15,7 +15,7 @@ open class ValidatorConfig {
     open fun tokenValidator(
         clientSystemDao: ClientSystemDao,
         jwtService: JwtService,
-    ) = PermissionValidator(
+    ) = AuthorizationServiceImpl(
         clientSystemDao = clientSystemDao,
         jwtService = jwtService,
     )

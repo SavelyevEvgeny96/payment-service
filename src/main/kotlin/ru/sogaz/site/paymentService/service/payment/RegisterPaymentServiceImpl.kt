@@ -9,11 +9,13 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.loggerFor
@@ -38,18 +40,23 @@ class RegisterPaymentServiceImpl(
         paymentTypeEnum: PaymentTypeEnum,
         payQueryParams: PayQueryParams,
         headersParams: GpbSbpHeadersParams?,
-    ): Payment =
+    ): Payment {
+        var payment: Payment? = null
         try {
-            formPayment(order, paymentTypeEnum, payQueryParams)
-                .run(paymentDao::save)
-                .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
-                .run { registerInBank(this, headersParams) }
-                .apply { paymentStarted = LocalDateTime.now() }
-                .run(paymentDao::save)
-                .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
+            payment =
+                formPayment(order, paymentTypeEnum, payQueryParams)
+                    .run(paymentDao::save)
+                    .also { saveHistory(order, ActionType.SEND_PAYMENT_START_REQUEST) }
+                    .run { registerInBank(this, headersParams) }
+                    .apply { paymentStarted = LocalDateTime.now() }
+                    .run(paymentDao::save)
+                    .also { saveHistory(order, ActionType.GET_PAYMENT_LINK) }
+            return payment
         } catch (ex: Exception) {
             logger.error("ERROR: " + ex.message)
             saveHistory(order, ActionType.PAYMENT_START_REQUEST_ERROR)
+            PaymentStatusEnum.FAIL.also { payment?.state = it }
+            payment?.let { paymentDao.save(it) }
             when (ex) {
                 is RestClientException -> throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, getTraceId())
                 is BankIntegrationException -> {
@@ -60,6 +67,7 @@ class RegisterPaymentServiceImpl(
                 else -> throw InnerException(getTraceId(), ERROR_PAYMENT_PROCESSING)
             }
         }
+    }
 
     private fun formPayment(
         order: Order,
@@ -83,9 +91,13 @@ class RegisterPaymentServiceImpl(
     override fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams?,
-        recurrent: Boolean,
     ): Payment =
         bankIntegrationFactoryService
             .getInstanceByBank(payment.bank)
-            .registerPayment(payment, headersParams, recurrent)
+            .registerPayment(payment, headersParams)
+
+    override fun registerInBankRecurrent(payment: Payment): PaymentRecurrentRegisterData =
+        bankIntegrationFactoryService
+            .getInstanceByBank(payment.bank)
+            .registerCardPaymentRecurrentWithDetails(payment)
 }

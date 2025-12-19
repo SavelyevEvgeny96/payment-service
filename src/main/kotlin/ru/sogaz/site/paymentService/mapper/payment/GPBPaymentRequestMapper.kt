@@ -71,6 +71,8 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "description", expression = "java(getDescription(payment))")
     @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
+    @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
+    @Mapping(target = "openApiMirPaySupported", constant = "true")
     @Mapping(target = "params", expression = "java(map)")
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "src", expression = "java(new Src(\"card_id\", payment.getKeyCard()))")
@@ -87,12 +89,13 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "state", expression = "java(cardPaymentState)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
     @Mapping(target = "openApiMirPaySupported", constant = "true")
-    @Mapping(target = "addCardAllowed", expression = "java(payment.getOrder().getSaveCard())")
+    @Mapping(target = "addCardAllowed", expression = "java(getCardAllowed(payment))")
     @Mapping(target = "backUrlS", expression = "java(backUrlS(payment))")
     @Mapping(target = "backUrlF", expression = "java(backUrlF(payment))")
     @Mapping(target = "params", expression = "java(getParams(payment))")
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "recurrent", constant = "false")
+    @Mapping(target = "cardRegistration", source = "payment.order.regCard")
     abstract fun toCardRequest(payment: Payment): GPBPaymentRequest
 
     @Mapping(target = "currency", constant = "RUB")
@@ -114,6 +117,13 @@ abstract class GPBPaymentRequestMapper {
         payment: Payment,
         properties: ApiConfigProperties,
     ): GPBSBPPaymentRequest
+
+    protected fun getCardAllowed(payment: Payment): Boolean? {
+        if (!payment.order.regCard) {
+            return payment.order.saveCard
+        }
+        return null
+    }
 
     protected fun getAmount(payment: Payment): Int =
         payment.order

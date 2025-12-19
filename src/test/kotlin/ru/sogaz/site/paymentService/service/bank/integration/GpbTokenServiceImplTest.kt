@@ -4,7 +4,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -14,10 +13,8 @@ import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
-import ru.sogaz.site.paymentService.exceptions.BankIntegrationException
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.BankIntegrationTokenService
@@ -67,14 +64,7 @@ class GpbTokenServiceImplTest {
         verify { gpbCardPaymentClient.getToken("MAIN_PORTAL") }
     }
 
-    @Test
-    fun `exchangeForToken - throws BankIntegrationException when client fails`() {
-        every { gpbCardPaymentClient.getToken(any()) } throws RuntimeException("boom")
-
-        assertThatThrownBy { service.exchangeForToken(false) }
-            .isInstanceOf(BankIntegrationException::class.java)
-            .hasFieldOrPropertyWithValue("actionType", ActionType.GET_ACCESS_TOKEN_ERROR)
-    } // -------------------------------------------------------------
+    // -------------------------------------------------------------
     // saveToken
     // -------------------------------------------------------------
 

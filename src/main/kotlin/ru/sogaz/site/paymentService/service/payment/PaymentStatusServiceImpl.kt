@@ -139,10 +139,6 @@ class PaymentStatusServiceImpl(
         bankPaymentDetails: BankPaymentDetails,
     ) {
         val order = payment.order
-        if (order == null) {
-            logger.warn("$NOT_FIND_ORDER_WARN_MESSAGE ${payment.paymentBankId}")
-            return
-        }
         if (order.status == OrderStatus.SUCCESS) {
             logger.warn("${ORDER_ALREADY_PAID_WARN_MESSAGE.format(order.id, payment.bank)} ${payment.paymentBankId}")
             return
