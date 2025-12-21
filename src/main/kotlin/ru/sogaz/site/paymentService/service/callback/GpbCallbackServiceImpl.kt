@@ -9,14 +9,20 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ActionType
+import ru.sogaz.site.paymentService.enums.OrderStatus
+import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
+import ru.sogaz.site.paymentService.service.OrderPaidEventFactory
 import ru.sogaz.site.paymentService.service.SignatureVerifier
+import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
 
 @Service
 class GpbCallbackServiceImpl(
@@ -26,12 +32,16 @@ class GpbCallbackServiceImpl(
     private val signatureVerifier: SignatureVerifier,
     private val apiConfigProperties: ApiConfigProperties,
     private val callbackPaymentDao: CallbackPaymentDao,
+    private val waitingPaymentDao: WaitingPaymentDao,
+    private val orderPaidEventProducer: OrderPaidEventProducer,
+    private val orderPaidEventFactory: OrderPaidEventFactory,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
     companion object {
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
+        const val INVALID_CODE = "Invalid resultCode"
         const val NOT_FOUND = "Not Found"
         const val CONST_CALLBACK = "CALLBACK"
         const val ORDER_NOT_FOUND = "Order ID не найден"
@@ -44,6 +54,8 @@ class GpbCallbackServiceImpl(
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
+        const val RESULT_CODE_SUCCESS = 1
+        const val RESULT_CODE_FAIL = 2
     }
 
     override fun processCallback(
@@ -54,24 +66,37 @@ class GpbCallbackServiceImpl(
             val traceId = getTraceId()
             logger.debug(START_METHOD_PROCESS_CALL + traceId)
 
+            val trxId = requestDto.trxId
+
             if (!signatureVerifier.verifySignature(requestDto, httpServletRequest)) {
-                logger.debug(ERROR_TRX_ID + requestDto.trxId)
+                logger.debug(ERROR_TRX_ID + trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
             }
 
             val payment =
                 paymentDao.findByPaymentBankId(requestDto.trxId)
 
-            if (payment.order.id
-                    ?.let {
-                        orderDao.findById(it)
-                    } == null
-            ) {
-                return createErrorResponse(NOT_FOUND)
-            }
+            val order =
+                payment.order.id
+                    ?.let(orderDao::findById)
+                    ?: return createErrorResponse(NOT_FOUND)
 
-            updatePaymentStatus(payment)
-            logger.debug(UPDATE_PAYMENT_STATUS)
+            when (requestDto.resultCode) {
+                RESULT_CODE_SUCCESS -> {
+                    waitingPaymentDao.deleteByPaymentBankId(trxId)
+                    processSuccess(payment, order)
+                }
+
+                RESULT_CODE_FAIL -> {
+                    waitingPaymentDao.deleteByPaymentBankId(trxId)
+                    processFail(payment, order, requestDto)
+                }
+
+                else -> {
+                    logger.warn("Unknown resultCode=${requestDto.resultCode}")
+                    return createErrorResponse(INVALID_CODE)
+                }
+            }
 
             logOperation(payment)
             logger.debug(OPERATION_PAYMENT_SUCCESS)
@@ -89,25 +114,71 @@ class GpbCallbackServiceImpl(
         }
     }
 
-    private fun updatePaymentStatus(payment: Payment) {
+    private fun processSuccess(
+        payment: Payment,
+        order: Order,
+    ) {
+        updatePaymentStatus(payment, PaymentStatusEnum.SUCCESS)
+        updateOrderStatus(order, OrderStatus.SUCCESS)
+
+        orderPaidEventProducer.send(
+            orderPaidEventFactory.success(
+                orderId = order.id,
+            ),
+        )
+
+        logger.debug("Payment and order successfully updated, orderId=${order.id}")
+    }
+
+    private fun processFail(
+        payment: Payment,
+        order: Order,
+        requestDto: GpbCallbackRequest,
+    ) {
+        updatePaymentStatus(payment, PaymentStatusEnum.FAIL)
+
+        orderPaidEventProducer.send(
+            orderPaidEventFactory.error(
+                orderId = order.id,
+                errorText = buildErrorText(requestDto.extResultCode),
+            ),
+        )
+
+        logger.debug(
+            "Payment failed, orderId=${order.id}, error=${requestDto.extResultCode}",
+        )
+    }
+
+    private fun updatePaymentStatus(
+        payment: Payment,
+        status: PaymentStatusEnum,
+    ) {
         payment
-            .apply { state = PaymentStatusEnum.CALLBACK }
+            .apply { state = status }
             .run { paymentDao.save(this) }
     }
+
+    private fun updateOrderStatus(
+        order: Order,
+        state: OrderStatus,
+    ) {
+        order
+            .apply { status = state }
+            .run { orderDao.save(this) }
+    }
+
+    private fun buildErrorText(extResultCode: String?): String =
+        extResultCode?.let { code ->
+            "$code. ${PaymentExtendedCodeMessage.fromCode(code)}"
+        } ?: "UNKNOWN_ERROR"
 
     private fun saveCallbackPayment(payment: Payment) = callbackPaymentDao.saveCallbackForPayment(payment)
 
     private fun logOperation(payment: Payment) {
         try {
-            val traceId = getTraceId()
-            val orderId = payment.order ?: throw InnerException(getTraceId(), ORDER_NOT_FOUND)
-            val order =
-                orderId.id?.let {
-                    orderDao.findById(it)
-                }
             paymentOperationHistoryDao.saveRecordOperationHistory(
-                order,
-                traceId,
+                payment.order,
+                getTraceId(),
                 ActionType.CALLBACK_RECEIVED.value,
             )
         } catch (e: Exception) {

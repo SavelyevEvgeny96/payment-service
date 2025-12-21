@@ -4,6 +4,7 @@ data class GpbCallbackRequest(
     val trxId: String,
     val merchId: String? = null,
     val resultCode: Int? = null,
+    val extResultCode: String? = null,
     val amount: String? = null,
     val accountId: String? = null,
     val orderId: String? = null,
