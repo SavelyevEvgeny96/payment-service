@@ -61,7 +61,7 @@ class PaymentStatusServiceImpl(
         private const val NOT_FIND_ORDER_WARN_MESSAGE = "Не найден заказ для банковского платежа"
         private const val ORDER_ALREADY_PAID_WARN_MESSAGE =
             "Заказ [orderId: %s, bank: %s] уже " +
-                "отмечен как оплаченный для банковского платежа"
+                    "отмечен как оплаченный для банковского платежа"
         private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
@@ -160,12 +160,14 @@ class PaymentStatusServiceImpl(
         } else {
             order.apply { status = OrderStatus.SUCCESS }
         }
-        sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
+
         if (order.skipSendingQueue != true) {
             when (order.regCard) {
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
                 else -> sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
             }
+        } else {
+            sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
         }
 
         order.skipSendingReceipt?.ifFalse { receiptService.generateReceipt(payment) }
