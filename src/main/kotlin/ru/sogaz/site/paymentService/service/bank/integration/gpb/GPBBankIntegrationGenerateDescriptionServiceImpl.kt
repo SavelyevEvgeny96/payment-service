@@ -15,6 +15,7 @@ class GPBBankIntegrationGenerateDescriptionServiceImpl : GPBBankIntegrationGener
     companion object {
         private const val PAY_ONE_CONTRACT_INFO = "Оплата по договору %s от %s. Платежный сервис, дата операции %s"
         private const val PAY_EMPTY_INFO = "Нет основного договора, дата операции %s"
+        private const val REG_DESCRIPTION = "Регистрация банковской карты"
 
         private val DEFAULT_ZONE: ZoneId = ZoneId.systemDefault()
         private val DDMMYYYY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
@@ -26,6 +27,10 @@ class GPBBankIntegrationGenerateDescriptionServiceImpl : GPBBankIntegrationGener
         order: Order,
         maxLen: Int = 125,
     ): DescriptionInfo {
+        if (order.regCard) {
+            return DescriptionInfo(description = "Регистрация банковской карты", mapOf())
+        }
+
         val opDate = LocalDate.now(DEFAULT_ZONE).toContractDateFormat()
 
         // 1) params — всегда по всем саб-ордерам
