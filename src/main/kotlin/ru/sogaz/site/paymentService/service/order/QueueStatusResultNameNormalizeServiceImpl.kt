@@ -20,6 +20,6 @@ class QueueStatusResultNameNormalizeServiceImpl(
 
         val normalizedString = clientId.replace(regex, ".")
 
-        return String.format(PAYMENT_STATUS_PATTERN, normalizedString)
+        return String.format(pattern, normalizedString)
     }
 }
