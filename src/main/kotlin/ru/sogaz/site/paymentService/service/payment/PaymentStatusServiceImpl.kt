@@ -166,11 +166,12 @@ class PaymentStatusServiceImpl(
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
                 else -> sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
             }
-        } else {
-            sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
         }
 
-        order.skipSendingReceipt?.ifFalse { receiptService.generateReceipt(payment) }
+        if (order.skipSendingReceipt != true) {
+            receiptService.generateReceipt(payment)
+        }
+
         orderDao.save(order)
         operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
