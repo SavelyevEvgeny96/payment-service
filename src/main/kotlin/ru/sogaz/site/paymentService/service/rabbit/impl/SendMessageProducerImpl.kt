@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
 class SendMessageProducerImpl(
     private val rabbitTemplate: RabbitTemplate,
 ) : SendMessageProducer {
-    private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
+    private val logger = loggerFor(SendMessageProducerImpl::class.java)
 
     override fun sendMessagePaidOrderAndPaymentStatus(
         routingKey: String,
