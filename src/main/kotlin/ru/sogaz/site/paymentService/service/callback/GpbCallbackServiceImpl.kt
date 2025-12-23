@@ -54,6 +54,8 @@ class GpbCallbackServiceImpl(
         const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
         const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
         const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
+        const val CALLBACK_RESULT_CODE_PROCESS_SUCCESS = "Payment и order успешно обновлены, orderId = {}"
+        const val CALLBACK_RESULT_CODE_PROCESS_FAIL = "Не удалось обработать payment, orderId = {}, error= {}"
         const val RESULT_CODE_SUCCESS = 1
         const val RESULT_CODE_FAIL = 2
     }
@@ -127,7 +129,7 @@ class GpbCallbackServiceImpl(
             ),
         )
 
-        logger.debug("Payment and order successfully updated, orderId=${order.id}")
+        logger.debug(CALLBACK_RESULT_CODE_PROCESS_SUCCESS, order.id)
     }
 
     private fun processFail(
@@ -144,9 +146,7 @@ class GpbCallbackServiceImpl(
             ),
         )
 
-        logger.debug(
-            "Payment failed, orderId=${order.id}, error=${requestDto.extResultCode}",
-        )
+        logger.debug(CALLBACK_RESULT_CODE_PROCESS_FAIL, order.id, requestDto.extResultCode)
     }
 
     private fun updatePaymentStatus(
