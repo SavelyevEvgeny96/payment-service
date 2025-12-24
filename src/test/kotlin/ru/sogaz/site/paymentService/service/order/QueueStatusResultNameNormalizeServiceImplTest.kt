@@ -19,6 +19,6 @@ class QueueStatusResultNameNormalizeServiceImplTest {
     fun `when call buildQueueStatusResultName with clinentId hyphen then return dot`() {
         val result = service.buildQueueStatusResultName(ORDER_STATUS_PATTERN, "www.api-client.ru")
 
-        assertEquals("payment.status.www.api.client.ru.created", result)
+        assertEquals("order.status.reg.www.api.client.ru.created", result)
     }
 }

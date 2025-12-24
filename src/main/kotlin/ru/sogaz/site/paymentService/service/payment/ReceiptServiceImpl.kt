@@ -21,6 +21,7 @@ class ReceiptServiceImpl(
     private val logger = loggerFor(javaClass)
 
     companion object {
+        private const val RECEIPT_CONTRACT_NUMBER = "Страховая премия по договору №"
         const val LOG_RECEIPT_SUCCESS = "Чек успешно сгенерирован для заказа %s. TraceId: %s"
         const val LOG_RECEIPT_FAILED = "Ошибка при генерации чека. TraceId: %s"
         const val LOG_RECEIPT_API_ERROR = "Ошибка API при генерации чека. Status: %s. TraceId: %s"
