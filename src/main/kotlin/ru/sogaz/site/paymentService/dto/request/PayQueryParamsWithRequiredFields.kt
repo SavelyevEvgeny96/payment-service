@@ -2,14 +2,17 @@ package ru.sogaz.site.paymentService.dto.request
 
 import io.swagger.v3.oas.annotations.Parameter
 import java.net.URI
+import javax.validation.constraints.NotNull
 
-open class PayQueryParams(
+data class PayQueryParamsWithRequiredFields(
     @param:Parameter(name = "urlToReturn", description = "Ссылка для редиректа после успешной оплаты")
-    open val urlToReturn: URI? = null,
+    @field:NotNull(message = "urlToReturn is required")
+    override val urlToReturn: URI,
     @param:Parameter(name = "urlToReturnS", description = "Ссылка для редиректа после успешной оплаты")
-    open val urlToReturnS: URI? = null,
+    @field:NotNull(message = "urlToReturn is required")
+    override val urlToReturnS: URI,
     @param:Parameter(name = "urlToReturnF", description = "Ссылка для редиректа после неуспешной оплаты")
-    open val urlToReturnF: URI? = null,
-    @param:Parameter(name = "depersonalization", description = "Флаг необходимости анонимизированной оплаты")
-    open val depersonalization: Boolean = false,
-)
+    @field:NotNull(message = "urlToReturn is required")
+    override val urlToReturnF: URI,
+    override val depersonalization: Boolean = false,
+) : PayQueryParams()

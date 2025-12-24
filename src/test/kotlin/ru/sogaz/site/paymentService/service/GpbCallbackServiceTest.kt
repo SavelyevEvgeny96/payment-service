@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
 import ru.sogaz.site.paymentService.entity.Order
@@ -19,6 +20,7 @@ import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.callback.GpbCallbackServiceImpl
+import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -30,6 +32,9 @@ class GpbCallbackServiceTest {
     private val apiConfigProperties = mock<ApiConfigProperties>()
     private val callbackPaymentDao = mock<CallbackPaymentDao>()
     private val httpServletRequest = mock<HttpServletRequest>()
+    private val waitingPaymentDao = mock<WaitingPaymentDao>()
+    private val orderPaidEventProducer = mock<OrderPaidEventProducer>()
+    private val orderPaidEventFactory = mock<OrderPaidEventFactory>()
 
     private val service =
         GpbCallbackServiceImpl(
@@ -39,6 +44,9 @@ class GpbCallbackServiceTest {
             signatureVerifier,
             apiConfigProperties,
             callbackPaymentDao,
+            waitingPaymentDao,
+            orderPaidEventProducer,
+            orderPaidEventFactory,
         )
 
     private val testRequest =

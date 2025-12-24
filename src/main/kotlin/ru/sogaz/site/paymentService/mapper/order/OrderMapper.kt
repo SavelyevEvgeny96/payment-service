@@ -6,7 +6,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
-import ru.sogaz.site.paymentService.dto.data.ClientCardDetails
+import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.DataOrderPaymentPageInfo
 import ru.sogaz.site.paymentService.dto.data.PaySbp
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
@@ -37,6 +37,10 @@ interface OrderMapper {
             dateTime
                 .atZone(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+        @JvmStatic
+        @Named("statusIfRecurrent")
+        fun statusIfRecurrent(order: Order): String? = if (order.recurrent == true) order.status.value else null
     }
 
     @Mapping(target = "id", ignore = true)
@@ -63,12 +67,13 @@ interface OrderMapper {
         qualifiedByName = ["localDateTimeToFormattedString"],
     )
     @Mapping(target = "subOrders", source = "subOrderPayloads")
-    @Mapping(target = "keyCard", source = "cardDetails.cardId")
+    @Mapping(target = "keyCard", source = "bankPaymentDetails.cardDetails.cardId")
     @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
+    @Mapping(target = "errorText", source = "bankPaymentDetails.extendedCode")
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,
-        cardDetails: ClientCardDetails?,
+        bankPaymentDetails: BankPaymentDetails?,
     ): PaidOrderMessage
 
     @Mapping(target = "orderId", source = "order.id")
@@ -91,12 +96,4 @@ interface OrderMapper {
     fun fromRequestDto(orderRequest: OrderRequest): Order
 
     fun fromRequestDto(subOrderRequest: SubOrderRequest): SubOrder
-
-    @Named("statusIfRecurrent")
-    fun statusIfRecurrent(order: Order): String? =
-        if (order.recurrent == true) {
-            order.status.name.lowercase(java.util.Locale.ROOT)
-        } else {
-            null
-        }
 }

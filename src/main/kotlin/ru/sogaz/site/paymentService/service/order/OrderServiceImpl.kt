@@ -7,7 +7,6 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentErrors
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.OrderDao
-import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
@@ -19,6 +18,9 @@ import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.mapper.order.OrderManualMapper
 import ru.sogaz.site.paymentService.service.OrderService
+import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
+import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalizeServiceImpl.Companion.ORDER_STATUS_PATTERN
+import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalizeServiceImpl.Companion.PAYMENT_STATUS_PATTERN
 import ru.sogaz.site.paymentService.service.payment.RegisterPaymentServiceImpl
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
@@ -30,7 +32,7 @@ import java.time.LocalDateTime
 class OrderServiceImpl(
     private val orderDao: OrderDao,
     private val orderManualMapper: OrderManualMapper,
-    private val paymentDao: PaymentDao,
+    private val queueStatusResultNameNormalizeService: QueueStatusResultNameNormalizeService,
 ) : OrderService {
     @Value("\${api.payment.paymentUrl}")
     lateinit var payBasePath: String
@@ -47,19 +49,12 @@ class OrderServiceImpl(
             .run(orderDao::save)
             .toDataOrder()
 
-    private fun buildQueueStatusResultName(clientId: String?): String? {
-        if (clientId.isNullOrBlank()) return null
-
-        val normalizedClientId = clientId.replace(Regex("[^A-Za-zА-Яа-яЁё0-9]"), ".")
-
-        return "payment.status.$normalizedClientId.created"
-    }
-
     override fun makeOrderByRequest(orderRequest: OrderRequest): Order =
         orderManualMapper
             .mapRequestToOrder(orderRequest)
             .apply {
-                queueStatusResultName = buildQueueStatusResultName(clientId)
+                queueStatusResultName =
+                    queueStatusResultNameNormalizeService.buildQueueStatusResultName(PAYMENT_STATUS_PATTERN, clientId)
                 premiumAmount =
                     extractPremiumAmount(subOrders)
                         .setScale(2, RoundingMode.HALF_UP)
@@ -90,7 +85,11 @@ class OrderServiceImpl(
             regCard = true,
             skipSendingReceipt = true,
             skipSendingQueue = false,
-            queueStatusResultName = "order.status.reg.$clientId.created",
+            queueStatusResultName =
+                queueStatusResultNameNormalizeService.buildQueueStatusResultName(
+                    ORDER_STATUS_PATTERN,
+                    clientId,
+                ),
             bank = BankEnum.GPB,
         ).run(orderDao::save)
 

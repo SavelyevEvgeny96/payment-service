@@ -43,26 +43,26 @@ abstract class GPBPaymentRequestMapper {
 
         @JvmField
         val cardPayment3ds2 = ThreeDSTwo(true)
-
-        @JvmStatic
-        @Named("getPaymentAmount")
-        protected fun getPaymentAmount(payment: Payment): Int =
-            payment.order
-                .premiumAmount
-                .toBigDecimal()
-                .movePointRight(2)
-                .intValueExact()
-
-        @JvmStatic
-        @Named("getSubscriptionPurpose")
-        protected fun getSubscriptionPurpose(payment: Payment): String {
-            val mainSubOrder = getMainSubOrder(payment)
-            return SUBSCRIPTION_PURPOSE_PATTERN.format(mainSubOrder?.contractNumber)
-        }
-
-        @JvmStatic
-        private fun getMainSubOrder(payment: Payment): SubOrder? = payment.order.subOrders.findLast(SubOrder::mainContractCheck)
     }
+
+    // Вынесено из companion object (теперь НЕ статический метод)была ошибка PMD 'getPaymentAmount' is already in scope.
+    @Named("getPaymentAmount")
+    protected fun getPaymentAmount(payment: Payment): Int =
+        payment.order
+            .premiumAmount
+            .toBigDecimal()
+            .movePointRight(2)
+            .intValueExact()
+
+    // Вынесено из companion object (теперь НЕ статический метод)
+    @Named("getSubscriptionPurpose")
+    protected fun getSubscriptionPurpose(payment: Payment): String {
+        val mainSubOrder = getMainSubOrder(payment)
+        return SUBSCRIPTION_PURPOSE_PATTERN.format(mainSubOrder?.contractNumber)
+    }
+
+    //  Тоже вынесено, чтобы не тянуть static-цепочку
+    protected fun getMainSubOrder(payment: Payment): SubOrder? = payment.order.subOrders.findLast(SubOrder::mainContractCheck)
 
     @Mapping(target = "merchantId", expression = "java(getMerchantId(payment))")
     @Mapping(target = "merchantTrx", expression = "java(payment.getId().toString())")
