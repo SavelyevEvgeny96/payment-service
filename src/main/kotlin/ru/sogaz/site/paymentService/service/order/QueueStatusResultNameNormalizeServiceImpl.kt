@@ -1,7 +1,9 @@
 package ru.sogaz.site.paymentService.service.order
 
+import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
 
+@Component
 class QueueStatusResultNameNormalizeServiceImpl(
     private val regex: Regex,
 ) : QueueStatusResultNameNormalizeService {
