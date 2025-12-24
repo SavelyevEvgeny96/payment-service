@@ -9,7 +9,7 @@ import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest.Ve
 import ru.sogaz.site.paymentService.entity.Payment
 
 @Mapper(
-    uses = [ReceiptTotalAmountMapper::class, ReceiptItemMapper::class, ReceiptPaymentMapper::class],
+    uses = [ReceiptTotalAmountMapper::class, ReceiptItemMapper::class, ReceiptPaymentMapper::class, ReceiptClientInfoMapper::class],
     imports = [ReceiptTypeEnum::class, SystemEnum::class, VersionEnum::class],
 )
 interface ReceiptMapper {

@@ -23,14 +23,26 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.mapper.receipt.ReceiptClientInfoMapperImpl
+import ru.sogaz.site.paymentService.mapper.receipt.ReceiptItemMapperImpl
 import ru.sogaz.site.paymentService.mapper.receipt.ReceiptMapper
 import ru.sogaz.site.paymentService.mapper.receipt.ReceiptMapperImpl
+import ru.sogaz.site.paymentService.mapper.receipt.ReceiptPaymentMapperImpl
+import ru.sogaz.site.paymentService.mapper.receipt.ReceiptTotalAmountMapperImpl
 import ru.sogaz.site.paymentService.properties.ReceiptProperties
 import ru.sogaz.site.paymentService.service.payment.ReceiptServiceImpl
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
-@Import(ReceiptMapperImpl::class)
+@Import(
+    value = [
+        ReceiptMapperImpl::class,
+        ReceiptTotalAmountMapperImpl::class,
+        ReceiptItemMapperImpl::class,
+        ReceiptPaymentMapperImpl::class,
+        ReceiptClientInfoMapperImpl::class,
+    ],
+)
 class ReceiptServiceTest {
     companion object {
         private const val TEST_RECEIPT_URL = "http://test.url"
@@ -67,7 +79,7 @@ class ReceiptServiceTest {
             ReceiptServiceImpl(
                 paymentDao = paymentDao,
                 receiptMapper = receiptMapper,
-                paymentReceiptControllerApi = paymentReceiptControllerApi
+                paymentReceiptControllerApi = paymentReceiptControllerApi,
             )
 
         initOrdersTestData()
