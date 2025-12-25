@@ -43,26 +43,36 @@ abstract class GPBPaymentRequestMapper {
 
         @JvmField
         val cardPayment3ds2 = ThreeDSTwo(true)
-
-        @JvmStatic
-        @Named("getPaymentAmount")
-        protected fun getPaymentAmount(payment: Payment): Int =
-            payment.order
-                .premiumAmount
-                .toBigDecimal()
-                .movePointRight(2)
-                .intValueExact()
-
-        @JvmStatic
-        @Named("getSubscriptionPurpose")
-        protected fun getSubscriptionPurpose(payment: Payment): String {
-            val mainSubOrder = getMainSubOrder(payment)
-            return SUBSCRIPTION_PURPOSE_PATTERN.format(mainSubOrder?.contractNumber)
-        }
-
-        @JvmStatic
-        private fun getMainSubOrder(payment: Payment): SubOrder? = payment.order.subOrders.findLast(SubOrder::mainContractCheck)
     }
+
+    // Вынесено из companion object (теперь НЕ статический метод)была ошибка PMD 'getPaymentAmount' is already in scope.
+    @Named("getPaymentAmount")
+    protected fun getPaymentAmount(payment: Payment): Int =
+        payment.order
+            .premiumAmount
+            .toBigDecimal()
+            .movePointRight(2)
+            .intValueExact()
+
+    // Вынесено из companion object (теперь НЕ статический метод)
+    @Named("getSubscriptionPurpose")
+    protected fun getSubscriptionPurpose(payment: Payment): String {
+        val mainSubOrder = getMainSubOrder(payment)
+        return SUBSCRIPTION_PURPOSE_PATTERN.format(mainSubOrder?.contractNumber)
+    }
+
+    @Named("mergeRecurrentParams")
+    protected fun mergeRecurrentParams(payment: Payment): Map<String, String> {
+        val base = getParams(payment) // params как у карты
+        val result = LinkedHashMap<String, String>(base.size + map.size)
+        result.putAll(base) // сначала base
+        result.putAll(map) // потом map
+        return result
+    }
+
+    //  Тоже вынесено, чтобы не тянуть static-цепочку
+    protected fun getMainSubOrder(payment: Payment): SubOrder? =
+        payment.order.subOrders.findLast(SubOrder::mainContractCheck)
 
     @Mapping(target = "merchantId", expression = "java(getMerchantId(payment))")
     @Mapping(target = "merchantTrx", expression = "java(payment.getId().toString())")
@@ -71,7 +81,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "description", expression = "java(getDescription(payment))")
     @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
-    @Mapping(target = "params", expression = "java(map)")
+    @Mapping(target = "params", source = "payment", qualifiedByName = ["mergeRecurrentParams"])
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "src", expression = "java(new Src(\"card_id\", payment.getKeyCard()))")
     @Mapping(target = "recurrent", constant = "true")
