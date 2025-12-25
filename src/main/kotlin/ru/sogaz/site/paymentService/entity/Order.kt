@@ -79,7 +79,7 @@ data class Order(
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
 ) {
-    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.EAGER, mappedBy = "order")
     @Fetch(FetchMode.SUBSELECT)
     val subOrders: MutableList<SubOrder> = mutableListOf()
 
