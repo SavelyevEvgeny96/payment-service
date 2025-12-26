@@ -91,6 +91,7 @@ api:
     depersonalizedMerchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
     backUrlS: ${BACK_URL_SUCCESS}
     backUrlF: ${BACK_URL_FALSE}
+    sogazUrlPattern: ${SOGAZ_URL_PATTERN:^.*.sogaz.ru$|^lk.health-and-care.ru$}
   receipt:
     receiptUrl: ${RECEIPT_URL}
   qr:
