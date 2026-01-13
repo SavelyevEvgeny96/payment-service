@@ -9,6 +9,6 @@ import ru.sogaz.site.paymentService.entity.Order
 interface ReceiptClientInfoMapper {
     @Mapping(target = "email", source = "recipientEmail")
     @Mapping(target = "phone", source = "recipientPhone")
-    @Mapping(target = "name", source = "recipientUserId")
+    @Mapping(target = "name", source = "policyholder")
     fun fromOrder(order: Order): ClientInfo
 }
