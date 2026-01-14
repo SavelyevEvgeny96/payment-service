@@ -70,16 +70,18 @@ class RecurringPaymentConsumerImpl(
                                 ) // отправляем в очередь для внешних систем
                                 // Но если это ordering-client не отправляем ошибку
                                 if (message.externalSystemCode?.contains("ordering-client") == false) {
-                                    sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
+                                    sendMessageProducer.sendMessage(
                                         routingKey,
                                         message,
                                         props.exchangePayment,
+                                        message.orderId
                                     )
                                 } // отправляем в очередь для ordering-service
-                                sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
+                                sendMessageProducer.sendMessage(
                                     props.routingKeyStatusOrderPaid,
                                     message,
                                     props.exchangeOrder,
+                                    message.orderId
                                 )
                                 logger.info(
                                     "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +

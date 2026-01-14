@@ -1,11 +1,10 @@
 package ru.sogaz.site.paymentService.service.rabbit
 
-import ru.sogaz.site.paymentService.dto.request.PaidOrderMessage
-
 interface SendMessageProducer {
-    fun sendMessagePaidOrderAndPaymentStatus(
+    fun <T : Any> sendMessage(
         routingKey: String,
-        paidOrderMessage: PaidOrderMessage,
+        payload: T,
         exchange: String,
+        orderId: String?,
     )
 }
