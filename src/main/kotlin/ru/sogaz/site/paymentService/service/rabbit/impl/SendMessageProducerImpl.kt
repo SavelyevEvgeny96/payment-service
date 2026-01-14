@@ -1,9 +1,13 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
+import ru.sogaz.site.paymentService.dto.data.TaggedPayload
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -12,8 +16,11 @@ import java.util.*
 
 @Service
 class SendMessageProducerImpl(
+    private val objectMapper: ObjectMapper,
     private val rabbitTemplate: RabbitTemplate,
 ) : SendMessageProducer {
+    private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
+
     /**
      * Универсальный метод отправки сообщения в RabbitMQ.
      *
@@ -78,4 +85,19 @@ class SendMessageProducerImpl(
             cd,
         )
     }
+    /**
+     * Преобразует Message → TaggedPayload или логирует ошибку и возвращает null
+     */
+    override fun <T> toTaggedPayload(msg: Message, clazz: Class<T>): TaggedPayload<T>? =
+        runCatching {
+            val tag = msg.messageProperties.deliveryTag
+            val dto = objectMapper.readValue(msg.body, clazz)
+            TaggedPayload(tag, dto)
+        }.onFailure { ex ->
+            val props = msg.messageProperties
+            logger.error(
+                "Ошибка парсинга сообщения: ${props.messageId} (tag=${props.deliveryTag})",
+                ex,
+            )
+        }.getOrNull()
 }

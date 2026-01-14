@@ -1,8 +1,6 @@
 package ru.sogaz.site.paymentService.dto.data
 
-import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
-
-data class TaggedPayload(
+data class TaggedPayload<T>(
     val tag: Long,
-    val dto: OrderPayloadDto,
+    val dto: T
 )

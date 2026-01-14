@@ -16,7 +16,6 @@ import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 
 @Service
 class RecurringPaymentConsumerImpl(
-    private val objectMapper: ObjectMapper,
     private val buildBatchConsumerService: BuildBatchConsumerService,
     private val paidOrderMessageMapper: PaidOrderMessageMapper,
     private val sendMessageProducer: SendMessageProducer,
@@ -37,11 +36,10 @@ class RecurringPaymentConsumerImpl(
         messages: List<Message>,
         channel: Channel,
     ) {
+
         val started = System.nanoTime()
-
         // 1) Парсим сообщения → оставляем только валидные
-        val payloads = messages.mapNotNull(::toTaggedPayload)
-
+        val payloads = messages.mapNotNull { sendMessageProducer.toTaggedPayload(it, OrderPayloadDto::class.java) }
         if (payloads.isEmpty()) {
             logger.warn("Нет валидных сообщений для обработки в батче")
             return
@@ -98,19 +96,6 @@ class RecurringPaymentConsumerImpl(
         logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
     }
 
-    /**
-     * Преобразует Message → TaggedPayload или логирует ошибку и возвращает null
-     */
-    private fun toTaggedPayload(msg: Message): TaggedPayload? =
-        runCatching {
-            val tag = msg.messageProperties.deliveryTag
-            val dto = objectMapper.readValue(msg.body, OrderPayloadDto::class.java)
-            TaggedPayload(tag, dto)
-        }.onFailure { ex ->
-            val props = msg.messageProperties
-            logger.error(
-                "Ошибка парсинга сообщения: ${props.messageId} (tag=${props.deliveryTag})",
-                ex,
-            )
-        }.getOrNull()
+
+
 }
