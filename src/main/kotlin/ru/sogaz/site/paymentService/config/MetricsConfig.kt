@@ -8,7 +8,6 @@ import ru.sogaz.site.paymentService.service.metrics.GpbCallbackMetricServiceImpl
 
 @Configuration
 class MetricsConfig {
-
     companion object {
         const val GPB_CALLBACK_FAIL = "gpb_callback_fail"
         const val GPB_CALLBACK_SUCCESS = "gpb_callback_success"

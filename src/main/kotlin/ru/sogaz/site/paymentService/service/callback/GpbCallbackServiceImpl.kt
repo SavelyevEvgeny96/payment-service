@@ -25,7 +25,7 @@ class GpbCallbackServiceImpl(
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
     private val callbackPaymentDao: CallbackPaymentDao,
-    private val gpbCallbackMetricService: GpbCallbackMetricServiceImpl
+    private val gpbCallbackMetricService: GpbCallbackMetricServiceImpl,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 

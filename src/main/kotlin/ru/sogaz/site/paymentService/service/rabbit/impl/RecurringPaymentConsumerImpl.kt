@@ -66,7 +66,7 @@ class RecurringPaymentConsumerImpl(
                             ?.also { routingKey ->
                                 logger.info(
                                     "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                            "routingKey=$routingKey",
+                                        "routingKey=$routingKey",
                                 ) // отправляем в очередь для внешних систем
                                 // Но если это ordering-client не отправляем ошибку
                                 if (message.externalSystemCode?.contains("ordering-client") == false) {
@@ -83,7 +83,7 @@ class RecurringPaymentConsumerImpl(
                                 )
                                 logger.info(
                                     "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                            "routingKey=${props.routingKeyStatusOrderPaid}",
+                                        "routingKey=${props.routingKeyStatusOrderPaid}",
                                 )
                             }
                     } else {

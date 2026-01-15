@@ -11,10 +11,8 @@ class GpbCallbackMetricServiceImpl(
     private val meterRegistry: MeterRegistry,
     private var gpbCallbackSuccessCounter: Counter,
 ) : GpbCallbackMetricService {
-
-
     private fun incrementFailMetric(extResultCode: String?) {
-        val counter = meterRegistry.counter(GPB_CALLBACK_FAIL, "ExtResultCode", extResultCode?:DEFAULT_TAG)
+        val counter = meterRegistry.counter(GPB_CALLBACK_FAIL, "ExtResultCode", extResultCode ?: DEFAULT_TAG)
         counter.increment()
     }
 
