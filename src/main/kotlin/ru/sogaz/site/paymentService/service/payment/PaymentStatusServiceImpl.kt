@@ -22,6 +22,7 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.WaitingPayment
 import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.OrderStatus
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
 import ru.sogaz.site.paymentService.mapper.order.SubOrderMapper
@@ -60,7 +61,7 @@ class PaymentStatusServiceImpl(
         private const val NOT_FIND_ORDER_WARN_MESSAGE = "Не найден заказ для банковского платежа"
         private const val ORDER_ALREADY_PAID_WARN_MESSAGE =
             "Заказ [orderId: %s, bank: %s] уже " +
-                "отмечен как оплаченный для банковского платежа"
+                    "отмечен как оплаченный для банковского платежа"
         private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
         const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
         private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
@@ -211,21 +212,26 @@ class PaymentStatusServiceImpl(
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
             logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
             logger.debug("Message request queue status: $requestBody")
-            rabbitTemplate.convertAndSend(
-                exchange,
-                routingKey,
-                requestBody,
-                { message ->
-                    message.messageProperties.headers["author"] = "payService"
-                    message.messageProperties.headers["flowCode"] = "ResultPay"
-                    message.messageProperties.headers["timestamp"] = timestamp
-                    message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
-                    message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
-                    message.messageProperties.correlationId = order.id.toString()
-                    message
-                },
-                cd,
-            )
+            val isOrderingClientWithError =
+                requestBody.externalSystemCode?.contains("ordering-client") == true &&
+                        requestBody.status == StatusEnum.ERROR.value
+            if (!isOrderingClientWithError) {
+                rabbitTemplate.convertAndSend(
+                    exchange,
+                    routingKey,
+                    requestBody,
+                    { message ->
+                        message.messageProperties.headers["author"] = "payService"
+                        message.messageProperties.headers["flowCode"] = "ResultPay"
+                        message.messageProperties.headers["timestamp"] = timestamp
+                        message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
+                        message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
+                        message.messageProperties.correlationId = order.id.toString()
+                        message
+                    },
+                    cd,
+                )
+            }
 
             logger.debug(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
         } catch (e: Exception) {

@@ -8,6 +8,7 @@ enum class StatusEnum(
     NEW("NEW"),
     FAILED("FAILED"),
     SUCCESS("SUCCESS"),
+    ERROR("error"),
     OVERDUE("OVERDUE"),
     MARKEDDEL("MARKEDDEL"),
     FAIL("FAIL"),
