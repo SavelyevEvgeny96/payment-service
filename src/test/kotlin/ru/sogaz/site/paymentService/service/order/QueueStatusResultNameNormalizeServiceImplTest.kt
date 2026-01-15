@@ -2,14 +2,15 @@ package ru.sogaz.site.paymentService.service.order
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.paymentService.config.ServicesConfig
 import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
 import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalizeServiceImpl.Companion.ORDER_STATUS_PATTERN
 
-@SpringBootTest
+@ExtendWith(SpringExtension::class)
 @ContextConfiguration(classes = [ServicesConfig::class])
 class QueueStatusResultNameNormalizeServiceImplTest {
     @Autowired
