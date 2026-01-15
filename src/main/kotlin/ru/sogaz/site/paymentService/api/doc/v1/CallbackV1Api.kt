@@ -14,6 +14,7 @@ interface CallbackV1Api {
         @RequestParam("trx_id") trxId: String,
         @RequestParam("merch_id") merchId: String?,
         @RequestParam("result_code") resultCode: Int?,
+        @RequestParam("ext_result_code") extResultCode: String?,
         @RequestParam("amount") amount: String?,
         @RequestParam(value = "account_id", required = false) accountId: String?,
         @RequestParam("o.order_id") orderId: String?,
