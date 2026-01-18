@@ -25,18 +25,12 @@ class BuildBatchConsumerServiceImpl(
     private val registerPaymentService: RegisterPaymentService,
     private val orderDao: OrderDao,
 ) : BuildBatchConsumerService {
-    companion object {
-        private const val LOG_START = "Старт batch upsertOrders: size=%d"
-    }
-
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
 
     override fun upsertBatch(
         batch: List<TaggedPayload>,
         channel: Channel,
     ): List<PaymentRecurrentRegisterData> {
-        logger.info(LOG_START.format(batch.size))
-
         val results =
             batch.map { payload ->
                 processSinglePayload(payload.dto) // -> PaymentRecurrentRegisterData

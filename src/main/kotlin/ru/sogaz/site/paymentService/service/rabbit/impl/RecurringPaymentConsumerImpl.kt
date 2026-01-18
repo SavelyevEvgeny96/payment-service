@@ -25,6 +25,7 @@ class RecurringPaymentConsumerImpl(
     companion object {
         private const val BATCH_SUMMARY =
             "Итог обработки пачки: количество=%d, длительность(мс)=%d"
+        private const val LOG_START = "Старт batch upsertOrders: size=%d"
     }
 
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
@@ -37,6 +38,7 @@ class RecurringPaymentConsumerImpl(
         messages: List<Message>,
         channel: Channel,
     ) {
+        logger.info(LOG_START.format(messages.size))
         val started = System.nanoTime()
 
         // 1) Парсим сообщения → оставляем только валидные
