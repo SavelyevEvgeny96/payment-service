@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class RegisterCardResponseDto(
     val token: String? = null,
     var state: String? = null,
-    val result: ResultDto? = null,
+    var result: ResultDto? = null,
     @JsonProperty("src")
     val gpbCardDetails: GpbCardDetails? = null,
     var error: String? = null,
@@ -17,7 +17,7 @@ data class RegisterCardResponseDto(
 ) {
     data class ResultDto(
         val status: String?,
-        val extendedCode: String?,
+        var extendedCode: String?,
         val trxId: String?,
         val responseCode: String?,
         val rrn: String?,
