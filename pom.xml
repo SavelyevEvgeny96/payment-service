@@ -403,12 +403,17 @@
                 <configuration>
                     <!-- enable incremental analysis -->
                     <analysisCache>true</analysisCache>
-                    <!-- analysisCacheLocation: optional - points to the following location by default -->
                     <analysisCacheLocation>${project.build.directory}/pmd/pmd.cache</analysisCacheLocation>
-                    <!-- failOnViolation is actually true by default, but can be disabled -->
+
+                    <!-- fail build on violations -->
                     <failOnViolation>true</failOnViolation>
-                    <!-- printFailingErrors is pretty useful -->
                     <printFailingErrors>true</printFailingErrors>
+
+                    <!-- EXCLUDE GENERATED CODE -->
+                    <excludes>
+                        <exclude>/generated/</exclude>
+                        <exclude>**/*MapperImpl.java</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
