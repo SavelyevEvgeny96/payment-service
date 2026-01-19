@@ -1,12 +1,10 @@
 package ru.sogaz.site.paymentService.service.payment
 
-import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -35,9 +33,6 @@ import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFact
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 @Service
 class PaymentStatusServiceImpl(
@@ -240,7 +235,7 @@ class PaymentStatusServiceImpl(
                     instantTime,
                 )
 
-            val exchange = props.exchangePayment
+            val exchange = props.exchangeOrder
 
 
             logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))

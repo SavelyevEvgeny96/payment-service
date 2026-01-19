@@ -115,7 +115,8 @@ class AKBankIntegrationServiceImpl(
      * Установить SRC-токен для конкретного заказа
      */
     private fun setSrcToken(payment: Payment) {
-        val url = "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$SET_SRC_TOKEN_SUFFIX${payment.paymentPass}"
+        val url =
+            "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$SET_SRC_TOKEN_SUFFIX${payment.paymentPass}"
         try {
             postForObject<Map<String, Any>>(url, HttpEntity(setSrcTokenRequest, jsonHeaders))
         } catch (ex: Exception) {
@@ -228,6 +229,7 @@ class AKBankIntegrationServiceImpl(
             AkbPaymentStatusEnum.WAITPUSHTRAN,
             AkbPaymentStatusEnum.AUTHORIZED,
             -> AkbPaymentStatusEnum.PREPARING
+
             else -> AkbPaymentStatusEnum.CLOSED
         }
     }
