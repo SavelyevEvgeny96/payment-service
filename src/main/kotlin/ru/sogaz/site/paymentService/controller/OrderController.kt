@@ -9,15 +9,15 @@ import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
 import ru.sogaz.site.paymentService.dto.data.DataOrder
 import ru.sogaz.site.paymentService.dto.request.OrderRequest
 import ru.sogaz.site.paymentService.properties.ServiceStatuses
+import ru.sogaz.site.paymentService.service.AuthorizationService
 import ru.sogaz.site.paymentService.service.OrderService
-import ru.sogaz.site.paymentService.validation.PermissionValidator
 import ru.sogaz.siter.models.resonses.Response
 
 @RestController
 @Tag(name = "Order", description = "Управление заказами")
 class OrderController(
     private val orderService: OrderService,
-    private val permissionValidator: PermissionValidator,
+    private val authorizationService: AuthorizationService,
 ) : WrapResponseController(),
     OrderCreateV1Api,
     OrderStatusV1Api {
@@ -25,7 +25,7 @@ class OrderController(
         requestWrapper: OrderRequest,
         authorization: String,
     ): ResponseEntity<Response<DataOrder>> {
-        requestWrapper.clientId = permissionValidator.checkPermission(authorization)?.externalSystemCode
+        requestWrapper.clientId = authorizationService.checkPermissionByClientId(authorization).externalSystemCode
         return requestWrapper
             .run(orderService::createOrder)
             .wrapToSuccessResponse(ServiceStatuses.STATUS_CODE_SUCCESS)

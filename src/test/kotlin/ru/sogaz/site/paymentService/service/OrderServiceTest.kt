@@ -33,6 +33,9 @@ class OrderServiceTest {
     @MockK
     private lateinit var orderDao: OrderDao
 
+    @MockK
+    private lateinit var queueStatusResultNameNormalizeService: QueueStatusResultNameNormalizeService
+
     private lateinit var orderMapper: OrderMapper
     private lateinit var orderManualMapper: OrderManualMapper
     private lateinit var orderService: OrderService
@@ -47,11 +50,13 @@ class OrderServiceTest {
         orderMapper = Mappers.getMapper(OrderMapper::class.java)
         orderManualMapper = OrderManualMapper(orderMapper)
 
+//        queueStatusResultNameNormalizeService = QueueStatusResultNameNormalizeServiceImpl()
         // Сервис с внедренным OrderManualMapper
         orderService =
             OrderServiceImpl(
                 orderDao = orderDao,
                 orderManualMapper = orderManualMapper,
+                queueStatusResultNameNormalizeService = queueStatusResultNameNormalizeService,
             )
     }
 
@@ -108,6 +113,8 @@ class OrderServiceTest {
                 clientId = "CLIENT-1",
             )
 
+        every { queueStatusResultNameNormalizeService.buildQueueStatusResultName(any(), any()) }.returns("CLIENT.1")
+
         // act
         val order = orderService.makeOrderByRequest(orderReq)
 
@@ -135,5 +142,6 @@ class OrderServiceTest {
         OrderServiceImpl(
             orderDao = orderDao,
             orderManualMapper = orderManualMapper,
+            queueStatusResultNameNormalizeService = queueStatusResultNameNormalizeService,
         )
 }

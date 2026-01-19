@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.service
 
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
@@ -17,6 +18,7 @@ interface RegisterPaymentService {
     fun registerInBank(
         payment: Payment,
         headersParams: GpbSbpHeadersParams? = null,
-        recurrent: Boolean = false,
     ): Payment
+
+    fun registerInBankRecurrent(payment: Payment): PaymentRecurrentRegisterData
 }

@@ -1,5 +1,9 @@
 package ru.sogaz.site.paymentService.service.bank.integration
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -14,6 +18,9 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
+import ru.sogaz.site.paymentService.dao.OrderDao
+import ru.sogaz.site.paymentService.dao.PaymentDao
+import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
 import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
 import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
@@ -35,6 +42,7 @@ import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
 import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapper
 import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapperImpl
+import ru.sogaz.site.paymentService.mapper.payment.RegisterCardMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
 import ru.sogaz.site.paymentService.service.bank.integration.akb.AKBankIntegrationServiceImpl
@@ -73,11 +81,25 @@ class BankIntegrationServiceTest {
             GPBQRImageResponse(QRCoreData(QRImageData(GPB_QR_CONTENT, GPB_QR_MEDIA_TYPE)))
     }
 
+    private val objectMapper: ObjectMapper =
+        jacksonObjectMapper()
+            .registerKotlinModule()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
     @RelaxedMockK
     private lateinit var apiConfigProperties: ApiConfigProperties
 
     @MockK
     private lateinit var restTemplate: RestTemplate
+
+    @MockK
+    private lateinit var orderDao: OrderDao
+
+    @MockK
+    private lateinit var paymentDao: PaymentDao
+
+    @MockK
+    private lateinit var waitingPaymentDao: WaitingPaymentDao
 
     @MockK
     private lateinit var gpbCardPaymentClient: GpbCardPaymentClient
@@ -87,6 +109,9 @@ class BankIntegrationServiceTest {
 
     @MockK
     private lateinit var bankPaymentDetailsMapper: BankPaymentDetailsMapper
+
+    @MockK
+    private lateinit var registerCardMapper: RegisterCardMapper
 
     @RelaxedMockK
     lateinit var gpbBankIntegrationGenerateDescriptionServiceImpl: GPBBankIntegrationGenerateDescriptionServiceImpl
@@ -118,7 +143,7 @@ class BankIntegrationServiceTest {
         // создаём маппер статусов банка
         bankPaymentDetailsMapper =
             Mappers.getMapper(BankPaymentDetailsMapper::class.java)
-
+        registerCardMapper = Mappers.getMapper(RegisterCardMapper::class.java)
         // сервис GPB
         gpBankIntegrationService =
             GPBankIntegrationServiceImpl(
@@ -128,6 +153,11 @@ class BankIntegrationServiceTest {
                 bankPaymentDetailsMapper,
                 gPBPaymentRequestMapper,
                 tokenService,
+                objectMapper,
+                registerCardMapper,
+                orderDao,
+                paymentDao,
+                waitingPaymentDao,
             )
 
         // сервис АКБ
@@ -142,7 +172,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register CARD payment in GPB test`() {
         generateValidPayment(BankEnum.GPB, PaymentTypeEnum.CARD)
-            .run { gpBankIntegrationService.registerPayment(this, null, false) }
+            .run { gpBankIntegrationService.registerPayment(this, null) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_GPB_PAYMENT_PAGE_URL, Payment::paymentPageUrl)
@@ -153,7 +183,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register SBP payment in GPB test`() {
         generateValidPayment(BankEnum.GPB, PaymentTypeEnum.SBP)
-            .run { gpBankIntegrationService.registerPayment(this, null, false) }
+            .run { gpBankIntegrationService.registerPayment(this, null) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_GPB_SBP_PAYLOAD, Payment::paymentPageUrl)
@@ -164,7 +194,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register CARD payment in AKB test`() {
         generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.CARD)
-            .run { akBankIntegrationService.registerPayment(this, null, false) }
+            .run { akBankIntegrationService.registerPayment(this, null) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(TEST_AKB_HPP_URL, Payment::paymentPageUrl)
@@ -176,7 +206,7 @@ class BankIntegrationServiceTest {
     @Test
     fun `successfully register SBP payment in AKB test`() {
         generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.SBP)
-            .run { akBankIntegrationService.registerPayment(this, null, false) }
+            .run { akBankIntegrationService.registerPayment(this, null) }
             .run(::assertThat)
             .returns(PaymentStatusEnum.REG, Payment::state)
             .returns(AKB_QRC_PAYLOAD, Payment::paymentPageUrl)

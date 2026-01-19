@@ -12,6 +12,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.Fetch
+import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.UpdateTimestamp
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
@@ -54,6 +56,8 @@ data class Order(
     var keyCard: String? = null,
     @Column(name = "save_card")
     var saveCard: Boolean = false,
+    @Column(name = "reg_card")
+    var regCard: Boolean = false,
     @Column(name = "subscription_id")
     var subscriptionId: String = "",
     @Column(name = "client_id")
@@ -75,6 +79,11 @@ data class Order(
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
 ) {
-    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.EAGER, mappedBy = "order")
+    @Fetch(FetchMode.SUBSELECT)
     val subOrders: MutableList<SubOrder> = mutableListOf()
+
+    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    @Fetch(FetchMode.SUBSELECT)
+    val payments: MutableList<Payment> = mutableListOf()
 }

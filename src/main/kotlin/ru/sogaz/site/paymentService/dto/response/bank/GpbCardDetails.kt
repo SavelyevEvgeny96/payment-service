@@ -9,4 +9,5 @@ data class GpbCardDetails(
     val paymentSystem: String? = null,
     val issuerName: String? = null,
     val cardId: String? = null,
+    val title: String? = null,
 )

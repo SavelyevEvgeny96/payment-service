@@ -8,14 +8,24 @@ import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusRespon
 import ru.sogaz.site.paymentService.dto.response.bank.GpbQrResult
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
+import ru.sogaz.site.paymentService.mapper.common.ExtendedCodeMapper
 
 @Mapper(
     componentModel = "spring",
-    uses = [CardDetailsMapper::class, PaymentStatusMapper::class],
+    uses = [
+        CardDetailsMapper::class,
+        PaymentStatusMapper::class,
+        ExtendedCodeMapper::class,
+    ],
     imports = [PaymentStatusEnum::class],
 )
 interface BankPaymentDetailsMapper {
     @Mapping(target = "status", source = "result.status", defaultValue = "WAIT")
+    @Mapping(
+        target = "extendedCode",
+        source = "result.extendedCode",
+        qualifiedByName = ["mapExtendedCode"],
+    )
     @Mapping(target = "cardDetails", source = "gpbCardDetails")
     fun convert(response: GpbCardPaymentStatusResponse): BankPaymentDetails
 

@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.dto.data.AmountData
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
+import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -72,8 +73,6 @@ class AKBankIntegrationServiceImpl(
             .run(::postForCardPaymentData)
             .run { payment.fillFromResponse(this) }
 
-    override fun registerCardPaymentRecurrent(payment: Payment): Payment = payment
-
     @Throws(RestClientException::class)
     override fun registerSBPPayment(
         payment: Payment,
@@ -116,7 +115,8 @@ class AKBankIntegrationServiceImpl(
      * Установить SRC-токен для конкретного заказа
      */
     private fun setSrcToken(payment: Payment) {
-        val url = "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$SET_SRC_TOKEN_SUFFIX${payment.paymentPass}"
+        val url =
+            "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$SET_SRC_TOKEN_SUFFIX${payment.paymentPass}"
         try {
             postForObject<Map<String, Any>>(url, HttpEntity(setSrcTokenRequest, jsonHeaders))
         } catch (ex: Exception) {
@@ -204,6 +204,10 @@ class AKBankIntegrationServiceImpl(
             .toBankPaymentDetails()
     }
 
+    override fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData {
+        TODO("Not yet implemented")
+    }
+
     private fun formUrl(paymentBankInfo: PaymentBankInfo): String =
         buildString {
             append(apiConfigProperties.akbUrl)
@@ -225,6 +229,7 @@ class AKBankIntegrationServiceImpl(
             AkbPaymentStatusEnum.WAITPUSHTRAN,
             AkbPaymentStatusEnum.AUTHORIZED,
             -> AkbPaymentStatusEnum.PREPARING
+
             else -> AkbPaymentStatusEnum.CLOSED
         }
     }
