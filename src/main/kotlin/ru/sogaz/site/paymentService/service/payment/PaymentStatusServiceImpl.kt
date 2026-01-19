@@ -258,7 +258,7 @@ class PaymentStatusServiceImpl(
                     instantTime,
                 )
 
-            val exchange = props.exchangePayment
+            val exchange = props.exchangeOrder
             val cd = CorrelationData(order.id.toString())
 
             logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
