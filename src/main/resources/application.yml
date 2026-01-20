@@ -14,6 +14,7 @@ app:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
+    payment-refund-queue: ${PAYMENT_REFUND_QUEUE:payment.refund.queue}
     payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
     order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
     order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}

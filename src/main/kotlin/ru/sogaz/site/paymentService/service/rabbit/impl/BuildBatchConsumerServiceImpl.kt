@@ -28,7 +28,7 @@ class BuildBatchConsumerServiceImpl(
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
 
     override fun upsertBatch(
-        batch: List<TaggedPayload>,
+        batch: List<TaggedPayload<OrderPayloadDto>>,
         channel: Channel,
     ): List<PaymentRecurrentRegisterData> {
         val results =

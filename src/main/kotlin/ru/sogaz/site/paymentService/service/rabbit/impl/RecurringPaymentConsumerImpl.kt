@@ -1,11 +1,9 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
-import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
@@ -24,6 +22,7 @@ class RecurringPaymentConsumerImpl(
     companion object {
         private const val BATCH_SUMMARY =
             "Итог обработки пачки: количество=%d, длительность(мс)=%d"
+        const val LOG_START = "Старт batch upsertOrders: size=%d"
     }
 
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
@@ -36,10 +35,10 @@ class RecurringPaymentConsumerImpl(
         messages: List<Message>,
         channel: Channel,
     ) {
-
+        logger.info(LOG_START.format(messages.size))
         val started = System.nanoTime()
         // 1) Парсим сообщения → оставляем только валидные
-        val payloads = messages.mapNotNull { sendMessageProducer.toTaggedPayload(it, OrderPayloadDto::class.java) }
+        val payloads = messages.map { sendMessageProducer.parsePayload(it, OrderPayloadDto::class.java) }
         if (payloads.isEmpty()) {
             logger.warn("Нет валидных сообщений для обработки в батче")
             return
@@ -64,7 +63,7 @@ class RecurringPaymentConsumerImpl(
                             ?.also { routingKey ->
                                 logger.info(
                                     "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                            "routingKey=$routingKey",
+                                        "routingKey=$routingKey",
                                 ) // отправляем в очередь для внешних систем
                                 // Но если это ordering-client не отправляем ошибку
                                 if (message.externalSystemCode?.contains("ordering-client") == false) {
@@ -72,18 +71,18 @@ class RecurringPaymentConsumerImpl(
                                         routingKey,
                                         message,
                                         props.exchangePayment,
-                                        message.orderId
+                                        message.orderId,
                                     )
                                 } // отправляем в очередь для ordering-service
                                 sendMessageProducer.sendMessage(
                                     props.routingKeyStatusOrderPaid,
                                     message,
                                     props.exchangeOrder,
-                                    message.orderId
+                                    message.orderId,
                                 )
                                 logger.info(
                                     "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                            "routingKey=${props.routingKeyStatusOrderPaid}",
+                                        "routingKey=${props.routingKeyStatusOrderPaid}",
                                 )
                             }
                     } else {
@@ -95,7 +94,4 @@ class RecurringPaymentConsumerImpl(
         val tookMs = (System.nanoTime() - started) / 1_000_000
         logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
     }
-
-
-
 }

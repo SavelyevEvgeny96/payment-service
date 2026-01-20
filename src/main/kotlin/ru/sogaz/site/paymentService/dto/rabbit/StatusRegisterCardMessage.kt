@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.CardRegisterStatus
 import java.time.Instant
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class StatusRegisterCardMessage(
     val metaInfo: MetaInfoOrder,

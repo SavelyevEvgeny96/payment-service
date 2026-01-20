@@ -7,12 +7,12 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import ru.sogaz.site.paymentService.dto.data.TaggedPayload
+import ru.sogaz.site.paymentService.dto.response.ParseResult
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 @Service
 class SendMessageProducerImpl(
@@ -85,19 +85,30 @@ class SendMessageProducerImpl(
             cd,
         )
     }
+
+    override fun <T> parsePayload(
+        msg: Message,
+        clazz: Class<T>,
+    ): TaggedPayload<T> {
+        val tag = msg.messageProperties.deliveryTag
+        val dto = objectMapper.readValue(msg.body, clazz)
+        return TaggedPayload(tag, dto)
+    }
+
     /**
-     * Преобразует Message → TaggedPayload или логирует ошибку и возвращает null
+     * Преобразует Message → TaggedPayload или логирует ошибку и возвращает ParseResult<T>
      */
-    override fun <T> toTaggedPayload(msg: Message, clazz: Class<T>): TaggedPayload<T>? =
+    override fun <T> toTaggedPayloadSafe(
+        msg: Message,
+        clazz: Class<T>,
+    ): ParseResult<T> =
         runCatching {
-            val tag = msg.messageProperties.deliveryTag
-            val dto = objectMapper.readValue(msg.body, clazz)
-            TaggedPayload(tag, dto)
-        }.onFailure { ex ->
-            val props = msg.messageProperties
+            ParseResult.Success(parsePayload(msg, clazz))
+        }.getOrElse { ex ->
             logger.error(
-                "Ошибка парсинга сообщения: ${props.messageId} (tag=${props.deliveryTag})",
+                "Ошибка парсинга сообщения: ${msg.messageProperties.messageId}",
                 ex,
             )
-        }.getOrNull()
+            ParseResult.Failure(msg, ex)
+        }
 }
