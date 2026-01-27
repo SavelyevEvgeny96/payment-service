@@ -10,7 +10,7 @@ class SogazDomainValidatorTest {
 
     @BeforeEach
     fun setup() {
-        val regex = Regex("^.*\\.sogaz\\.ru\$|^lk\\.health-and-care\\.ru\$")
+        val regex = Regex("^(.*\\.sogaz\\.ru|lk\\.health-and-care\\.ru)(/[^ ]*)?\$")
         sogazDomainValidator = SogazDomainValidator(regex)
     }
 
@@ -42,5 +42,17 @@ class SogazDomainValidatorTest {
     fun `должен вернуть false при валидации lkk health-and-care ru`() {
         val ressult = sogazDomainValidator.isValid("lkk.health-and-care.ru", null)
         assertFalse(ressult)
+    }
+
+    @Test
+    fun `должен вернуть тру при валидации test sogaz ru test`() {
+        val ressult = sogazDomainValidator.isValid("test.sogaz.ru/test", null)
+        assertTrue(ressult)
+    }
+
+    @Test
+    fun `должен вернуть тру при валидации lk health-and-care ru test`() {
+        val ressult = sogazDomainValidator.isValid("lk.health-and-care.ru/test", null)
+        assertTrue(ressult)
     }
 }
