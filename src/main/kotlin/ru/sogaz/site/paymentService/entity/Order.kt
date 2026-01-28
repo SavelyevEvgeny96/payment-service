@@ -61,7 +61,7 @@ data class Order(
     @Column(name = "subscription_id")
     var subscriptionId: String = "",
     @Column(name = "client_id")
-    var clientId: String? = null,
+    var clientId: String,
     @Column(name = "recurrent")
     var recurrent: Boolean? = null,
     @Column(name = "order_id_recurrent")

@@ -5,7 +5,7 @@ import org.springframework.amqp.core.Message
 
 interface RecurringPaymentConsumer {
     fun handleBatch(
-        messages: List<Message>,
+        messages: Message,
         channel: Channel,
     )
 }

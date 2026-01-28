@@ -1,14 +1,13 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
-import ru.sogaz.site.paymentService.dto.data.TaggedPayload
-import ru.sogaz.site.paymentService.dto.response.ParseResult
-import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.dto.data.ParsedResult
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -18,8 +17,7 @@ import java.time.format.DateTimeFormatter
 class SendMessageProducerImpl(
     private val objectMapper: ObjectMapper,
     private val rabbitTemplate: RabbitTemplate,
-) : SendMessageProducer {
-    private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
+    ) : SendMessageProducer {
 
     /**
      * Универсальный метод отправки сообщения в RabbitMQ.
@@ -86,29 +84,21 @@ class SendMessageProducerImpl(
         )
     }
 
-    override fun <T> parsePayload(
-        msg: Message,
-        clazz: Class<T>,
-    ): TaggedPayload<T> {
-        val tag = msg.messageProperties.deliveryTag
-        val dto = objectMapper.readValue(msg.body, clazz)
-        return TaggedPayload(tag, dto)
-    }
-
-    /**
-     * Преобразует Message → TaggedPayload или логирует ошибку и возвращает ParseResult<T>
-     */
-    override fun <T> toTaggedPayloadSafe(
-        msg: Message,
-        clazz: Class<T>,
-    ): ParseResult<T> =
-        runCatching {
-            ParseResult.Success(parsePayload(msg, clazz))
-        }.getOrElse { ex ->
-            logger.error(
-                "Ошибка парсинга сообщения: ${msg.messageProperties.messageId}",
-                ex,
-            )
-            ParseResult.Failure(msg, ex)
+    override fun <T : Any> parseBatch(
+        messages: Message,
+        channel: Channel,
+        dtoClass: Class<T>,
+    ): ParsedResult<T>? {
+        val tag = messages.messageProperties.deliveryTag
+        val messageId = messages.messageProperties.messageId
+        val body = String(messages.body, Charsets.UTF_8)
+        return try {
+            // Пробуем десериализовать тело
+            val dto = objectMapper.readValue(body, dtoClass)
+            ParsedResult.Success(tag, dto, messageId)
+        } catch (ex: Exception) {
+            channel.basicReject(tag, false)
+            return null
         }
+    }
 }

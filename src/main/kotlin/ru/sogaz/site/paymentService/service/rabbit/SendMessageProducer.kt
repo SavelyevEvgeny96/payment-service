@@ -1,8 +1,8 @@
 package ru.sogaz.site.paymentService.service.rabbit
 
+import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
-import ru.sogaz.site.paymentService.dto.data.TaggedPayload
-import ru.sogaz.site.paymentService.dto.response.ParseResult
+import ru.sogaz.site.paymentService.dto.data.ParsedResult
 
 interface SendMessageProducer {
     fun <T : Any> sendMessage(
@@ -12,13 +12,9 @@ interface SendMessageProducer {
         orderId: String?,
     )
 
-    fun <T> parsePayload(
-        msg: Message,
-        clazz: Class<T>,
-    ): TaggedPayload<T>
-
-    fun <T> toTaggedPayloadSafe(
-        msg: Message,
-        clazz: Class<T>,
-    ): ParseResult<T>
+    fun <T : Any> parseBatch(
+        messages: Message,
+        channel: Channel,
+        dtoClass: Class<T>,
+    ): ParsedResult<T>?
 }

@@ -1,12 +1,10 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
-import com.rabbitmq.client.Channel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
-import ru.sogaz.site.paymentService.dto.data.TaggedPayload
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.loggerFor
@@ -27,23 +25,8 @@ class BuildBatchConsumerServiceImpl(
 ) : BuildBatchConsumerService {
     private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
 
-    override fun upsertBatch(
-        batch: List<TaggedPayload<OrderPayloadDto>>,
-        channel: Channel,
-    ): List<PaymentRecurrentRegisterData> {
-        val results =
-            batch.map { payload ->
-                processSinglePayload(payload.dto) // -> PaymentRecurrentRegisterData
-                    .also {
-                        // после успешной обработки
-                        channel.basicAck(payload.tag, false) // подтверждаем сообщение
-                    }
-            }
-        return results
-    }
-
     @Transactional(rollbackFor = [Exception::class])
-    private fun processSinglePayload(payload: OrderPayloadDto): PaymentRecurrentRegisterData {
+    override fun processSinglePayload(payload: OrderPayloadDto): PaymentRecurrentRegisterData {
         // 1) DTO → Request → Order
         val order = buildAndSaveOrder(payload)
 

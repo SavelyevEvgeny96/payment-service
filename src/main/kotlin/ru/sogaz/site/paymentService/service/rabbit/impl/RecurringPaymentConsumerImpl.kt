@@ -4,6 +4,7 @@ import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
+import ru.sogaz.site.paymentService.dto.data.ParsedResult
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
@@ -20,52 +21,37 @@ class RecurringPaymentConsumerImpl(
     private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
     companion object {
-        private const val BATCH_SUMMARY =
-            "Итог обработки пачки: количество=%d, длительность(мс)=%d"
-        const val LOG_START = "Старт batch upsertOrders: size=%d"
+
+        private const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
+            "Нет валидных сообщений для обработки"
     }
 
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
 
     @RabbitListener(
         queues = ["\${app.rabbit.payment-created-queue}"],
-        containerFactory = "batchContainerFactory",
     )
     override fun handleBatch(
-        messages: List<Message>,
+        messages: Message,
         channel: Channel,
     ) {
-        logger.info(LOG_START.format(messages.size))
-        val started = System.nanoTime()
-        // 1) Парсим сообщения → оставляем только валидные
-        val payloads = messages.map { sendMessageProducer.parsePayload(it, OrderPayloadDto::class.java) }
-        if (payloads.isEmpty()) {
-            logger.warn("Нет валидных сообщений для обработки в батче")
+        val parsedResults = sendMessageProducer.parseBatch(messages, channel, OrderPayloadDto::class.java)
+        if (parsedResults == null) {
+            logger.warn(NOT_VALID_BATCH_MESSAGE_ORDER_CREATED)
             return
         }
-
-        // 2) Обрабатываем батч в сервисе
-        val batchResult =
-            runCatching {
-                buildBatchConsumerService.upsertBatch(payloads, channel) // List<PaymentRecurrentRegisterData>
-            }.onFailure { ex ->
-                logger.error("Ошибка при обработке батча: ${ex.message}", ex)
-            }.getOrNull() ?: return
-
-        // 3) Мапим и шлём каждое сообщение с его routingKey
-        batchResult.forEach { regData ->
+        if (parsedResults is ParsedResult.Success) {
+            val dtoSuccess = parsedResults.dto
+            //  Бизнес-логика (БЕЗ ACK)
+            val processSinglePayloadResponse =
+                buildBatchConsumerService.processSinglePayload(dtoSuccess)
             paidOrderMessageMapper
-                .toPaidOrderMessage(regData)
+                .toPaidOrderMessage(processSinglePayloadResponse)
                 .let { message ->
                     if (message.status?.contains("error") == true) {
-                        regData.payment.order.queueStatusResultName
+                        processSinglePayloadResponse.payment.order.queueStatusResultName
                             ?.takeIf { it.isNotBlank() }
                             ?.also { routingKey ->
-                                logger.info(
-                                    "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                        "routingKey=$routingKey",
-                                ) // отправляем в очередь для внешних систем
-                                // Но если это ordering-client не отправляем ошибку
                                 if (message.externalSystemCode?.contains("ordering-client") == false) {
                                     sendMessageProducer.sendMessage(
                                         routingKey,
@@ -73,25 +59,16 @@ class RecurringPaymentConsumerImpl(
                                         props.exchangePayment,
                                         message.orderId,
                                     )
-                                } // отправляем в очередь для ordering-service
+                                }
                                 sendMessageProducer.sendMessage(
                                     props.routingKeyStatusOrderPaid,
                                     message,
                                     props.exchangeOrder,
                                     message.orderId,
                                 )
-                                logger.info(
-                                    "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                        "routingKey=${props.routingKeyStatusOrderPaid}",
-                                )
                             }
-                    } else {
-                        // success  сделать тогда  когда чеки переедут в ордеринг тогда уберем условие .contains("error")
                     }
                 }
         }
-
-        val tookMs = (System.nanoTime() - started) / 1_000_000
-        logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
     }
 }
