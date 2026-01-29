@@ -44,7 +44,7 @@ class SendMessageProducerImpl(
             message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
             message.messageProperties.correlationId = paidOrderMessage.orderId.toString()
             // Отключаем typeId
-            message.messageProperties.headers.remove("TypeId") // полностью удаляем
+            message.messageProperties.headers.remove("__TypeId__")
             message
         }
     }
