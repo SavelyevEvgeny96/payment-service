@@ -42,6 +42,8 @@ class SendMessageProducerImpl(
             message.messageProperties.headers["timestamp"] = timestamp
             message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
             message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
+            // Отключаем typeId
+            message.messageProperties.headers.remove("__TypeId__")
             message.messageProperties.correlationId = paidOrderMessage.orderId.toString()
             message
         }
