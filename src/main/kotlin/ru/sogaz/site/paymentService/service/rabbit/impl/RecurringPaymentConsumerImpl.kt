@@ -21,7 +21,6 @@ class RecurringPaymentConsumerImpl(
     private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
     companion object {
-
         private const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
             "Нет валидных сообщений для обработки"
     }

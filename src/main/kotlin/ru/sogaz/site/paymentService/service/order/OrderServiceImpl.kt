@@ -61,8 +61,7 @@ class OrderServiceImpl(
                         .toString()
             }
 
-    private fun extractPremiumAmount(subOrders: List<SubOrder>) =
-        subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }
+    private fun extractPremiumAmount(subOrders: List<SubOrder>) = subOrders.sumOf { it.premiumAmount?.toBigDecimal() ?: BigDecimal.ZERO }
 
     private fun Order.toDataOrder() = DataOrder(id!!, "$payBasePath$id")
 
@@ -92,7 +91,7 @@ class OrderServiceImpl(
                     clientId,
                 ),
             bank = BankEnum.GPB,
-            clientId = clientId
+            clientId = clientId,
         ).run(orderDao::save)
 
     override fun cancelOrder(order: Order) {

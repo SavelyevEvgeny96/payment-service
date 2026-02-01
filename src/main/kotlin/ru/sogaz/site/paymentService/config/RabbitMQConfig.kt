@@ -1,22 +1,18 @@
 package ru.sogaz.site.paymentService.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.amqp.core.AcknowledgeMode
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.BindingBuilder
 import org.springframework.amqp.core.BindingBuilder.bind
 import org.springframework.amqp.core.Queue
 import org.springframework.amqp.core.QueueBuilder
 import org.springframework.amqp.core.TopicExchange
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
-import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import ru.sogaz.site.paymentService.config.converters.NoOpMessageConverter
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 
 @Configuration
@@ -83,5 +79,4 @@ class RabbitMQConfig(
     @Bean
     @Primary
     fun jacksonMessageConverter(objectMapper: ObjectMapper): MessageConverter = Jackson2JsonMessageConverter(objectMapper)
-
 }

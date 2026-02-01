@@ -14,7 +14,6 @@ class QueueStatusResultNameNormalizeServiceImpl(
         pattern: String,
         clientId: String,
     ): String {
-
         val normalizedString = clientId.replace(regex, ".")
 
         return String.format(pattern, normalizedString)

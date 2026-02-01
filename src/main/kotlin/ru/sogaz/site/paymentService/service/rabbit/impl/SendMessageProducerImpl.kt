@@ -17,8 +17,7 @@ import java.time.format.DateTimeFormatter
 class SendMessageProducerImpl(
     private val objectMapper: ObjectMapper,
     private val rabbitTemplate: RabbitTemplate,
-    ) : SendMessageProducer {
-
+) : SendMessageProducer {
     /**
      * Универсальный метод отправки сообщения в RabbitMQ.
      *
