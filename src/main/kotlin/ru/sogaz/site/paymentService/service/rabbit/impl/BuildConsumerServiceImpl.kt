@@ -12,18 +12,18 @@ import ru.sogaz.site.paymentService.mapper.order.OrderPayloadMapper
 import ru.sogaz.site.paymentService.mapper.payment.PaymentMapper
 import ru.sogaz.site.paymentService.service.OrderService
 import ru.sogaz.site.paymentService.service.RegisterPaymentService
-import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
+import ru.sogaz.site.paymentService.service.rabbit.BuildConsumerService
 
 @Service
-class BuildBatchConsumerServiceImpl(
+class BuildConsumerServiceImpl(
     private val paymentDao: PaymentDao,
     private val orderPayloadMapper: OrderPayloadMapper,
     private val orderService: OrderService,
     private val paymentMapper: PaymentMapper,
     private val registerPaymentService: RegisterPaymentService,
     private val orderDao: OrderDao,
-) : BuildBatchConsumerService {
-    private val logger = loggerFor(BuildBatchConsumerServiceImpl::class.java)
+) : BuildConsumerService {
+    private val logger = loggerFor(BuildConsumerServiceImpl::class.java)
 
     @Transactional(rollbackFor = [Exception::class])
     override fun processSinglePayload(payload: OrderPayloadDto): PaymentRecurrentRegisterData {

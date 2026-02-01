@@ -16,9 +16,9 @@ class RefundPaymentConsumerImpl(
 ) : RefundPaymentConsumer {
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
 
-    @RabbitListener(
-        queues = ["\${app.rabbit.payment-refund-queue}"],
-    )
+//    @RabbitListener(
+//        queues = ["\${app.rabbit.payment-refund-queue}"],
+//    )
     override fun handleBatch(
         messages: List<Message>,
         channel: Channel,

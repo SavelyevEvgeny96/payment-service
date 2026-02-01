@@ -12,7 +12,7 @@ interface SendMessageProducer {
         orderId: String?,
     )
 
-    fun <T : Any> parseBatch(
+    fun <T : Any> parseMessage(
         messages: Message,
         channel: Channel,
         dtoClass: Class<T>,
