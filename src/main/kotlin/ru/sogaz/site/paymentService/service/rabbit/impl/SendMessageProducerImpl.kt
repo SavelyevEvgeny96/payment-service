@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import ru.sogaz.site.paymentService.dto.data.ParsedResult
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -18,6 +19,15 @@ class SendMessageProducerImpl(
     private val objectMapper: ObjectMapper,
     private val rabbitTemplate: RabbitTemplate,
 ) : SendMessageProducer {
+
+    companion object{
+        val AUTHOR_REGEX =
+            Regex(
+                """"author"\s*:\s*"([^"]+)"""",
+                RegexOption.IGNORE_CASE,
+            )
+    }
+    private val logger = loggerFor(SendMessageProducerImpl::class.java)
     /**
      * Универсальный метод отправки сообщения в RabbitMQ.
      *
@@ -83,21 +93,56 @@ class SendMessageProducerImpl(
         )
     }
 
-    override fun <T : Any> parseBatch(
+    override fun <T : Any> parseMessage(
         messages: Message,
         channel: Channel,
         dtoClass: Class<T>,
-    ): ParsedResult<T>? {
+    ): ParsedResult<T> {
         val tag = messages.messageProperties.deliveryTag
         val messageId = messages.messageProperties.messageId
         val body = String(messages.body, Charsets.UTF_8)
+
         return try {
             // Пробуем десериализовать тело
             val dto = objectMapper.readValue(body, dtoClass)
             ParsedResult.Success(tag, dto, messageId)
         } catch (ex: Exception) {
-            channel.basicReject(tag, false)
-            return null
+            // Если не получилось десериализовать, пытаемся найти автора
+            val author = extractAuthorUnsafe(body)
+            if (author != null) {
+                // Сообщение битое, но мы знаем автора → передаем в обработку
+                ParsedResult.Error(tag, body, author, messageId)
+            } else {
+                // Не нашли автора → реджектим сообщение
+                try {
+                    channel.basicReject(tag, false)
+                } catch (ackEx: Exception) {
+                    logger.error("Не удалось сделать basicReject для tag=$tag", ackEx)
+                }
+                // Возвращаем Error с пустым автором, если нужен какой-то объект
+                ParsedResult.Error(tag, body, "unknown", messageId)
+            }
         }
+    }
+
+    private fun extractAuthorUnsafe(body: String): String? {
+        // 1. Пытаемся по-человечески
+        runCatching {
+            val node = objectMapper.readTree(body)
+            val json =
+                if (node.isTextual) objectMapper.readTree(node.asText()) else node
+
+            return json
+                .path("metaInfo")
+                .firstOrNull()
+                ?.path("author")
+                ?.asText()
+        }
+
+        // 2. Fallback — режем строку
+        return AUTHOR_REGEX
+            .find(body)
+            ?.groupValues
+            ?.getOrNull(1)
     }
 }

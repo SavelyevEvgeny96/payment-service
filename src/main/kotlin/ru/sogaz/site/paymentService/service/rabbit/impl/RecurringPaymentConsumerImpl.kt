@@ -67,58 +67,65 @@ class RecurringPaymentConsumerImpl(
         }
 
         // Обрабатываем только успешный результат парсинга
-        if (parsedResults is ParsedResult.Success) {
-            val dtoSuccess = parsedResults.dto
+        when (parsedResults) {
+            is ParsedResult.Success -> {
+                val dtoSuccess = parsedResults.dto
 
-            try {
-                // Основная бизнес-логика обработки payload
-                val processSinglePayloadResponse =
-                    buildConsumerService.processSinglePayload(dtoSuccess)
+                try {
+                    // Основная бизнес-логика обработки payload
+                    val processSinglePayloadResponse =
+                        buildConsumerService.processSinglePayload(dtoSuccess)
 
-                // Маппинг результата в сообщение для внешних систем
-                paidOrderMessageMapper
-                    .toPaidOrderMessage(processSinglePayloadResponse)
-                    .let { message ->
+                    // Маппинг результата в сообщение для внешних систем
+                    paidOrderMessageMapper
+                        .toPaidOrderMessage(processSinglePayloadResponse)
+                        .let { message ->
 
-                        // Если статус обработки содержит ошибку —
-                        // отправляем статусные сообщения
-                        if (message.status?.contains("error") == true) {
+                            // Если статус обработки содержит ошибку —
+                            // отправляем статусные сообщения
+                            if (message.status?.contains("error") == true) {
 
-                            processSinglePayloadResponse.payment.order.queueStatusResultName
-                                ?.takeIf { it.isNotBlank() }
-                                ?.also { routingKey ->
+                                processSinglePayloadResponse.payment.order.queueStatusResultName
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.also { routingKey ->
 
-                                    // Отправка сообщения во внешнюю систему,
-                                    // если это не ordering-client
-                                    if (message.externalSystemCode
-                                            ?.contains("ordering-client") == false
-                                    ) {
+                                        // Отправка сообщения во внешнюю систему,
+                                        // если это не ordering-client
+                                        if (message.externalSystemCode
+                                                ?.contains("ordering-client") == false
+                                        ) {
+                                            sendMessageProducer.sendMessage(
+                                                routingKey,
+                                                message,
+                                                props.exchangePayment,
+                                                message.orderId,
+                                            )
+                                        }
+
+                                        // Отправка статуса в ordering-service
                                         sendMessageProducer.sendMessage(
-                                            routingKey,
+                                            props.routingKeyStatusOrderPaid,
                                             message,
-                                            props.exchangePayment,
+                                            props.exchangeOrder,
                                             message.orderId,
                                         )
                                     }
-
-                                    // Отправка статуса в ordering-service
-                                    sendMessageProducer.sendMessage(
-                                        props.routingKeyStatusOrderPaid,
-                                        message,
-                                        props.exchangeOrder,
-                                        message.orderId,
-                                    )
-                                }
+                            }
                         }
-                    }
 
-                // ACK сообщения после успешной обработки
-                channel.basicAck(parsedResults.tag, true)
+                    // ACK сообщения после успешной обработки
+                    channel.basicAck(parsedResults.tag, true)
 
-            } catch (ex: Exception) {
-                // REJECT без requeue при любой ошибке бизнес-логики
+                } catch (ex: Exception) {
+                    // REJECT без requeue при любой ошибке бизнес-логики
+                    channel.basicReject(parsedResults.tag, false)
+                    logger.error("Ошибка обработки сообщения", ex)
+                }
+            }
+            is ParsedResult.Error -> {
+                logger.error("Ошибка парсинга. Автор: ${parsedResults.author}, " +
+                        "тело: ${parsedResults.rawMessage} , TAG:${parsedResults.tag}")
                 channel.basicReject(parsedResults.tag, false)
-                logger.error("Ошибка обработки сообщения", ex)
             }
         }
     }
