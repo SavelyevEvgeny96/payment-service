@@ -5,6 +5,8 @@ import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dto.data.ParsedResult
+import ru.sogaz.site.paymentService.dto.data.PayloadInfo
+import ru.sogaz.site.paymentService.dto.data.PayloadInfoExtractor
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
@@ -53,11 +55,15 @@ class RecurringPaymentConsumerImpl(
         messages: Message,
         channel: Channel,
     ) {
+        val authorExtractor = PayloadInfoExtractor { body ->
+            sendMessageProducer.extractAuthorUnsafe(body)?.let { PayloadInfo.Author(it) }
+        }
         // Парсинг сообщения messages->OrderPayloadDto
         val parsedResults = sendMessageProducer.parseMessage(
             messages,
             channel,
-            OrderPayloadDto::class.java
+            OrderPayloadDto::class.java,
+            authorExtractor
         )
 
         // Если результат невалидный или пустой — просто логируем и выходим
@@ -122,9 +128,12 @@ class RecurringPaymentConsumerImpl(
                     logger.error("Ошибка обработки сообщения", ex)
                 }
             }
+
             is ParsedResult.Error -> {
-                logger.error("Ошибка парсинга. Автор: ${parsedResults.author}, " +
-                        "тело: ${parsedResults.rawMessage} , TAG:${parsedResults.tag}")
+                logger.error(
+                    "Ошибка парсинга. Автор: ${parsedResults.payloadInfo}, " +
+                            "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}"
+                )
                 channel.basicReject(parsedResults.tag, false)
             }
         }

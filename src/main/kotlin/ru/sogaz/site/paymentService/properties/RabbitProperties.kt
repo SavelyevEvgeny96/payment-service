@@ -14,6 +14,7 @@ class RabbitProperties {
     lateinit var paymentCreatedQueue: String
     lateinit var orderPaidStatusQueue: String
     lateinit var routingKeyStatusPayment: String
+    lateinit var routingKeyPaymentStatusRefund: String
     lateinit var routingKeyPaymentCreated: String
     lateinit var routingKeyStatusOrderPaid: String
 
@@ -29,5 +30,6 @@ class RabbitProperties {
         logger.info("routingKeyStatusPayment = $routingKeyStatusPayment")
         logger.info("orderPaidStatusQueue = $orderPaidStatusQueue")
         logger.info("routingKeyStatusOrderPaid = $routingKeyStatusOrderPaid")
+        logger.info("routingKeyPaymentStatusRefund = $routingKeyPaymentStatusRefund")
     }
 }
