@@ -4,9 +4,11 @@ import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
+import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.ParsedResult
 import ru.sogaz.site.paymentService.dto.data.PayloadInfo
 import ru.sogaz.site.paymentService.dto.data.PayloadInfoExtractor
+import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.RabbitProperties
@@ -18,6 +20,7 @@ import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 class RefundPaymentConsumerImpl(
     private val sendMessageProducer: SendMessageProducer,
     private val props: RabbitProperties,
+    private val paymentDao: PaymentDao
 
     ) : RefundPaymentConsumer {
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
@@ -36,13 +39,14 @@ class RefundPaymentConsumerImpl(
         val parsedResults = sendMessageProducer.parseMessage(
             messages,
             channel,
-            OrderPayloadDto::class.java,
+            RefundPayloadDto::class.java,
             orderIdExtractor
         )
         if (parsedResults != null)
             when (parsedResults) {
                 is ParsedResult.Success -> {
-
+                    val orderId = parsedResults.dto.orderId
+                    paymentDao.findByPaymentOrderId(orderId)
                 }
 
                 is ParsedResult.Error -> {

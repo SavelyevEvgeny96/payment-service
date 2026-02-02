@@ -8,6 +8,7 @@ interface PaymentDao {
     fun getPaymentFromBankId(bankId: String): Payment
 
     fun findByPaymentBankId(paymentId: String): Payment
+    fun findByPaymentOrderId(orderId: UUID?): Payment
 
     fun save(payment: Payment): Payment
 
