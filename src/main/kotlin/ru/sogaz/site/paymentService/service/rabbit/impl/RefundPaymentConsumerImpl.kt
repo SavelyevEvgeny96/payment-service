@@ -4,8 +4,13 @@ import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
+import ru.sogaz.site.paymentService.dto.data.ParsedResult
+import ru.sogaz.site.paymentService.dto.data.PayloadInfo
+import ru.sogaz.site.paymentService.dto.data.PayloadInfoExtractor
+import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
 import ru.sogaz.site.paymentService.service.rabbit.RefundPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 
@@ -13,24 +18,46 @@ import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 class RefundPaymentConsumerImpl(
     private val sendMessageProducer: SendMessageProducer,
     private val props: RabbitProperties,
-) : RefundPaymentConsumer {
+
+    ) : RefundPaymentConsumer {
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
 
-//    @RabbitListener(
-//        queues = ["\${app.rabbit.payment-refund-queue}"],
-//    )
+    @RabbitListener(
+        queues = ["\${app.rabbit.payment-refund-queue}"],
+    )
     override fun handleBatch(
-        messages: List<Message>,
+        messages: Message,
         channel: Channel,
     ) {
-//        logger.info(LOG_START.format(messages.size))
-//        val started = System.nanoTime()
-//        // 1) Парсим сообщения → оставляем только валидные
-//        val payloads = messages.map { sendMessageProducer.toTaggedPayloadSafe(it, RefundPayloadDto::class.java) }
-//        if (payloads.isEmpty()) {
-//            logger.warn("Нет валидных сообщений для обработки в батче")
-//            return
-//        }
-//        logger.info(payloads.toString())
+        val orderIdExtractor = PayloadInfoExtractor { body ->
+            sendMessageProducer.extractOrderIdUnsafe(body)?.let { PayloadInfo.OrderId(it) }
+        }
+        // Парсинг сообщения messages->OrderPayloadDto
+        val parsedResults = sendMessageProducer.parseMessage(
+            messages,
+            channel,
+            OrderPayloadDto::class.java,
+            orderIdExtractor
+        )
+        if (parsedResults != null)
+            when (parsedResults) {
+                is ParsedResult.Success -> {
+
+                }
+
+                is ParsedResult.Error -> {
+                    logger.error(
+                        "Ошибка парсинга. Автор: ${parsedResults.payloadInfo}, " +
+                                "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}"
+                    )
+                    sendMessageProducer.sendRawMessageWithConfirm(
+                        channel,
+                        props.exchangePayment,
+                        props.routingKeyPaymentStatusRefund,
+                        parsedResults.rawBody
+                    )
+                }
+
+            }
     }
 }

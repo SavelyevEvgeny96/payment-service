@@ -5,7 +5,7 @@ import org.springframework.amqp.core.Message
 
 interface RefundPaymentConsumer {
     fun handleBatch(
-        messages: List<Message>,
+        messages:Message,
         channel: Channel,
     )
 }
