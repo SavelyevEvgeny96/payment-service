@@ -234,9 +234,11 @@ class GPBankIntegrationServiceImpl(
             logger.debug("$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}", ex)
             throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
         }
-
+//  не понятно где брать сумму возврата
     override fun registerRefundForThePayment(payment: Payment) {
         val getSessionId = gpbCardPaymentClient.getSessionId(tokenService.takePortalId(payment.depersonalization))
+        gpbCardPaymentClient.startRefund(tokenService.takePortalId(payment.depersonalization),payment.paymentBankId
+            ,getSessionId,payment.order)
         println(getSessionId)
     }
 
