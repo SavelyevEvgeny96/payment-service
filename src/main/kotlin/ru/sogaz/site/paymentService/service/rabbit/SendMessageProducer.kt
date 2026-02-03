@@ -14,7 +14,9 @@ interface SendMessageProducer {
     )
 
     fun extractOrderIdUnsafe(body: String): String?
+
     fun extractAuthorUnsafe(body: String): String?
+
     fun sendRawMessageWithConfirm(
         channel: Channel,
         exchange: String,

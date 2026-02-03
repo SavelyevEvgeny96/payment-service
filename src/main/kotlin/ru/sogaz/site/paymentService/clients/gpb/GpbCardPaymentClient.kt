@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
+import ru.sogaz.site.paymentService.dto.response.bank.SessionIdDtoResponse
 
 @FeignClient(
     name = "gpb-card-payment-client",
@@ -21,6 +22,11 @@ interface GpbCardPaymentClient {
     fun getToken(
         @PathVariable portalId: String,
     ): GazpromTokenResponse
+
+    @PostMapping(value = ["/{portalId}/session/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun getSessionId(
+        @PathVariable portalId: String,
+    ): SessionIdDtoResponse
 
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun startPayment(

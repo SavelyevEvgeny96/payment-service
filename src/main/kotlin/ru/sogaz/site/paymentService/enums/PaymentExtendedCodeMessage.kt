@@ -54,6 +54,7 @@ enum class PaymentExtendedCodeMessage(
     CARD_TEMPORARY_BLOCKED("Карта временно заблокирована"),
     CPA_SSL_FAILED("Ошибка при взаимодействии с магазином"),
     RECURRENT_ACQUIRER_ERROR("Ошибка при проведении рекуррентного платежа у эквайера"),
+    PAYMENT_DATA_NOT_FOUND("Не найден данные о банковской транзакции"),
     ;
 
     companion object {

@@ -21,13 +21,12 @@ class SendMessageProducerImpl(
     private val objectMapper: ObjectMapper,
     private val rabbitTemplate: RabbitTemplate,
 ) : SendMessageProducer {
-
     companion object {
-            val ORDER_ID_REGEX =
-                Regex(
-                    """"orderId"\s*:\s*"([^"]+)"""",
-                    RegexOption.IGNORE_CASE,
-                )
+        val ORDER_ID_REGEX =
+            Regex(
+                """"orderId"\s*:\s*"([^"]+)"""",
+                RegexOption.IGNORE_CASE,
+            )
 
         val AUTHOR_REGEX =
             Regex(
@@ -182,7 +181,6 @@ class SendMessageProducerImpl(
         dtoClass: Class<T>,
         payloadInfoExtractor: PayloadInfoExtractor,
     ): ParsedResult<T>? {
-
         val tag = messages.messageProperties.deliveryTag
         val messageId = messages.messageProperties.messageId
         val body = String(messages.body, Charsets.UTF_8)
@@ -191,7 +189,6 @@ class SendMessageProducerImpl(
             // 1. Пробуем десериализовать тело
             val dto = objectMapper.readValue(body, dtoClass)
             ParsedResult.Success(tag, dto, messageId)
-
         } catch (ex: Exception) {
             // 2. Десериализация не удалась — пробуем вытащить полезную инфу
             val payloadInfo = payloadInfoExtractor.extract(body)

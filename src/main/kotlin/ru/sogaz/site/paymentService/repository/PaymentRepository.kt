@@ -7,11 +7,13 @@ import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
+import java.util.Optional
 import java.util.UUID
 
 @Repository
 interface PaymentRepository : JpaRepository<Payment, UUID> {
-    fun findByOrder(order: Order): Payment?
+
+    fun findByOrderId(orderId: UUID?): Optional<Payment>
 
     fun findByPaymentBankId(paymentBankId: String?): Payment
 

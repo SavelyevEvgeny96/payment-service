@@ -33,7 +33,6 @@ class RecurringPaymentConsumerImpl(
     private val sendMessageProducer: SendMessageProducer,
     private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
-
     companion object {
         /** Сообщение логирования при отсутствии валидных сообщений в батче */
         private const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
@@ -55,16 +54,18 @@ class RecurringPaymentConsumerImpl(
         messages: Message,
         channel: Channel,
     ) {
-        val authorExtractor = PayloadInfoExtractor { body ->
-            sendMessageProducer.extractAuthorUnsafe(body)?.let { PayloadInfo.Author(it) }
-        }
+        val authorExtractor =
+            PayloadInfoExtractor { body ->
+                sendMessageProducer.extractAuthorUnsafe(body)?.let { PayloadInfo.Author(it) }
+            }
         // Парсинг сообщения messages->OrderPayloadDto
-        val parsedResults = sendMessageProducer.parseMessage(
-            messages,
-            channel,
-            OrderPayloadDto::class.java,
-            authorExtractor
-        )
+        val parsedResults =
+            sendMessageProducer.parseMessage(
+                messages,
+                channel,
+                OrderPayloadDto::class.java,
+                authorExtractor,
+            )
 
         // Если результат невалидный или пустой — просто логируем и выходим
         if (parsedResults == null) {
@@ -90,7 +91,6 @@ class RecurringPaymentConsumerImpl(
                             // Если статус обработки содержит ошибку —
                             // отправляем статусные сообщения
                             if (message.status?.contains("error") == true) {
-
                                 processSinglePayloadResponse.payment.order.queueStatusResultName
                                     ?.takeIf { it.isNotBlank() }
                                     ?.also { routingKey ->
@@ -121,7 +121,6 @@ class RecurringPaymentConsumerImpl(
 
                     // ACK сообщения после успешной обработки
                     channel.basicAck(parsedResults.tag, true)
-
                 } catch (ex: Exception) {
                     // REJECT без requeue при любой ошибке бизнес-логики
                     channel.basicReject(parsedResults.tag, false)
@@ -132,7 +131,7 @@ class RecurringPaymentConsumerImpl(
             is ParsedResult.Error -> {
                 logger.error(
                     "Ошибка парсинга. Автор: ${parsedResults.payloadInfo}, " +
-                            "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}"
+                        "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}",
                 )
                 channel.basicReject(parsedResults.tag, false)
             }

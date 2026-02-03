@@ -204,6 +204,10 @@ class AKBankIntegrationServiceImpl(
             .toBankPaymentDetails()
     }
 
+    override fun registerRefundForThePayment(payment: Payment) {
+        TODO("Not yet implemented")
+    }
+
     override fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData {
         TODO("Not yet implemented")
     }

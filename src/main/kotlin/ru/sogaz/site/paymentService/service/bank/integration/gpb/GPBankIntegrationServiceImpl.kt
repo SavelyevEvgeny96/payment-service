@@ -235,6 +235,11 @@ class GPBankIntegrationServiceImpl(
             throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
         }
 
+    override fun registerRefundForThePayment(payment: Payment) {
+        val getSessionId = gpbCardPaymentClient.getSessionId(tokenService.takePortalId(payment.depersonalization))
+        println(getSessionId)
+    }
+
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
         convertToBankPaymentDetails(
             gpbCardPaymentClient
