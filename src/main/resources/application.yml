@@ -98,8 +98,18 @@ api:
   gpb:
     card:
       basePath: ${GPB_URL}
+      accounts:
+        main:
+          portalId: ${GPB_PORTAL_ID}
+          merchantId: ${GPB_MERCHANT_ID}
+        depersonalized:
+          portalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
+          merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
     sbp:
       basePath: ${GPB_SBP_URL}
+      callbackUrlSbp: ${CALLBACK_URL_SBP}
+      merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
+      paymentAccount: ${PAYMENT_ACCOUNT}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
