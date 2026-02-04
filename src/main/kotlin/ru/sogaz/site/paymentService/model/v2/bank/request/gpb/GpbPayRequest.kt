@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class GpbPayRequestDepr(
+data class GpbPayRequest(
     val state: State?,
     val params: Map<String, String>? = null,
     val merchantId: String,

@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.mapper.v2.bank.gpb
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Named
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequestDepr
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.State
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
 import ru.sogaz.site.paymentService.model.v2.web.request.PayParams
@@ -42,5 +42,5 @@ abstract class GpbRequestMapper {
         merchantId: String,
         cardPayOperationRequest: CardPayOperationRequest,
         payParams: PayParams,
-    ): GpbPayRequestDepr
+    ): GpbPayRequest
 }

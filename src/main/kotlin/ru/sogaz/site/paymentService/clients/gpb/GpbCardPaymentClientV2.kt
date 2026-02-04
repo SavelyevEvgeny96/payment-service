@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequestDepr
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 
 @FeignClient(
@@ -26,14 +26,14 @@ interface GpbCardPaymentClientV2 {
     fun cardPayment(
         @PathVariable portalId: String,
         @PathVariable token: String,
-        @RequestBody request: GpbPayRequestDepr,
+        @RequestBody request: GpbPayRequest,
     ): GpbPayCardResponse
 
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun recurrentPayment(
         @PathVariable portalId: String,
         @PathVariable token: String,
-        @RequestBody request: GpbPayRequestDepr,
+        @RequestBody request: GpbPayRequest,
     ): RegisterCardResponseDto
 
     @GetMapping(value = ["/{portalId}/payment/{paymentBankId}"])
