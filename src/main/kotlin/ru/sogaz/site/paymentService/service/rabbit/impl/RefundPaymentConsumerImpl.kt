@@ -94,7 +94,7 @@ class RefundPaymentConsumerImpl(
             }
             try {
                 if (payment.bank == BankEnum.GPB) {
-                    bankIntegrationService.registerRefundForThePayment(payment)
+                    bankIntegrationService.registerRefundForThePayment(payment,dto)
                 }
             } catch (ex: Exception) {
                 sendRefundError(

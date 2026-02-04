@@ -37,10 +37,10 @@ interface GpbCardPaymentClient {
     )
     fun startRefund(
         @PathVariable portalId: String,
-        @PathVariable paymentBankId: String,
+        @PathVariable paymentBankId: String?,
         @RequestHeader("X-IV-Authorization")
         sessionHeader: String,
-        @RequestParam("amount") amount: Long,
+        @RequestParam("amount") amount: String,
         @RequestParam("currency") currency: String,
         @RequestParam("comment") comment: String,
     ): GPBRefundResponseDto

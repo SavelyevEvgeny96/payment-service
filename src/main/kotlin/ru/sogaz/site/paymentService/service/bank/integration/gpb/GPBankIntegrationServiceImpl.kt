@@ -17,18 +17,21 @@ import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
+import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBStatusSBPRequest
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GPBRefundResponseDto
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.HeaderStatusEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
@@ -234,12 +237,18 @@ class GPBankIntegrationServiceImpl(
             logger.debug("$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}", ex)
             throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
         }
-//  не понятно где брать сумму возврата
-    override fun registerRefundForThePayment(payment: Payment) {
+
+    //  не понятно где брать сумму возврата
+    override fun registerRefundForThePayment(payment: Payment, dto: RefundPayloadDto): GPBRefundResponseDto {
         val getSessionId = gpbCardPaymentClient.getSessionId(tokenService.takePortalId(payment.depersonalization))
-        gpbCardPaymentClient.startRefund(tokenService.takePortalId(payment.depersonalization),payment.paymentBankId
-            ,getSessionId,payment.order)
-        println(getSessionId)
+        return gpbCardPaymentClient.startRefund(
+            tokenService.takePortalId(payment.depersonalization),
+            payment.paymentBankId,
+            getSessionId.sessionId,
+            dto.premiumAmount,
+            CurrencyEnum.RUB.name,
+            dto.description
+        )
     }
 
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =

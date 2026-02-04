@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
+import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -204,7 +205,7 @@ class AKBankIntegrationServiceImpl(
             .toBankPaymentDetails()
     }
 
-    override fun registerRefundForThePayment(payment: Payment) {
+    override fun registerRefundForThePayment(payment: Payment, dto: RefundPayloadDto) {
         TODO("Not yet implemented")
     }
 
