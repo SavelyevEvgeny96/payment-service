@@ -89,6 +89,8 @@ api:
     backUrlS: ${BACK_URL_SUCCESS}
     backUrlF: ${BACK_URL_FALSE}
     sogazUrlPattern: ${SOGAZ_URL_PATTERN:^.*.sogaz.ru$|^lk.health-and-care.ru$}
+    identifier: ${GPB_BANK_LOGIN:}
+    password: ${GPB_BANK_PASS:}
   receipt:
     receiptUrl: ${RECEIPT_URL}
   qr:
@@ -141,7 +143,7 @@ logging:
     frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
     upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
     max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
-    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:true}
     stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
     sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink, qrCode, content}
 

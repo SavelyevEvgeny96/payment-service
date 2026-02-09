@@ -7,5 +7,5 @@ data class RefundPayloadDto(
     val metaInfo: List<MetaInfoOrder>,
     val orderId: UUID?,
     val premiumAmount: String,
-    val description: String
+    val description: String,
 )

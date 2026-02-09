@@ -4,7 +4,7 @@ import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 
 interface RefundPaymentConsumer {
-    fun handleBatch(
+    fun handleMessage(
         messages: Message,
         channel: Channel,
     )

@@ -23,6 +23,7 @@ import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GPBRefundResponseDto
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.BankEnum
@@ -205,7 +206,10 @@ class AKBankIntegrationServiceImpl(
             .toBankPaymentDetails()
     }
 
-    override fun registerRefundForThePayment(payment: Payment, dto: RefundPayloadDto) {
+    override fun registerRefundForThePayment(
+        payment: Payment,
+        dto: RefundPayloadDto,
+    ): GPBRefundResponseDto {
         TODO("Not yet implemented")
     }
 

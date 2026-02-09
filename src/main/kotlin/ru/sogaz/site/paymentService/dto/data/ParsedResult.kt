@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.dto.data
-sealed class ParsedResult<out T> {
 
+sealed class ParsedResult<out T> {
     data class Success<T>(
         val tag: Long,
         val dto: T,

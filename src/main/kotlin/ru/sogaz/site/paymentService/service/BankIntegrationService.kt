@@ -19,6 +19,10 @@ interface BankIntegrationService {
 
     fun requestPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails
 
-    fun registerRefundForThePayment(payment: Payment, dto: RefundPayloadDto): GPBRefundResponseDto
+    fun registerRefundForThePayment(
+        payment: Payment,
+        dto: RefundPayloadDto,
+    ): GPBRefundResponseDto
+
     fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData
 }

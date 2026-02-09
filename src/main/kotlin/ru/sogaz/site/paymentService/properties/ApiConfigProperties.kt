@@ -24,6 +24,8 @@ class ApiConfigProperties {
     lateinit var akbUrl: String
     lateinit var akbSbpUrl: String
     lateinit var sogazUrlPattern: String
+    lateinit var identifier: String
+    lateinit var password: String
 
     @PostConstruct
     fun postConstruct() {

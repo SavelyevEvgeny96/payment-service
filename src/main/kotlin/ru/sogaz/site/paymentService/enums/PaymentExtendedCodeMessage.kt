@@ -58,7 +58,8 @@ enum class PaymentExtendedCodeMessage(
     NOT_IS_CORRECTED_VALUE("Не пройдена проверка корректности значений, переданных в сообщении"),
     PAYMENT_STATUS_NOT_SUCCESS("Счет не оплачен"),
     PAYMENT_EXPIRED("Платеж недоступен для отмены. Прошло более суток с момента совершения оплаты"),
-    PAYMENT_SYSTEM_IS_NOT_AVAILABLE("Платежная система недоступна")
+    PAYMENT_SYSTEM_IS_NOT_AVAILABLE("Платежная система недоступна"),
+    OPERATION_ERROR_ON_THE_BANK("Ошибка при совершении операции на стороне банка"),
     ;
 
     companion object {

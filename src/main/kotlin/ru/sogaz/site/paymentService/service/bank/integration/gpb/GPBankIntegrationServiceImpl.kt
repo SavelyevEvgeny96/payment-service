@@ -62,7 +62,7 @@ class GPBankIntegrationServiceImpl(
     private val waitingPaymentDao: WaitingPaymentDao,
 ) : BankIntegrationServiceImpl() {
     companion object {
-        private const val TEMPLATE_VERSION = "01"
+        private const val SESSION = "Session "
         private const val QR_TTL = "60"
         private const val QR_TYPE = "02"
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции:"
@@ -238,17 +238,49 @@ class GPBankIntegrationServiceImpl(
             throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
         }
 
-    //  не понятно где брать сумму возврата
-    override fun registerRefundForThePayment(payment: Payment, dto: RefundPayloadDto): GPBRefundResponseDto {
-        val getSessionId = gpbCardPaymentClient.getSessionId(tokenService.takePortalId(payment.depersonalization))
-        return gpbCardPaymentClient.startRefund(
-            tokenService.takePortalId(payment.depersonalization),
-            payment.paymentBankId,
-            getSessionId.sessionId,
-            dto.premiumAmount,
-            CurrencyEnum.RUB.name,
-            dto.description
-        )
+    /**
+     * Регистрирует возврат средств по платежу через GPB Card Payment.
+     *
+     * Метод:
+     * 1. Определяет portalId по данным деперсонализации платежа
+     * 2. Открывает сессию в GPB
+     * 3. Инициирует возврат средств
+     * 4. Гарантированно закрывает сессию (даже при ошибке выполнения)
+     *
+     * @param payment объект платежа, по которому выполняется возврат
+     * @param dto данные для возврата средств (сумма, описание и пр.)
+     *
+     * @return ответ банка с результатом операции возврата
+     *
+     * @throws RuntimeException может пробрасывать исключения клиента GPB
+     */
+    override fun registerRefundForThePayment(
+        payment: Payment,
+        dto: RefundPayloadDto,
+    ): GPBRefundResponseDto {
+        val portalId = tokenService.takePortalId(payment.depersonalization)
+
+        val sessionResponse =
+            gpbCardPaymentClient.getSessionId(
+                portalId = portalId,
+                identifier = apiConfigProperties.identifier,
+                password = apiConfigProperties.password,
+            )
+
+        val sessionToken = SESSION + sessionResponse.sessionId
+
+        return try {
+            gpbCardPaymentClient.startRefund(
+                portalId,
+                payment.paymentBankId,
+                sessionToken,
+                dto.premiumAmount,
+                CurrencyEnum.RUB.name,
+                dto.description,
+            )
+        } finally {
+            gpbCardPaymentClient.finishSessionId(sessionToken, portalId)
+        }
     }
 
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
