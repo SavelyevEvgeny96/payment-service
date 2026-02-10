@@ -70,6 +70,10 @@ interface OrderMapper {
     @Mapping(target = "keyCard", source = "bankPaymentDetails.cardDetails.cardId")
     @Mapping(target = "status", source = "order", qualifiedByName = ["statusIfRecurrent"])
     @Mapping(target = "errorText", source = "bankPaymentDetails.extendedCode")
+    @Mapping(target = "issuerName", source = "bankPaymentDetails.cardDetails.issuerName")
+    @Mapping(target = "maskedPan", source = "bankPaymentDetails.cardDetails.maskedPan")
+    @Mapping(target = "paymentSystem", source = "bankPaymentDetails.cardDetails.paymentSystem")
+    @Mapping(target = "paymentType", source = "bankPaymentDetails.cardDetails.paymentType")
     fun toPaidOrderMessage(
         order: Order,
         subOrderPayloads: List<SubOrderPayload>,

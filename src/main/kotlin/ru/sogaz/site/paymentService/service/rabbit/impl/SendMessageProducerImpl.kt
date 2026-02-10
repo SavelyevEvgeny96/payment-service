@@ -88,7 +88,8 @@ class SendMessageProducerImpl(
                 message.messageProperties.headers["author"] = "payService"
                 message.messageProperties.headers["flowCode"] = "ResultPay"
                 message.messageProperties.headers["timestamp"] = timestamp
-
+                // Отключаем typeId
+                message.messageProperties.headers.remove("__TypeId__")
                 // 4.2) Пробрасываем exchange/routingKey в headers (удобно для логов/трассировки)
                 message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
                 message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
