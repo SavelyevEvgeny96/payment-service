@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.dto.data.PayloadInfo
 import ru.sogaz.site.paymentService.dto.data.PayloadInfoExtractor
 import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.response.StatusRefundResponseDto
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
@@ -43,6 +44,7 @@ class RefundPaymentConsumerImpl(
     @Qualifier("GPBankIntegrationServiceImpl")
     private val bankIntegrationService: BankIntegrationService,
 ) : RefundPaymentConsumer {
+
     private val logger = loggerFor(RefundPaymentConsumerImpl::class.java)
 
     /**
@@ -98,54 +100,62 @@ class RefundPaymentConsumerImpl(
                     orderId = orderId,
                     error = PaymentExtendedCodeMessage.PAYMENT_DATA_NOT_FOUND,
                 )
-// Что делаем если в поле банк нал или другой банк оформляем ли возврат ?
-        if (payment.state != PaymentStatusEnum.SUCCESS) {
+
+        if (payment.bank != BankEnum.GPB) {
             return sendRefundError(
                 dto = dto,
                 orderId = orderId,
-                error = PaymentExtendedCodeMessage.PAYMENT_STATUS_NOT_SUCCESS,
+                error = PaymentExtendedCodeMessage.PAYMENT_NOT_FOUND_IS_NOT_GPB,
             )
-        }
+        } else {
+            if (payment.state != PaymentStatusEnum.SUCCESS) {
+                return sendRefundError(
+                    dto = dto,
+                    orderId = orderId,
+                    error = PaymentExtendedCodeMessage.PAYMENT_STATUS_NOT_SUCCESS,
+                )
+            }
 
-        val finishedAt =
-            payment.paymentFinished
-                ?: return sendRefundError(
+            val finishedAt =
+                payment.paymentFinished
+                    ?: return sendRefundError(
+                        dto = dto,
+                        orderId = orderId,
+                        error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
+                    )
+
+            val expiredAt = finishedAt.plusHours(24)
+            if (LocalDateTime.now().isAfter(expiredAt)) {
+                return sendRefundError(
                     dto = dto,
                     orderId = orderId,
                     error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
                 )
+            }
 
-        val expiredAt = finishedAt.plusHours(24)
-        if (LocalDateTime.now().isAfter(expiredAt)) {
-            return sendRefundError(
-                dto = dto,
-                orderId = orderId,
-                error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
-            )
-        }
-
-        runCatching {
-            bankIntegrationService.registerRefundForThePayment(payment, dto)
-        }.onFailure { ex ->
-            logger.error(
-                "Ошибка при регистрации возврата в банке. orderId=$orderId, paymentBankId=${payment.paymentBankId}",
-                ex,
-            )
-            sendRefundError(
-                dto = dto,
-                orderId = orderId,
-                error = PaymentExtendedCodeMessage.PAYMENT_SYSTEM_IS_NOT_AVAILABLE,
-            )
-        }.onSuccess { bankResp ->
-            val status = bankResp.status
-            if (status == StatusEnum.UNKNOWN.value || status == StatusEnum.FAILED.value) {
+            runCatching {
+                bankIntegrationService.registerRefundForThePayment(payment, dto)
+            }.onFailure { ex ->
+                logger.error(
+                    "Ошибка при регистрации возврата в банке. orderId=$orderId, paymentBankId=${payment.paymentBankId}",
+                    ex,
+                )
                 sendRefundError(
                     dto = dto,
                     orderId = orderId,
-                    error = PaymentExtendedCodeMessage.OPERATION_ERROR_ON_THE_BANK,
+                    error = PaymentExtendedCodeMessage.PAYMENT_SYSTEM_IS_NOT_AVAILABLE,
                 )
-            } else {
-                sendRefundSuccess(dto, orderId)
+            }.onSuccess { bankResp ->
+                val status = bankResp.status
+                if (status == StatusEnum.UNKNOWN.value || status == StatusEnum.FAILED.value) {
+                    sendRefundError(
+                        dto = dto,
+                        orderId = orderId,
+                        error = PaymentExtendedCodeMessage.OPERATION_ERROR_ON_THE_BANK,
+                    )
+                } else {
+                    sendRefundSuccess(dto = dto, orderId = orderId)
+                }
             }
         }
     }
@@ -185,13 +195,12 @@ class RefundPaymentConsumerImpl(
         dto: RefundPayloadDto,
         orderId: UUID?,
     ) {
-        val response =
-            StatusRefundResponseDto(
-                dto.metaInfo,
-                orderId,
-                StatusEnum.SUCCESS.value,
-                null,
-            )
+        val response = StatusRefundResponseDto(
+            dto.metaInfo,
+            orderId,
+            StatusEnum.SUCCESS.value,
+            null,
+        )
 
         sendMessageProducer.sendMessage(
             props.routingKeyPaymentStatusRefund,
@@ -213,13 +222,12 @@ class RefundPaymentConsumerImpl(
         orderId: UUID?,
         error: PaymentExtendedCodeMessage,
     ) {
-        val response =
-            StatusRefundResponseDto(
-                dto.metaInfo,
-                orderId,
-                StatusEnum.ERROR.value,
-                error.message,
-            )
+        val response = StatusRefundResponseDto(
+            dto.metaInfo,
+            orderId,
+            StatusEnum.ERROR.value,
+            error.message,
+        )
 
         sendMessageProducer.sendMessage(
             props.routingKeyPaymentStatusRefund,
