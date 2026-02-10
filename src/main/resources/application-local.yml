@@ -37,7 +37,7 @@ api:
   gpb:
     card:
       basePath: ${api.gateway.dmz}/payment/gpb/card/
-      accounts:
+      account:
         main:
           portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
           merchantId: B80540E3096C8730BCE3

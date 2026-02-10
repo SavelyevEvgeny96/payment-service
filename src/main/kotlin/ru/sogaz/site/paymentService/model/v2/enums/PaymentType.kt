@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.model.v2.enums.payment
+package ru.sogaz.site.paymentService.model.v2.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 

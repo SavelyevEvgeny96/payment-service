@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.dto.rabbit.MetaInfoOrder
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPaidEvent
 import ru.sogaz.site.paymentService.enums.OrderPaidStatus
-import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.OrderPaidEventFactory
 import java.time.Instant
 import java.util.UUID

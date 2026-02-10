@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService.service.v2.order
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
@@ -52,6 +54,33 @@ class IdempotentOrderServiceTest {
         every { idempotentOrderOperationDao.save(any()) } returnsArgument 0
 
         every { payOperationRequest.orderId } returns UUID.randomUUID()
+    }
+
+    val mapper = jacksonObjectMapper()
+
+    val json =
+        """
+        {
+          "orderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "description": "string",
+          "amount": 10.56,
+          "payItems": {
+            "param1": "string"
+          },
+          "params": {
+            "urlToReturn": "http://www.sogaz.ru",
+            "urlToReturnS": "http://www.sogaz.ru",
+            "urlToReturnF": "http://www.sogaz.ru",
+            "depersonalization": false,
+            "saveCard": true
+          }
+        }
+        """.trimIndent()
+
+    @Test
+    fun `asdf`() {
+        val req = mapper.readValue<CardPayOperationRequest>(json)
+        println(req)
     }
 
     @Test

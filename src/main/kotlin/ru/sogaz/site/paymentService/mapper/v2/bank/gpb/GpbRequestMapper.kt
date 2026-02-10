@@ -6,8 +6,8 @@ import org.mapstruct.Named
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.State
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
-import ru.sogaz.site.paymentService.model.v2.web.request.PayParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayParams
 import java.math.BigDecimal
 
 @Mapper
@@ -33,7 +33,7 @@ abstract class GpbRequestMapper {
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
     @Mapping(target = "params", source = "cardPayOperationRequest.payItems")
     @Mapping(target = "merchantTrx", source = "cardPayOperationRequest.orderId")
-    @Mapping(target = "addCardAllowed", source = "payParams.saveCard")
+    @Mapping(target = "addCardAllowed", source = "cardPayOperationRequest.saveCard")
     @Mapping(target = "state", expression = "java(cardPaymentState)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
     @Mapping(target = "openApiMirPaySupported", constant = "true")

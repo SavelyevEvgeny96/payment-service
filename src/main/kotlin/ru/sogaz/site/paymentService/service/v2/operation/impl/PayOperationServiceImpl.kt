@@ -22,6 +22,5 @@ class PayOperationServiceImpl(
     private fun cardPayStrategy(cardPayOperationRequest: CardPayOperationRequest): PayStrategy =
         CardPayStrategy(cardPayOperationRequest, gpbCardPayIntegration)
 
-    private fun sbpPayStrategy(sbpPayOperationRequest: SbpPayOperationRequest): PayStrategy =
-        TODO("Not yet implemented")
+    private fun sbpPayStrategy(sbpPayOperationRequest: SbpPayOperationRequest): PayStrategy = TODO("Not yet implemented")
 }

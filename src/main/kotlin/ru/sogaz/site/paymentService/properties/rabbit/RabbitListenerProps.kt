@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.properties
+package ru.sogaz.site.paymentService.properties.rabbit
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
