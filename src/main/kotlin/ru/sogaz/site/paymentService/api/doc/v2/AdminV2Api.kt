@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import ru.sogaz.site.paymentService.dto.data.DataPay
 import ru.sogaz.site.paymentService.dto.request.PayQueryParams
-import ru.sogaz.site.paymentService.model.web.request.PayRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.PayRequest
 
 @RequestMapping("admin")
 interface AdminV2Api {
