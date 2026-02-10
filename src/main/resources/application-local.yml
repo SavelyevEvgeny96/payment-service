@@ -37,8 +37,18 @@ api:
   gpb:
     card:
       basePath: ${api.gateway.dmz}/payment/gpb/card/
+      accounts:
+        main:
+          portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
+          merchantId: B80540E3096C8730BCE3
+        depersonalized:
+          portalId:
+          merchantId:
     sbp:
       basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
+      callbackUrlSbp: https://example.com/callback
+      merchantIdSbpGpb:
+      paymentAccount: 40701810800000030052
 
 crons:
   waitingPaymentsCheck: "*/30 * * * * *"
