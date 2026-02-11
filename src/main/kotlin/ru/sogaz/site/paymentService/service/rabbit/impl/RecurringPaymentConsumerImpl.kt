@@ -35,7 +35,7 @@ class RecurringPaymentConsumerImpl(
 ) : RecurringPaymentConsumer {
     companion object {
         /** Сообщение логирования при отсутствии валидных сообщений в батче */
-        private const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
+         const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
             "Нет валидных сообщений для обработки"
     }
 
@@ -70,6 +70,12 @@ class RecurringPaymentConsumerImpl(
         // Если результат невалидный или пустой — просто логируем и выходим
         if (parsedResults == null) {
             logger.warn(NOT_VALID_BATCH_MESSAGE_ORDER_CREATED)
+            // Ничего полезного не нашли → реджект
+            try {
+                channel.basicReject(messages.messageProperties.deliveryTag, false)
+            } catch (ackEx: Exception) {
+                logger.error("Не удалось сделать basicReject для tag=${messages.messageProperties.deliveryTag}", ackEx)
+            }
             return
         }
 
@@ -131,7 +137,7 @@ class RecurringPaymentConsumerImpl(
             is ParsedResult.Error -> {
                 logger.error(
                     "Ошибка парсинга. Автор: ${parsedResults.payloadInfo}, " +
-                        "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}",
+                            "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}",
                 )
                 channel.basicReject(parsedResults.tag, false)
             }

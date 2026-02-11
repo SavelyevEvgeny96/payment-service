@@ -198,12 +198,6 @@ class SendMessageProducerImpl(
                 // Сообщение битое, но мы знаем ЧТО-ТО важное → передаем дальше
                 ParsedResult.Error(tag, body, payloadInfo, messageId, ex)
             } else {
-                // Ничего полезного не нашли → реджект
-                try {
-                    channel.basicReject(tag, false)
-                } catch (ackEx: Exception) {
-                    logger.error("Не удалось сделать basicReject для tag=$tag", ackEx)
-                }
                 null
             }
         }

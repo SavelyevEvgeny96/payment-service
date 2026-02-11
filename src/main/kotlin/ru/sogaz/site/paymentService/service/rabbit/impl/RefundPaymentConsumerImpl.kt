@@ -20,6 +20,7 @@ import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.BankIntegrationService
 import ru.sogaz.site.paymentService.service.rabbit.RefundPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
+import ru.sogaz.site.paymentService.service.rabbit.impl.RecurringPaymentConsumerImpl.Companion.NOT_VALID_BATCH_MESSAGE_ORDER_CREATED
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -76,8 +77,19 @@ class RefundPaymentConsumerImpl(
                 channel,
                 RefundPayloadDto::class.java,
                 orderIdExtractor,
-            ) ?: return
+            )
 
+        // Если результат невалидный или пустой — просто логируем и выходим
+        if (parsedResult == null) {
+            logger.warn(NOT_VALID_BATCH_MESSAGE_ORDER_CREATED)
+            // Ничего полезного не нашли → реджект
+            try {
+                channel.basicReject(messages.messageProperties.deliveryTag, false)
+            } catch (ackEx: Exception) {
+                logger.error("Не удалось сделать basicReject для tag=${messages.messageProperties.deliveryTag}", ackEx)
+            }
+            return
+        }
         when (parsedResult) {
             is ParsedResult.Success -> handleSuccess(parsedResult)
             is ParsedResult.Error -> handleParseError(parsedResult, channel)

@@ -11,8 +11,7 @@ import java.util.UUID
 
 @Repository
 interface PaymentRepository : JpaRepository<Payment, UUID> {
-    fun findByOrderId(orderId: UUID?): Optional<Payment>
-
+    fun findAllByOrderIdAndState(orderId: UUID?, state: PaymentStatusEnum): Optional<Payment>
     fun findByPaymentBankId(paymentBankId: String?): Payment
 
     @Query(
