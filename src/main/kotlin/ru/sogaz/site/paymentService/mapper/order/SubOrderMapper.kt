@@ -4,7 +4,6 @@ import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
-import org.mapstruct.Mappings
 import org.mapstruct.Named
 import org.mapstruct.NullValuePropertyMappingStrategy
 import ru.sogaz.site.paymentService.dto.request.SubOrderPayload
@@ -32,18 +31,7 @@ interface SubOrderMapper {
         @MappingTarget subOrder: SubOrder,
     ): SubOrder
 
-    @Mappings(
-        Mapping(
-            target = "policyDate",
-            source = "policyDate",
-            qualifiedByName = ["instantToFormattedString"],
-        ),
-        Mapping(
-            target = "contractDate",
-            source = "contractDate",
-            qualifiedByName = ["instantToFormattedString"],
-        ),
-    )
+    // убрал policyDate и contractDate мапинг в виде даты и вернули в виде числа для подписок
     fun toSubOrderPayload(subOrder: SubOrder): SubOrderPayload
 
     fun toPayloadList(src: List<SubOrder>): List<SubOrderPayload>

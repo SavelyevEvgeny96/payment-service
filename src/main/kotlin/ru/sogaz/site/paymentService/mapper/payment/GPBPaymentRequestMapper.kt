@@ -61,6 +61,15 @@ abstract class GPBPaymentRequestMapper {
         return SUBSCRIPTION_PURPOSE_PATTERN.format(mainSubOrder?.contractNumber)
     }
 
+    @Named("mergeRecurrentParams")
+    protected fun mergeRecurrentParams(payment: Payment): Map<String, String> {
+        val base = getParams(payment) // params как у карты
+        val result = LinkedHashMap<String, String>(base.size + map.size)
+        result.putAll(base) // сначала base
+        result.putAll(map) // потом map
+        return result
+    }
+
     //  Тоже вынесено, чтобы не тянуть static-цепочку
     protected fun getMainSubOrder(payment: Payment): SubOrder? = payment.order.subOrders.findLast(SubOrder::mainContractCheck)
 
@@ -73,7 +82,7 @@ abstract class GPBPaymentRequestMapper {
     @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
     @Mapping(target = "openApiMirPaySupported", constant = "true")
-    @Mapping(target = "params", expression = "java(map)")
+    @Mapping(target = "params", source = "payment", qualifiedByName = ["mergeRecurrentParams"])
     @Mapping(target = "depersonalization", source = "payment.depersonalization")
     @Mapping(target = "src", expression = "java(new Src(\"card_id\", payment.getKeyCard()))")
     @Mapping(target = "recurrent", constant = "true")

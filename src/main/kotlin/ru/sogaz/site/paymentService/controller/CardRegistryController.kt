@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.Parameters
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -49,7 +50,7 @@ class CardRegistryController(
     fun cardRegistry(
         @PathVariable unifiedId: String,
         @Parameter(hidden = true)
-        payQueryParams: PayQueryParamsWithRequiredFields,
+        @Valid payQueryParams: PayQueryParamsWithRequiredFields,
         @Parameter(hidden = true)
         @RequestHeader(HttpHeaders.AUTHORIZATION, required = true) token: String,
     ): RedirectView {

@@ -25,7 +25,7 @@ class OrderController(
         requestWrapper: OrderRequest,
         authorization: String,
     ): ResponseEntity<Response<DataOrder>> {
-        requestWrapper.clientId = authorizationService.checkPermissionByClientId(authorization)?.externalSystemCode
+        requestWrapper.clientId = authorizationService.checkPermissionByClientId(authorization).externalSystemCode
         return requestWrapper
             .run(orderService::createOrder)
             .wrapToSuccessResponse(ServiceStatuses.STATUS_CODE_SUCCESS)

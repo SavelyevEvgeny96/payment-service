@@ -18,10 +18,10 @@ import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
 import ru.sogaz.site.paymentService.service.OrderPaidEventFactory
 import ru.sogaz.site.paymentService.service.SignatureVerifier
+import ru.sogaz.site.paymentService.service.metrics.GpbCallbackMetricServiceImpl
 import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
 
 @Service
@@ -30,8 +30,8 @@ class GpbCallbackServiceImpl(
     private val orderDao: OrderDao,
     private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
     private val signatureVerifier: SignatureVerifier,
-    private val apiConfigProperties: ApiConfigProperties,
     private val callbackPaymentDao: CallbackPaymentDao,
+    private val gpbCallbackMetricService: GpbCallbackMetricServiceImpl,
     private val waitingPaymentDao: WaitingPaymentDao,
     private val orderPaidEventProducer: OrderPaidEventProducer,
     private val orderPaidEventFactory: OrderPaidEventFactory,
@@ -74,6 +74,8 @@ class GpbCallbackServiceImpl(
                 logger.debug(ERROR_TRX_ID + trxId)
                 return createErrorResponse(INVALID_SIGNATURE)
             }
+
+            gpbCallbackMetricService.setMetric(requestDto)
 
             val payment =
                 paymentDao.findByPaymentBankId(requestDto.trxId)
