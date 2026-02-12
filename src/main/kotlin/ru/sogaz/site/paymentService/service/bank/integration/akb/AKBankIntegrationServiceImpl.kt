@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
+import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -22,6 +23,7 @@ import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GPBRefundResponseDto
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.BankEnum
@@ -202,6 +204,13 @@ class AKBankIntegrationServiceImpl(
         return restTemplate
             .getForObject<PaymentAkbStatusResponse>(url)
             .toBankPaymentDetails()
+    }
+
+    override fun registerRefundForThePayment(
+        payment: Payment,
+        dto: RefundPayloadDto,
+    ): GPBRefundResponseDto {
+        TODO("Not yet implemented")
     }
 
     override fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData {
