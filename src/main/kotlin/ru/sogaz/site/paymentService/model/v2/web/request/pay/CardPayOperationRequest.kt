@@ -15,7 +15,7 @@ data class CardPayOperationRequest(
 ) : PayOperationRequest() {
     @field:Schema(
         accessMode = Schema.AccessMode.READ_ONLY,
-        defaultValue = "bankCard"
+        defaultValue = "bankCard",
     )
     override val paymentType: PaymentType = PaymentType.CARD
 }

@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.BankIntegrationService
 import ru.sogaz.site.paymentService.service.rabbit.RefundPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
@@ -45,7 +45,6 @@ class RefundPaymentConsumerImpl(
     @Qualifier("GPBankIntegrationServiceImpl")
     private val bankIntegrationService: BankIntegrationService,
 ) : RefundPaymentConsumer {
-
     private val logger = loggerFor(RefundPaymentConsumerImpl::class.java)
 
     /**
@@ -207,12 +206,13 @@ class RefundPaymentConsumerImpl(
         dto: RefundPayloadDto,
         orderId: UUID?,
     ) {
-        val response = StatusRefundResponseDto(
-            dto.metaInfo,
-            orderId,
-            StatusEnum.SUCCESS.value,
-            null,
-        )
+        val response =
+            StatusRefundResponseDto(
+                dto.metaInfo,
+                orderId,
+                StatusEnum.SUCCESS.value,
+                null,
+            )
 
         sendMessageProducer.sendMessage(
             props.routingKeyPaymentStatusRefund,
@@ -234,12 +234,13 @@ class RefundPaymentConsumerImpl(
         orderId: UUID?,
         error: PaymentExtendedCodeMessage,
     ) {
-        val response = StatusRefundResponseDto(
-            dto.metaInfo,
-            orderId,
-            StatusEnum.ERROR.value,
-            error.message,
-        )
+        val response =
+            StatusRefundResponseDto(
+                dto.metaInfo,
+                orderId,
+                StatusEnum.ERROR.value,
+                error.message,
+            )
 
         sendMessageProducer.sendMessage(
             props.routingKeyPaymentStatusRefund,

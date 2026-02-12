@@ -19,8 +19,8 @@ import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.enums.PaymentTypeEnum
 import ru.sogaz.site.paymentService.service.callback.GpbCallbackServiceImpl
-import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
 import ru.sogaz.site.paymentService.service.metrics.GpbCallbackMetricServiceImpl
+import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -43,10 +43,10 @@ class GpbCallbackServiceTest {
             paymentOperationHistoryDao,
             signatureVerifier,
             callbackPaymentDao,
+            gpbCallbackMetricService,
             waitingPaymentDao,
             orderPaidEventProducer,
             orderPaidEventFactory,
-            gpbCallbackMetricService,
         )
 
     private val testRequest =

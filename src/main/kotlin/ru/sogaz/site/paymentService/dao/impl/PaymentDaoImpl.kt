@@ -48,7 +48,8 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
 
-    override fun findByPaymentOrderId(orderId: UUID?): Optional<Payment> = paymentRepository.findAllByOrderIdAndState(orderId,PaymentStatusEnum.SUCCESS)
+    override fun findByPaymentOrderId(orderId: UUID?): Optional<Payment> =
+        paymentRepository.findAllByOrderIdAndState(orderId, PaymentStatusEnum.SUCCESS)
 
     override fun save(payment: Payment): Payment =
         try {
