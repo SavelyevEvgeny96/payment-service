@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "idempotent_orders")
-class IdempotentOrder(
+data class IdempotentOrder(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID?,

@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClientV2
-import ru.sogaz.site.paymentService.mapper.payment.CardDetailsMapperImpl
-import ru.sogaz.site.paymentService.mapper.payment.PaymentStatusMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbCardDetailMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbPayStatusMapperImpl
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbRequestMapperImpl
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbResponseMapper
@@ -25,7 +25,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationReq
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
-@Import(value = [GpbRequestMapperImpl::class, GpbResponseMapperImpl::class, CardDetailsMapperImpl::class, PaymentStatusMapperImpl::class])
+@Import(value = [GpbRequestMapperImpl::class, GpbResponseMapperImpl::class, GpbCardDetailMapperImpl::class, GpbPayStatusMapperImpl::class])
 class GpbCardPayIntegrationTest {
     companion object {
         private const val TOKEN = "TEST TOKEN"
