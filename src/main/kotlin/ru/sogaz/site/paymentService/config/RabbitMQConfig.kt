@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.config.converters.NoOpMessageConverter
-import ru.sogaz.site.paymentService.properties.RabbitListenerProps
-import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitListenerProps
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 
 @Configuration
 class RabbitMQConfig(

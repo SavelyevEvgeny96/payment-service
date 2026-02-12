@@ -1,6 +1,6 @@
 package ru.sogaz.site.paymentService.model.v2.web.request
 
-import ru.sogaz.site.paymentService.model.v2.enums.payment.OperationType
+import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import java.util.UUID
 
 abstract class OperationRequest {

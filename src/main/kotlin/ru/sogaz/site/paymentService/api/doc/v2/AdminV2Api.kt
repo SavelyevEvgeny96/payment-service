@@ -7,12 +7,9 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
-import ru.sogaz.site.paymentService.dto.data.DataPay
-import ru.sogaz.site.paymentService.dto.request.PayQueryParams
-import ru.sogaz.site.paymentService.model.v2.web.request.PayRequest
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentPageData
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 
 @RequestMapping("admin")
 interface AdminV2Api {
@@ -46,13 +43,5 @@ interface AdminV2Api {
     )
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по СБП", useReturnTypeSchema = false)
     @PostMapping("/v2/payment/autoclose/paySbp")
-    fun createPaySbp(
-        @RequestHeader("processPayments") processPayments: String?,
-        @RequestHeader("paymentDelay") paymentDelay: String?,
-        @RequestHeader("paymentStatus") paymentStatus: String?,
-        @Parameter(hidden = true)
-        payQueryParams: PayQueryParams,
-        @RequestBody
-        payRequest: PayRequest,
-    ): DataPay
+    fun createPaySbp(sbpPayOperationRequest: SbpPayOperationRequest): BankPaymentPageData
 }

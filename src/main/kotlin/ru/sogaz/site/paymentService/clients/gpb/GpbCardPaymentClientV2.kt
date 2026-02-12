@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
-import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
+import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
+import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbTokenResponse
 
 @FeignClient(
     name = "gpb-card-payment-client-v2",
@@ -20,7 +20,7 @@ interface GpbCardPaymentClientV2 {
     @PostMapping(value = ["/{portalId}/token"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun getToken(
         @PathVariable portalId: String,
-    ): GazpromTokenResponse
+    ): GpbTokenResponse
 
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun cardPayment(
@@ -40,5 +40,5 @@ interface GpbCardPaymentClientV2 {
     fun getPaymentStatus(
         @PathVariable portalId: String,
         @PathVariable paymentBankId: String,
-    ): GpbCardPaymentStatusResponse
+    ): GpbCardPayDetailsResponse
 }

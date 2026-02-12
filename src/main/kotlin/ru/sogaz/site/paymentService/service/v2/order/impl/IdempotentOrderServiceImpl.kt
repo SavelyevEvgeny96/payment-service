@@ -27,7 +27,10 @@ class IdempotentOrderServiceImpl(
     override fun updateOperation(
         idempotentOrderOperation: IdempotentOrderOperation,
         bankPaymentPageData: BankPaymentPageData,
-    ): IdempotentOrderOperation = idempotentOrderOperationDao.save(idempotentOrderOperation)
+    ): IdempotentOrderOperation =
+        idempotentOrderOperation
+            .run { idempotentOrderMapper.updateIdempotentOrderOperation(this, bankPaymentPageData) }
+            .run(idempotentOrderOperationDao::save)
 
     private fun findIdempotentOrderOrCreateNewOne(operationRequest: OperationRequest): IdempotentOrder =
         idempotentOrderDao.findIdempotentOrderByOrderId(operationRequest.orderId)

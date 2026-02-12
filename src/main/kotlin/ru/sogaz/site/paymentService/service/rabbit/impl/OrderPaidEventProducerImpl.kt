@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.service.rabbit.impl
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPaidEvent
-import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
 
 @Service
