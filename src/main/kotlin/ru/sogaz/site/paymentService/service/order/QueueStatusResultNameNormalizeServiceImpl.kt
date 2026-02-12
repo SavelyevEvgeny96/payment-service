@@ -14,12 +14,8 @@ class QueueStatusResultNameNormalizeServiceImpl(
 
     override fun buildQueueStatusResultName(
         pattern: String,
-        clientId: String?,
-    ): String? {
-        if (clientId.isNullOrBlank()) {
-            return null
-        }
-
+        clientId: String,
+    ): String {
         val normalizedString = clientId.replace(regex, ".")
 
         return String.format(pattern, normalizedString)

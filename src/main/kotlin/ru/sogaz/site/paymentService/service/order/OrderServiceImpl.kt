@@ -91,6 +91,7 @@ class OrderServiceImpl(
                     clientId,
                 ),
             bank = BankEnum.GPB,
+            clientId = clientId,
         ).run(orderDao::save)
 
     override fun cancelOrder(order: Order) {

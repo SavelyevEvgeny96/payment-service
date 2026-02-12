@@ -1,116 +1,146 @@
 package ru.sogaz.site.paymentService.service.rabbit.impl
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
-import ru.sogaz.site.paymentService.dto.data.TaggedPayload
+import ru.sogaz.site.paymentService.dto.data.ParsedResult
+import ru.sogaz.site.paymentService.dto.data.PayloadInfo
+import ru.sogaz.site.paymentService.dto.data.PayloadInfoExtractor
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
 import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
-import ru.sogaz.site.paymentService.service.rabbit.BuildBatchConsumerService
+import ru.sogaz.site.paymentService.service.rabbit.BuildConsumerService
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 
+/**
+ * Консьюмер для обработки сообщений о создании платежей
+ * по рекуррентным заказам.
+ *
+ * Получает сообщения из RabbitMQ, парсит сообщение,
+ * обрабатывает каждое сообщение бизнес-логикой
+ * и отправляет статусные события в соответствующие очереди.
+ *
+ * ACK отправляется только после успешной обработки.
+ * В случае ошибки выполняется REJECT без повторной постановки в очередь.
+ */
 @Service
 class RecurringPaymentConsumerImpl(
-    private val objectMapper: ObjectMapper,
-    private val buildBatchConsumerService: BuildBatchConsumerService,
+    private val buildConsumerService: BuildConsumerService,
     private val paidOrderMessageMapper: PaidOrderMessageMapper,
     private val sendMessageProducer: SendMessageProducer,
     private val props: RabbitProperties,
 ) : RecurringPaymentConsumer {
     companion object {
-        private const val BATCH_SUMMARY =
-            "Итог обработки пачки: количество=%d, длительность(мс)=%d"
-        private const val LOG_START = "Старт batch upsertOrders: size=%d"
+        /** Сообщение логирования при отсутствии валидных сообщений в батче */
+         const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
+            "Нет валидных сообщений для обработки"
     }
 
     private val logger = loggerFor(RecurringPaymentConsumerImpl::class.java)
 
+    /**
+     * Обработчик сообщений из очереди payment.created.queue
+     *
+     * @param messages AMQP-сообщение
+     * @param channel канал RabbitMQ для ручного управления ACK/REJECT
+     */
     @RabbitListener(
         queues = ["\${app.rabbit.payment-created-queue}"],
-        containerFactory = "batchContainerFactory",
     )
-    override fun handleBatch(
-        messages: List<Message>,
+    override fun handleMessage(
+        messages: Message,
         channel: Channel,
     ) {
-        logger.info(LOG_START.format(messages.size))
-        val started = System.nanoTime()
+        val authorExtractor =
+            PayloadInfoExtractor { body ->
+                sendMessageProducer.extractAuthorUnsafe(body)?.let { PayloadInfo.Author(it) }
+            }
+        // Парсинг сообщения messages->OrderPayloadDto
+        val parsedResults =
+            sendMessageProducer.parseMessage(
+                messages,
+                channel,
+                OrderPayloadDto::class.java,
+                authorExtractor,
+            )
 
-        // 1) Парсим сообщения → оставляем только валидные
-        val payloads = messages.mapNotNull(::toTaggedPayload)
-
-        if (payloads.isEmpty()) {
-            logger.warn("Нет валидных сообщений для обработки в батче")
+        // Если результат невалидный или пустой — просто логируем и выходим
+        if (parsedResults == null) {
+            logger.warn(NOT_VALID_BATCH_MESSAGE_ORDER_CREATED)
+            // Ничего полезного не нашли → реджект
+            try {
+                channel.basicReject(messages.messageProperties.deliveryTag, false)
+            } catch (ackEx: Exception) {
+                logger.error("Не удалось сделать basicReject для tag=${messages.messageProperties.deliveryTag}", ackEx)
+            }
             return
         }
 
-        // 2) Обрабатываем батч в сервисе
-        val batchResult =
-            runCatching {
-                buildBatchConsumerService.upsertBatch(payloads, channel) // List<PaymentRecurrentRegisterData>
-            }.onFailure { ex ->
-                logger.error("Ошибка при обработке батча: ${ex.message}", ex)
-            }.getOrNull() ?: return
+        // Обрабатываем только успешный результат парсинга
+        when (parsedResults) {
+            is ParsedResult.Success -> {
+                val dtoSuccess = parsedResults.dto
 
-        // 3) Мапим и шлём каждое сообщение с его routingKey
-        batchResult.forEach { regData ->
-            paidOrderMessageMapper
-                .toPaidOrderMessage(regData)
-                .let { message ->
-                    if (message.status?.contains("error") == true) {
-                        regData.payment.order.queueStatusResultName
-                            ?.takeIf { it.isNotBlank() }
-                            ?.also { routingKey ->
-                                logger.info(
-                                    "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                        "routingKey=$routingKey",
-                                ) // отправляем в очередь для внешних систем
-                                // Но если это ordering-client не отправляем ошибку
-                                if (message.externalSystemCode?.contains("ordering-client") == false) {
-                                    sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
-                                        routingKey,
-                                        message,
-                                        props.exchangePayment,
-                                    )
-                                } // отправляем в очередь для ordering-service
-                                sendMessageProducer.sendMessagePaidOrderAndPaymentStatus(
-                                    props.routingKeyStatusOrderPaid,
-                                    message,
-                                    props.exchangeOrder,
-                                )
-                                logger.info(
-                                    "Отправляем PaidOrderMessage для paymentId=${regData.payment.id}, " +
-                                        "routingKey=${props.routingKeyStatusOrderPaid}",
-                                )
+                try {
+                    // Основная бизнес-логика обработки payload
+                    val processSinglePayloadResponse =
+                        buildConsumerService.processSinglePayload(dtoSuccess)
+
+                    // Маппинг результата в сообщение для внешних систем
+                    paidOrderMessageMapper
+                        .toPaidOrderMessage(processSinglePayloadResponse)
+                        .let { message ->
+
+                            // Если статус обработки содержит ошибку —
+                            // отправляем статусные сообщения
+                            if (message.status?.contains("error") == true) {
+                                processSinglePayloadResponse.payment.order.queueStatusResultName
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.also { routingKey ->
+
+                                        // Отправка сообщения во внешнюю систему,
+                                        // если это не ordering-client
+                                        if (message.externalSystemCode
+                                                ?.contains("ordering-client") == false
+                                        ) {
+                                            sendMessageProducer.sendMessage(
+                                                routingKey,
+                                                message,
+                                                props.exchangePayment,
+                                                message.orderId,
+                                            )
+                                        }
+
+                                        // Отправка статуса в ordering-service
+                                        sendMessageProducer.sendMessage(
+                                            props.routingKeyStatusOrderPaid,
+                                            message,
+                                            props.exchangeOrder,
+                                            message.orderId,
+                                        )
+                                    }
                             }
-                    } else {
-                        // success  сделать тогда  когда чеки переедут в ордеринг тогда уберем условие .contains("error")
-                    }
+                        }
+
+                    // ACK сообщения после успешной обработки
+                    channel.basicAck(parsedResults.tag, true)
+                } catch (ex: Exception) {
+                    // REJECT без requeue при любой ошибке бизнес-логики
+                    channel.basicReject(parsedResults.tag, false)
+                    logger.error("Ошибка обработки сообщения", ex)
                 }
+            }
+
+            is ParsedResult.Error -> {
+                logger.error(
+                    "Ошибка парсинга. Автор: ${parsedResults.payloadInfo}, " +
+                            "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}",
+                )
+                channel.basicReject(parsedResults.tag, false)
+            }
         }
-
-        val tookMs = (System.nanoTime() - started) / 1_000_000
-        logger.info(BATCH_SUMMARY.format(payloads.size, tookMs))
     }
-
-    /**
-     * Преобразует Message → TaggedPayload или логирует ошибку и возвращает null
-     */
-    private fun toTaggedPayload(msg: Message): TaggedPayload? =
-        runCatching {
-            val tag = msg.messageProperties.deliveryTag
-            val dto = objectMapper.readValue(msg.body, OrderPayloadDto::class.java)
-            TaggedPayload(tag, dto)
-        }.onFailure { ex ->
-            val props = msg.messageProperties
-            logger.error(
-                "Ошибка парсинга сообщения: ${props.messageId} (tag=${props.deliveryTag})",
-                ex,
-            )
-        }.getOrNull()
 }

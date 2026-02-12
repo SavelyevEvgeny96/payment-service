@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.service.rabbit
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 
-interface RecurringPaymentConsumer {
+interface RefundPaymentConsumer {
     fun handleMessage(
         messages: Message,
         channel: Channel,
