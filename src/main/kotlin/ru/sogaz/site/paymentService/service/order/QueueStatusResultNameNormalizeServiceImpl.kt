@@ -1,9 +1,7 @@
 package ru.sogaz.site.paymentService.service.order
 
-import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
 
-@Component
 class QueueStatusResultNameNormalizeServiceImpl(
     private val regex: Regex,
 ) : QueueStatusResultNameNormalizeService {
@@ -14,12 +12,8 @@ class QueueStatusResultNameNormalizeServiceImpl(
 
     override fun buildQueueStatusResultName(
         pattern: String,
-        clientId: String?,
-    ): String? {
-        if (clientId.isNullOrBlank()) {
-            return null
-        }
-
+        clientId: String,
+    ): String {
         val normalizedString = clientId.replace(regex, ".")
 
         return String.format(pattern, normalizedString)

@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
+import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.request.AkbCardAndSbpPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.OrderDto
@@ -22,6 +23,7 @@ import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.PaymentAkbStatusResponse
 import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GPBRefundResponseDto
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.BankEnum
@@ -115,7 +117,8 @@ class AKBankIntegrationServiceImpl(
      * Установить SRC-токен для конкретного заказа
      */
     private fun setSrcToken(payment: Payment) {
-        val url = "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$SET_SRC_TOKEN_SUFFIX${payment.paymentPass}"
+        val url =
+            "${apiConfigProperties.akbSbpUrl}/${payment.paymentBankId}/$SET_SRC_TOKEN_SUFFIX${payment.paymentPass}"
         try {
             postForObject<Map<String, Any>>(url, HttpEntity(setSrcTokenRequest, jsonHeaders))
         } catch (ex: Exception) {
@@ -203,6 +206,13 @@ class AKBankIntegrationServiceImpl(
             .toBankPaymentDetails()
     }
 
+    override fun registerRefundForThePayment(
+        payment: Payment,
+        dto: RefundPayloadDto,
+    ): GPBRefundResponseDto {
+        TODO("Not yet implemented")
+    }
+
     override fun registerCardPaymentRecurrentWithDetails(payment: Payment): PaymentRecurrentRegisterData {
         TODO("Not yet implemented")
     }
@@ -228,6 +238,7 @@ class AKBankIntegrationServiceImpl(
             AkbPaymentStatusEnum.WAITPUSHTRAN,
             AkbPaymentStatusEnum.AUTHORIZED,
             -> AkbPaymentStatusEnum.PREPARING
+
             else -> AkbPaymentStatusEnum.CLOSED
         }
     }

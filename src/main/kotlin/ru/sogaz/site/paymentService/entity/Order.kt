@@ -22,12 +22,12 @@ import java.util.UUID
 
 @Entity
 @Table(name = "orders")
-data class Order(
+class Order(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     var status: OrderStatus = OrderStatus.NEW,
     @Enumerated(EnumType.STRING)
     @Column(name = "bank")
@@ -35,11 +35,11 @@ data class Order(
     @Column(name = "premium_amount")
     var premiumAmount: String = "",
     @Column(name = "recipient_email")
-    var recipientEmail: String? = "",
+    var recipientEmail: String? = null,
     @Column(name = "url_to_return")
-    var urlToReturn: String? = "",
+    var urlToReturn: String? = null,
     @Column(name = "url_to_decline")
-    var urlToDecline: String? = "",
+    var urlToDecline: String? = null,
     @Column(name = "payment_end_date")
     var paymentEndDate: LocalDateTime? = null,
     @Column(name = "date_delete")
@@ -60,8 +60,8 @@ data class Order(
     var regCard: Boolean = false,
     @Column(name = "subscription_id")
     var subscriptionId: String = "",
-    @Column(name = "client_id")
-    var clientId: String? = null,
+    @Column(name = "client_id", nullable = false)
+    var clientId: String = "",
     @Column(name = "recurrent")
     var recurrent: Boolean? = null,
     @Column(name = "order_id_recurrent")
@@ -79,11 +79,19 @@ data class Order(
     @Column(name = "update_date")
     var updateDate: LocalDateTime? = null,
 ) {
-    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    @OneToMany(
+        cascade = [CascadeType.ALL],
+        fetch = FetchType.EAGER,
+        mappedBy = "order",
+    )
     @Fetch(FetchMode.SUBSELECT)
     val subOrders: MutableList<SubOrder> = mutableListOf()
 
-    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "order")
+    @OneToMany(
+        cascade = [CascadeType.ALL],
+        fetch = FetchType.LAZY,
+        mappedBy = "order",
+    )
     @Fetch(FetchMode.SUBSELECT)
     val payments: MutableList<Payment> = mutableListOf()
 }

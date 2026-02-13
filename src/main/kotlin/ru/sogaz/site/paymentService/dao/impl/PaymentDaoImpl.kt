@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.repository.PaymentRepository
 import java.sql.ResultSet
 import java.time.Instant
+import java.util.Optional
 import java.util.UUID
 import kotlin.collections.ArrayList
 
@@ -46,6 +47,9 @@ class PaymentDaoImpl(
             logger.error(LOG_ERROR_PAYMENT_FIND, e)
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
+
+    override fun findByPaymentOrderId(orderId: UUID?): Optional<Payment> =
+        paymentRepository.findAllByOrderIdAndState(orderId, PaymentStatusEnum.SUCCESS)
 
     override fun save(payment: Payment): Payment =
         try {

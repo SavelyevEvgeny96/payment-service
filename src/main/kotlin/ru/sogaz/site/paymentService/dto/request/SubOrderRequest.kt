@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.dto.request
 
-import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
@@ -27,7 +26,6 @@ data class SubOrderRequest(
     val docType: String? = null,
     val policyDate: Instant? = null,
     @field:NotNull(message = "{validation.orderPaymentRequest.date.notNull}")
-    @field:FutureOrPresent(message = "{validation.orderPaymentRequest.date.future}")
     val contractDate: Instant? = null,
     @field:Email(message = "{validation.orderPaymentRequest.recipientEmail.email}")
     val managerEmail: String = "",
