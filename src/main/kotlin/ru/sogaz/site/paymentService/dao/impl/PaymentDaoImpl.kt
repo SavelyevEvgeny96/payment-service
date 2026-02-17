@@ -14,7 +14,6 @@ import java.sql.ResultSet
 import java.time.Instant
 import java.util.Optional
 import java.util.UUID
-import kotlin.collections.ArrayList
 
 @Repository
 class PaymentDaoImpl(
@@ -48,7 +47,11 @@ class PaymentDaoImpl(
             throw InnerException(getTraceId(), "$LOG_ERROR_PAYMENT_FIND ${e.message}")
         }
 
-    override fun findByPaymentOrderId(orderId: UUID?): Optional<Payment> = paymentRepository.findAllByOrderIdAndState(orderId,PaymentStatusEnum.SUCCESS)
+    override fun findLastPaymentByOrderId(orderId: UUID): Optional<Payment> =
+        paymentRepository.findFirstByOrderIdOrderByUpdateDateDesc(orderId)
+
+    override fun findByPaymentOrderId(orderId: UUID?): Optional<Payment> =
+        paymentRepository.findAllByOrderIdAndState(orderId, PaymentStatusEnum.SUCCESS)
 
     override fun save(payment: Payment): Payment =
         try {

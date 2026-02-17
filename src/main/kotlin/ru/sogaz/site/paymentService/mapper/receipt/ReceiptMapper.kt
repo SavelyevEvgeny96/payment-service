@@ -19,7 +19,7 @@ interface ReceiptMapper {
     @Mapping(target = "client", source = "order")
     @Mapping(target = "items", source = "order.subOrders")
     @Mapping(target = "payments", source = ".")
-    @Mapping(target = "receiptType", constant = "SELL")
+    @Mapping(target = "receiptType", source = "state")
     @Mapping(target = "system", constant = "ATOL")
     @Mapping(target = "version", constant = "V4")
     fun mapFromPaymentToReceiptCreateRequest(payment: Payment): PaymentReceiptCreateRequest

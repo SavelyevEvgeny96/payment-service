@@ -18,8 +18,8 @@ import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.WaitingPayment
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.OrderStatus
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
@@ -111,24 +111,23 @@ class PaymentStatusServiceImpl(
     private fun updateStatusesForPayment(
         bankPaymentDetails: BankPaymentDetails,
         payment: Payment,
-    ): Payment =
-        payment
-            .apply { state = bankPaymentDetails.status }
-            .also { handlePaymentChangedStatus(it, bankPaymentDetails) }
-            .run(paymentDao::save)
+    ): Payment {
+        handlePaymentChangedStatus(payment, bankPaymentDetails)
+        return paymentDao.save(payment)
+    }
 
     private fun handlePaymentChangedStatus(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
         when {
-            payment.isSuccess() || payment.isFail() && payment.order.recurrent == true ->
+            bankPaymentDetails.isSuccess() ||
+                (bankPaymentDetails.isFail() && payment.order.recurrent == true) ->
                 handleSuccessOrFailRecurrentPayment(
                     payment,
                     bankPaymentDetails,
                 )
-
-            payment.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
+            bankPaymentDetails.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
             else -> deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
         }
     }
@@ -138,7 +137,6 @@ class PaymentStatusServiceImpl(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
-        payment.paymentFinished = LocalDateTime.now()
         updateOrderForSuccessPayment(payment, bankPaymentDetails)
         deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
     }
@@ -154,11 +152,11 @@ class PaymentStatusServiceImpl(
         }
         if (payment.isFail()) {
             order.apply { status = OrderStatus.CANCELED }
-        } else {
+        } else if (payment.isSuccess()) {
             order.apply { status = OrderStatus.SUCCESS }
         }
 
-        if (order.skipSendingQueue != true) {
+        if (payment.state != PaymentStatusEnum.CALLBACK && order.skipSendingQueue != true) {
             when (order.regCard) {
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
                 else -> sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
@@ -168,9 +166,11 @@ class PaymentStatusServiceImpl(
         if (order.skipSendingReceipt != true) {
             receiptService.generateReceipt(payment)
         }
-
+        payment.apply {
+            state = bankPaymentDetails.status
+            paymentFinished = LocalDateTime.now()
+        }
         orderDao.save(order)
-        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
 
     @Transactional(rollbackFor = [Exception::class])
@@ -245,4 +245,19 @@ class PaymentStatusServiceImpl(
             throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
+
+    fun BankPaymentDetails.isInProcess(): Boolean =
+        when (status) {
+            PaymentStatusEnum.REG,
+            PaymentStatusEnum.WAIT,
+            -> true
+
+            else -> false
+        }
+
+    fun BankPaymentDetails.isClosed(): Boolean = isInProcess().not()
+
+    fun BankPaymentDetails.isSuccess(): Boolean = status == PaymentStatusEnum.SUCCESS
+
+    fun BankPaymentDetails.isFail(): Boolean = status == PaymentStatusEnum.FAIL
 }

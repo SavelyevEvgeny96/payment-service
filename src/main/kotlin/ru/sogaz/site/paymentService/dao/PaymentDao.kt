@@ -10,6 +10,8 @@ interface PaymentDao {
 
     fun findByPaymentBankId(paymentId: String): Payment
 
+    fun findLastPaymentByOrderId(orderId: UUID): Optional<Payment>
+
     fun findByPaymentOrderId(orderId: UUID?): Optional<Payment>
 
     fun save(payment: Payment): Payment

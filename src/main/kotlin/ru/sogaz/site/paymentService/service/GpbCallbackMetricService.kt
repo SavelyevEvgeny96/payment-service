@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentService.service
 
-import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallback
 
 interface GpbCallbackMetricService {
-    fun setMetric(requestDto: GpbCallbackRequest)
+    fun setMetric(gpbCallback: GpbCallback)
 }
