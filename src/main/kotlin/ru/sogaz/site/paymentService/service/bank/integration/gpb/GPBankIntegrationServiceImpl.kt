@@ -269,12 +269,19 @@ class GPBankIntegrationServiceImpl(
 
         val sessionToken = SESSION + sessionResponse.sessionId
 
+        val refundAmount =
+            dto.premiumAmount
+            .toBigDecimal()
+            .movePointRight(2)
+            .intValueExact()
+            .toString()
+
         return try {
             gpbCardPaymentClient.startRefund(
                 portalId,
                 payment.paymentBankId,
                 sessionToken,
-                dto.premiumAmount,
+                refundAmount,
                 CurrencyEnum.RUB.name,
                 dto.description,
             )
