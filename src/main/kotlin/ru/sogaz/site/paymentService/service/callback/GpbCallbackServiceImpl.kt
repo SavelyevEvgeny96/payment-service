@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.rabbit.MetaInfoOrder
@@ -29,6 +30,7 @@ import java.time.Instant
 @Service
 class GpbCallbackServiceImpl(
     private val paymentDao: PaymentDao,
+    private val callbackPaymentDao: CallbackPaymentDao,
     private val orderMapper: OrderMapper,
     private val subOrderMapper: SubOrderMapper,
     private val signatureVerifier: SignatureVerifier,
@@ -86,6 +88,8 @@ class GpbCallbackServiceImpl(
                     else -> sendToPaidOrdersQueue(payment, bankPaymentDetails)
                 }
             }
+
+            callbackPaymentDao.saveCallbackForPayment(payment)
 
             updatePaymentStatus(payment)
             logger.debug(UPDATE_PAYMENT_STATUS)
