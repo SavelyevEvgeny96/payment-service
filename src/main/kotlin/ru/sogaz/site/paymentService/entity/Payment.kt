@@ -69,6 +69,7 @@ data class Payment(
         when (state) {
             PaymentStatusEnum.REG,
             PaymentStatusEnum.WAIT,
+            PaymentStatusEnum.CALLBACK
             -> true
 
             else -> false
