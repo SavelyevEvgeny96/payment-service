@@ -35,7 +35,7 @@ class RecurringPaymentConsumerImpl(
 ) : RecurringPaymentConsumer {
     companion object {
         /** Сообщение логирования при отсутствии валидных сообщений в батче */
-         const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
+        const val NOT_VALID_BATCH_MESSAGE_ORDER_CREATED =
             "Нет валидных сообщений для обработки"
     }
 
@@ -137,7 +137,7 @@ class RecurringPaymentConsumerImpl(
             is ParsedResult.Error -> {
                 logger.error(
                     "Ошибка парсинга. Автор: ${parsedResults.payloadInfo}, " +
-                            "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}",
+                        "тело: ${parsedResults.rawBody} , TAG:${parsedResults.tag}",
                 )
                 channel.basicReject(parsedResults.tag, false)
             }

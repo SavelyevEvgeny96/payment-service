@@ -23,6 +23,7 @@ import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.SubOrder
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.mapper.receipt.ReceiptClientInfoMapperImpl
 import ru.sogaz.site.paymentService.mapper.receipt.ReceiptItemMapperImpl
 import ru.sogaz.site.paymentService.mapper.receipt.ReceiptMapper
@@ -141,6 +142,7 @@ class ReceiptServiceTest {
             }
         validPayment =
             Payment(
+                state = PaymentStatusEnum.SUCCESS,
                 paymentBankId = TEST_PAYMENT_BANK_ID,
                 order = validOrder,
             )

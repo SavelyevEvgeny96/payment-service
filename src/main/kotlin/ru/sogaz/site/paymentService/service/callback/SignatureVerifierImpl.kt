@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.service.callback
 
 import jakarta.servlet.http.HttpServletRequest
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
@@ -29,11 +29,11 @@ class SignatureVerifierImpl(
     }
 
     override fun verifySignature(
-        requestDto: GpbCallbackRequest,
+        gpbCallback: GpbCallback,
         httpServletRequest: HttpServletRequest,
     ): Boolean =
         try {
-            val signature = requestDto.signature
+            val signature = gpbCallback.signature
             val decodedQueryString =
                 if (isEncoded(signature)) {
                     java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)

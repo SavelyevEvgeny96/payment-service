@@ -316,6 +316,8 @@
                     <compilerPlugins>
                         <plugin>spring</plugin>
                         <plugin>jpa</plugin>
+                        <plugin>all-open</plugin>
+                        <plugin>no-arg</plugin>
                     </compilerPlugins>
                 </configuration>
                 <dependencies>
@@ -409,11 +411,11 @@
                     <failOnViolation>true</failOnViolation>
                     <printFailingErrors>true</printFailingErrors>
 
-                    <!-- EXCLUDE GENERATED CODE -->
-                    <excludes>
-                        <exclude>/generated/</exclude>
-                        <exclude>**/*MapperImpl.java</exclude>
-                    </excludes>
+<!--                    &lt;!&ndash; EXCLUDE GENERATED CODE &ndash;&gt;-->
+<!--                    <excludes>-->
+<!--                        <exclude>/generated/</exclude>-->
+<!--                        <exclude>**/*MapperImpl.java</exclude>-->
+<!--                    </excludes>-->
                 </configuration>
                 <executions>
                     <execution>

@@ -18,10 +18,11 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.BankIntegrationService
+import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.rabbit.RefundPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import ru.sogaz.site.paymentService.service.rabbit.impl.RecurringPaymentConsumerImpl.Companion.NOT_VALID_BATCH_MESSAGE_ORDER_CREATED
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.util.UUID
 
 /**
@@ -44,8 +45,8 @@ class RefundPaymentConsumerImpl(
     private val paymentDao: PaymentDao,
     @Qualifier("GPBankIntegrationServiceImpl")
     private val bankIntegrationService: BankIntegrationService,
+    private val receiptService: ReceiptService,
 ) : RefundPaymentConsumer {
-
     private val logger = loggerFor(RefundPaymentConsumerImpl::class.java)
 
     /**
@@ -106,7 +107,7 @@ class RefundPaymentConsumerImpl(
         val orderId = dto.orderId
 
         val payment =
-            paymentDao.findByPaymentOrderId(orderId).orElse(null)
+            paymentDao.findLastPaymentByOrderId(orderId!!).orElse(null)
                 ?: return sendRefundError(
                     dto = dto,
                     orderId = orderId,
@@ -136,8 +137,7 @@ class RefundPaymentConsumerImpl(
                         error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
                     )
 
-            val expiredAt = finishedAt.plusHours(24)
-            if (LocalDateTime.now().isAfter(expiredAt)) {
+            if (LocalDate.now().isEqual(finishedAt.toLocalDate())) {
                 return sendRefundError(
                     dto = dto,
                     orderId = orderId,
@@ -166,7 +166,9 @@ class RefundPaymentConsumerImpl(
                         error = PaymentExtendedCodeMessage.OPERATION_ERROR_ON_THE_BANK,
                     )
                 } else {
-                    sendRefundSuccess(dto = dto, orderId = orderId)
+                    payment.state = PaymentStatusEnum.REFUND
+                    paymentDao.save(payment)
+                    receiptService.generateReceipt(payment)
                 }
             }
         }
@@ -207,12 +209,13 @@ class RefundPaymentConsumerImpl(
         dto: RefundPayloadDto,
         orderId: UUID?,
     ) {
-        val response = StatusRefundResponseDto(
-            dto.metaInfo,
-            orderId,
-            StatusEnum.SUCCESS.value,
-            null,
-        )
+        val response =
+            StatusRefundResponseDto(
+                dto.metaInfo,
+                orderId,
+                StatusEnum.SUCCESS.value,
+                null,
+            )
 
         sendMessageProducer.sendMessage(
             props.routingKeyPaymentStatusRefund,
@@ -234,12 +237,13 @@ class RefundPaymentConsumerImpl(
         orderId: UUID?,
         error: PaymentExtendedCodeMessage,
     ) {
-        val response = StatusRefundResponseDto(
-            dto.metaInfo,
-            orderId,
-            StatusEnum.ERROR.value,
-            error.message,
-        )
+        val response =
+            StatusRefundResponseDto(
+                dto.metaInfo,
+                orderId,
+                StatusEnum.ERROR.value,
+                error.message,
+            )
 
         sendMessageProducer.sendMessage(
             props.routingKeyPaymentStatusRefund,
