@@ -142,6 +142,7 @@ class ReceiptServiceTest {
             }
         validPayment =
             Payment(
+                id = UUID.randomUUID(),
                 state = PaymentStatusEnum.SUCCESS,
                 paymentBankId = TEST_PAYMENT_BANK_ID,
                 order = validOrder,
