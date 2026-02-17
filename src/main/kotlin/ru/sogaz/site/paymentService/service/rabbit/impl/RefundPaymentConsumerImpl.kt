@@ -135,7 +135,7 @@ class RefundPaymentConsumerImpl(
                         error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
                     )
 
-            if (LocalDate.now().isEqual(finishedAt.toLocalDate())) {
+            if (LocalDate.now().isAfter(finishedAt.toLocalDate())) {
                 return sendRefundError(
                     dto = dto,
                     error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,

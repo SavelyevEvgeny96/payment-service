@@ -7,6 +7,7 @@ import ru.sogaz.site.payment.receipt.client.api.PaymentReceiptControllerApi
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.ChequeStateEnum
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.receipt.ReceiptMapper
@@ -35,7 +36,7 @@ class ReceiptServiceImpl(
 
     override fun generateReceipt(payment: Payment) {
         val traceId = getTraceId()
-        if (payment.chequeName.equals(ChequeStateEnum.SENT.name)) {
+        if (payment.chequeName.equals(ChequeStateEnum.SENT.name) && payment.state != PaymentStatusEnum.REFUND) {
             return
         }
         val orderId = payment.order.id

@@ -8,7 +8,7 @@ data class AmountData(
     private val amount: BigDecimal,
     val currency: CurrencyEnum = CurrencyEnum.RUB,
 ) {
-    fun getAmountInPennies(): Int = amount.toString().replace(".", "").toInt()
+    fun getAmountInPennies(): Int = amount.movePointRight(2).intValueExact()
 
     fun getAmount(): Int = amount.setScale(0, RoundingMode.HALF_UP).toInt()
 }
