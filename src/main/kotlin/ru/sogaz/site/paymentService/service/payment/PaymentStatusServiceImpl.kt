@@ -145,7 +145,6 @@ class PaymentStatusServiceImpl(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
-
         val order = payment.order
         if (order.status == OrderStatus.SUCCESS) {
             logger.warn("${ORDER_ALREADY_PAID_WARN_MESSAGE.format(order.id, payment.bank)} ${payment.paymentBankId}")

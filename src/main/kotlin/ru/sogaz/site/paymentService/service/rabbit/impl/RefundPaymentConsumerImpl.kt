@@ -201,9 +201,7 @@ class RefundPaymentConsumerImpl(
      * @param dto входной payload возврата
      * @param orderId идентификатор заказа
      */
-    private fun sendRefundSuccess(
-        dto: RefundPayloadDto,
-    ) {
+    private fun sendRefundSuccess(dto: RefundPayloadDto) {
         val response =
             StatusRefundResponseDto(
                 dto.metaInfo,
@@ -212,7 +210,7 @@ class RefundPaymentConsumerImpl(
                 null,
             )
 
-        val author =  dto.metaInfo.firstOrNull()?.author ?: ""
+        val author = dto.metaInfo.firstOrNull()?.author ?: ""
 
         val routingKey = queueStatusResultNameNormalizeService.buildQueueStatusResultName(ORDER_REFUND_STATUS_PATTERN, author)
 
@@ -243,7 +241,7 @@ class RefundPaymentConsumerImpl(
                 error.message,
             )
 
-        val author =  dto.metaInfo.firstOrNull()?.author ?: ""
+        val author = dto.metaInfo.firstOrNull()?.author ?: ""
 
         val routingKey = queueStatusResultNameNormalizeService.buildQueueStatusResultName(ORDER_REFUND_STATUS_PATTERN, author)
 

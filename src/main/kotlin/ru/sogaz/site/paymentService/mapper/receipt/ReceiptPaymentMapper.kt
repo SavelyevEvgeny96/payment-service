@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.mapper.receipt
 
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
+import org.mapstruct.Named
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest
@@ -9,6 +10,7 @@ import ru.sogaz.site.payment.receipt.client.model.PaymentPaymentRequest.TypeEnum
 import ru.sogaz.site.payment.receipt.client.model.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
+import java.util.UUID
 
 @Mapper(
     uses = [ReceiptTotalAmountMapper::class],
@@ -31,5 +33,12 @@ abstract class ReceiptPaymentMapper {
             PaymentStatusEnum.SUCCESS -> PaymentReceiptCreateRequest.ReceiptTypeEnum.SELL
             PaymentStatusEnum.REFUND -> PaymentReceiptCreateRequest.ReceiptTypeEnum.SELL_REFUND
             else -> throw InnerException(getTraceId(), INCORRECT_PAYMENT_STATE)
+        }
+
+    @Named("mapPaymentId")
+    fun mapPaymentId(payment: Payment): UUID =
+        when (payment.state) {
+            PaymentStatusEnum.REFUND -> payment.order.id!!
+            else -> payment.id!!
         }
 }
