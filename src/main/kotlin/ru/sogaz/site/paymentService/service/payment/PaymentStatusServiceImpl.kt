@@ -1,12 +1,10 @@
 package ru.sogaz.site.paymentService.service.payment
 
-import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
@@ -20,8 +18,8 @@ import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.WaitingPayment
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.OrderStatus
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
@@ -32,11 +30,9 @@ import ru.sogaz.site.paymentService.properties.RabbitProperties
 import ru.sogaz.site.paymentService.service.PaymentStatusService
 import ru.sogaz.site.paymentService.service.ReceiptService
 import ru.sogaz.site.paymentService.service.bank.integration.BankIntegrationFactoryService
+import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 @Service
 class PaymentStatusServiceImpl(
@@ -54,6 +50,7 @@ class PaymentStatusServiceImpl(
     private val subOrderMapper: SubOrderMapper,
     private val orderMapper: OrderMapper,
     private val registerCardMapper: RegisterCardMapper,
+    private val sendMessageProducer: SendMessageProducer,
 ) : PaymentStatusService {
     companion object {
         private const val UPDATE_STATUS_ERROR_MESSAGE =
@@ -114,24 +111,23 @@ class PaymentStatusServiceImpl(
     private fun updateStatusesForPayment(
         bankPaymentDetails: BankPaymentDetails,
         payment: Payment,
-    ): Payment =
-        payment
-            .apply { state = bankPaymentDetails.status }
-            .also { handlePaymentChangedStatus(it, bankPaymentDetails) }
-            .run(paymentDao::save)
+    ): Payment {
+        handlePaymentChangedStatus(payment, bankPaymentDetails)
+        return paymentDao.save(payment)
+    }
 
     private fun handlePaymentChangedStatus(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
         when {
-            payment.isSuccess() || payment.isFail() && payment.order.recurrent == true ->
+            bankPaymentDetails.isSuccess() ||
+                (bankPaymentDetails.isFail() && payment.order.recurrent == true) ->
                 handleSuccessOrFailRecurrentPayment(
                     payment,
                     bankPaymentDetails,
                 )
-
-            payment.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
+            bankPaymentDetails.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
             else -> deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
         }
     }
@@ -141,7 +137,6 @@ class PaymentStatusServiceImpl(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
-        payment.paymentFinished = LocalDateTime.now()
         updateOrderForSuccessPayment(payment, bankPaymentDetails)
         deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
     }
@@ -157,23 +152,26 @@ class PaymentStatusServiceImpl(
         }
         if (payment.isFail()) {
             order.apply { status = OrderStatus.CANCELED }
-        } else {
+        } else if (payment.isSuccess()) {
             order.apply { status = OrderStatus.SUCCESS }
         }
 
-        if (order.skipSendingQueue != true) {
+        if (payment.state != PaymentStatusEnum.CALLBACK && order.skipSendingQueue != true) {
             when (order.regCard) {
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
                 else -> sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
             }
         }
 
+        payment.apply {
+            state = bankPaymentDetails.status
+            paymentFinished = LocalDateTime.now()
+        }
+
         if (order.skipSendingReceipt != true) {
             receiptService.generateReceipt(payment)
         }
-
         orderDao.save(order)
-        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
 
     @Transactional(rollbackFor = [Exception::class])
@@ -204,35 +202,13 @@ class PaymentStatusServiceImpl(
                 order.queueStatusResultName
                     ?.takeIf { it.isNotBlank() }
                     ?: props.routingKeyStatusPayment
-
-            val cd = CorrelationData(order.id.toString())
-            val timestamp =
-                OffsetDateTime
-                    .now(ZoneOffset.UTC)
-                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
             logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
             logger.debug("Message request queue status: $requestBody")
             val isOrderingClientWithError =
                 requestBody.externalSystemCode?.contains("ordering-client") == true &&
                     requestBody.status == StatusEnum.ERROR.value
             if (!isOrderingClientWithError) {
-                rabbitTemplate.convertAndSend(
-                    exchange,
-                    routingKey,
-                    requestBody,
-                    { message ->
-                        message.messageProperties.headers["author"] = "payService"
-                        message.messageProperties.headers["flowCode"] = "ResultPay"
-                        message.messageProperties.headers["timestamp"] = timestamp
-                        message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
-                        message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
-                        message.messageProperties.correlationId = order.id.toString()
-                        // Отключаем typeId
-                        message.messageProperties.headers.remove("__TypeId__")
-                        message
-                    },
-                    cd,
-                )
+                sendMessageProducer.sendMessage(routingKey, requestBody, exchange, requestBody.orderId)
             }
 
             logger.debug(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
@@ -261,34 +237,28 @@ class PaymentStatusServiceImpl(
                 )
 
             val exchange = props.exchangeOrder
-            val cd = CorrelationData(order.id.toString())
 
             logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
             logger.debug("Message request queue status: $messageBody")
-
-            rabbitTemplate.convertAndSend(
-                exchange,
-                routingKey,
-                messageBody,
-                { message ->
-                    message.messageProperties.headers["author"] = "payService"
-                    message.messageProperties.headers["flowCode"] = "ResultPay"
-                    message.messageProperties.headers["timestamp"] =
-                        OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-                    message.messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
-                    message.messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
-                    message.messageProperties.correlationId = order.id.toString()
-                    // Отключаем typeId
-                    message.messageProperties.headers.remove("__TypeId__")
-                    message
-                },
-                cd,
-            )
-
+            sendMessageProducer.sendMessage(routingKey, messageBody, exchange, order.id.toString())
             logger.debug(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
         } catch (e: Exception) {
             throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
+
+    fun BankPaymentDetails.isInProcess(): Boolean =
+        when (status) {
+            PaymentStatusEnum.REG,
+            PaymentStatusEnum.WAIT,
+            -> true
+
+            else -> false
+        }
+
+    fun BankPaymentDetails.isClosed(): Boolean = isInProcess().not()
+
+    fun BankPaymentDetails.isSuccess(): Boolean = status == PaymentStatusEnum.SUCCESS
+
+    fun BankPaymentDetails.isFail(): Boolean = status == PaymentStatusEnum.FAIL
 }

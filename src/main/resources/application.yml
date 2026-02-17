@@ -14,17 +14,15 @@ app:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
+    payment-refund-queue: ${PAYMENT_REFUND_QUEUE:order.refund.queue}
     payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
     order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
     order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}
+    routing-key-payment-created: ${ROUTING_KEY_PAYMENT_CREATED_QUEUE:payment.created}
     routing-key-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_QUEUE:payment.status.created}
+    routing-key-payment-status-refund: ${ROUTING_KEY_PAYMENT_STATUS_REFUND_QUEUE:payment.status.refund.created}
     routing-key-status-order-paid: ${ROUTING_KEY_ORDER_PAID_STATUS_QUEUE:order.paid.created}
     routing-key-status-order-unpaid: ${ROUTING_KEY_ORDER_UNPAID_STATUS_QUEUE:order.unpaid.created}
-  listener:
-    batch-size: 100
-    prefetch: 100
-    concurrency: 3
-    max-concurrency: 10
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
@@ -39,11 +37,10 @@ spring:
     port: ${RABBIT_PORT}
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
-
     virtual-host: /
     listener:
       simple:
-        acknowledge-mode: auto
+        acknowledge-mode: manual
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -92,6 +89,8 @@ api:
     backUrlS: ${BACK_URL_SUCCESS}
     backUrlF: ${BACK_URL_FALSE}
     sogazUrlPattern: ${SOGAZ_URL_PATTERN:^.*.sogaz.ru$|^lk.health-and-care.ru$}
+    identifier: ${GPB_BANK_LOGIN:}
+    password: ${GPB_BANK_PASS:}
   receipt:
     receiptUrl: ${RECEIPT_URL}
   qr:
@@ -140,12 +139,11 @@ logging:
     ru.sogaz.site.loggingStarter: ${LOGGING_LEVEL_LOGGING_STARTER:INFO}
     ru.sogaz.site.paymentService: ${LOGGING_LEVEL_PAYMENT_SERVICE:DEBUG}
     com.zaxxer.hikari: ${LOGGING_LEVEL_HIKARI:INFO}
-
   proxy:
     frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
     upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
     max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
-    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:true}
     stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:true}
     sensitive-fields: ${LOGGING_SENSITIVE_FIELDS:mirPayMerchantToken, mirPayPaymentToken, mirPayLink, qrCode, content}
 

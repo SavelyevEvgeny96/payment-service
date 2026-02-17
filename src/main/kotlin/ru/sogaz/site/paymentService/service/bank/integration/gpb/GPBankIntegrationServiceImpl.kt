@@ -17,18 +17,21 @@ import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.data.GpbSbpHeadersParams
 import ru.sogaz.site.paymentService.dto.data.PaymentBankInfo
 import ru.sogaz.site.paymentService.dto.data.PaymentRecurrentRegisterData
+import ru.sogaz.site.paymentService.dto.data.RefundPayloadDto
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.request.GPBQRImageRequest
 import ru.sogaz.site.paymentService.dto.request.GPBStatusSBPRequest
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
+import ru.sogaz.site.paymentService.dto.response.bank.GPBRefundResponseDto
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbSbpPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.HeaderStatusEnum
 import ru.sogaz.site.paymentService.enums.OrderStatus
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
@@ -59,9 +62,8 @@ class GPBankIntegrationServiceImpl(
     private val waitingPaymentDao: WaitingPaymentDao,
 ) : BankIntegrationServiceImpl() {
     companion object {
-        private const val TEMPLATE_VERSION = "01"
-        private const val QR_TTL = "60"
-        private const val QR_TYPE = "02"
+        private const val SESSION = "Session "
+        private const val REFUND_DESCRIPTION = "Отмена банковской транзакции"
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции:"
         private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %s"
         private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
@@ -234,6 +236,54 @@ class GPBankIntegrationServiceImpl(
             logger.debug("$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}", ex)
             throw InnerException(getTraceId(), "$LOG_GPB_API_ERROR ${paymentBankInfo.paymentBankId}")
         }
+
+    /**
+     * Регистрирует возврат средств по платежу через GPB Card Payment.
+     *
+     * Метод:
+     * 1. Определяет portalId по данным деперсонализации платежа
+     * 2. Открывает сессию в GPB
+     * 3. Инициирует возврат средств
+     * 4. Гарантированно закрывает сессию (даже при ошибке выполнения)
+     *
+     * @param payment объект платежа, по которому выполняется возврат
+     * @param dto данные для возврата средств (сумма, описание и пр.)
+     *
+     * @return ответ банка с результатом операции возврата
+     *
+     * @throws RuntimeException может пробрасывать исключения клиента GPB
+     */
+    override fun registerRefundForThePayment(
+        payment: Payment,
+        dto: RefundPayloadDto,
+    ): GPBRefundResponseDto {
+        val portalId = tokenService.takePortalId(payment.depersonalization)
+
+        val sessionResponse =
+            gpbCardPaymentClient.getSessionId(
+                portalId = portalId,
+                identifier = apiConfigProperties.identifier,
+                password = apiConfigProperties.password,
+            )
+
+        val sessionToken = SESSION + sessionResponse.sessionId
+
+        val refundAmount =
+            payment.getAmountData().getAmountInPennies().toString()
+
+        return try {
+            gpbCardPaymentClient.startRefund(
+                portalId,
+                payment.paymentBankId,
+                sessionToken,
+                refundAmount,
+                CurrencyEnum.RUB.name,
+                REFUND_DESCRIPTION,
+            )
+        } finally {
+            gpbCardPaymentClient.finishSessionId(sessionToken, portalId)
+        }
+    }
 
     private fun requestCardPaymentStatus(paymentBankInfo: PaymentBankInfo): BankPaymentDetails =
         convertToBankPaymentDetails(

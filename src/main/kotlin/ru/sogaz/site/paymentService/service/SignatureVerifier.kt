@@ -1,11 +1,11 @@
 package ru.sogaz.site.paymentService.service
 
 import jakarta.servlet.http.HttpServletRequest
-import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallback
 
 interface SignatureVerifier {
     fun verifySignature(
-        requestDto: GpbCallbackRequest,
+        gpbCallback: GpbCallback,
         httpServletRequest: HttpServletRequest,
     ): Boolean
 }

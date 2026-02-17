@@ -54,6 +54,13 @@ enum class PaymentExtendedCodeMessage(
     CARD_TEMPORARY_BLOCKED("Карта временно заблокирована"),
     CPA_SSL_FAILED("Ошибка при взаимодействии с магазином"),
     RECURRENT_ACQUIRER_ERROR("Ошибка при проведении рекуррентного платежа у эквайера"),
+    PAYMENT_DATA_NOT_FOUND("Не найден данные о банковской транзакции"),
+    PAYMENT_NOT_FOUND_IS_NOT_GPB("Платеж недоступен для отмены. Указанный банк недоступен для отмены"),
+    NOT_IS_CORRECTED_VALUE("Не пройдена проверка корректности значений, переданных в сообщении"),
+    PAYMENT_STATUS_NOT_SUCCESS("Счет не оплачен"),
+    PAYMENT_EXPIRED("Платеж недоступен для отмены. Прошло более суток с момента совершения оплаты"),
+    PAYMENT_SYSTEM_IS_NOT_AVAILABLE("Платежная система недоступна"),
+    OPERATION_ERROR_ON_THE_BANK("Ошибка при совершении операции на стороне банка"),
     ;
 
     companion object {
