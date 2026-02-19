@@ -31,6 +31,9 @@ abstract class PaymentStatusMapper {
             StatusEnum.ACCEPTED,
             -> PaymentStatusEnum.SUCCESS
 
+            StatusEnum.REFUND,
+            -> PaymentStatusEnum.REFUND
+
             else -> PaymentStatusEnum.WAIT
         }
 

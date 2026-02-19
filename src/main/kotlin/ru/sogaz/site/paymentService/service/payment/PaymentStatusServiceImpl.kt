@@ -113,6 +113,9 @@ class PaymentStatusServiceImpl(
         payment: Payment,
     ): Payment {
         handlePaymentChangedStatus(payment, bankPaymentDetails)
+        payment.apply {
+            state = bankPaymentDetails.status
+        }
         return paymentDao.save(payment)
     }
 
@@ -150,11 +153,6 @@ class PaymentStatusServiceImpl(
             logger.warn("${ORDER_ALREADY_PAID_WARN_MESSAGE.format(order.id, payment.bank)} ${payment.paymentBankId}")
             return
         }
-        if (payment.isFail()) {
-            order.apply { status = OrderStatus.CANCELED }
-        } else if (payment.isSuccess()) {
-            order.apply { status = OrderStatus.SUCCESS }
-        }
 
         if (payment.state != PaymentStatusEnum.CALLBACK && order.skipSendingQueue != true) {
             when (order.regCard) {
@@ -168,9 +166,16 @@ class PaymentStatusServiceImpl(
             paymentFinished = LocalDateTime.now()
         }
 
+        if (bankPaymentDetails.isFail()) {
+            order.status = OrderStatus.CANCELED
+        } else if (bankPaymentDetails.isSuccess()) {
+            order.status = OrderStatus.SUCCESS
+        }
+
         if (order.skipSendingReceipt != true) {
             receiptService.generateReceipt(payment)
         }
+
         orderDao.save(order)
     }
 
@@ -247,18 +252,11 @@ class PaymentStatusServiceImpl(
         }
     }
 
-    fun BankPaymentDetails.isInProcess(): Boolean =
-        when (status) {
-            PaymentStatusEnum.REG,
-            PaymentStatusEnum.WAIT,
-            -> true
+    fun BankPaymentDetails.isInProcess(): Boolean = status.isInProcess()
 
-            else -> false
-        }
+    fun BankPaymentDetails.isClosed(): Boolean = status.isClosed()
 
-    fun BankPaymentDetails.isClosed(): Boolean = isInProcess().not()
+    fun BankPaymentDetails.isSuccess(): Boolean = status.isSuccess()
 
-    fun BankPaymentDetails.isSuccess(): Boolean = status == PaymentStatusEnum.SUCCESS
-
-    fun BankPaymentDetails.isFail(): Boolean = status == PaymentStatusEnum.FAIL
+    fun BankPaymentDetails.isFail(): Boolean = status.isFail()
 }
