@@ -85,7 +85,7 @@ class GpbCardPayIntegrationTest {
         verify { gpbCardClient.cardPayment(MAIN_PORTAL_ID, TOKEN, any()) }
 
         assertThat(result)
-            .returns(TOKEN, BankPaymentPageData::id)
+            .returns(TOKEN, BankPaymentPageData::paymentBankId)
     }
 
     @Test
@@ -98,7 +98,7 @@ class GpbCardPayIntegrationTest {
         verify { gpbCardClient.cardPayment(DEPERSONALIZED_PORTAL_ID, TOKEN, any()) }
 
         assertThat(result)
-            .returns(TOKEN, BankPaymentPageData::id)
+            .returns(TOKEN, BankPaymentPageData::paymentBankId)
     }
 
     private fun initMockAccountProperties() {
