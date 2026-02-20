@@ -15,10 +15,9 @@ class PayV2Controller(
     private val operationServiceImpl: OperationServiceImpl,
 ) : WrapResponseController(),
     PayV2Api {
-    override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): BankPaymentPageData {
-        TODO("Not yet implemented")
-    }
-
     override fun pay(cardPayOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         operationServiceImpl.pay(cardPayOperationRequest)
+
+    override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): BankPaymentPageData =
+        TODO("Not yet implemented")
 }

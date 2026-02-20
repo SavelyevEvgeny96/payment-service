@@ -6,10 +6,15 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class SbpPayOperationRequest(
+    @field:Schema(description = "Id заказа на оплату")
     override val orderId: UUID,
+    @field:Schema(description = "Описание операции для банка", example = "Описание операции для банка")
     override val description: String,
+    @field:Schema(description = "Сумма операции", example = "10", type = "integer")
     override val amount: BigDecimal,
+    @field:Schema(description = "Платежные позиции")
     override val payItems: Map<String, String> = emptyMap(),
+    @field:Schema(description = "Дополнительные параметры операции")
     override val params: PayParams = PayParams(),
 ) : PayOperationRequest() {
     @field:Schema(

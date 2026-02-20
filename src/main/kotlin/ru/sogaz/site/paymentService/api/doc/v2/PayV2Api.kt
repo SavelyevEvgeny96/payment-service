@@ -10,6 +10,16 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequ
 
 interface PayV2Api {
     @Operation(
+        summary = "Редирект на страницу оплаты заказа по карте",
+        description = "Регистрирует платеж в банке указанном для заказа и перенаправляет на платежную страницу банка",
+    )
+    @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по карте")
+    @PostMapping("/v2/payment/pay")
+    fun pay(
+        @RequestBody cardPayOperationRequest: CardPayOperationRequest,
+    ): BankPaymentPageData
+
+    @Operation(
         summary = "Редирект на страницу оплаты заказа по СБП",
         description = "Регистрирует платеж в банке указанном для заказа и перенаправляет на платежную страницу банка",
     )
@@ -19,13 +29,4 @@ interface PayV2Api {
         @RequestBody sbpPayOperationRequest: SbpPayOperationRequest,
     ): BankPaymentPageData
 
-    @Operation(
-        summary = "Редирект на страницу оплаты заказа по карте",
-        description = "Регистрирует платеж в банке указанном для заказа и перенаправляет на платежную страницу банка",
-    )
-    @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по карте")
-    @PostMapping("/v2/payment/pay")
-    fun pay(
-        @RequestBody cardPayOperationRequest: CardPayOperationRequest,
-    ): BankPaymentPageData
 }
