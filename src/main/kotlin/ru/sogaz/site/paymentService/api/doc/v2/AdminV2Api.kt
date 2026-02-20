@@ -8,8 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
-import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 
 @RequestMapping("admin")
 interface AdminV2Api {

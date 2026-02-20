@@ -4,11 +4,11 @@ import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderDao
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderMapper
-import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrder
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.order.IdempotentOrderService
 
 @Service

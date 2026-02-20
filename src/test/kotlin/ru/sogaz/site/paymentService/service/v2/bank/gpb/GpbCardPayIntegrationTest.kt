@@ -19,9 +19,9 @@ import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbRequestMapperImpl
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbResponseMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbResponseMapperImpl
-import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
