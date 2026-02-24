@@ -24,7 +24,7 @@ class OperationDetailsProducer(
             rabbitProperties.exchangePayment,
             makeRoutingKey(completedOperationEvent),
             completedOperationEvent,
-            CorrelationData(operation.idempotentOrder.orderId.toString()),
+            CorrelationData(operation.idempotentOrder?.id.toString()),
         )
     }
 

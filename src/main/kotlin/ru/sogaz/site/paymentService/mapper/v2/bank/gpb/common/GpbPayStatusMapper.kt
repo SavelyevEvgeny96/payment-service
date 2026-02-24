@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.mapper.v2.bank.gpb
+package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common
 
 import org.mapstruct.Mapper
 import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbCardPayStatus

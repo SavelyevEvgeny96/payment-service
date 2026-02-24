@@ -7,13 +7,13 @@ import ru.sogaz.site.paymentService.controller.WrapResponseController
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
-import ru.sogaz.site.paymentService.service.v2.operation.impl.OperationServiceImpl
+import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
 import ru.sogaz.siter.models.resonses.Response
 
 @RestController
 @Tag(name = "Pay v2", description = "Проведение платежа с редиректом на страницу оплаты")
 class PayV2Controller(
-    private val operationServiceImpl: OperationServiceImpl,
+    private val payOperationService: PayOperationService,
 ) : WrapResponseController(),
     PayV2Api {
     companion object {
@@ -21,9 +21,9 @@ class PayV2Controller(
     }
 
     override fun pay(cardPayOperationRequest: CardPayOperationRequest): Response<BankPaymentPageData> =
-        operationServiceImpl
-            .pay(cardPayOperationRequest)
+        cardPayOperationRequest
+            .run(payOperationService::cardPayOperation)
             .wrapToSuccessResponse(CARD_PAY_SUCCESS_CODE)
 
-    override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): Response<BankPaymentPageData> = TODO("Not yet implemented")
+    override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): Response<BankPaymentPageData> = TODO()
 }

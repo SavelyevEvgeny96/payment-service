@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbTokenResponse
     name = "gpb-card-payment-client-v2",
     url = "\${api.gpb.card.basePath}",
 )
-interface GpbCardPaymentClientV2 {
+interface GpbCardClient {
     @PostMapping(value = ["/{portalId}/token"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun getToken(
         @PathVariable portalId: String,

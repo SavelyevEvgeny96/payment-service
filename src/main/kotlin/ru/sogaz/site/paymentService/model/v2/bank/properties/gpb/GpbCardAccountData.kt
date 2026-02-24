@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.model.v2.bank.properties
+package ru.sogaz.site.paymentService.model.v2.bank.properties.gpb
 
 data class GpbCardAccountData(
     val portalId: String,

@@ -24,7 +24,7 @@ class CheckOperationStatusProducer(
             makeRoutingKey(deathCount),
             CheckStatusEvent(operation.id!!),
             setMessageDeathCount(deathCount),
-            CorrelationData(operation.idempotentOrder.orderId.toString()),
+            CorrelationData(operation.idempotentOrder?.id.toString()),
         )
     }
 

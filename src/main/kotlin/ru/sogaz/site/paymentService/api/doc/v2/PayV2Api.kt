@@ -13,7 +13,7 @@ import ru.sogaz.siter.models.resonses.Response
 interface PayV2Api {
     @Operation(
         summary = "Редирект на страницу оплаты заказа по карте",
-        description = "Регистрирует платеж в банке указанном для заказа и перенаправляет на платежную страницу банка",
+        description = "Регистрирует платеж в банке указанном для заказа и возвращает ссылку на платежную страницу банка",
     )
     @ValidationErrorApiResponse
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по карте")
@@ -24,7 +24,7 @@ interface PayV2Api {
 
     @Operation(
         summary = "Редирект на страницу оплаты заказа по СБП",
-        description = "Регистрирует платеж в банке указанном для заказа и перенаправляет на платежную страницу банка",
+        description = "Регистрирует платеж в банке указанном для заказа и возвращает ссылку на платежную страницу банка",
     )
     @ValidationErrorApiResponse
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по сбп")

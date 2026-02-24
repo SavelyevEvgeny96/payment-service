@@ -21,7 +21,7 @@ class CheckOperationStatusConsumer(
     private val operationDetailsProducer: OperationDetailsProducer,
 ) {
     @RabbitListener(
-        queues = ["payment.status.check.queue"],
+        queues = ["\${app.rabbit.payment-status-queue}"],
         containerFactory = "concurrentContainerFactory",
     )
     fun checkStatus(

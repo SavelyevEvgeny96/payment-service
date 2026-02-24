@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.mapper.v2.bank.gpb
+package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response
 
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

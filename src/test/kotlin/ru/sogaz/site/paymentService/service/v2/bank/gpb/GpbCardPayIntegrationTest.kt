@@ -12,20 +12,23 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClientV2
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbCardDetailMapperImpl
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbPayStatusMapperImpl
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbRequestMapper
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbRequestMapperImpl
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbResponseMapper
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.GpbResponseMapperImpl
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardClient
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common.GpbPayStatusMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardDetailMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapper
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapperImpl
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardCardIntegrationImpl
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
-@Import(value = [GpbRequestMapperImpl::class, GpbResponseMapperImpl::class, GpbCardDetailMapperImpl::class, GpbPayStatusMapperImpl::class])
+@Import(
+    value = [GpbRequestMapperImpl::class, GpbCardResponseMapperImpl::class, GpbCardDetailMapperImpl::class, GpbPayStatusMapperImpl::class],
+)
 class GpbCardPayIntegrationTest {
     companion object {
         private const val TOKEN = "TEST TOKEN"
@@ -39,18 +42,18 @@ class GpbCardPayIntegrationTest {
     }
 
     @MockK
-    private lateinit var gpbCardClient: GpbCardPaymentClientV2
+    private lateinit var gpbCardClient: GpbCardClient
 
     @Autowired
     private lateinit var requestMapper: GpbRequestMapper
 
     @Autowired
-    private lateinit var responseMapper: GpbResponseMapper
+    private lateinit var responseMapper: GpbCardResponseMapper
 
     @RelaxedMockK
     private lateinit var cardAccountProperties: GpbCardAccountProperties
 
-    private lateinit var gpbCardPayIntegration: GpbCardPayIntegration
+    private lateinit var gpbCardPayIntegration: GpbCardCardIntegrationImpl
 
     @RelaxedMockK
     private lateinit var cardPayOperationRequest: CardPayOperationRequest
@@ -61,7 +64,7 @@ class GpbCardPayIntegrationTest {
     @BeforeEach
     fun beforeEach() {
         gpbCardPayIntegration =
-            GpbCardPayIntegration(
+            GpbCardCardIntegrationImpl(
                 gpbCardClient,
                 requestMapper,
                 responseMapper,
@@ -79,7 +82,8 @@ class GpbCardPayIntegrationTest {
     fun `pay should call correct cardAccountData based on depersonalization`() {
         every { cardPayOperationRequest.params.depersonalization } returns false
 
-        val result = gpbCardPayIntegration.pay(cardPayOperationRequest)
+        val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
+        val result = gpbCardPayIntegration.cardPay(cardPayOperationRequest, authorizedCardTrxData)
 
         verify { gpbCardClient.getToken(MAIN_PORTAL_ID) }
         verify { gpbCardClient.cardPayment(MAIN_PORTAL_ID, TOKEN, any()) }
@@ -92,7 +96,8 @@ class GpbCardPayIntegrationTest {
     fun `pay should call correct cardAccountData based on depersonalization if it is true`() {
         every { cardPayOperationRequest.params.depersonalization } returns true
 
-        val result = gpbCardPayIntegration.pay(cardPayOperationRequest)
+        val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
+        val result = gpbCardPayIntegration.cardPay(cardPayOperationRequest, authorizedCardTrxData)
 
         verify { gpbCardClient.getToken(DEPERSONALIZED_PORTAL_ID) }
         verify { gpbCardClient.cardPayment(DEPERSONALIZED_PORTAL_ID, TOKEN, any()) }

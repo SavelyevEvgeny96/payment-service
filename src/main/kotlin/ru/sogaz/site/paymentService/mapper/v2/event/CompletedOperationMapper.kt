@@ -9,9 +9,9 @@ import ru.sogaz.site.paymentService.model.v2.event.CompletedOperationEvent
 @Mapper
 interface CompletedOperationMapper {
     @Mapping(target = "paymentId", source = "operation.id")
-    @Mapping(target = "orderId", source = "operation.idempotentOrder.orderId")
+    @Mapping(target = "orderId", source = "operation.idempotentOrder.id")
     @Mapping(target = "payDate", expression = "java(Instant.now())")
-    @Mapping(target = "totalAmount", constant = "0")
+    @Mapping(target = "totalAmount", source = "operation.premiumAmount")
     @Mapping(target = "status", source = "operationDetails.state")
     @Mapping(target = "keyCard", source = "operationDetails.cardDetails.cardId")
     fun completedOperationEvent(

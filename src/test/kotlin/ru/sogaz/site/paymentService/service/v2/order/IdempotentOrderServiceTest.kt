@@ -15,15 +15,20 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderDao
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
-import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderMapper
-import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.operation.PayOperationRequestMapper
+import ru.sogaz.site.paymentService.mapper.v2.operation.PayOperationRequestMapperImpl
+import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
+import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapperImpl
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.service.v2.order.impl.IdempotentOrderServiceImpl
+import java.math.BigDecimal
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
-@Import(IdempotentOrderMapperImpl::class)
+@Import(
+    value = [IdempotentOrderOperationMapperImpl::class, PayOperationRequestMapperImpl::class],
+)
 class IdempotentOrderServiceTest {
     @MockK
     private lateinit var idempotentOrderDao: IdempotentOrderDao
@@ -32,7 +37,10 @@ class IdempotentOrderServiceTest {
     private lateinit var idempotentOrderOperationDao: IdempotentOrderOperationDao
 
     @Autowired
-    private lateinit var idempotentOrderMapper: IdempotentOrderMapper
+    private lateinit var idempotentOrderOperationMapper: IdempotentOrderOperationMapper
+
+    @Autowired
+    private lateinit var payOperationRequestMapper: PayOperationRequestMapper
 
     private lateinit var idempotentOrderService: IdempotentOrderService
 
@@ -44,14 +52,15 @@ class IdempotentOrderServiceTest {
         idempotentOrderService =
             IdempotentOrderServiceImpl(
                 idempotentOrderDao,
+                idempotentOrderOperationMapper,
                 idempotentOrderOperationDao,
-                idempotentOrderMapper,
             )
 
         every { idempotentOrderDao.save(any()) } returnsArgument 0
         every { idempotentOrderOperationDao.save(any()) } returnsArgument 0
 
         every { payOperationRequest.orderId } returns UUID.randomUUID()
+        every { payOperationRequest.amount } returns BigDecimal.TEN
     }
 
     @Test
@@ -90,7 +99,11 @@ class IdempotentOrderServiceTest {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns mockk()
         every { payOperationRequest.params.depersonalization } returns true
 
-        val savedOperation = idempotentOrderService.saveOperation(payOperationRequest)
+        val savedOperation =
+            idempotentOrderService.saveOperation(
+                payOperationRequest,
+                payOperationRequestMapper::toIdempotentOrderOperation,
+            )
 
         assertThat(savedOperation)
             .returns(true, IdempotentOrderOperation::depersonalization)
