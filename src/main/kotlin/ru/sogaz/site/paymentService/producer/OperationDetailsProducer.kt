@@ -17,14 +17,14 @@ class OperationDetailsProducer(
 ) {
     fun sendOperationDetails(
         operation: IdempotentOrderOperation,
-        operationDetails: BankOperationDetails,
+        bankOperationDetails: BankOperationDetails,
     ) {
-        val completedOperationEvent = completedOperationMapper.completedOperationEvent(operation, operationDetails)
+        val completedOperationEvent = completedOperationMapper.completedOperationEvent(operation, bankOperationDetails)
         rabbitTemplate.convertAndSend(
             rabbitProperties.exchangePayment,
             makeRoutingKey(completedOperationEvent),
             completedOperationEvent,
-            CorrelationData(operation.idempotentOrder?.id.toString()),
+            CorrelationData(completedOperationEvent.orderId.toString()),
         )
     }
 

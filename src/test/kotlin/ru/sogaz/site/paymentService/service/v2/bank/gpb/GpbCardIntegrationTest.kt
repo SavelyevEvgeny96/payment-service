@@ -19,8 +19,11 @@ import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapperI
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardDetailMapperImpl
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapperImpl
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardCardIntegrationImpl
@@ -29,7 +32,7 @@ import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardCardIntegrat
 @Import(
     value = [GpbRequestMapperImpl::class, GpbCardResponseMapperImpl::class, GpbCardDetailMapperImpl::class, GpbPayStatusMapperImpl::class],
 )
-class GpbCardPayIntegrationTest {
+class GpbCardIntegrationTest {
     companion object {
         private const val TOKEN = "TEST TOKEN"
         private const val PAYMENT_PAGE = "PAYMENT PAGE"
@@ -59,7 +62,13 @@ class GpbCardPayIntegrationTest {
     private lateinit var cardPayOperationRequest: CardPayOperationRequest
 
     @RelaxedMockK
+    private lateinit var cardRecurrentPayOperationRequest: CardRecurrentOperationRequest
+
+    @RelaxedMockK
     private lateinit var gpbPayCardResponse: GpbPayCardResponse
+
+    @RelaxedMockK
+    private lateinit var gpbCardPayDetailsResponse: GpbCardPayDetailsResponse
 
     @BeforeEach
     fun beforeEach() {
@@ -73,9 +82,11 @@ class GpbCardPayIntegrationTest {
 
         initMockAccountProperties()
         initMockGpbPayCardResponse()
+        initMockGpbCardPayDetailsResponse()
 
         every { gpbCardClient.getToken(any()).token } returns TOKEN
         every { gpbCardClient.cardPayment(any(), TOKEN, any()) } returns gpbPayCardResponse
+        every { gpbCardClient.cardRecurrentPayment(any(), TOKEN, any()) } returns gpbCardPayDetailsResponse
     }
 
     @Test
@@ -106,6 +117,35 @@ class GpbCardPayIntegrationTest {
             .returns(TOKEN, BankPaymentPageData::paymentBankId)
     }
 
+    @Test
+    fun `recurrent pay should call correct cardAccountData based on depersonalization`() {
+        every { cardPayOperationRequest.params.depersonalization } returns false
+
+        val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
+        val result = gpbCardPayIntegration.recurrentPay(cardRecurrentPayOperationRequest, authorizedCardTrxData)
+
+        verify { gpbCardClient.getToken(MAIN_PORTAL_ID) }
+        verify { gpbCardClient.cardRecurrentPayment(MAIN_PORTAL_ID, TOKEN, any()) }
+
+        assertThat(result)
+            .returns(TOKEN, BankOperationDetails::bankId)
+    }
+
+    @Test
+    fun `recurrent pay should call correct cardAccountData based on depersonalization if it is true`() {
+        every { cardPayOperationRequest.params.depersonalization } returns true
+
+        val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
+        val result = gpbCardPayIntegration.recurrentPay(cardRecurrentPayOperationRequest, authorizedCardTrxData)
+
+        verify { gpbCardClient.getToken(DEPERSONALIZED_PORTAL_ID) }
+        verify { gpbCardClient.cardRecurrentPayment(DEPERSONALIZED_PORTAL_ID, TOKEN, any()) }
+
+        assertThat(result)
+            .returns(TOKEN, BankOperationDetails::bankId)
+    }
+
+
     private fun initMockAccountProperties() {
         every { cardAccountProperties.main.portalId } returns MAIN_PORTAL_ID
         every { cardAccountProperties.main.merchantId } returns MAIN_MERCHANT_ID
@@ -116,5 +156,9 @@ class GpbCardPayIntegrationTest {
     private fun initMockGpbPayCardResponse() {
         every { gpbPayCardResponse.token } returns TOKEN
         every { gpbPayCardResponse.options.paymentPageUrl } returns PAYMENT_PAGE
+    }
+
+    private fun initMockGpbCardPayDetailsResponse() {
+        every { gpbCardPayDetailsResponse.id } returns TOKEN
     }
 }

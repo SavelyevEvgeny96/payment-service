@@ -79,6 +79,7 @@ spring:
       enabled: ALWAYS
 
 api:
+  version: ${API_VERSION:v2}
   payment:
     paymentUrl: ${PAYMENT_URL}
     sbpPaymentUrl: ${SBP_PAYMENT_URL}

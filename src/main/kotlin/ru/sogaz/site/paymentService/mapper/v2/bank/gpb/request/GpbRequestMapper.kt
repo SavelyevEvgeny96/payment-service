@@ -8,6 +8,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.Src
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.State
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayParams
 import java.math.BigDecimal
 
@@ -52,5 +53,17 @@ abstract class GpbRequestMapper {
         merchantId: String,
         request: CardPayOperationRequest,
         payParams: PayParams,
+    ): GpbPayRequest
+
+    @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "params", source = "request.payItems")
+    @Mapping(target = "merchantTrx", source = "request.orderId")
+    @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
+    @Mapping(target = "src", source = "request.keyCard", qualifiedByName = ["mapSrc"])
+    @Mapping(target = "recurrent", constant = "true")
+    @Mapping(target = "currency", constant = "RUB")
+    abstract fun toRecurrentRequest(
+        merchantId: String,
+        request: CardRecurrentOperationRequest,
     ): GpbPayRequest
 }
