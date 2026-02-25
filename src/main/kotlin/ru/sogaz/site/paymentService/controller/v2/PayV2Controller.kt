@@ -20,6 +20,7 @@ class PayV2Controller(
     PayV2Api {
     companion object {
         private const val CARD_PAY_SUCCESS_CODE = 1101510200
+        private const val SBP_PAY_SUCCESS_CODE = 1
     }
 
     override fun pay(cardPayOperationRequest: CardPayOperationRequest): Response<BankPaymentPageData> =
@@ -27,10 +28,13 @@ class PayV2Controller(
             .run(payOperationService::cardPayOperation)
             .wrapToSuccessResponse(CARD_PAY_SUCCESS_CODE)
 
-    override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): Response<BankPaymentPageData> = TODO()
+    override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): Response<BankPaymentPageData> =
+        sbpPayOperationRequest
+            .run(payOperationService::sbpPayOperation)
+            .wrapToSuccessResponse(SBP_PAY_SUCCESS_CODE)
 
     override fun recurrentCardPay(cardRecurrentOperationRequest: CardRecurrentOperationRequest): Response<BankOperationDetails> =
         cardRecurrentOperationRequest
             .run(payOperationService::recurrentOperation)
-            .wrapToSuccessResponse(CARD_PAY_SUCCESS_CODE)
+            .wrapToSuccessResponse(0)
 }

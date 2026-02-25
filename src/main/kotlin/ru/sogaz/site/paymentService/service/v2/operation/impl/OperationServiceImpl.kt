@@ -11,18 +11,19 @@ import ru.sogaz.site.paymentService.service.v2.operation.model.OperationResult
 import ru.sogaz.site.paymentService.service.v2.order.IdempotentOrderService
 
 @Service
-@Transactional(rollbackFor = [Exception::class])
+@Transactional
 class OperationServiceImpl(
     private val idempotentOrderService: IdempotentOrderService,
     private val checkOperationStatusProducer: CheckOperationStatusProducer,
 ) : OperationService {
-    override fun <REQUEST : OperationRequest, RESULT> runIdempotentOperation(operationCommand: OperationCommand<REQUEST, RESULT>): RESULT =
-        operationCommand
-            .run(::createNewIdempotentOrderOperation)
-            .also(checkOperationStatusProducer::sendDelayedCheckStatusEvent)
-            .executeCommand(operationCommand)
-            .result
-
+    override fun <REQUEST : OperationRequest, RESULT> runIdempotentOperation(operationCommand: OperationCommand<REQUEST, RESULT>): Result<RESULT> =
+        runCatching {
+            operationCommand
+                .run(::createNewIdempotentOrderOperation)
+                .also(checkOperationStatusProducer::sendDelayedCheckStatusEvent)
+                .executeCommand(operationCommand)
+                .result
+        }
     private fun <REQUEST : OperationRequest, RESULT> IdempotentOrderOperation.executeCommand(
         operationCommand: OperationCommand<REQUEST, RESULT>,
     ): OperationResult<RESULT> = operationCommand.strategy.execute(this, idempotentOrderService::saveOperation)
@@ -30,8 +31,8 @@ class OperationServiceImpl(
     private fun <REQUEST : OperationRequest, RESULT> createNewIdempotentOrderOperation(
         operationCommand: OperationCommand<REQUEST, RESULT>,
     ) = when {
-        operationCommand.mapRequest == null -> idempotentOrderService.saveOperation(operationCommand.request)
-        else -> idempotentOrderService.saveOperation(operationCommand.request, operationCommand.mapRequest)
+        operationCommand.requestToOrderOperationMapper == null -> idempotentOrderService.saveOperation(operationCommand.request)
+        else -> idempotentOrderService.saveOperation(operationCommand.request, operationCommand.requestToOrderOperationMapper)
     }
 
     private fun <RESULT> OperationResult<RESULT>.saveOperationResult(): OperationResult<RESULT> =

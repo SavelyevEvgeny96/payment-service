@@ -3,13 +3,18 @@ package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Named
+import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbSbpAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbSbpPayRequest
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbSpbStatusRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.Src
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.State
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
+import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayParams
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import java.math.BigDecimal
 
 @Mapper
@@ -44,6 +49,18 @@ abstract class GpbRequestMapper {
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
     @Mapping(target = "params", source = "request.payItems")
     @Mapping(target = "merchantTrx", source = "request.orderId")
+    @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
+    @Mapping(target = "src", source = "request.keyCard", qualifiedByName = ["mapSrc"])
+    @Mapping(target = "recurrent", constant = "true")
+    @Mapping(target = "currency", constant = "RUB")
+    abstract fun toRecurrentRequest(
+        merchantId: String,
+        request: CardRecurrentOperationRequest,
+    ): GpbPayRequest
+
+    @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "params", source = "request.payItems")
+    @Mapping(target = "merchantTrx", source = "request.orderId")
     @Mapping(target = "addCardAllowed", source = "request.saveCard")
     @Mapping(target = "state", expression = "java(cardPaymentState)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
@@ -56,14 +73,18 @@ abstract class GpbRequestMapper {
     ): GpbPayRequest
 
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
-    @Mapping(target = "params", source = "request.payItems")
-    @Mapping(target = "merchantTrx", source = "request.orderId")
-    @Mapping(target = "state", expression = "java(cardPaymentStateRecurrent)")
-    @Mapping(target = "src", source = "request.keyCard", qualifiedByName = ["mapSrc"])
-    @Mapping(target = "recurrent", constant = "true")
+    @Mapping(target = "account", source = "gpbSbpAccountData.paymentAccount")
+    @Mapping(target = "merchantId", source = "gpbSbpAccountData.merchantIdSbpGpb")
+    @Mapping(target = "callbackMerchantNotifications", source = "gpbSbpAccountData.callbackUrlSbp")
+    @Mapping(target = "paymentPurpose", source = "sbpPayOperationRequest.description")
     @Mapping(target = "currency", constant = "RUB")
-    abstract fun toRecurrentRequest(
-        merchantId: String,
-        request: CardRecurrentOperationRequest,
-    ): GpbPayRequest
+    @Mapping(target = "templateVersion", constant = "01")
+    @Mapping(target = "qrTtl", constant = "60")
+    @Mapping(target = "qrcType", constant = "02")
+    abstract fun toSbpRequest(
+        sbpPayOperationRequest: SbpPayOperationRequest,
+        gpbSbpAccountData: GpbSbpAccountData,
+    ): GpbSbpPayRequest
+
+    fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.paymentBankId)
 }

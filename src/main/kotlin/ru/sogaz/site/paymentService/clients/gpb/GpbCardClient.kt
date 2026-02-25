@@ -12,7 +12,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardRespons
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbTokenResponse
 
 @FeignClient(
-    name = "gpb-card-payment-client-v2",
+    name = "gpb-card-client",
     url = "\${api.gpb.card.basePath}",
 )
 interface GpbCardClient {

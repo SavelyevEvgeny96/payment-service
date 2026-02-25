@@ -15,6 +15,7 @@ app:
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
     exchange-check-status-payment: ${PAYMENT_STATUS_CHECK_EXCHANGE:payment.status.check.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
+    payment-status-check-queue: ${PAYMENT_STATUS_QUEUE:payment.status.check.queue}
     payment-refund-queue: ${PAYMENT_REFUND_QUEUE:payment.refund.queue}
     payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
     order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
@@ -30,6 +31,16 @@ app:
       consumers: ${RABBIT_CONCURRENCY_CONSUMERS:2}
       maxConsumers: ${RABBIT_CONCURRENCY_MAX_CONSUMERS:5}
       stopConsumerMinIntervalMs: ${RABBIT_CONCURRENCY_STOP_CONSUMERS_MIN_INTERVALS_MS:10000}
+
+resilience4j:
+  retry:
+    instances:
+      rabbitFastRetry:
+        maxAttempts: ${RABBIT_CONSUMER_FAST_RETRY_MAX_ATTEMPTS:2}
+        waitDuration: ${RABBIT_CONSUMER_FAST_RETRY_INITIAL_WAIT_DURATIONS:1s}
+        enableExponentialBackoff: ${RABBIT_CONSUMER_RETRY_EXPONENTIAL:true}
+        exponentialBackoffMultiplier: ${RABBIT_CONSUMER_RETRY_WAIT_MULTIPLAYER:2}
+
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
@@ -115,9 +126,10 @@ api:
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
     sbp:
       basePath: ${GPB_SBP_URL}
-      callbackUrlSbp: ${CALLBACK_URL_SBP}
-      merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
-      paymentAccount: ${PAYMENT_ACCOUNT}
+      account:
+        merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
+        paymentAccount: ${PAYMENT_ACCOUNT}
+        callbackUrlSbp: ${CALLBACK_URL_SBP}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}

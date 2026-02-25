@@ -12,8 +12,8 @@ inline fun <reified REQUEST : OperationRequest, reified RESULT> REQUEST.step(
 
 inline fun <reified REQUEST : OperationRequest, reified RESULT> REQUEST.step(
     noinline action: REQUEST.() -> RESULT,
-    noinline mapResult: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
-): AbstractOperationStrategy<REQUEST, RESULT> = OperationStrategy(this, false, action, mapResult)
+    noinline resultToOrderOperationMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
+): AbstractOperationStrategy<REQUEST, RESULT> = OperationStrategy(this, false, action, resultToOrderOperationMapper)
 
 inline fun <reified REQUEST : OperationRequest, PREV_RESULT, reified RESULT> AbstractOperationStrategy<REQUEST, PREV_RESULT>.step(
     noinline action: REQUEST.(PREV_RESULT) -> RESULT,
@@ -21,8 +21,8 @@ inline fun <reified REQUEST : OperationRequest, PREV_RESULT, reified RESULT> Abs
 
 inline fun <reified REQUEST : OperationRequest, PREV_RESULT, reified RESULT> AbstractOperationStrategy<REQUEST, PREV_RESULT>.step(
     noinline action: REQUEST.(PREV_RESULT) -> RESULT,
-    noinline resultMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
-): AbstractOperationStrategy<REQUEST, RESULT> = FollowingOperationStrategy(this.request, false, this, action, resultMapper)
+    noinline resultToOrderOperationMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
+): AbstractOperationStrategy<REQUEST, RESULT> = FollowingOperationStrategy(this.request, false, this, action, resultToOrderOperationMapper)
 
 inline fun <reified REQUEST : OperationRequest, reified RESULT> REQUEST.stepWithSave(
     noinline action: REQUEST.() -> RESULT,
@@ -30,10 +30,10 @@ inline fun <reified REQUEST : OperationRequest, reified RESULT> REQUEST.stepWith
 
 inline fun <reified REQUEST : OperationRequest, reified RESULT> REQUEST.stepWithSave(
     noinline action: REQUEST.() -> RESULT,
-    noinline resultMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
-): AbstractOperationStrategy<REQUEST, RESULT> = OperationStrategy(this, true, action, resultMapper)
+    noinline resultToOrderOperationMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
+): AbstractOperationStrategy<REQUEST, RESULT> = OperationStrategy(this, true, action, resultToOrderOperationMapper)
 
 inline fun <reified REQUEST : OperationRequest, PREV_RESULT, reified RESULT> AbstractOperationStrategy<REQUEST, PREV_RESULT>.stepWithSave(
     noinline action: REQUEST.(PREV_RESULT) -> RESULT,
-    noinline resultMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
-): AbstractOperationStrategy<REQUEST, RESULT> = FollowingOperationStrategy(this.request, true, this, action, resultMapper)
+    noinline resultToOrderOperationMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
+): AbstractOperationStrategy<REQUEST, RESULT> = FollowingOperationStrategy(this.request, true, this, action, resultToOrderOperationMapper)

@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.consumer
 
+import io.github.resilience4j.retry.annotation.Retry
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
@@ -21,9 +22,10 @@ class CheckOperationStatusConsumer(
     private val operationDetailsProducer: OperationDetailsProducer,
 ) {
     @RabbitListener(
-        queues = ["\${app.rabbit.payment-status-queue}"],
+        queues = ["\${app.rabbit.payment-status-check-queue}"],
         containerFactory = "concurrentContainerFactory",
     )
+    @Retry(name = "rabbitFastRetry", fallbackMethod = "requeue")
     fun checkStatus(
         @Payload checkStatusEvent: CheckStatusEvent,
         @Header("x-death-count") deathCount: Int?,
@@ -38,9 +40,9 @@ class CheckOperationStatusConsumer(
             OperationState.FAIL,
             OperationState.REFUND,
             OperationState.DECLINED,
-            -> handleCompletedOperation(operation, operationDetails)
+                -> handleCompletedOperation(operation, operationDetails)
             else
-            -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
+                -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
         }
     }
 
@@ -54,4 +56,10 @@ class CheckOperationStatusConsumer(
     }
 
     private fun increaseDeathCount(deathCount: Int?): Int = (deathCount ?: -1) + 1
+
+    fun requeue(
+        event: CheckStatusEvent,
+        deathCount: Int?,
+        ex: Exception,
+    ): Unit = checkOperationStatusProducer.sendDelayedCheckStatusEvent(event, increaseDeathCount(deathCount))
 }

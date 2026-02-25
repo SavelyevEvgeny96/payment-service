@@ -97,7 +97,7 @@ class IdempotentOrderServiceTest {
         val savedOperation =
             idempotentOrderService.saveOperation(
                 payOperationRequest,
-                idempotentOrderOperationMapper::toIdempotentOrderOperation,
+                idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
             )
 
         assertThat(savedOperation)
