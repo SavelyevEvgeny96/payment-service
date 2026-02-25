@@ -69,6 +69,12 @@ class GPBankIntegrationServiceImpl(
         private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
     }
 
+    object GpbHttpCodes {
+        private val FAIL_CODES_FOR_REGISTER = setOf(400, 404)
+
+        fun shouldMarkRegisterFail(code: Int?): Boolean = code in FAIL_CODES_FOR_REGISTER
+    }
+
     private val logger = loggerFor(javaClass)
 
     override fun provider(): BankEnum = BankEnum.GPB
@@ -148,12 +154,17 @@ class GPBankIntegrationServiceImpl(
                 request,
             )
         } catch (ex: FeignException) {
-            var raw = RegisterCardResponseDto()
+            val statusCode = ex.status() // <-- HTTP код ответа банка
             val body = ex.contentUTF8()
-            if (body.isNotBlank()) {
-                raw = objectMapper.readValue(body, RegisterCardResponseDto::class.java)
-            }
-            registerCardMapper.mapErrorBody(raw)
+
+            val raw =
+                if (body.isNotBlank()) {
+                    objectMapper.readValue(body, RegisterCardResponseDto::class.java)
+                } else {
+                    RegisterCardResponseDto()
+                }
+
+            registerCardMapper.mapErrorBody(raw.copy(httpStatusCode = statusCode))
         }
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
@@ -196,12 +207,10 @@ class GPBankIntegrationServiceImpl(
 
     private fun Payment.changeStatus(response: RegisterCardResponseDto) =
         apply {
-            state =
-                if (response.result?.status == StatusEnum.SUCCESS.value) {
-                    PaymentStatusEnum.REG
-                } else {
-                    PaymentStatusEnum.FAIL
-                }
+            when {
+                response.result?.status == StatusEnum.SUCCESS.value -> state = PaymentStatusEnum.REG
+                GpbHttpCodes.shouldMarkRegisterFail(response.httpStatusCode) -> state = PaymentStatusEnum.FAIL
+            }
         }
 
     private fun Order.changeStatus(response: RegisterCardResponseDto) =

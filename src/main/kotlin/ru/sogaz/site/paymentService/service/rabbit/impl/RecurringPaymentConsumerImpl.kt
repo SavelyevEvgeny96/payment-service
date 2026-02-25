@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
 import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBankIntegrationServiceImpl
 import ru.sogaz.site.paymentService.service.rabbit.BuildConsumerService
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
@@ -94,9 +95,9 @@ class RecurringPaymentConsumerImpl(
                         .toPaidOrderMessage(processSinglePayloadResponse)
                         .let { message ->
 
-                            // Если статус обработки содержит ошибку —
+                            // Если статус обработки содержит ошибку и статус 400 или 404 —
                             // отправляем статусные сообщения
-                            if (message.status?.contains("error") == true) {
+                            if (GPBankIntegrationServiceImpl.GpbHttpCodes.shouldMarkRegisterFail(message.httpStatusCode)) {
                                 processSinglePayloadResponse.payment.order.queueStatusResultName
                                     ?.takeIf { it.isNotBlank() }
                                     ?.also { routingKey ->
