@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.PayV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
@@ -26,4 +28,9 @@ class PayV2Controller(
             .wrapToSuccessResponse(CARD_PAY_SUCCESS_CODE)
 
     override fun paySbp(sbpPayOperationRequest: SbpPayOperationRequest): Response<BankPaymentPageData> = TODO()
+
+    override fun recurrentCardPay(cardRecurrentOperationRequest: CardRecurrentOperationRequest): Response<BankOperationDetails> =
+        cardRecurrentOperationRequest
+            .run(payOperationService::recurrentOperation)
+            .wrapToSuccessResponse(CARD_PAY_SUCCESS_CODE)
 }

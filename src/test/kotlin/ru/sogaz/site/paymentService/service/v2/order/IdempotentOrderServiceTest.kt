@@ -15,8 +15,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderDao
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
-import ru.sogaz.site.paymentService.mapper.v2.operation.PayOperationRequestMapper
-import ru.sogaz.site.paymentService.mapper.v2.operation.PayOperationRequestMapperImpl
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapperImpl
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
@@ -27,7 +25,7 @@ import java.util.UUID
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
 @Import(
-    value = [IdempotentOrderOperationMapperImpl::class, PayOperationRequestMapperImpl::class],
+    value = [IdempotentOrderOperationMapperImpl::class],
 )
 class IdempotentOrderServiceTest {
     @MockK
@@ -38,9 +36,6 @@ class IdempotentOrderServiceTest {
 
     @Autowired
     private lateinit var idempotentOrderOperationMapper: IdempotentOrderOperationMapper
-
-    @Autowired
-    private lateinit var payOperationRequestMapper: PayOperationRequestMapper
 
     private lateinit var idempotentOrderService: IdempotentOrderService
 
@@ -102,7 +97,7 @@ class IdempotentOrderServiceTest {
         val savedOperation =
             idempotentOrderService.saveOperation(
                 payOperationRequest,
-                payOperationRequestMapper::toIdempotentOrderOperation,
+                idempotentOrderOperationMapper::toIdempotentOrderOperation,
             )
 
         assertThat(savedOperation)

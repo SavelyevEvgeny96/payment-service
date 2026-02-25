@@ -1,3 +1,5 @@
 package ru.sogaz.site.paymentService.service.v2.bank.gpb
 
-interface GpbCardIntegration : GpbCardPayIntegration
+interface GpbCardIntegration :
+    GpbCardPayIntegration,
+    GpbRecurrentPayIntegration

@@ -6,13 +6,13 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
-import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardPayIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 import ru.sogaz.site.paymentService.service.v2.status.OperationDetailsService
 
 @Service
 class GpbOperationDetailsServiceImpl(
     private val operationMapper: OperationMapper,
-    private val gpbCardPayIntegration: GpbCardPayIntegration,
+    private val gpbCardIntegration: GpbCardIntegration,
 ) : OperationDetailsService {
     override fun getOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
         when (idempotentOrderOperation.operationType) {
@@ -23,6 +23,6 @@ class GpbOperationDetailsServiceImpl(
 
     private fun getPayOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
         when (val payOperation = operationMapper.makePayOperation(idempotentOrderOperation)) {
-            is CardPayOperation -> gpbCardPayIntegration.payStatus(payOperation)
+            is CardPayOperation -> gpbCardIntegration.payStatus(payOperation)
         }
 }

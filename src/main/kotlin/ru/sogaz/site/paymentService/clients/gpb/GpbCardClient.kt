@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import ru.sogaz.site.paymentService.dto.response.bank.RegisterCardResponseDto
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
@@ -30,11 +29,11 @@ interface GpbCardClient {
     ): GpbPayCardResponse
 
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun recurrentPayment(
+    fun cardRecurrentPayment(
         @PathVariable portalId: String,
         @PathVariable token: String,
         @RequestBody request: GpbPayRequest,
-    ): RegisterCardResponseDto
+    ): GpbCardPayDetailsResponse
 
     @GetMapping(value = ["/{portalId}/payment/{paymentBankId}"])
     fun getPaymentStatus(
