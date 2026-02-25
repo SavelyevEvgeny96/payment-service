@@ -17,6 +17,7 @@ data class PaidOrderMessage(
     val maskedPan: String?,
     val paymentSystem: String?,
     val status: String?,
+    var httpStatusCode: Int? = null,
     val keyCard: String?,
     var bank: String?,
     val errorText: String? = null,

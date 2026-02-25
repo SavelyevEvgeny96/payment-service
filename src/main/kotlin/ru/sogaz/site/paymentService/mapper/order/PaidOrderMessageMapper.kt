@@ -55,6 +55,7 @@ interface PaidOrderMessageMapper {
             qualifiedByName = ["mapExtendedCode"],
         ),
     )
+    @Mapping(target = "httpStatusCode", source = "bankResponse.httpStatusCode")
     fun toPaidOrderMessage(src: PaymentRecurrentRegisterData): PaidOrderMessage
 
     fun toPaidOrderMessages(src: List<PaymentRecurrentRegisterData>): List<PaidOrderMessage>
