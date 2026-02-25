@@ -16,7 +16,7 @@ class IdempotentOrderServiceImpl(
     private val idempotentOrderOperationDao: IdempotentOrderOperationDao,
 ) : IdempotentOrderService {
     override fun <R : OperationRequest> saveOperation(operationRequest: R): IdempotentOrderOperation =
-        saveOperation(operationRequest, idempotentOrderOperationMapper::toIdempotentOrderOperation)
+        saveOperation(operationRequest, idempotentOrderOperationMapper::toGpbIdempotentOrderOperation)
 
     override fun <R : OperationRequest> saveOperation(
         operationRequest: R,

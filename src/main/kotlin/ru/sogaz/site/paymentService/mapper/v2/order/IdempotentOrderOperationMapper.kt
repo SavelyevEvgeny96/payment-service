@@ -18,15 +18,17 @@ interface IdempotentOrderOperationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "premiumAmount", constant = "0")
-    fun toIdempotentOrderOperation(operationRequest: OperationRequest): IdempotentOrderOperation
+    @Mapping(target = "bank", constant = "GPB")
+    fun toGpbIdempotentOrderOperation(operationRequest: OperationRequest): IdempotentOrderOperation
 
     @Mapping(target = "depersonalization", source = "payOperationRequest.params.depersonalization")
     @Mapping(target = "premiumAmount", source = "amount")
     @Mapping(target = "state", constant = "REG")
-    fun toIdempotentOrderOperation(payOperationRequest: PayOperationRequest): IdempotentOrderOperation
+    @Mapping(target = "bank", constant = "GPB")
+    fun toGpbIdempotentOrderOperation(payOperationRequest: PayOperationRequest): IdempotentOrderOperation
 
-    @Mapping(target = "state", constant = "REG")
     @Mapping(target = "paymentBankId", source = "token")
+    @Mapping(target = "state", constant = "REG")
     fun updateByAuthorizedTrx(
         @MappingTarget idempotentOrderOperation: IdempotentOrderOperation,
         authorizedCardTrxData: AuthorizedCardTrxData,

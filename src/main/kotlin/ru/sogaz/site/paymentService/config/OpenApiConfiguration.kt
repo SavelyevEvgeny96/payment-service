@@ -45,6 +45,16 @@ class OpenApiConfiguration {
 
     @Bean
     @Profile("test", "local")
+    fun adminV2Api(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("testV2")
+            .pathsToMatch("/admin/v2/payment/**")
+            .displayName("API v2 для администрирования")
+            .build()
+
+    @Bean
+    @Profile("test", "local")
     fun adminApi(): GroupedOpenApi =
         GroupedOpenApi
             .builder()

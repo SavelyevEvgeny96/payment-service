@@ -46,9 +46,10 @@ api:
           merchantId: B80540E3096C8730BCE3
     sbp:
       basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
-      callbackUrlSbp: https://example.com/callback
-      merchantIdSbpGpb:
-      paymentAccount: 40701810800000030052
+      account:
+#        merchantIdSbpGpb: MA0000000685
+        paymentAccount: 40701810800000030052
+        callbackUrlSbp:  https://example.com/callback
 
 crons:
   waitingPaymentsCheck: "*/30 * * * * *"

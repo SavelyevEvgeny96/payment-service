@@ -145,7 +145,6 @@ class GpbCardIntegrationTest {
             .returns(TOKEN, BankOperationDetails::bankId)
     }
 
-
     private fun initMockAccountProperties() {
         every { cardAccountProperties.main.portalId } returns MAIN_PORTAL_ID
         every { cardAccountProperties.main.merchantId } returns MAIN_MERCHANT_ID

@@ -17,7 +17,7 @@ interface GpbCardResponseMapper {
     @Mapping(target = "paymentBankId", source = "token")
     @Mapping(target = "paymentPageUrl", source = "options.paymentPageUrl")
     @Mapping(target = "bank", constant = "GPB")
-    fun toBankPayData(response: GpbPayCardResponse): BankPaymentPageData
+    fun toBankPaymentPageData(response: GpbPayCardResponse): BankPaymentPageData
 
     @Mapping(target = "state", source = "result.status", defaultValue = "WAIT")
     @Mapping(target = "cardDetails", source = "gpbCardDetails")

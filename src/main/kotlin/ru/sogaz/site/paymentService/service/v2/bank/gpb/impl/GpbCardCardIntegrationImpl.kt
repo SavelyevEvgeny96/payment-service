@@ -38,32 +38,11 @@ class GpbCardCardIntegrationImpl(
         authorizedCardTrxData: AuthorizedCardTrxData,
     ): BankPaymentPageData =
         cardPayOperationRequest
-            .buildBankRequest(authorizedCardTrxData)
+            .buildCardPayRequest(authorizedCardTrxData)
             .cardPay(authorizedCardTrxData)
-            .toResponse()
+            .toBankPaymentPageData()
 
-    override fun recurrentPay(
-        cardRecurrentOperationRequest: CardRecurrentOperationRequest,
-        authorizedCardTrxData: AuthorizedCardTrxData,
-    ): BankOperationDetails =
-        cardRecurrentOperationRequest
-            .buildBankRequest(authorizedCardTrxData)
-            .cardRecurrentPay(authorizedCardTrxData)
-            .toResponse()
-
-    override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails {
-        val accountData = chooseAccountDataForOperation(cardPayOperation)
-        val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
-        return responseMapper.toBankPaymentDetails(cardPayDetails)
-    }
-
-    private fun CardRecurrentOperationRequest.buildBankRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
-        requestMapper.toRecurrentRequest(
-            authorizedCardTrxData.account.merchantId,
-            this,
-        )
-
-    private fun CardPayOperationRequest.buildBankRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
+    private fun CardPayOperationRequest.buildCardPayRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
         requestMapper.toCardRequest(
             authorizedCardTrxData.account.merchantId,
             this,
@@ -77,6 +56,23 @@ class GpbCardCardIntegrationImpl(
             this,
         )
 
+    private fun GpbPayCardResponse.toBankPaymentPageData() = responseMapper.toBankPaymentPageData(this)
+
+    override fun recurrentPay(
+        cardRecurrentOperationRequest: CardRecurrentOperationRequest,
+        authorizedCardTrxData: AuthorizedCardTrxData,
+    ): BankOperationDetails =
+        cardRecurrentOperationRequest
+            .buildRecurrentRequest(authorizedCardTrxData)
+            .cardRecurrentPay(authorizedCardTrxData)
+            .toBankPaymentPageData()
+
+    private fun CardRecurrentOperationRequest.buildRecurrentRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
+        requestMapper.toRecurrentRequest(
+            authorizedCardTrxData.account.merchantId,
+            this,
+        )
+
     private fun GpbPayRequest.cardRecurrentPay(authorizedCardTrxData: AuthorizedCardTrxData): GpbCardPayDetailsResponse =
         gpbCardClient.cardRecurrentPayment(
             authorizedCardTrxData.account.portalId,
@@ -84,9 +80,13 @@ class GpbCardCardIntegrationImpl(
             this,
         )
 
-    private fun GpbPayCardResponse.toResponse() = responseMapper.toBankPayData(this)
+    private fun GpbCardPayDetailsResponse.toBankPaymentPageData() = responseMapper.toBankPaymentDetails(this)
 
-    private fun GpbCardPayDetailsResponse.toResponse() = responseMapper.toBankPaymentDetails(this)
+    override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails {
+        val accountData = chooseAccountDataForOperation(cardPayOperation)
+        val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
+        return responseMapper.toBankPaymentDetails(cardPayDetails)
+    }
 
     private fun chooseAccountDataForOperation(payOperationRequest: PayOperationRequest): GpbCardAccountData =
         chooseAccountData(payOperationRequest.params.depersonalization)
