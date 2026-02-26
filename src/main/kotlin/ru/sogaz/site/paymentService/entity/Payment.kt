@@ -46,6 +46,8 @@ data class Payment(
     var paymentPass: String? = null,
     @Column(name = "payment_bank_id")
     var paymentBankId: String? = null,
+    @Column(name = "error_text")
+    var errorText: String? = null,
     @Column(name = "cheque_name", length = 20)
     var chequeName: String? = null,
     @Column(name = "payment_page_url")

@@ -121,11 +121,13 @@ class GPBankIntegrationServiceImpl(
                 payment.paymentFinished = LocalDateTime.now()
                 // 2.2.4) Обновляем статус платежа на основании ответа банка
                 payment.changeStatus(bankResp)
-                // 2.2.5) Обновляем статус ордера и сохраняем его
+                // 2.2.6) Сохраняем ошибку если она была
+                payment.errorText = bankResp.error
+                // 2.2.7) Обновляем статус ордера и сохраняем его
                 orderDao.save(payment.order.changeStatus(bankResp))
-                // 2.2.6) Логируем успех рекуррентного платежа
+                // 2.2.8) Логируем успех рекуррентного платежа
                 logger.info(PAYMENT_RECURRENT_SUCCESS.format(payment.id))
-                // 2.2.7) Возвращаем результат вместе с ответом банка
+                // 2.2.9) Возвращаем результат вместе с ответом банка
                 PaymentRecurrentRegisterData(
                     payment = payment,
                     bankResponse = bankResp,
