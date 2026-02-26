@@ -51,7 +51,7 @@ interface PaidOrderMessageMapper {
         // ----- ошибка (С ИСПОЛЬЗОВАНИЕМ enum → сообщение) -----
         Mapping(
             target = "errorText",
-            source = "bankResponse.result.extendedCode",
+            source = "payment.errorText",
             qualifiedByName = ["mapExtendedCode"],
         ),
     )
