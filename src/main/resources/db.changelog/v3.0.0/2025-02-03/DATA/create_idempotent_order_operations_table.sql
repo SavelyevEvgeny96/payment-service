@@ -13,6 +13,8 @@ CREATE TABLE idempotent_order_operations (
     payment_bank_id VARCHAR(255),
     payment_bank_url VARCHAR(255),
     depersonalization BOOLEAN DEFAULT FALSE,
-    operation_started TIMESTAMP DEFAULT now(),
-    operation_finished TIMESTAMP DEFAULT now()
+    operation_started TIMESTAMP,
+    operation_finished TIMESTAMP,
+    create_date TIMESTAMP DEFAULT now(),
+    update_date TIMESTAMP DEFAULT now()
 );

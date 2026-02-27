@@ -6,5 +6,10 @@ import java.util.UUID
 interface IdempotentOrderOperationDao {
     fun findById(operationId: UUID): IdempotentOrderOperation?
 
+    fun findByOrderIdAndPaymentBankId(
+        orderId: UUID,
+        paymentBankId: String,
+    ): IdempotentOrderOperation?
+
     fun save(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation
 }

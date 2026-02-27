@@ -21,5 +21,5 @@ interface GpbSbpResponseMapper {
 
     @Mapping(target = "state", source = "status", defaultValue = "WAIT")
     @Mapping(target = "bankId", source = "id")
-    fun toBankPaymentDetails(response: GpbSbpResult?): BankOperationDetails
+    fun toBankOperationDetails(response: GpbSbpResult): BankOperationDetails
 }

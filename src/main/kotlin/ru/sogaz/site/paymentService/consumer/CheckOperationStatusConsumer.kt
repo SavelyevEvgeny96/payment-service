@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentService.model.v2.event.CheckStatusEvent
 import ru.sogaz.site.paymentService.producer.CheckOperationStatusProducer
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.status.OperationDetailsService
+import java.time.Instant
 
 @Component
 class CheckOperationStatusConsumer(
@@ -40,9 +41,9 @@ class CheckOperationStatusConsumer(
             OperationState.FAIL,
             OperationState.REFUND,
             OperationState.DECLINED,
-                -> handleCompletedOperation(operation, operationDetails)
+            -> handleCompletedOperation(operation, operationDetails)
             else
-                -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
+            -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
         }
     }
 
@@ -52,6 +53,7 @@ class CheckOperationStatusConsumer(
     ) {
         operationDetailsProducer.sendOperationDetails(operation, operationDetails)
         operation.state = operationDetails.state
+        operation.operationFinished = Instant.now()
         idempotentOrderOperationDao.save(operation)
     }
 

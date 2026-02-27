@@ -126,10 +126,12 @@ api:
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
     sbp:
       basePath: ${GPB_SBP_URL}
+      redirectUrl: ${GPB_SBP_REDIRECT_URL:https://www.sogaz.ru/}
       account:
         merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
         paymentAccount: ${PAYMENT_ACCOUNT}
         callbackUrlSbp: ${CALLBACK_URL_SBP}
+        qrcTtl: ${GPB_SBP_QRC_TTL_MINUTES:60}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}

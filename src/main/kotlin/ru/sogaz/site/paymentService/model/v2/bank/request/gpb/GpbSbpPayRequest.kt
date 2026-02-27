@@ -12,5 +12,6 @@ data class GpbSbpPayRequest(
     val paymentPurpose: String?,
     val callbackMerchantNotifications: String,
     val qrTtl: String,
+    val redirectUrl: String?,
     val subscriptionPurpose: String?,
 )

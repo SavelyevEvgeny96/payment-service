@@ -18,8 +18,8 @@ import ru.sogaz.site.paymentService.entity.CallbackPayment
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
 import ru.sogaz.site.paymentService.entity.WaitingPayment
-import ru.sogaz.site.paymentService.enums.ActionType
 import ru.sogaz.site.paymentService.enums.OrderStatus
+import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.OrderMapper
@@ -111,24 +111,26 @@ class PaymentStatusServiceImpl(
     private fun updateStatusesForPayment(
         bankPaymentDetails: BankPaymentDetails,
         payment: Payment,
-    ): Payment =
-        payment
-            .apply { state = bankPaymentDetails.status }
-            .also { handlePaymentChangedStatus(it, bankPaymentDetails) }
-            .run(paymentDao::save)
+    ): Payment {
+        handlePaymentChangedStatus(payment, bankPaymentDetails)
+        payment.apply {
+            state = bankPaymentDetails.status
+        }
+        return paymentDao.save(payment)
+    }
 
     private fun handlePaymentChangedStatus(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
         when {
-            payment.isSuccess() || payment.isFail() && payment.order.recurrent == true ->
+            bankPaymentDetails.isSuccess() ||
+                (bankPaymentDetails.isFail() && payment.order.recurrent == true) ->
                 handleSuccessOrFailRecurrentPayment(
                     payment,
                     bankPaymentDetails,
                 )
-
-            payment.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
+            bankPaymentDetails.isInProcess() -> updateWaitingPaymentsInQueue(bankPaymentDetails.id)
             else -> deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
         }
     }
@@ -138,7 +140,6 @@ class PaymentStatusServiceImpl(
         payment: Payment,
         bankPaymentDetails: BankPaymentDetails,
     ) {
-        payment.paymentFinished = LocalDateTime.now()
         updateOrderForSuccessPayment(payment, bankPaymentDetails)
         deleteWaitingPaymentsFromQueue(bankPaymentDetails.id)
     }
@@ -152,17 +153,23 @@ class PaymentStatusServiceImpl(
             logger.warn("${ORDER_ALREADY_PAID_WARN_MESSAGE.format(order.id, payment.bank)} ${payment.paymentBankId}")
             return
         }
-        if (payment.isFail()) {
-            order.apply { status = OrderStatus.CANCELED }
-        } else {
-            order.apply { status = OrderStatus.SUCCESS }
-        }
 
-        if (order.skipSendingQueue != true) {
+        if (payment.state != PaymentStatusEnum.CALLBACK && order.skipSendingQueue != true) {
             when (order.regCard) {
                 true -> sendToRegCardQueue(order, bankPaymentDetails)
                 else -> sendToPaidOrdersQueue(payment, order, bankPaymentDetails)
             }
+        }
+
+        payment.apply {
+            state = bankPaymentDetails.status
+            paymentFinished = LocalDateTime.now()
+        }
+
+        if (bankPaymentDetails.isFail()) {
+            order.status = OrderStatus.CANCELED
+        } else if (bankPaymentDetails.isSuccess()) {
+            order.status = OrderStatus.SUCCESS
         }
 
         if (order.skipSendingReceipt != true) {
@@ -170,7 +177,6 @@ class PaymentStatusServiceImpl(
         }
 
         orderDao.save(order)
-        operationHistoryDao.saveForOrder(order, ActionType.ORDER_PAID.value)
     }
 
     @Transactional(rollbackFor = [Exception::class])
@@ -245,4 +251,12 @@ class PaymentStatusServiceImpl(
             throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
+
+    fun BankPaymentDetails.isInProcess(): Boolean = status.isInProcess()
+
+    fun BankPaymentDetails.isClosed(): Boolean = status.isClosed()
+
+    fun BankPaymentDetails.isSuccess(): Boolean = status.isSuccess()
+
+    fun BankPaymentDetails.isFail(): Boolean = status.isFail()
 }

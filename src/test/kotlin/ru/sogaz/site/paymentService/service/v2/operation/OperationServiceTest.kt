@@ -74,7 +74,7 @@ class OperationServiceTest {
     @Test
     fun `execute command with two steps with save`() {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns mockk()
-        every { cardPayOperationRequest.params.depersonalization } returns true
+        every { cardPayOperationRequest.depersonalization } returns true
         val testCommand = testCardPayOperationCommand2StepsWithSave()
 
         val result = operationService.runIdempotentOperation(testCommand).getOrThrow()
@@ -88,7 +88,7 @@ class OperationServiceTest {
     @Test
     fun `execute command with one step with save and one step without`() {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns mockk()
-        every { cardPayOperationRequest.params.depersonalization } returns true
+        every { cardPayOperationRequest.depersonalization } returns true
 
         val testCommand = testCardPayOperationCommand1StepWithSaveAnd1StepWithout()
 

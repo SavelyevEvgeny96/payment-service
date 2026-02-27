@@ -46,10 +46,12 @@ api:
           merchantId: B80540E3096C8730BCE3
     sbp:
       basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
+      redirectUrl: https://www.sogaz.ru/
       account:
-#        merchantIdSbpGpb: MA0000000685
+        merchantIdSbpGpb: MA0000000685
         paymentAccount: 40701810800000030052
         callbackUrlSbp:  https://example.com/callback
+        qrcTtl: 2
 
 crons:
   waitingPaymentsCheck: "*/30 * * * * *"

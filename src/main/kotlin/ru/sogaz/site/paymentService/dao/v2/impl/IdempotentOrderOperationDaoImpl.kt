@@ -14,6 +14,11 @@ class IdempotentOrderOperationDaoImpl(
     override fun findById(operationId: UUID): IdempotentOrderOperation? =
         idempotentOrderOperationRepository.findById(operationId).getOrNull()
 
+    override fun findByOrderIdAndPaymentBankId(
+        orderId: UUID,
+        paymentBankId: String,
+    ): IdempotentOrderOperation? = idempotentOrderOperationRepository.findByIdempotentOrderIdAndPaymentBankId(orderId, paymentBankId)
+
     override fun save(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation =
         idempotentOrderOperationRepository.save(idempotentOrderOperation)
 }

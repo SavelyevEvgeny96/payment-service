@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -38,10 +38,12 @@ class IdempotentOrderOperation(
     @Enumerated(EnumType.STRING)
     var state: OperationState,
     var paymentBankUrl: String?,
-    var depersonalization: Boolean = false,
+    var depersonalization: Boolean,
+    var operationStarted: Instant?,
+    var operationFinished: Instant?,
     @CreationTimestamp
     @Column(updatable = false)
-    var operationStarted: LocalDateTime? = null,
+    var createDate: Instant?,
     @UpdateTimestamp
-    var operationFinished: LocalDateTime? = null,
+    var updateDate: Instant?,
 )

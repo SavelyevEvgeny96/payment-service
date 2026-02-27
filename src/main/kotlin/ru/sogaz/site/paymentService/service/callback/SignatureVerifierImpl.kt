@@ -2,8 +2,9 @@ package ru.sogaz.site.paymentService.service.callback
 
 import jakarta.servlet.http.HttpServletRequest
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.nio.charset.StandardCharsets
@@ -29,11 +30,32 @@ class SignatureVerifierImpl(
     }
 
     override fun verifySignature(
-        requestDto: GpbCallbackRequest,
+        gpbCallback: GpbCallback,
         httpServletRequest: HttpServletRequest,
     ): Boolean =
         try {
-            val signature = requestDto.signature
+            val signature = gpbCallback.signature
+            val decodedQueryString =
+                if (isEncoded(signature)) {
+                    java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)
+                } else {
+                    signature
+                }
+
+            val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
+
+            verifySignatureCert(decodedSignature, httpServletRequest)
+        } catch (e: Exception) {
+            logger.error(VEREFIELD_FAIL)
+            false
+        }
+
+    override fun verifySignature(
+        gpbCallback: GpbCardCallback,
+        httpServletRequest: HttpServletRequest,
+    ): Boolean =
+        try {
+            val signature = gpbCallback.signature
             val decodedQueryString =
                 if (isEncoded(signature)) {
                     java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)

@@ -63,8 +63,7 @@ class GPBankIntegrationServiceImpl(
 ) : BankIntegrationServiceImpl() {
     companion object {
         private const val SESSION = "Session "
-        private const val QR_TTL = "60"
-        private const val QR_TYPE = "02"
+        private const val REFUND_DESCRIPTION = "Отмена банковской транзакции"
         const val LOG_GPB_API_ERROR = "Ошибка при запросе статуса в ГПБ. ID операции:"
         private const val PAYMENT_RECURRENT_FALSE = "Платеж не сформирован для paymentId: %s"
         private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
@@ -269,14 +268,17 @@ class GPBankIntegrationServiceImpl(
 
         val sessionToken = SESSION + sessionResponse.sessionId
 
+        val refundAmount =
+            payment.getAmountData().getAmountInPennies().toString()
+
         return try {
             gpbCardPaymentClient.startRefund(
                 portalId,
                 payment.paymentBankId,
                 sessionToken,
-                dto.premiumAmount,
+                refundAmount,
                 CurrencyEnum.RUB.name,
-                dto.description,
+                REFUND_DESCRIPTION,
             )
         } finally {
             gpbCardPaymentClient.finishSessionId(sessionToken, portalId)

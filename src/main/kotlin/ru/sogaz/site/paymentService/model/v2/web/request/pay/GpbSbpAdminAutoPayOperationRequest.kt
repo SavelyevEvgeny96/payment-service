@@ -14,21 +14,17 @@ data class GpbSbpAdminAutoPayOperationRequest(
     override val description: String,
     @field:Schema(description = "Сумма операции", example = "10.00")
     override val amount: BigDecimal,
+    @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "false")
+    override val depersonalization: Boolean = false,
     @field:Schema(description = "Платежные позиции")
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
-    @field:Schema(description = "Дополнительные параметры банковской операции")
-    override val params: PayParams = PayParams(),
+    @field:Schema(description = "Ссылка для редиректа после оплаты", example = "https://www.sogaz.ru/")
+    val returnUrl: String?,
     val headers: GpbSbpAutoPayHeaders,
 ) : PayOperationRequest() {
-    @field:Schema(
-        accessMode = Schema.AccessMode.READ_ONLY,
-        defaultValue = "PAY",
-    )
+    @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "PAY")
     override val operationType: OperationType = OperationType.PAY
 
-    @field:Schema(
-        accessMode = Schema.AccessMode.READ_ONLY,
-        defaultValue = "SBP",
-    )
+    @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "SBP")
     override val paymentType: PaymentType = PaymentType.SBP
 }

@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.v2.bank.gpb.impl
 import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardClient
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapper
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.AuthorizedCardTrxData
@@ -13,6 +14,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
 import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
+import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
@@ -27,6 +29,12 @@ class GpbCardCardIntegrationImpl(
     private val responseMapper: GpbCardResponseMapper,
     private val cardAccountProperties: GpbCardAccountProperties,
 ) : GpbCardIntegration {
+    companion object {
+        private const val OPERATION_DETAILS_ERROR = "Во время получения данных по операции оплаты картой произошла ошибка: {}"
+    }
+
+    private val logger = loggerFor(javaClass)
+
     override fun authorize(payOperationRequest: PayOperationRequest): AuthorizedCardTrxData {
         val accountData = chooseAccountDataForOperation(payOperationRequest)
         val token = gpbCardClient.getToken(accountData.portalId).token
@@ -82,14 +90,18 @@ class GpbCardCardIntegrationImpl(
 
     private fun GpbCardPayDetailsResponse.toBankPaymentPageData() = responseMapper.toBankPaymentDetails(this)
 
-    override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails {
-        val accountData = chooseAccountDataForOperation(cardPayOperation)
-        val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
-        return responseMapper.toBankPaymentDetails(cardPayDetails)
-    }
+    override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails =
+        try {
+            val accountData = chooseAccountDataForOperation(cardPayOperation)
+            val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
+            responseMapper.toBankPaymentDetails(cardPayDetails)
+        } catch (ex: Exception) {
+            logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
+            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
+        }
 
     private fun chooseAccountDataForOperation(payOperationRequest: PayOperationRequest): GpbCardAccountData =
-        chooseAccountData(payOperationRequest.params.depersonalization)
+        chooseAccountData(payOperationRequest.depersonalization)
 
     private fun chooseAccountDataForOperation(payOperation: PayOperation): GpbCardAccountData =
         chooseAccountData(payOperation.depersonalization)
