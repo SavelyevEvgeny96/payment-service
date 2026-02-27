@@ -3,189 +3,170 @@ package ru.sogaz.site.paymentService.service.callback
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.dao.CallbackPaymentDao
-import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
-import ru.sogaz.site.paymentService.dao.PaymentOperationHistoryDao
-import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
-import ru.sogaz.site.paymentService.dto.request.GpbCallbackRequest
+import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
+import ru.sogaz.site.paymentService.dto.rabbit.MetaInfoOrder
+import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.entity.Order
 import ru.sogaz.site.paymentService.entity.Payment
-import ru.sogaz.site.paymentService.enums.ActionType
-import ru.sogaz.site.paymentService.enums.OrderStatus
-import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
+import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
+import ru.sogaz.site.paymentService.mapper.order.OrderMapper
+import ru.sogaz.site.paymentService.mapper.order.SubOrderMapper
+import ru.sogaz.site.paymentService.mapper.payment.BankPaymentDetailsMapper
+import ru.sogaz.site.paymentService.mapper.payment.RegisterCardMapper
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.GpbCallbackService
-import ru.sogaz.site.paymentService.service.OrderPaidEventFactory
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.metrics.GpbCallbackMetricServiceImpl
-import ru.sogaz.site.paymentService.service.rabbit.OrderPaidEventProducer
+import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
+import java.time.Instant
 
 @Service
 class GpbCallbackServiceImpl(
     private val paymentDao: PaymentDao,
-    private val orderDao: OrderDao,
-    private val paymentOperationHistoryDao: PaymentOperationHistoryDao,
-    private val signatureVerifier: SignatureVerifier,
     private val callbackPaymentDao: CallbackPaymentDao,
+    private val orderMapper: OrderMapper,
+    private val subOrderMapper: SubOrderMapper,
+    private val signatureVerifier: SignatureVerifier,
+    private val registerCardMapper: RegisterCardMapper,
+    private val bankPaymentDetailsMapper: BankPaymentDetailsMapper,
+    private val sendMessageProducer: SendMessageProducer,
+    private val props: RabbitProperties,
     private val gpbCallbackMetricService: GpbCallbackMetricServiceImpl,
-    private val waitingPaymentDao: WaitingPaymentDao,
-    private val orderPaidEventProducer: OrderPaidEventProducer,
-    private val orderPaidEventFactory: OrderPaidEventFactory,
 ) : GpbCallbackService {
     private val logger = loggerFor(javaClass)
 
     companion object {
+        private const val LOG_QUEUE_MESSAGE_SENT = "Отправлено в очередь %s TraceId: %s"
+        const val START_LOG_MESSAGE_QUEUE = "Старт записи в очередь routingKey: %s  exchange: %s "
+        private const val LOG_QUEUE_MESSAGE_ERROR = "Отправка в очередь не удалась: "
+        private const val REG_CARD_QUEUE_AUTHOR = "order-service"
+        private const val MESSAGE_ROUTING_KEY_IS_NULL = "Отсутствует значение для Routing key"
         const val INTERNAL_SERVER_ERROR = "Internal server error"
         const val INVALID_SIGNATURE = "Invalid signature"
-        const val INVALID_CODE = "Invalid resultCode"
         const val NOT_FOUND = "Not Found"
-        const val CONST_CALLBACK = "CALLBACK"
-        const val ORDER_NOT_FOUND = "Order ID не найден"
         const val ERROR_TRX_ID = "Произошла ошибка сертификата для trx_id: "
         const val START_METHOD_PROCESS_CALL =
             ">>> СТАРТ метода проверки CALLBACK от банка" +
                 " traceID: "
 
         const val UPDATE_PAYMENT_STATUS = "Статус платежа в таблице ПЛАТЕЖЕЙ обновлен. paymentBankId: "
-        const val OPERATION_PAYMENT_SUCCESS = "Запись в таблицу истории операций добавлена. paymentBankId: "
-        const val ERROR_SAVE_OPERATIONS = "Ошибка сохранения истории операций в таблицу"
-        const val CALLBACK_TABLE_SAVE_SUCCESS = "Запись в таблицу CALLBACK добавлена. paymentBankId: "
-        const val CALLBACK_RESULT_CODE_PROCESS_SUCCESS = "Payment и order успешно обновлены, orderId = {}"
-        const val CALLBACK_RESULT_CODE_PROCESS_FAIL = "Не удалось обработать payment, orderId = {}, error= {}"
-        const val RESULT_CODE_SUCCESS = 1
-        const val RESULT_CODE_FAIL = 2
     }
 
+    @Transactional(rollbackFor = [Exception::class])
     override fun processCallback(
-        requestDto: GpbCallbackRequest,
+        gpbCallback: GpbCallback,
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<String> {
         return try {
             val traceId = getTraceId()
             logger.debug(START_METHOD_PROCESS_CALL + traceId)
 
-            val trxId = requestDto.trxId
-
-            if (!signatureVerifier.verifySignature(requestDto, httpServletRequest)) {
-                logger.debug(ERROR_TRX_ID + trxId)
+            if (!signatureVerifier.verifySignature(gpbCallback, httpServletRequest)) {
+                logger.debug(ERROR_TRX_ID + gpbCallback.trx_id)
                 return createErrorResponse(INVALID_SIGNATURE)
             }
 
-            gpbCallbackMetricService.setMetric(requestDto)
+            gpbCallbackMetricService.setMetric(gpbCallback)
+            val bankPaymentDetails = bankPaymentDetailsMapper.convert(gpbCallback)
 
-            val payment =
-                paymentDao.findByPaymentBankId(requestDto.trxId)
+            val payment = paymentDao.findByPaymentBankId(bankPaymentDetails.id)
 
-            val order =
-                payment.order.id
-                    ?.let(orderDao::findById)
-                    ?: return createErrorResponse(NOT_FOUND)
+            if (payment.isClosed() || bankPaymentDetails.status != PaymentStatusEnum.SUCCESS) {
+                return createSuccessResponse()
+            }
 
-            when (requestDto.resultCode) {
-                RESULT_CODE_SUCCESS -> {
-                    waitingPaymentDao.deleteByPaymentBankId(trxId)
-                    processSuccess(payment, order)
-                }
-
-                RESULT_CODE_FAIL -> {
-                    waitingPaymentDao.deleteByPaymentBankId(trxId)
-                    processFail(payment, order, requestDto)
-                }
-
-                else -> {
-                    logger.warn("Unknown resultCode=${requestDto.resultCode}")
-                    return createErrorResponse(INVALID_CODE)
+            if (payment.order.skipSendingQueue != true) {
+                when (payment.order.regCard) {
+                    true -> sendToRegCardQueue(payment.order, bankPaymentDetails)
+                    else -> sendToPaidOrdersQueue(payment, bankPaymentDetails)
                 }
             }
 
-            logOperation(payment)
-            logger.debug(OPERATION_PAYMENT_SUCCESS)
+            callbackPaymentDao.saveCallbackForPayment(payment)
 
-            saveCallbackPayment(payment)
-            logger.debug("$CALLBACK_TABLE_SAVE_SUCCESS ${payment.paymentBankId}")
+            updatePaymentStatus(payment)
+            logger.debug(UPDATE_PAYMENT_STATUS)
 
             createSuccessResponse()
         } catch (e: InnerException) {
-            logger.error(ERROR_TRX_ID + requestDto.trxId)
+            logger.error(ERROR_TRX_ID + gpbCallback.trx_id)
             createErrorResponse(NOT_FOUND)
         } catch (e: Exception) {
-            logger.error(ERROR_TRX_ID + requestDto.trxId)
+            logger.error(ERROR_TRX_ID + gpbCallback.trx_id)
             createErrorResponse(INTERNAL_SERVER_ERROR)
         }
     }
 
-    private fun processSuccess(
-        payment: Payment,
-        order: Order,
-    ) {
-        updatePaymentStatus(payment, PaymentStatusEnum.SUCCESS)
-        updateOrderStatus(order, OrderStatus.SUCCESS)
-
-        orderPaidEventProducer.send(
-            orderPaidEventFactory.success(
-                orderId = order.id,
-            ),
-        )
-
-        logger.debug(CALLBACK_RESULT_CODE_PROCESS_SUCCESS, order.id)
-    }
-
-    private fun processFail(
-        payment: Payment,
-        order: Order,
-        requestDto: GpbCallbackRequest,
-    ) {
-        updatePaymentStatus(payment, PaymentStatusEnum.FAIL)
-
-        orderPaidEventProducer.send(
-            orderPaidEventFactory.error(
-                orderId = order.id,
-                errorText = buildErrorText(requestDto.extResultCode),
-            ),
-        )
-
-        logger.debug(CALLBACK_RESULT_CODE_PROCESS_FAIL, order.id, requestDto.extResultCode)
-    }
-
-    private fun updatePaymentStatus(
-        payment: Payment,
-        status: PaymentStatusEnum,
-    ) {
+    private fun updatePaymentStatus(payment: Payment) {
         payment
-            .apply { state = status }
+            .apply { state = PaymentStatusEnum.CALLBACK }
             .run { paymentDao.save(this) }
     }
 
-    private fun updateOrderStatus(
-        order: Order,
-        state: OrderStatus,
+    private fun sendToPaidOrdersQueue(
+        payment: Payment,
+        bankPaymentDetails: BankPaymentDetails,
     ) {
-        order
-            .apply { status = state }
-            .run { orderDao.save(this) }
+        try {
+            val subOrders = payment.order.subOrders
+            val subOrderPayloads = subOrders.map(subOrderMapper::toSubOrderPayload)
+
+            val requestBody = orderMapper.toPaidOrderMessage(payment.order, subOrderPayloads, bankPaymentDetails)
+            requestBody.bank = payment.bank?.name
+            val exchange = props.exchangePayment
+            val routingKey =
+                payment.order.queueStatusResultName
+                    ?.takeIf { it.isNotBlank() }
+                    ?: props.routingKeyStatusPayment
+            logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+            logger.debug("Message request queue status: $requestBody")
+            val isOrderingClientWithError =
+                requestBody.externalSystemCode?.contains("ordering-client") == true &&
+                    requestBody.status == StatusEnum.ERROR.value
+            if (!isOrderingClientWithError) {
+                sendMessageProducer.sendMessage(routingKey, requestBody, exchange, requestBody.orderId)
+            }
+
+            logger.debug(LOG_QUEUE_MESSAGE_SENT.format(payment.order.id, getTraceId()))
+        } catch (e: Exception) {
+            throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
+        }
     }
 
-    private fun buildErrorText(extResultCode: String?): String =
-        extResultCode?.let { code ->
-            "$code. ${PaymentExtendedCodeMessage.fromCode(code)}"
-        } ?: "UNKNOWN_ERROR"
-
-    private fun saveCallbackPayment(payment: Payment) = callbackPaymentDao.saveCallbackForPayment(payment)
-
-    private fun logOperation(payment: Payment) {
+    private fun sendToRegCardQueue(
+        order: Order,
+        bankPaymentDetails: BankPaymentDetails,
+    ) {
         try {
-            paymentOperationHistoryDao.saveRecordOperationHistory(
-                payment.order,
-                getTraceId(),
-                ActionType.CALLBACK_RECEIVED.value,
-            )
+            val channel = order.subOrders.firstOrNull()?.channel ?: ""
+            val instantTime = Instant.now()
+            val routingKey = requireNotNull(order.queueStatusResultName) { MESSAGE_ROUTING_KEY_IS_NULL }
+
+            val metaInfoOrder = MetaInfoOrder(instantTime, REG_CARD_QUEUE_AUTHOR, routingKey)
+            val messageBody =
+                registerCardMapper.toStatusRegisterCardMessage(
+                    metaInfoOrder,
+                    order,
+                    channel,
+                    bankPaymentDetails,
+                    instantTime,
+                )
+
+            val exchange = props.exchangeOrder
+
+            logger.debug(START_LOG_MESSAGE_QUEUE.format(routingKey, exchange))
+            logger.debug("Message request queue status: $messageBody")
+            sendMessageProducer.sendMessage(routingKey, messageBody, exchange, order.id.toString())
+            logger.debug(LOG_QUEUE_MESSAGE_SENT.format(order.id, getTraceId()))
         } catch (e: Exception) {
-            logger.error(ERROR_SAVE_OPERATIONS + e.message)
-            throw e
+            throw InnerException(getTraceId(), LOG_QUEUE_MESSAGE_ERROR + e.message)
         }
     }
 

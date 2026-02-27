@@ -4,6 +4,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.AuthorizedCardTrxData
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrder
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
@@ -15,15 +16,13 @@ interface IdempotentOrderOperationMapper {
     @Mapping(target = "id", source = "orderId")
     fun toIdempotentOrder(operationRequest: OperationRequest): IdempotentOrder
 
-    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "premiumAmount", source = "amount")
     @Mapping(target = "state", constant = "NEW")
-    @Mapping(target = "premiumAmount", constant = "0")
     @Mapping(target = "bank", constant = "GPB")
     fun toGpbIdempotentOrderOperation(operationRequest: OperationRequest): IdempotentOrderOperation
 
-    @Mapping(target = "depersonalization", source = "payOperationRequest.params.depersonalization")
     @Mapping(target = "premiumAmount", source = "amount")
-    @Mapping(target = "state", constant = "REG")
+    @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "bank", constant = "GPB")
     fun toGpbIdempotentOrderOperation(payOperationRequest: PayOperationRequest): IdempotentOrderOperation
 
@@ -36,8 +35,15 @@ interface IdempotentOrderOperationMapper {
 
     @Mapping(target = "state", constant = "REG")
     @Mapping(target = "paymentBankUrl", source = "paymentPageUrl")
+    @Mapping(target = "operationStarted", expression = "java( Instant.now() )")
     fun updateByBankPaymentPage(
         @MappingTarget idempotentOrderOperation: IdempotentOrderOperation,
         bankPaymentPageData: BankPaymentPageData,
+    ): IdempotentOrderOperation
+
+    @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
+    fun updateByBankOperationDetails(
+        @MappingTarget idempotentOrderOperation: IdempotentOrderOperation,
+        bankOperationDetails: BankOperationDetails,
     ): IdempotentOrderOperation
 }

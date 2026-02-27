@@ -13,7 +13,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayParams
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import java.math.BigDecimal
 
@@ -69,7 +69,7 @@ abstract class GpbRequestMapper {
     abstract fun toCardRequest(
         merchantId: String,
         request: CardPayOperationRequest,
-        payParams: PayParams,
+        redirectParams: RedirectParams,
     ): GpbPayRequest
 
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
@@ -77,13 +77,14 @@ abstract class GpbRequestMapper {
     @Mapping(target = "merchantId", source = "gpbSbpAccountData.merchantIdSbpGpb")
     @Mapping(target = "callbackMerchantNotifications", source = "gpbSbpAccountData.callbackUrlSbp")
     @Mapping(target = "paymentPurpose", source = "sbpPayOperationRequest.description")
+    @Mapping(target = "qrTtl", source = "gpbSbpAccountData.qrcTtl")
     @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "templateVersion", constant = "01")
-    @Mapping(target = "qrTtl", constant = "60")
     @Mapping(target = "qrcType", constant = "02")
     abstract fun toSbpRequest(
         sbpPayOperationRequest: SbpPayOperationRequest,
         gpbSbpAccountData: GpbSbpAccountData,
+        redirectUrl: String,
     ): GpbSbpPayRequest
 
     fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.paymentBankId)

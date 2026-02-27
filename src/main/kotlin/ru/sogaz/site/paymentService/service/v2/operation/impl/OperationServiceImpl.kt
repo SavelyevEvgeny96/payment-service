@@ -16,7 +16,9 @@ class OperationServiceImpl(
     private val idempotentOrderService: IdempotentOrderService,
     private val checkOperationStatusProducer: CheckOperationStatusProducer,
 ) : OperationService {
-    override fun <REQUEST : OperationRequest, RESULT> runIdempotentOperation(operationCommand: OperationCommand<REQUEST, RESULT>): Result<RESULT> =
+    override fun <REQUEST : OperationRequest, RESULT> runIdempotentOperation(
+        operationCommand: OperationCommand<REQUEST, RESULT>,
+    ): Result<RESULT> =
         runCatching {
             operationCommand
                 .run(::createNewIdempotentOrderOperation)
@@ -24,6 +26,7 @@ class OperationServiceImpl(
                 .executeCommand(operationCommand)
                 .result
         }
+
     private fun <REQUEST : OperationRequest, RESULT> IdempotentOrderOperation.executeCommand(
         operationCommand: OperationCommand<REQUEST, RESULT>,
     ): OperationResult<RESULT> = operationCommand.strategy.execute(this, idempotentOrderService::saveOperation)

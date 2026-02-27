@@ -91,7 +91,7 @@ class GpbCardIntegrationTest {
 
     @Test
     fun `pay should call correct cardAccountData based on depersonalization`() {
-        every { cardPayOperationRequest.params.depersonalization } returns false
+        every { cardPayOperationRequest.depersonalization } returns false
 
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.cardPay(cardPayOperationRequest, authorizedCardTrxData)
@@ -105,7 +105,7 @@ class GpbCardIntegrationTest {
 
     @Test
     fun `pay should call correct cardAccountData based on depersonalization if it is true`() {
-        every { cardPayOperationRequest.params.depersonalization } returns true
+        every { cardPayOperationRequest.depersonalization } returns true
 
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.cardPay(cardPayOperationRequest, authorizedCardTrxData)
@@ -119,7 +119,7 @@ class GpbCardIntegrationTest {
 
     @Test
     fun `recurrent pay should call correct cardAccountData based on depersonalization`() {
-        every { cardPayOperationRequest.params.depersonalization } returns false
+        every { cardPayOperationRequest.depersonalization } returns false
 
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.recurrentPay(cardRecurrentPayOperationRequest, authorizedCardTrxData)
@@ -133,7 +133,7 @@ class GpbCardIntegrationTest {
 
     @Test
     fun `recurrent pay should call correct cardAccountData based on depersonalization if it is true`() {
-        every { cardPayOperationRequest.params.depersonalization } returns true
+        every { cardPayOperationRequest.depersonalization } returns true
 
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.recurrentPay(cardRecurrentPayOperationRequest, authorizedCardTrxData)

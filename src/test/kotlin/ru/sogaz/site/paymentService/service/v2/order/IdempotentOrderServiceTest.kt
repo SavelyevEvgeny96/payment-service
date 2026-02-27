@@ -92,7 +92,7 @@ class IdempotentOrderServiceTest {
     @Test
     fun `saveOperation should return operation with depersonalization same as request`() {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns mockk()
-        every { payOperationRequest.params.depersonalization } returns true
+        every { payOperationRequest.depersonalization } returns true
 
         val savedOperation =
             idempotentOrderService.saveOperation(

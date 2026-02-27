@@ -15,6 +15,16 @@ class CheckOperationStatusProducer(
     private val rabbitProperties: RabbitProperties,
     private val maxDeathCount: Int = 5,
 ) {
+    fun sendCheckStatusEvent(operation: IdempotentOrderOperation) {
+        rabbitTemplate.convertAndSend(
+            rabbitProperties.exchangeCheckStatusPayment,
+            rabbitProperties.routingKeyCheckStatusPayment,
+            CheckStatusEvent(operation.id!!),
+            setMessageDeathCount(0),
+            CorrelationData(operation.idempotentOrder?.id.toString()),
+        )
+    }
+
     fun sendDelayedCheckStatusEvent(
         event: CheckStatusEvent,
         deathCount: Int = 0,

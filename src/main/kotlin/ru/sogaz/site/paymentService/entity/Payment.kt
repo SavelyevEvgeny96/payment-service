@@ -75,7 +75,7 @@ data class Payment(
             else -> false
         }
 
-    fun isClosed(): Boolean = isInProcess().not() && isSuccess().not()
+    fun isClosed(): Boolean = isInProcess().not()
 
     fun isSuccess(): Boolean = state == PaymentStatusEnum.SUCCESS
 

@@ -18,11 +18,13 @@ import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.BankIntegrationService
+import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
+import ru.sogaz.site.paymentService.service.ReceiptService
+import ru.sogaz.site.paymentService.service.order.QueueStatusResultNameNormalizeServiceImpl.Companion.ORDER_REFUND_STATUS_PATTERN
 import ru.sogaz.site.paymentService.service.rabbit.RefundPaymentConsumer
 import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
 import ru.sogaz.site.paymentService.service.rabbit.impl.RecurringPaymentConsumerImpl.Companion.NOT_VALID_BATCH_MESSAGE_ORDER_CREATED
-import java.time.LocalDateTime
-import java.util.UUID
+import java.time.LocalDate
 
 /**
  * RabbitMQ consumer для обработки сообщений на возврат платежа.
@@ -44,6 +46,8 @@ class RefundPaymentConsumerImpl(
     private val paymentDao: PaymentDao,
     @Qualifier("GPBankIntegrationServiceImpl")
     private val bankIntegrationService: BankIntegrationService,
+    private val receiptService: ReceiptService,
+    private val queueStatusResultNameNormalizeService: QueueStatusResultNameNormalizeService,
 ) : RefundPaymentConsumer {
     private val logger = loggerFor(RefundPaymentConsumerImpl::class.java)
 
@@ -105,24 +109,21 @@ class RefundPaymentConsumerImpl(
         val orderId = dto.orderId
 
         val payment =
-            paymentDao.findByPaymentOrderId(orderId).orElse(null)
+            paymentDao.findLastPaymentByOrderId(orderId!!).orElse(null)
                 ?: return sendRefundError(
                     dto = dto,
-                    orderId = orderId,
                     error = PaymentExtendedCodeMessage.PAYMENT_DATA_NOT_FOUND,
                 )
 
         if (payment.bank != BankEnum.GPB) {
             return sendRefundError(
                 dto = dto,
-                orderId = orderId,
                 error = PaymentExtendedCodeMessage.PAYMENT_NOT_FOUND_IS_NOT_GPB,
             )
         } else {
             if (payment.state != PaymentStatusEnum.SUCCESS) {
                 return sendRefundError(
                     dto = dto,
-                    orderId = orderId,
                     error = PaymentExtendedCodeMessage.PAYMENT_STATUS_NOT_SUCCESS,
                 )
             }
@@ -131,15 +132,12 @@ class RefundPaymentConsumerImpl(
                 payment.paymentFinished
                     ?: return sendRefundError(
                         dto = dto,
-                        orderId = orderId,
                         error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
                     )
 
-            val expiredAt = finishedAt.plusHours(24)
-            if (LocalDateTime.now().isAfter(expiredAt)) {
+            if (LocalDate.now().isAfter(finishedAt.toLocalDate())) {
                 return sendRefundError(
                     dto = dto,
-                    orderId = orderId,
                     error = PaymentExtendedCodeMessage.PAYMENT_EXPIRED,
                 )
             }
@@ -153,7 +151,6 @@ class RefundPaymentConsumerImpl(
                 )
                 sendRefundError(
                     dto = dto,
-                    orderId = orderId,
                     error = PaymentExtendedCodeMessage.PAYMENT_SYSTEM_IS_NOT_AVAILABLE,
                 )
             }.onSuccess { bankResp ->
@@ -161,11 +158,13 @@ class RefundPaymentConsumerImpl(
                 if (status == StatusEnum.UNKNOWN.value || status == StatusEnum.FAILED.value) {
                     sendRefundError(
                         dto = dto,
-                        orderId = orderId,
                         error = PaymentExtendedCodeMessage.OPERATION_ERROR_ON_THE_BANK,
                     )
                 } else {
-                    sendRefundSuccess(dto = dto, orderId = orderId)
+                    payment.state = PaymentStatusEnum.REFUND
+                    paymentDao.save(payment)
+                    receiptService.generateReceipt(payment)
+                    sendRefundSuccess(dto)
                 }
             }
         }
@@ -202,23 +201,24 @@ class RefundPaymentConsumerImpl(
      * @param dto входной payload возврата
      * @param orderId идентификатор заказа
      */
-    private fun sendRefundSuccess(
-        dto: RefundPayloadDto,
-        orderId: UUID?,
-    ) {
+    private fun sendRefundSuccess(dto: RefundPayloadDto) {
         val response =
             StatusRefundResponseDto(
                 dto.metaInfo,
-                orderId,
+                dto.orderId,
                 StatusEnum.SUCCESS.value,
                 null,
             )
 
+        val author = dto.metaInfo.firstOrNull()?.author ?: ""
+
+        val routingKey = queueStatusResultNameNormalizeService.buildQueueStatusResultName(ORDER_REFUND_STATUS_PATTERN, author)
+
         sendMessageProducer.sendMessage(
-            props.routingKeyPaymentStatusRefund,
+            routingKey,
             response,
-            props.exchangePayment,
-            orderId.toString(),
+            props.exchangeOrder,
+            dto.orderId.toString(),
         )
     }
 
@@ -231,22 +231,25 @@ class RefundPaymentConsumerImpl(
      */
     private fun sendRefundError(
         dto: RefundPayloadDto,
-        orderId: UUID?,
         error: PaymentExtendedCodeMessage,
     ) {
         val response =
             StatusRefundResponseDto(
                 dto.metaInfo,
-                orderId,
+                dto.orderId,
                 StatusEnum.ERROR.value,
                 error.message,
             )
 
+        val author = dto.metaInfo.firstOrNull()?.author ?: ""
+
+        val routingKey = queueStatusResultNameNormalizeService.buildQueueStatusResultName(ORDER_REFUND_STATUS_PATTERN, author)
+
         sendMessageProducer.sendMessage(
-            props.routingKeyPaymentStatusRefund,
+            routingKey,
             response,
-            props.exchangePayment,
-            orderId.toString(),
+            props.exchangeOrder,
+            dto.orderId.toString(),
         )
     }
 }

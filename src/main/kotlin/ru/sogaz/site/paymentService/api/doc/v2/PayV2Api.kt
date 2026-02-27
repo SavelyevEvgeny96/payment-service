@@ -19,7 +19,7 @@ interface PayV2Api {
     )
     @ValidationErrorApiResponse
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по карте")
-    @PostMapping("/v2/payment/pay")
+    @PostMapping("/v2/payment/paycard")
     fun pay(
         @RequestBody cardPayOperationRequest: CardPayOperationRequest,
     ): Response<BankPaymentPageData>
@@ -30,7 +30,7 @@ interface PayV2Api {
     )
     @ValidationErrorApiResponse
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по сбп")
-    @PostMapping("/v2/payment/paySbp")
+    @PostMapping("/v2/payment/paysbp")
     fun paySbp(
         @RequestBody sbpPayOperationRequest: SbpPayOperationRequest,
     ): Response<BankPaymentPageData>
@@ -41,7 +41,7 @@ interface PayV2Api {
     )
     @ValidationErrorApiResponse
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по сбп")
-    @PostMapping("/v2/payment/recurrentCardPay")
+    @PostMapping("/v2/payment/recurrent/paycard")
     fun recurrentCardPay(
         @RequestBody cardRecurrentOperationRequest: CardRecurrentOperationRequest,
     ): Response<BankOperationDetails>

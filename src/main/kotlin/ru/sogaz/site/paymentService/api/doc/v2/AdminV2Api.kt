@@ -44,7 +44,7 @@ interface AdminV2Api {
         ),
     )
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по СБП", useReturnTypeSchema = false)
-    @PostMapping("/v2/payment/autoclose/paySbp")
+    @PostMapping("/v2/payment/autoclose/paysbp")
     fun sbpAutoPay(
         @RequestHeader("paymentDelay") paymentDelay: String?,
         @RequestHeader("processPayments") processPayments: String?,

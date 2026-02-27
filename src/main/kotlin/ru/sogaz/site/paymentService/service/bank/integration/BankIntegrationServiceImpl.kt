@@ -121,7 +121,7 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
 
     protected fun Payment.getAmountData() =
         AmountData(
-            amount = this.order!!.premiumAmount.toBigDecimal(),
+            amount = this.order.premiumAmount.toBigDecimal(),
             currency = CurrencyEnum.RUB,
         )
 
