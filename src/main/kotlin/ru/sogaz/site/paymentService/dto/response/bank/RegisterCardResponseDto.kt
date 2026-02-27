@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class RegisterCardResponseDto(
+    var httpStatusCode: Int? = null,
     val token: String? = null,
     var state: String? = null,
     var result: ResultDto? = null,

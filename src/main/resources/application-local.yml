@@ -24,7 +24,7 @@ api:
     merchantIdSbpGpb:
     paymentAccount: 40701810800000030052
     mainPortalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
-    mainMerchantId: B80540E3096C8730BCE3
+    mainMerchantId: B80540E3096C8730BCE
     depersonalizedPortalId:
     depersonalizedMerchantId:
     backUrlS: http://test.k835.sogaz.ru/realty/flat/success/

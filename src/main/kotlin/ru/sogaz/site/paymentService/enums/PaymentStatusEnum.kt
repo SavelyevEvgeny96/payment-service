@@ -8,7 +8,8 @@ enum class PaymentStatusEnum {
     FAIL,
     REFUND,
     DECLINED,
-    CALLBACK;
+    CALLBACK,
+    ;
 
     fun isInProcess(): Boolean = this in listOf(REG, WAIT)
 

@@ -69,6 +69,12 @@ class GPBankIntegrationServiceImpl(
         private const val PAYMENT_RECURRENT_SUCCESS = "Платеж успешно сформирован для paymentId: %s"
     }
 
+    object GpbHttpCodes {
+        private val FAIL_CODES_FOR_REGISTER = setOf(400, 404)
+
+        fun shouldMarkRegisterFail(code: Int?): Boolean = code in FAIL_CODES_FOR_REGISTER
+    }
+
     private val logger = loggerFor(javaClass)
 
     override fun provider(): BankEnum = BankEnum.GPB
@@ -115,11 +121,13 @@ class GPBankIntegrationServiceImpl(
                 payment.paymentFinished = LocalDateTime.now()
                 // 2.2.4) Обновляем статус платежа на основании ответа банка
                 payment.changeStatus(bankResp)
-                // 2.2.5) Обновляем статус ордера и сохраняем его
+                // 2.2.6) Сохраняем ошибку если она была
+                payment.errorText = bankResp.error
+                // 2.2.7) Обновляем статус ордера и сохраняем его
                 orderDao.save(payment.order.changeStatus(bankResp))
-                // 2.2.6) Логируем успех рекуррентного платежа
+                // 2.2.8) Логируем успех рекуррентного платежа
                 logger.info(PAYMENT_RECURRENT_SUCCESS.format(payment.id))
-                // 2.2.7) Возвращаем результат вместе с ответом банка
+                // 2.2.9) Возвращаем результат вместе с ответом банка
                 PaymentRecurrentRegisterData(
                     payment = payment,
                     bankResponse = bankResp,
@@ -148,12 +156,17 @@ class GPBankIntegrationServiceImpl(
                 request,
             )
         } catch (ex: FeignException) {
-            var raw = RegisterCardResponseDto()
+            val statusCode = ex.status() // <-- HTTP код ответа банка
             val body = ex.contentUTF8()
-            if (body.isNotBlank()) {
-                raw = objectMapper.readValue(body, RegisterCardResponseDto::class.java)
-            }
-            registerCardMapper.mapErrorBody(raw)
+
+            val raw =
+                if (body.isNotBlank()) {
+                    objectMapper.readValue(body, RegisterCardResponseDto::class.java)
+                } else {
+                    RegisterCardResponseDto()
+                }
+
+            registerCardMapper.mapErrorBody(raw.copy(httpStatusCode = statusCode))
         }
 
     override fun getQRCodeImageData(payment: Payment): GPBQRImageResponse =
@@ -196,12 +209,10 @@ class GPBankIntegrationServiceImpl(
 
     private fun Payment.changeStatus(response: RegisterCardResponseDto) =
         apply {
-            state =
-                if (response.result?.status == StatusEnum.SUCCESS.value) {
-                    PaymentStatusEnum.REG
-                } else {
-                    PaymentStatusEnum.FAIL
-                }
+            when {
+                response.result?.status == StatusEnum.SUCCESS.value -> state = PaymentStatusEnum.REG
+                GpbHttpCodes.shouldMarkRegisterFail(response.httpStatusCode) -> state = PaymentStatusEnum.FAIL
+            }
         }
 
     private fun Order.changeStatus(response: RegisterCardResponseDto) =

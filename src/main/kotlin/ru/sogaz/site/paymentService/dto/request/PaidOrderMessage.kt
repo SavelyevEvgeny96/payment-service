@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.dto.request
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import java.io.Serializable
 import java.time.Instant
@@ -17,6 +18,8 @@ data class PaidOrderMessage(
     val maskedPan: String?,
     val paymentSystem: String?,
     val status: String?,
+    @field:JsonIgnore
+    var httpStatusCode: Int? = null,
     val keyCard: String?,
     var bank: String?,
     val errorText: String? = null,
