@@ -32,3 +32,5 @@ databaseChangeLog:
       file: db.changelog/v2.2.3/release-changelog.yml
   - include:
       file: db.changelog/v2.2.4/release-changelog.yml
+  - include:
+      file: db.changelog/v3.0.0/release-changelog.yml

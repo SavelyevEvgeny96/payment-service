@@ -13,16 +13,34 @@ app:
   rabbit:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
+    exchange-check-status-payment: ${PAYMENT_STATUS_CHECK_EXCHANGE:payment.status.check.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
-    payment-refund-queue: ${PAYMENT_REFUND_QUEUE:order.refund.queue}
+    payment-status-check-queue: ${PAYMENT_STATUS_CHECK_QUEUE:payment.status.check.queue}
+    payment-refund-queue: ${PAYMENT_REFUND_QUEUE:payment.refund.queue}
     payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
     order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
     order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}
     routing-key-payment-created: ${ROUTING_KEY_PAYMENT_CREATED_QUEUE:payment.created}
+    routing-key-check-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_QUEUE:payment.status.check}
+    routing-key-details-payment-prefix: ${PAYMENT_DETAILS_ROUTING_KEY_PREFIX:payment.details}
     routing-key-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_QUEUE:payment.status.created}
     routing-key-payment-status-refund: ${ROUTING_KEY_PAYMENT_STATUS_REFUND_QUEUE:payment.status.refund.created}
     routing-key-status-order-paid: ${ROUTING_KEY_ORDER_PAID_STATUS_QUEUE:order.paid.created}
     routing-key-status-order-unpaid: ${ROUTING_KEY_ORDER_UNPAID_STATUS_QUEUE:order.unpaid.created}
+    concurrency:
+      consumers: ${RABBIT_CONCURRENCY_CONSUMERS:2}
+      maxConsumers: ${RABBIT_CONCURRENCY_MAX_CONSUMERS:5}
+      stopConsumerMinIntervalMs: ${RABBIT_CONCURRENCY_STOP_CONSUMERS_MIN_INTERVALS_MS:10000}
+
+resilience4j:
+  retry:
+    instances:
+      rabbitFastRetry:
+        maxAttempts: ${RABBIT_CONSUMER_FAST_RETRY_MAX_ATTEMPTS:2}
+        waitDuration: ${RABBIT_CONSUMER_FAST_RETRY_INITIAL_WAIT_DURATIONS:1s}
+        enableExponentialBackoff: ${RABBIT_CONSUMER_RETRY_EXPONENTIAL:true}
+        exponentialBackoffMultiplier: ${RABBIT_CONSUMER_RETRY_WAIT_MULTIPLAYER:2}
+
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
@@ -72,6 +90,7 @@ spring:
       enabled: ALWAYS
 
 api:
+  version: ${API_VERSION:v2}
   payment:
     paymentUrl: ${PAYMENT_URL}
     sbpPaymentUrl: ${SBP_PAYMENT_URL}
@@ -98,8 +117,21 @@ api:
   gpb:
     card:
       basePath: ${GPB_URL}
+      account:
+        main:
+          portalId: ${GPB_PORTAL_ID}
+          merchantId: ${GPB_MERCHANT_ID}
+        depersonalized:
+          portalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
+          merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
     sbp:
       basePath: ${GPB_SBP_URL}
+      redirectUrl: ${GPB_SBP_REDIRECT_URL:https://www.sogaz.ru/}
+      account:
+        merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
+        paymentAccount: ${PAYMENT_ACCOUNT}
+        callbackUrlSbp: ${CALLBACK_URL_SBP}
+        qrcTtl: ${GPB_SBP_QRC_TTL_MINUTES:60}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
@@ -150,5 +182,5 @@ logging:
   rabbit:
     enabled: ${LOGGING_RABBIT_ENABLED:true}
     log-body: ${LOGGING_RABBIT_LOG_BODY:true}
-    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:true}
-    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:false}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:false}

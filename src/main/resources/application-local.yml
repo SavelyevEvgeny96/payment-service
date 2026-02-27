@@ -6,7 +6,7 @@ spring:
     password: dev
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/payment
     username: postgres
     password: 123456
 
@@ -37,8 +37,21 @@ api:
   gpb:
     card:
       basePath: ${api.gateway.dmz}/payment/gpb/card/
+      account:
+        main:
+          portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
+          merchantId: B80540E3096C8730BCE3
+        depersonalized:
+          portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
+          merchantId: B80540E3096C8730BCE3
     sbp:
       basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
+      redirectUrl: https://www.sogaz.ru/
+      account:
+        merchantIdSbpGpb: MA0000000685
+        paymentAccount: 40701810800000030052
+        callbackUrlSbp:  https://example.com/callback
+        qrcTtl: 2
 
 crons:
   waitingPaymentsCheck: "*/30 * * * * *"
