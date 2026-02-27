@@ -51,10 +51,11 @@ interface PaidOrderMessageMapper {
         // ----- ошибка (С ИСПОЛЬЗОВАНИЕМ enum → сообщение) -----
         Mapping(
             target = "errorText",
-            source = "bankResponse.result.extendedCode",
+            source = "payment.errorText",
             qualifiedByName = ["mapExtendedCode"],
         ),
     )
+    @Mapping(target = "httpStatusCode", source = "bankResponse.httpStatusCode")
     fun toPaidOrderMessage(src: PaymentRecurrentRegisterData): PaidOrderMessage
 
     fun toPaidOrderMessages(src: List<PaymentRecurrentRegisterData>): List<PaidOrderMessage>

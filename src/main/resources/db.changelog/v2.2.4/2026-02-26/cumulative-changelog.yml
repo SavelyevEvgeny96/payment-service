@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-add-column
+      author: Evgeny Savelyev
+      changes:
+        - tagDatabase:
+            tag: backend-add-column
+  - include:
+      file: db.changelog\v2.2.4\2026-02-26\DATA\add_column.sql
+
