@@ -51,6 +51,8 @@ spring:
     allow-bean-definition-overriding: true
   cloud:
     openfeign:
+      okhttp:
+        enabled: true
       client:
         config:
           gpb-card-payment-auth-client:
@@ -130,7 +132,7 @@ api:
       basePath: ${GPB_URL}
       auth:
         retryer:
-          maxRetries: ${GPB_CARD_AUTH_CLIENT_MAX_RETRIES:2}
+          maxRetries: ${GPB_CARD_AUTH_CLIENT_MAX_RETRIES:3}
           minTimeoutMs: ${GPB_CARD_AUTH_CLIENT_MIN_TIMEOUT_MS:250}
           maxTimeoutMs: ${GPB_CARD_AUTH_CLIENT_MAX_TIMEOUT_MS:3000}
       account:

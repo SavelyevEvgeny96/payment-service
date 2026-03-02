@@ -6,7 +6,6 @@ import okhttp3.OkHttpClient
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.properties.gpb.AuthClientRetryerProperties
-import java.util.concurrent.TimeUnit
 
 @Configuration
 class OkHttpClientConfig(
@@ -17,9 +16,6 @@ class OkHttpClientConfig(
         OkHttpClient
             .Builder()
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(3, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.SECONDS)
-            .writeTimeout(3, TimeUnit.SECONDS)
             .build()
 
     @Bean
