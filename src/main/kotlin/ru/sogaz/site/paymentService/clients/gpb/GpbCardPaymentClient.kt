@@ -28,7 +28,7 @@ import ru.sogaz.site.paymentService.dto.response.bank.SessionIdDtoResponse
 @FeignClient(
     name = "gpb-card-payment-client",
     url = "\${api.gpb.card.basePath}",
-    configuration = [FeignTimingConfig::class]
+    configuration = [FeignTimingConfig::class],
 )
 interface GpbCardPaymentClient {
     /**

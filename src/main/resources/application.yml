@@ -49,7 +49,18 @@ server:
 spring:
   main:
     allow-bean-definition-overriding: true
-
+  cloud:
+    openfeign:
+      client:
+        config:
+          gpb-card-payment-auth-client:
+            connectTimeout: 1000
+            readTimeout: 2000
+            retryer: feign.Retryer
+          gpb-card-auth-client:
+            connectTimeout: 1000
+            readTimeout: 2000
+            retryer: feign.Retryer
   rabbitmq:
     host: ${RABBIT_HOST}
     port: ${RABBIT_PORT}
@@ -117,6 +128,11 @@ api:
   gpb:
     card:
       basePath: ${GPB_URL}
+      auth:
+        retryer:
+          maxRetries: ${GPB_CARD_AUTH_CLIENT_MAX_RETRIES:2}
+          minTimeoutMs: ${GPB_CARD_AUTH_CLIENT_MIN_TIMEOUT_MS:250}
+          maxTimeoutMs: ${GPB_CARD_AUTH_CLIENT_MAX_TIMEOUT_MS:3000}
       account:
         main:
           portalId: ${GPB_PORTAL_ID}

@@ -15,7 +15,19 @@ services:
       - pgdata:/var/lib/postgresql/data
 #    command: ["postgres", "-c", "log_statement=all"] # Для включения подробных логов postgres
     networks:
-      - shedlock-net
+      - payment-network
+
+  gpb-mock:
+    image: nexus.sogaz.ru/wiremock/wiremock:3.13.2
+    container_name: gpb-mock
+    ports:
+      - "8082:8082"
+    command: [ "--verbose","--port","8082","--root-dir","/home/wiremock", "--global-response-templating" ]
+    volumes:
+      - ./mocks/gpb:/home/wiremock
+    restart: unless-stopped
+    networks:
+      - payment-network
 
   payment-service:
     # Сначала пробуем загрузить образ
@@ -38,10 +50,10 @@ services:
     depends_on:
       - postgres
     networks:
-      - shedlock-net
+      - payment-network
 
 networks:
-  shedlock-net:
+  payment-network:
 
 volumes:
   pgdata:

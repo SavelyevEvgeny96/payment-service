@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardAuthClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardClient
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common.GpbPayStatusMapperImpl
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
@@ -26,7 +27,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationReq
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
-import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardCardIntegrationImpl
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardIntegrationImpl
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
 @Import(
@@ -47,6 +48,9 @@ class GpbCardIntegrationTest {
     @MockK
     private lateinit var gpbCardClient: GpbCardClient
 
+    @MockK
+    private lateinit var gpbCardAuthClient: GpbCardAuthClient
+
     @Autowired
     private lateinit var requestMapper: GpbRequestMapper
 
@@ -56,7 +60,7 @@ class GpbCardIntegrationTest {
     @RelaxedMockK
     private lateinit var cardAccountProperties: GpbCardAccountProperties
 
-    private lateinit var gpbCardPayIntegration: GpbCardCardIntegrationImpl
+    private lateinit var gpbCardPayIntegration: GpbCardIntegrationImpl
 
     @RelaxedMockK
     private lateinit var cardPayOperationRequest: CardPayOperationRequest
@@ -73,8 +77,9 @@ class GpbCardIntegrationTest {
     @BeforeEach
     fun beforeEach() {
         gpbCardPayIntegration =
-            GpbCardCardIntegrationImpl(
+            GpbCardIntegrationImpl(
                 gpbCardClient,
+                gpbCardAuthClient,
                 requestMapper,
                 responseMapper,
                 cardAccountProperties,
@@ -84,7 +89,7 @@ class GpbCardIntegrationTest {
         initMockGpbPayCardResponse()
         initMockGpbCardPayDetailsResponse()
 
-        every { gpbCardClient.getToken(any()).token } returns TOKEN
+        every { gpbCardAuthClient.getToken(any()).token } returns TOKEN
         every { gpbCardClient.cardPayment(any(), TOKEN, any()) } returns gpbPayCardResponse
         every { gpbCardClient.cardRecurrentPayment(any(), TOKEN, any()) } returns gpbCardPayDetailsResponse
     }
@@ -96,7 +101,7 @@ class GpbCardIntegrationTest {
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.cardPay(cardPayOperationRequest, authorizedCardTrxData)
 
-        verify { gpbCardClient.getToken(MAIN_PORTAL_ID) }
+        verify { gpbCardAuthClient.getToken(MAIN_PORTAL_ID) }
         verify { gpbCardClient.cardPayment(MAIN_PORTAL_ID, TOKEN, any()) }
 
         assertThat(result)
@@ -110,7 +115,7 @@ class GpbCardIntegrationTest {
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.cardPay(cardPayOperationRequest, authorizedCardTrxData)
 
-        verify { gpbCardClient.getToken(DEPERSONALIZED_PORTAL_ID) }
+        verify { gpbCardAuthClient.getToken(DEPERSONALIZED_PORTAL_ID) }
         verify { gpbCardClient.cardPayment(DEPERSONALIZED_PORTAL_ID, TOKEN, any()) }
 
         assertThat(result)
@@ -124,7 +129,7 @@ class GpbCardIntegrationTest {
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.recurrentPay(cardRecurrentPayOperationRequest, authorizedCardTrxData)
 
-        verify { gpbCardClient.getToken(MAIN_PORTAL_ID) }
+        verify { gpbCardAuthClient.getToken(MAIN_PORTAL_ID) }
         verify { gpbCardClient.cardRecurrentPayment(MAIN_PORTAL_ID, TOKEN, any()) }
 
         assertThat(result)
@@ -138,7 +143,7 @@ class GpbCardIntegrationTest {
         val authorizedCardTrxData = gpbCardPayIntegration.authorize(cardPayOperationRequest)
         val result = gpbCardPayIntegration.recurrentPay(cardRecurrentPayOperationRequest, authorizedCardTrxData)
 
-        verify { gpbCardClient.getToken(DEPERSONALIZED_PORTAL_ID) }
+        verify { gpbCardAuthClient.getToken(DEPERSONALIZED_PORTAL_ID) }
         verify { gpbCardClient.cardRecurrentPayment(DEPERSONALIZED_PORTAL_ID, TOKEN, any()) }
 
         assertThat(result)
