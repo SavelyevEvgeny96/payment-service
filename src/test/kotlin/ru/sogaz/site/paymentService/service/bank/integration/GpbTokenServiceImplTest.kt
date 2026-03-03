@@ -7,7 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentAuthClient
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.UrlToReturn
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
@@ -24,7 +24,7 @@ import java.util.UUID
 @ExtendWith(MockKExtension::class)
 class GpbTokenServiceImplTest {
     @MockK
-    lateinit var gpbCardPaymentClient: GpbCardPaymentClient
+    lateinit var gpbCardPaymentAuthClient: GpbCardPaymentAuthClient
 
     @MockK
     lateinit var apiConfigProperties: ApiConfigProperties
@@ -38,7 +38,7 @@ class GpbTokenServiceImplTest {
     fun setup() {
         service =
             BankIntegrationTokenService(
-                gpbCardPaymentClient = gpbCardPaymentClient,
+                gpbCardPaymentAuthClient = gpbCardPaymentAuthClient,
                 apiConfigProperties = apiConfigProperties,
                 paymentDao = paymentDao,
             )
@@ -56,12 +56,12 @@ class GpbTokenServiceImplTest {
 
     @Test
     fun `exchangeForToken - success`() {
-        every { gpbCardPaymentClient.getToken("MAIN_PORTAL") } returns GazpromTokenResponse("TOKEN_123")
+        every { gpbCardPaymentAuthClient.getToken("MAIN_PORTAL") } returns GazpromTokenResponse("TOKEN_123")
 
         val token = service.exchangeForToken(false)
 
         assertThat(token).isEqualTo("TOKEN_123")
-        verify { gpbCardPaymentClient.getToken("MAIN_PORTAL") }
+        verify { gpbCardPaymentAuthClient.getToken("MAIN_PORTAL") }
     }
 
     // -------------------------------------------------------------
@@ -72,7 +72,7 @@ class GpbTokenServiceImplTest {
     fun `saveToken - saves token inside payment and calls dao`() {
         val payment = createTestPayment()
 
-        every { gpbCardPaymentClient.getToken("MAIN_PORTAL") } returns GazpromTokenResponse("TOKEN_777")
+        every { gpbCardPaymentAuthClient.getToken("MAIN_PORTAL") } returns GazpromTokenResponse("TOKEN_777")
         every { paymentDao.save(any()) } returns payment
 
         val result = service.saveToken(payment)

@@ -13,7 +13,7 @@ import ru.sogaz.site.paymentService.dto.request.PaymentParams
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 data class GpbCardCallback(
     val trx_id: String,
-    val merch_id: String,
+    val merchant_trx: String,
     val result_code: Int,
     val extResultCode: Int?,
     val amount: Int,
