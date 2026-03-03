@@ -73,15 +73,10 @@ class GpbCardIntegrationImpl(
         cardRecurrentOperationRequest: CardRecurrentOperationRequest,
         authorizedCardTrxData: AuthorizedCardTrxData,
     ): BankOperationDetails =
-        try {
-            cardRecurrentOperationRequest
-                .buildRecurrentRequest(authorizedCardTrxData)
-                .cardRecurrentPay(authorizedCardTrxData)
-                .toBankPaymentPageData()
-        } catch (ex: FeignException.NotFound) {
-            logger.error(ex.message)
-            BankOperationDetails(authorizedCardTrxData.token, OperationState.FAIL)
-        }
+        cardRecurrentOperationRequest
+            .buildRecurrentRequest(authorizedCardTrxData)
+            .cardRecurrentPay(authorizedCardTrxData)
+            .toBankPaymentPageData()
 
     private fun CardRecurrentOperationRequest.buildRecurrentRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
         requestMapper.toRecurrentRequest(
