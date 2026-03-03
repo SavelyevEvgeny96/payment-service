@@ -23,7 +23,7 @@ class OperationCallbackServiceImpl(
     private val gpbCallbackMapper: GpbCallbackMapper,
 ) : OperationCallbackService {
     override fun updateByGpbCardCallback(gpbCardCallback: GpbCardCallback) {
-        val orderOperation = findOrderOperationOrThrow(UUID.fromString(gpbCardCallback.merch_id), gpbCardCallback.trx_id)
+        val orderOperation = findOrderOperationOrThrow(UUID.fromString(gpbCardCallback.merchant_trx), gpbCardCallback.trx_id)
         if (orderOperation.state.isFinaleState()) {
             return
         }

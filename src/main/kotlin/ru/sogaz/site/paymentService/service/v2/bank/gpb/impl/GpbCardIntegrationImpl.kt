@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.service.v2.bank.gpb.impl
 
 import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.springframework.stereotype.Component
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardAuthClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardClient
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
@@ -23,8 +24,9 @@ import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 
 @Component
-class GpbCardCardIntegrationImpl(
+class GpbCardIntegrationImpl(
     private val gpbCardClient: GpbCardClient,
+    private val gpbCardAuthClient: GpbCardAuthClient,
     private val requestMapper: GpbRequestMapper,
     private val responseMapper: GpbCardResponseMapper,
     private val cardAccountProperties: GpbCardAccountProperties,
@@ -37,7 +39,7 @@ class GpbCardCardIntegrationImpl(
 
     override fun authorize(payOperationRequest: PayOperationRequest): AuthorizedCardTrxData {
         val accountData = chooseAccountDataForOperation(payOperationRequest)
-        val token = gpbCardClient.getToken(accountData.portalId).token
+        val token = gpbCardAuthClient.getToken(accountData.portalId).token
         return AuthorizedCardTrxData(token, accountData)
     }
 
