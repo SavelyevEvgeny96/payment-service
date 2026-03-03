@@ -20,7 +20,7 @@ class PayV2Controller(
     PayV2Api {
     companion object {
         private const val CARD_PAY_SUCCESS_CODE = 1101510200
-        private const val SBP_PAY_SUCCESS_CODE = 1
+        private const val SBP_PAY_SUCCESS_CODE = 1101530200
     }
 
     override fun pay(cardPayOperationRequest: CardPayOperationRequest): Response<BankPaymentPageData> =

@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.web.request.pay
 
 import io.swagger.v3.oas.annotations.media.Schema
+import ru.sogaz.site.paymentService.api.doc.v2.requestSchema.StraightRedirectSchema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import java.math.BigDecimal
@@ -17,8 +18,8 @@ data class SbpPayOperationRequest(
     override val depersonalization: Boolean = false,
     @field:Schema(description = "Платежные позиции")
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
-    @field:Schema(description = "Ссылка для редиректа после оплаты", example = "https://www.sogaz.ru/")
-    val returnUrl: String?,
+    @field:Schema(description = "Дополнительные параметры банковской операции", implementation = StraightRedirectSchema::class)
+    val params: RedirectParams,
 ) : PayOperationRequest() {
     @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "PAY")
     override val operationType: OperationType = OperationType.PAY

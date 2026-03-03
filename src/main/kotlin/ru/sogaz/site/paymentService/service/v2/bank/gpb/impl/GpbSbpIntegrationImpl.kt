@@ -39,7 +39,7 @@ class GpbSbpIntegrationImpl(
         requestMapper.toSbpRequest(
             this,
             accountProperties.account,
-            returnUrl ?: accountProperties.redirectUrl,
+            params.urlToReturn ?: accountProperties.redirectUrl,
         )
 
     private fun GpbSbpPayRequest.sbpPay(): GpbSbpPayResponse = gpbSbpClient.pay(this)
