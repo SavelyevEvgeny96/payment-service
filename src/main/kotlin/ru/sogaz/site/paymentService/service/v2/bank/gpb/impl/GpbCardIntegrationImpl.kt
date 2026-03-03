@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.v2.bank.gpb.impl
 
+import feign.FeignException
 import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardAuthClient
@@ -72,10 +73,15 @@ class GpbCardIntegrationImpl(
         cardRecurrentOperationRequest: CardRecurrentOperationRequest,
         authorizedCardTrxData: AuthorizedCardTrxData,
     ): BankOperationDetails =
-        cardRecurrentOperationRequest
-            .buildRecurrentRequest(authorizedCardTrxData)
-            .cardRecurrentPay(authorizedCardTrxData)
-            .toBankPaymentPageData()
+        try {
+            cardRecurrentOperationRequest
+                .buildRecurrentRequest(authorizedCardTrxData)
+                .cardRecurrentPay(authorizedCardTrxData)
+                .toBankPaymentPageData()
+        } catch (ex: FeignException.NotFound) {
+            logger.error(ex.message)
+            BankOperationDetails(authorizedCardTrxData.token, OperationState.FAIL)
+        }
 
     private fun CardRecurrentOperationRequest.buildRecurrentRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
         requestMapper.toRecurrentRequest(
@@ -99,7 +105,10 @@ class GpbCardIntegrationImpl(
             responseMapper.toBankPaymentDetails(cardPayDetails)
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
-            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
+            when (ex) {
+                is FeignException.NotFound -> BankOperationDetails(cardPayOperation.paymentBankId, OperationState.FAIL, extendedCode = ex.contentUTF8())
+                else -> BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
+            }
         }
 
     private fun chooseAccountDataForOperation(payOperationRequest: PayOperationRequest): GpbCardAccountData =
