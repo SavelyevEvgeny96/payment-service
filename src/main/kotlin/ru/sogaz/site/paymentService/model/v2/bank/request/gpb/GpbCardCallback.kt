@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
 import ru.sogaz.site.paymentService.dto.request.CardParams
 import ru.sogaz.site.paymentService.dto.request.PaymentParams
+import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbExtResultCode
 
 /**
  * Поля мапятся из query параметров,
@@ -15,7 +16,7 @@ data class GpbCardCallback(
     val trx_id: String,
     val merchant_trx: String,
     val result_code: Int,
-    val extResultCode: Int?,
+    val extResultCode: GpbExtResultCode?,
     val amount: Int,
     val account_id: String?,
     val p: PaymentParams?,

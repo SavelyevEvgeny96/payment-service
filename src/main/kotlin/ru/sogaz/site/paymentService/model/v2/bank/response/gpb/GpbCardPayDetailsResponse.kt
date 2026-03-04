@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.model.v2.bank.response.gpb
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbCardPayStatus
+import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbExtResultCode
 
 data class GpbCardPayDetailsResponse(
     @param:JsonProperty("token")
@@ -18,7 +19,7 @@ data class GpbResult(
     @param:JsonProperty("status")
     val status: GpbCardPayStatus,
     @param:JsonProperty("extendedCode")
-    val extendedCode: String?,
+    val extendedCode: GpbExtResultCode?,
 )
 
 data class GpbCardDetails(

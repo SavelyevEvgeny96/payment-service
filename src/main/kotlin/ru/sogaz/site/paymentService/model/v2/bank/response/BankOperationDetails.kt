@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.bank.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbExtResultCode
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import java.time.Instant
 
@@ -10,8 +11,9 @@ data class BankOperationDetails(
     @field:JsonProperty("status")
     val state: OperationState,
     val operationFinished: Instant? = null,
-    val extendedCode: String? = null,
+    val extendedCode: GpbExtResultCode? = null,
     val cardDetails: ClientCardDetails? = null,
+    val errorText: String? = null,
 )
 
 data class ClientCardDetails(

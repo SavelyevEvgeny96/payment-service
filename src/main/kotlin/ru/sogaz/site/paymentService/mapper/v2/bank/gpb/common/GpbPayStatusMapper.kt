@@ -11,6 +11,7 @@ abstract class GpbPayStatusMapper {
     fun convertToOperationState(gpbCallback: GpbCardCallback): OperationState =
         when (gpbCallback.result_code) {
             1 -> OperationState.SUCCESS
+            2 -> OperationState.FAIL
             else -> OperationState.WAIT
         }
 

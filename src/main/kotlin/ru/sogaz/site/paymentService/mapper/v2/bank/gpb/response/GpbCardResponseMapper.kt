@@ -20,7 +20,10 @@ interface GpbCardResponseMapper {
     fun toBankPaymentPageData(response: GpbPayCardResponse): BankPaymentPageData
 
     @Mapping(target = "state", source = "result.status", defaultValue = "WAIT")
+    @Mapping(target = "extendedCode", source = "result.extendedCode")
+    @Mapping(target = "errorText", source = "result.extendedCode.message")
     @Mapping(target = "cardDetails", source = "gpbCardDetails")
     @Mapping(target = "bankId", source = "id")
+    @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
     fun toBankPaymentDetails(response: GpbCardPayDetailsResponse): BankOperationDetails
 }

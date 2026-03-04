@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.v2.bank.gpb
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
@@ -82,6 +83,7 @@ class GpbCardIntegrationTest {
                 gpbCardAuthClient,
                 requestMapper,
                 responseMapper,
+                jacksonObjectMapper(),
                 cardAccountProperties,
             )
 

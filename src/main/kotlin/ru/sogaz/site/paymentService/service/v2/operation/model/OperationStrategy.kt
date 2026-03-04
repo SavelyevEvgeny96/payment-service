@@ -10,9 +10,9 @@ sealed class AbstractOperationStrategy<REQUEST : OperationRequest, RESULT>(
     abstract fun execute(
         idempotentOrderOperation: IdempotentOrderOperation,
         operationSaver: IdempotentOrderOperation.() -> Unit,
-    ): OperationResult<RESULT>
+    ): StepResult<RESULT>
 
-    protected fun <T> OperationResult<T>.saveResult(operationSaver: IdempotentOrderOperation.() -> Unit): OperationResult<T> =
+    protected fun <T> StepResult<T>.saveResult(operationSaver: IdempotentOrderOperation.() -> Unit): StepResult<T> =
         when (needSaveResult) {
             true -> apply { operation.operationSaver() }
             false -> this
@@ -28,10 +28,10 @@ class OperationStrategy<REQUEST : OperationRequest, RESULT>(
     override fun execute(
         idempotentOrderOperation: IdempotentOrderOperation,
         operationSaver: IdempotentOrderOperation.() -> Unit,
-    ): OperationResult<RESULT> {
+    ): StepResult<RESULT> {
         val result = request.action()
         val updatedOperation = idempotentOrderOperation.mapResult(result)
-        return OperationResult(updatedOperation, result)
+        return StepResult(updatedOperation, result)
             .saveResult(operationSaver)
     }
 }
@@ -46,10 +46,10 @@ class FollowingOperationStrategy<REQUEST : OperationRequest, PREV_RESULT, RESULT
     override fun execute(
         idempotentOrderOperation: IdempotentOrderOperation,
         operationSaver: IdempotentOrderOperation.() -> Unit,
-    ): OperationResult<RESULT> {
+    ): StepResult<RESULT> {
         val prevOperationResult = prevOperation.execute(idempotentOrderOperation, operationSaver)
         val result = request.action(prevOperationResult.result)
-        return OperationResult(prevOperationResult.operation.mapResult(result), result)
+        return StepResult(prevOperationResult.operation.mapResult(result), result)
             .saveResult(operationSaver)
     }
 }
