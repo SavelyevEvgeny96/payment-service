@@ -16,6 +16,6 @@ interface GpbCallbackMapper {
     @Mapping(target = "bankId", source = "trx_id")
     @Mapping(target = "cardDetails", source = ".")
     @Mapping(target = "errorText", source = "extResultCode.message")
-    @Mapping(target = "operationFinished", source = "ts")
+    @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
     fun toBankOperationDetails(gpbCallback: GpbCardCallback): BankOperationDetails
 }
