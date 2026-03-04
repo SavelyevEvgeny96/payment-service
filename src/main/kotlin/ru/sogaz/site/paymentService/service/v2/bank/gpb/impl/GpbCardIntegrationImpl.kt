@@ -39,6 +39,7 @@ class GpbCardIntegrationImpl(
     companion object {
         private const val OPERATION_DETAILS_ERROR = "Во время получения данных по операции оплаты картой произошла ошибка: {}"
         private const val CARD_NOT_FOUND = "Карта не найдена"
+        private const val TRANSACTION_NOT_STARTED = "Транзакция по этой операции не была открыта"
         private const val BAD_REQUEST = "Bad request"
     }
 
@@ -91,12 +92,9 @@ class GpbCardIntegrationImpl(
         }
 
     private fun FeignException.getErrorCode(): String? =
-        try {
-            objectMapper.readValue<GpbCardPayErrorMessage>(contentUTF8()).error?.message
-        } catch (ex: Exception) {
-            logger.error(ex.message, ex)
-            null
-        }
+        runCatching { objectMapper.readValue<GpbCardPayErrorMessage>(contentUTF8()).error?.message }
+            .onFailure { ex -> logger.error(ex.message, ex) }
+            .getOrNull()
 
     private fun CardRecurrentOperationRequest.buildRecurrentRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
         requestMapper.toRecurrentRequest(
@@ -118,17 +116,11 @@ class GpbCardIntegrationImpl(
             val accountData = chooseAccountDataForOperation(cardPayOperation)
             val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
             responseMapper.toBankPaymentDetails(cardPayDetails)
+        } catch (ex: FeignException.NotFound) {
+            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.FAIL, errorText = ex.getErrorCode() ?: TRANSACTION_NOT_STARTED)
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
-            when (ex) {
-                is FeignException.NotFound ->
-                    BankOperationDetails(
-                        cardPayOperation.paymentBankId,
-                        OperationState.FAIL,
-                        errorText = ex.getErrorCode(),
-                    )
-                else -> BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
-            }
+            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
         }
 
     private fun chooseAccountDataForOperation(payOperationRequest: PayOperationRequest): GpbCardAccountData =

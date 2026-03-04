@@ -1,8 +1,9 @@
 package ru.sogaz.site.paymentService.model.v2.bank.enums
 
 enum class GpbExtResultCode(
-    val message: String,
+    val message: String?,
 ) {
+    OK(null),
     UNKNOWN("Результат платежа неизвестен (не определён)"),
     SYSTEM_ERROR("Системная ошибка. Платеж завершился неуспешно из-за внутренней ошибки Сервиса"),
     COMMUNICATION_ERROR("Ошибка при взаимодействии с внешней системой"),
@@ -28,6 +29,8 @@ enum class GpbExtResultCode(
     DECLINED_BY_ACQUIRER("Транзакция отклонена эквайером"),
     DECLINED_BY_ISSUER("Транзакция отклонена эмитентом"),
     CARD_FAULT("Проблемы с картой, карточными данными"),
+    OFFER_TIMEOUT("Транзакция автоматически закрылась по таймауту"),
+    TRANSACTION_NOT_FOUND("Транзакция не открыта"),
     AUTHORIZATION_FAILED("Ошибка авторизации"),
     CARD_NOT_SUPPORTED("Карта не поддерживается"),
     CARD_DATA_INVALID("Неверно указаны данные карты (например, CVV2/CVC2)"),

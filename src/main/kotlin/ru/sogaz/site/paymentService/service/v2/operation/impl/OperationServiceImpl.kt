@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.v2.operation.impl
 
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
@@ -41,5 +42,6 @@ class OperationServiceImpl(
 
     private fun <REQUEST : OperationRequest, RESULT> StepResult<RESULT>.onFinalState(
         operationCommand: OperationCommand<REQUEST, RESULT>,
-    ): StepResult<RESULT> = apply { operationCommand.finalStateAction(operation, result) }
+    ): StepResult<RESULT> = applyIf(operation.state.isFinaleState()) { apply { operationCommand.finalStateAction(operation, result) } }
+
 }

@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
 import ru.sogaz.site.paymentService.service.v2.operation.inline.bankOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFinalState
-import ru.sogaz.site.paymentService.service.v2.operation.inline.step
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
@@ -82,8 +81,9 @@ class PayOperationServiceImpl(
         stepWithSave(
             action = gpbCardIntegration::authorize,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByAuthorizedTrx,
-        ).step(
+        ).stepWithSave(
             action = gpbCardIntegration::recurrentPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails
         )
 
     private fun <REQUEST : OperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =
