@@ -7,25 +7,20 @@ import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import java.util.UUID
 
 abstract class RabbitProducer<T>(
-    private val rabbitTemplate: RabbitTemplate
+    private val rabbitTemplate: RabbitTemplate,
 ) {
     protected fun convertAndSend(
         exchange: String,
         routingKey: String,
         message: T,
-        correlationId: UUID?,
+        correlationId: UUID? = null,
     ): Unit =
-        rabbitTemplate.convertAndSend(
+        convertAndSend(
             exchange,
             routingKey,
             message!!,
-            {
-                it.apply {
-                    messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
-                    messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
-                }
-            },
-            CorrelationData(correlationId.toString()),
+            correlationId,
+            null
         )
 
     protected fun convertAndSend(
@@ -47,14 +42,20 @@ abstract class RabbitProducer<T>(
         routingKey: String,
         message: T,
         correlationId: UUID?,
-        messagePostProcessor: MessagePostProcessor,
+        messagePostProcessor: MessagePostProcessor?,
     ): Unit =
         rabbitTemplate.convertAndSend(
             exchange,
             routingKey,
             message!!,
-            messagePostProcessor,
-            CorrelationData(correlationId.toString()),
+            {
+                it.apply {
+                    messageProperties.headers[RabbitLogConst.HDR_X_EXCHANGE] = exchange
+                    messageProperties.headers[RabbitLogConst.HDR_X_ROUTINGKEY] = routingKey
+                    messageProperties.headers.remove("__TypeId__")
+                    messagePostProcessor?.postProcessMessage(this)
+                }
+            },
+            correlationId?.let { CorrelationData(it.toString()) },
         )
-
 }

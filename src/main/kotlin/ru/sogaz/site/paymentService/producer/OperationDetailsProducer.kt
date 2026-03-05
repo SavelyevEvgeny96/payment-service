@@ -13,7 +13,7 @@ class OperationDetailsProducer(
     rabbitTemplate: RabbitTemplate,
     private val rabbitProperties: RabbitProperties,
     private val completedOperationMapper: CompletedOperationMapper,
-): RabbitProducer<CompletedOperationEvent>(rabbitTemplate) {
+) : RabbitProducer<CompletedOperationEvent>(rabbitTemplate) {
     fun sendOperationDetails(
         operation: IdempotentOrderOperation,
         bankOperationDetails: BankOperationDetails,

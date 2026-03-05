@@ -13,36 +13,36 @@ class CheckOperationStatusProducer(
     rabbitTemplate: RabbitTemplate,
     private val rabbitProperties: RabbitProperties,
     private val maxDeathCount: Int = 5,
-): RabbitProducer<CheckStatusEvent>(rabbitTemplate) {
+) : RabbitProducer<CheckStatusEvent>(rabbitTemplate) {
     fun sendCheckStatusEvent(operation: IdempotentOrderOperation) =
         convertAndSend(
             rabbitProperties.exchangeCheckStatusPayment,
             rabbitProperties.routingKeyCheckStatusPayment,
             CheckStatusEvent(operation.id!!),
             operation.idempotentOrder?.id,
-            setMessageDeathCount(0)
+            setMessageDeathCount(0),
         )
 
     fun sendDelayedCheckStatusEvent(
         event: CheckStatusEvent,
         deathCount: Int = 0,
     ) = convertAndSend(
-            rabbitProperties.exchangeCheckStatusPayment,
-            makeRoutingKey(deathCount),
-            CheckStatusEvent(event.operationId),
-            setMessageDeathCount(deathCount),
-        )
+        rabbitProperties.exchangeCheckStatusPayment,
+        makeRoutingKey(deathCount),
+        CheckStatusEvent(event.operationId),
+        setMessageDeathCount(deathCount),
+    )
 
     fun sendDelayedCheckStatusEvent(
         operation: IdempotentOrderOperation,
         deathCount: Int = 0,
     ) = convertAndSend(
-            rabbitProperties.exchangeCheckStatusPayment,
-            makeRoutingKey(deathCount),
-            CheckStatusEvent(operation.id!!),
-            operation.idempotentOrder?.id,
-            setMessageDeathCount(deathCount),
-        )
+        rabbitProperties.exchangeCheckStatusPayment,
+        makeRoutingKey(deathCount),
+        CheckStatusEvent(operation.id!!),
+        operation.idempotentOrder?.id,
+        setMessageDeathCount(deathCount),
+    )
 
     private fun makeRoutingKey(deathCount: Int) =
         "${rabbitProperties.routingKeyCheckStatusPayment}.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
