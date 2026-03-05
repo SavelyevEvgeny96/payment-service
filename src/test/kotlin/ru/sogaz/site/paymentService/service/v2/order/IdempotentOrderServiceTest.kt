@@ -52,7 +52,7 @@ class IdempotentOrderServiceTest {
             )
 
         every { idempotentOrderDao.save(any()) } returnsArgument 0
-        every { idempotentOrderOperationDao.save(any()) } returnsArgument 0
+        every { idempotentOrderOperationDao.saveAndFlush(any()) } returnsArgument 0
 
         every { payOperationRequest.orderId } returns UUID.randomUUID()
         every { payOperationRequest.amount } returns BigDecimal.TEN
@@ -65,7 +65,7 @@ class IdempotentOrderServiceTest {
         idempotentOrderService.saveOperation(payOperationRequest)
 
         verify { idempotentOrderDao.save(any()) }
-        verify { idempotentOrderOperationDao.save(any()) }
+        verify { idempotentOrderOperationDao.saveAndFlush(any()) }
     }
 
     @Test
@@ -75,7 +75,7 @@ class IdempotentOrderServiceTest {
         idempotentOrderService.saveOperation(payOperationRequest)
 
         verify(exactly = 0) { idempotentOrderDao.save(any()) }
-        verify { idempotentOrderOperationDao.save(any()) }
+        verify { idempotentOrderOperationDao.saveAndFlush(any()) }
     }
 
     @Test

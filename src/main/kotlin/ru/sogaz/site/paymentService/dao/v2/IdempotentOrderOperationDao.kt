@@ -11,5 +11,5 @@ interface IdempotentOrderOperationDao {
         paymentBankId: String,
     ): IdempotentOrderOperation?
 
-    fun save(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation
+    fun saveAndFlush(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation
 }
