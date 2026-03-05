@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.event
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import ru.sogaz.site.paymentService.model.v2.bank.response.ClientCardDetails
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -12,7 +13,7 @@ data class CompletedOperationEvent(
     val totalAmount: BigDecimal,
     val depersonalization: Boolean = false,
     val status: String,
-    val keyCard: String? = null,
+    val card: ClientCardDetails? = null,
     val bank: String,
     val paymentType: String,
     val payDate: Instant,

@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.AuthorizedCardT
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbCardAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.ClientCardDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
@@ -41,6 +42,7 @@ class GpbCardIntegrationImpl(
         private const val CARD_NOT_FOUND = "Карта не найдена"
         private const val TRANSACTION_NOT_STARTED = "Транзакция по этой операции не была открыта"
         private const val BAD_REQUEST = "Bad request"
+        private const val INTERNAL_ERROR = "Internal server error"
     }
 
     private val logger = loggerFor(javaClass)
@@ -86,10 +88,25 @@ class GpbCardIntegrationImpl(
                 .cardRecurrentPay(authorizedCardTrxData)
                 .toBankPaymentPageData()
         } catch (ex: FeignException.NotFound) {
-            BankOperationDetails(authorizedCardTrxData.token, OperationState.FAIL, errorText = ex.getErrorCode() ?: CARD_NOT_FOUND)
+            ex.toFailOperationDetails(authorizedCardTrxData.token, cardRecurrentOperationRequest.keyCard) { CARD_NOT_FOUND }
         } catch (ex: FeignException.BadRequest) {
-            BankOperationDetails(authorizedCardTrxData.token, OperationState.FAIL, errorText = ex.getErrorCode() ?: BAD_REQUEST)
+            ex.toFailOperationDetails(authorizedCardTrxData.token) { BAD_REQUEST }
         }
+
+    private fun FeignException.toFailOperationDetails(
+        bankId: String,
+        defaultError: () -> String = { INTERNAL_ERROR },
+    ): BankOperationDetails = BankOperationDetails(bankId, OperationState.FAIL, errorText = getErrorCode() ?: defaultError())
+
+    private fun FeignException.toFailOperationDetails(
+        bankId: String,
+        keyCard: String,
+        defaultError: () -> String = { INTERNAL_ERROR },
+    ): BankOperationDetails = BankOperationDetails(
+        bankId,
+        OperationState.FAIL,
+        cardDetails = ClientCardDetails(keyCard),
+        errorText = getErrorCode() ?: defaultError())
 
     private fun FeignException.getErrorCode(): String? =
         runCatching { objectMapper.readValue<GpbCardPayErrorMessage>(contentUTF8()).error?.message }
@@ -117,7 +134,7 @@ class GpbCardIntegrationImpl(
             val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
             responseMapper.toBankPaymentDetails(cardPayDetails)
         } catch (ex: FeignException.NotFound) {
-            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.FAIL, errorText = ex.getErrorCode() ?: TRANSACTION_NOT_STARTED)
+            ex.toFailOperationDetails(cardPayOperation.paymentBankId) { TRANSACTION_NOT_STARTED }
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
             BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)

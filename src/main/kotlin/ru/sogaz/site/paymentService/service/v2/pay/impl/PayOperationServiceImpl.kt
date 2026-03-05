@@ -83,7 +83,7 @@ class PayOperationServiceImpl(
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByAuthorizedTrx,
         ).stepWithSave(
             action = gpbCardIntegration::recurrentPay,
-            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
         )
 
     private fun <REQUEST : OperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =

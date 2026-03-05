@@ -43,5 +43,4 @@ class OperationServiceImpl(
     private fun <REQUEST : OperationRequest, RESULT> StepResult<RESULT>.onFinalState(
         operationCommand: OperationCommand<REQUEST, RESULT>,
     ): StepResult<RESULT> = applyIf(operation.state.isFinaleState()) { apply { operationCommand.finalStateAction(operation, result) } }
-
 }
