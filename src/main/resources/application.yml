@@ -13,6 +13,7 @@ app:
   rabbit:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
+    exchange-completed-payment: ${PAYMENT_EXCHANGE:payment.completed.exchange}
     exchange-check-status-payment: ${PAYMENT_STATUS_CHECK_EXCHANGE:payment.status.check.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
     payment-status-check-queue: ${PAYMENT_STATUS_CHECK_QUEUE:payment.status.check.queue}

@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentService.producer
 
-import org.springframework.amqp.rabbit.connection.CorrelationData
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.mapper.v2.event.CompletedOperationMapper
@@ -11,23 +10,23 @@ import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 
 @Component
 class OperationDetailsProducer(
-    private val rabbitTemplate: RabbitTemplate,
+    rabbitTemplate: RabbitTemplate,
     private val rabbitProperties: RabbitProperties,
     private val completedOperationMapper: CompletedOperationMapper,
-) {
+): RabbitProducer<CompletedOperationEvent>(rabbitTemplate) {
     fun sendOperationDetails(
         operation: IdempotentOrderOperation,
         bankOperationDetails: BankOperationDetails,
-    ) {
-        val completedOperationEvent = completedOperationMapper.completedOperationEvent(operation, bankOperationDetails)
-        rabbitTemplate.convertAndSend(
-            rabbitProperties.exchangePayment,
-            makeRoutingKey(completedOperationEvent),
-            completedOperationEvent,
-            CorrelationData(completedOperationEvent.orderId.toString()),
-        )
-    }
+    ) = bankOperationDetails
+        .mapToCompletedOperationEvent(operation)
+        .convertAndSend()
 
-    private fun makeRoutingKey(completedOperationEvent: CompletedOperationEvent): String =
-        "${rabbitProperties.routingKeyDetailsPaymentPrefix}.${completedOperationEvent.status.lowercase()}"
+    private fun BankOperationDetails.mapToCompletedOperationEvent(operation: IdempotentOrderOperation): CompletedOperationEvent =
+        completedOperationMapper.completedOperationEvent(operation, this)
+
+    private fun CompletedOperationEvent.convertAndSend(): Unit =
+        convertAndSend(rabbitProperties.exchangeCompletedPayment, makeRoutingKey(), this, orderId)
+
+    private fun CompletedOperationEvent.makeRoutingKey(): String =
+        "${rabbitProperties.routingKeyDetailsPaymentPrefix}.${operationType.name.lowercase()}.${status.lowercase()}"
 }

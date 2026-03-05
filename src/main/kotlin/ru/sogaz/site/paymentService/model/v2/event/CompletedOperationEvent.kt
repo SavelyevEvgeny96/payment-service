@@ -1,7 +1,9 @@
 package ru.sogaz.site.paymentService.model.v2.event
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.model.v2.bank.response.ClientCardDetails
+import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -15,6 +17,8 @@ data class CompletedOperationEvent(
     val status: String,
     val card: ClientCardDetails? = null,
     val bank: String,
+    @field:JsonIgnore
+    val operationType: OperationType,
     val paymentType: String,
     val payDate: Instant,
     val errorText: String?,
