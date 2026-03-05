@@ -23,6 +23,6 @@ data class ClientCardDetails(
     val paymentType: String?, // Источник совершения операции (из portalType)
     val cardId: String?,
     val title: String?,
-) {
-    constructor(keyCard: String): this(null, null, null, null, keyCard, null)
-}
+)
+
+fun emptyCardDetails(keyCard: String) = ClientCardDetails(null, null, null, null, keyCard, null)

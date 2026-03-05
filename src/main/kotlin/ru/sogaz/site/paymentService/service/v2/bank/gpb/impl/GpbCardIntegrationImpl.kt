@@ -15,7 +15,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.AuthorizedCardT
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbCardAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
-import ru.sogaz.site.paymentService.model.v2.bank.response.ClientCardDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.emptyCardDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
@@ -102,11 +102,13 @@ class GpbCardIntegrationImpl(
         bankId: String,
         keyCard: String,
         defaultError: () -> String = { INTERNAL_ERROR },
-    ): BankOperationDetails = BankOperationDetails(
-        bankId,
-        OperationState.FAIL,
-        cardDetails = ClientCardDetails(keyCard),
-        errorText = getErrorCode() ?: defaultError())
+    ): BankOperationDetails =
+        BankOperationDetails(
+            bankId,
+            OperationState.FAIL,
+            cardDetails = emptyCardDetails(keyCard),
+            errorText = getErrorCode() ?: defaultError(),
+        )
 
     private fun FeignException.getErrorCode(): String? =
         runCatching { objectMapper.readValue<GpbCardPayErrorMessage>(contentUTF8()).error?.message }
