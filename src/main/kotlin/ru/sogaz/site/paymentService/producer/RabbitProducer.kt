@@ -8,15 +8,14 @@ import java.util.UUID
 
 abstract class RabbitProducer<T>(
     private val rabbitTemplate: RabbitTemplate,
+    private val exchange: String,
 ) {
     protected fun convertAndSend(
-        exchange: String,
         routingKey: String,
         message: T,
         correlationId: UUID? = null,
     ): Unit =
         convertAndSend(
-            exchange,
             routingKey,
             message!!,
             correlationId,
@@ -24,13 +23,11 @@ abstract class RabbitProducer<T>(
         )
 
     protected fun convertAndSend(
-        exchange: String,
         routingKey: String,
         message: T,
         messagePostProcessor: MessagePostProcessor,
     ): Unit =
         convertAndSend(
-            exchange,
             routingKey,
             message!!,
             null,
@@ -38,7 +35,6 @@ abstract class RabbitProducer<T>(
         )
 
     protected fun convertAndSend(
-        exchange: String,
         routingKey: String,
         message: T,
         correlationId: UUID?,

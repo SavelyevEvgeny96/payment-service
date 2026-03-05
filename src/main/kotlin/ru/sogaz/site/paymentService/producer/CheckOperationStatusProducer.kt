@@ -3,21 +3,23 @@ package ru.sogaz.site.paymentService.producer
 import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.event.CheckStatusEvent
-import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 
 @Component
 class CheckOperationStatusProducer(
     rabbitTemplate: RabbitTemplate,
-    private val rabbitProperties: RabbitProperties,
+    @Value("\${app.rabbit.exchange-check-status-payment}")
+    exchange: String,
+    @param:Value("\${app.rabbit.routing-key-check-status-payment}")
+    private val baseRoutingKey: String,
     private val maxDeathCount: Int = 5,
-) : RabbitProducer<CheckStatusEvent>(rabbitTemplate) {
+) : RabbitProducer<CheckStatusEvent>(rabbitTemplate, exchange) {
     fun sendCheckStatusEvent(operation: IdempotentOrderOperation) =
         convertAndSend(
-            rabbitProperties.exchangeCheckStatusPayment,
-            rabbitProperties.routingKeyCheckStatusPayment,
+            baseRoutingKey,
             CheckStatusEvent(operation.id!!),
             operation.idempotentOrder?.id,
             setMessageDeathCount(0),
@@ -27,7 +29,6 @@ class CheckOperationStatusProducer(
         event: CheckStatusEvent,
         deathCount: Int = 0,
     ) = convertAndSend(
-        rabbitProperties.exchangeCheckStatusPayment,
         makeRoutingKey(deathCount),
         CheckStatusEvent(event.operationId),
         setMessageDeathCount(deathCount),
@@ -37,7 +38,6 @@ class CheckOperationStatusProducer(
         operation: IdempotentOrderOperation,
         deathCount: Int = 0,
     ) = convertAndSend(
-        rabbitProperties.exchangeCheckStatusPayment,
         makeRoutingKey(deathCount),
         CheckStatusEvent(operation.id!!),
         operation.idempotentOrder?.id,
@@ -45,7 +45,7 @@ class CheckOperationStatusProducer(
     )
 
     private fun makeRoutingKey(deathCount: Int) =
-        "${rabbitProperties.routingKeyCheckStatusPayment}.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
+        "${baseRoutingKey}.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
 
     private fun setMessageDeathCount(deathCount: Int): (Message) -> Message =
         { message ->
