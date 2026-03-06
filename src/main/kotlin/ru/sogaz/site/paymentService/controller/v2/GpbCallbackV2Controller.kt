@@ -53,6 +53,6 @@ class GpbCallbackV2Controller(
         qrcId: String,
         merchantId: String,
     ) {
-        operationCallbackService.updateByGpbSbpCallback(UUID.fromString(qrcId), merchantId)
+        operationCallbackService.updateByOrderIdAndPaymentBankId(UUID.fromString(qrcId), merchantId)
     }
 }

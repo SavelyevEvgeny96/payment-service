@@ -66,7 +66,7 @@ class OperationServiceTest {
             )
 
         every { idempotentOrderDao.save(any()) } returnsArgument 0
-        every { idempotentOrderOperationDao.save(any()) } returnsArgument 0
+        every { idempotentOrderOperationDao.saveAndFlush(any()) } returnsArgument 0
 
         every { cardPayOperationRequest.orderId } returns UUID.randomUUID()
     }
@@ -79,7 +79,7 @@ class OperationServiceTest {
 
         val result = operationService.runIdempotentOperation(testCommand).getOrThrow()
 
-        verify(exactly = 3) { idempotentOrderOperationDao.save(any()) }
+        verify(exactly = 3) { idempotentOrderOperationDao.saveAndFlush(any()) }
 
         assertThat(result)
             .isEqualTo(TEST_PAYMENT_PAGE)
@@ -94,7 +94,7 @@ class OperationServiceTest {
 
         val result: String = operationService.runIdempotentOperation(testCommand).getOrThrow()
 
-        verify(exactly = 2) { idempotentOrderOperationDao.save(any()) }
+        verify(exactly = 2) { idempotentOrderOperationDao.saveAndFlush(any()) }
 
         assertThat(result)
             .isEqualTo(TEST_PAYMENT_PAGE)

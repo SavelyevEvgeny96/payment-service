@@ -1,9 +1,8 @@
-package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.callback
+package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response
 
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common.GpbPayStatusMapper
-import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardDetailMapper
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
@@ -16,5 +15,7 @@ interface GpbCallbackMapper {
     @Mapping(target = "state", source = ".", defaultValue = "WAIT")
     @Mapping(target = "bankId", source = "trx_id")
     @Mapping(target = "cardDetails", source = ".")
+    @Mapping(target = "errorText", source = "extResultCode.message")
+    @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
     fun toBankOperationDetails(gpbCallback: GpbCardCallback): BankOperationDetails
 }

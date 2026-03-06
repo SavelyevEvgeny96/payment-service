@@ -26,11 +26,11 @@ class IdempotentOrderServiceImpl(
         return operationRequest
             .mapToIdempotentOrderOperation()
             .apply { this.idempotentOrder = idempotentOrder }
-            .run(idempotentOrderOperationDao::save)
+            .run(idempotentOrderOperationDao::saveAndFlush)
     }
 
     override fun saveOperation(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation =
-        idempotentOrderOperationDao.save(idempotentOrderOperation)
+        idempotentOrderOperationDao.saveAndFlush(idempotentOrderOperation)
 
     private fun findIdempotentOrderOrCreateNewOne(operationRequest: OperationRequest): IdempotentOrder =
         idempotentOrderDao.findIdempotentOrderByOrderId(operationRequest.orderId)

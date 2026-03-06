@@ -13,7 +13,7 @@ interface CompletedOperationMapper {
     @Mapping(target = "payDate", expression = "java(Instant.now())")
     @Mapping(target = "totalAmount", source = "operation.premiumAmount")
     @Mapping(target = "status", source = "operationDetails.state")
-    @Mapping(target = "keyCard", source = "operationDetails.cardDetails.cardId")
+    @Mapping(target = "card", source = "operationDetails.cardDetails")
     fun completedOperationEvent(
         operation: IdempotentOrderOperation,
         operationDetails: BankOperationDetails,

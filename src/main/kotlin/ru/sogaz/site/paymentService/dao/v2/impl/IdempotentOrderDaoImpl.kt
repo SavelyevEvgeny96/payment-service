@@ -13,5 +13,5 @@ class IdempotentOrderDaoImpl(
 ) : IdempotentOrderDao {
     override fun findIdempotentOrderByOrderId(orderId: UUID): IdempotentOrder? = idempotentOrderRepository.findById(orderId).getOrNull()
 
-    override fun save(idempotentOrder: IdempotentOrder): IdempotentOrder = idempotentOrderRepository.save(idempotentOrder)
+    override fun save(idempotentOrder: IdempotentOrder): IdempotentOrder = idempotentOrderRepository.saveAndFlush(idempotentOrder)
 }

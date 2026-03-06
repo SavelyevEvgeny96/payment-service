@@ -8,5 +8,5 @@ data class OperationCommand<REQUEST : OperationRequest, RESULT>(
     val requestToOrderOperationMapper: (REQUEST.() -> IdempotentOrderOperation)? = null,
     val strategy: AbstractOperationStrategy<REQUEST, RESULT>,
 ) {
-    constructor(request: REQUEST, strategy: AbstractOperationStrategy<REQUEST, RESULT>) : this(request, null, strategy)
+    var finalStateAction: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation = { _ -> this }
 }

@@ -9,6 +9,7 @@ class RabbitProperties {
     private val logger = loggerFor(javaClass)
     lateinit var exchangeOrder: String
     lateinit var exchangePayment: String
+    lateinit var exchangeCompletedPayment: String
     lateinit var exchangeCheckStatusPayment: String
     lateinit var paymentStatusQueue: String
     lateinit var paymentRefundQueue: String
@@ -27,6 +28,7 @@ class RabbitProperties {
         logger.info("PostConstruct:")
         logger.info("exchangeOrder = $exchangeOrder")
         logger.info("exchangePayment = $exchangePayment")
+        logger.info("exchangeCompletedPayment = $exchangeCompletedPayment")
         logger.info("exchangeCheckStatusPayment = $exchangeCheckStatusPayment")
         logger.info("paymentStatusQueue = $paymentStatusQueue")
         logger.info("paymentRefundQueue = $paymentRefundQueue")

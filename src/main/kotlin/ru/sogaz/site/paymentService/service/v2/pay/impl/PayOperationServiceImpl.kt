@@ -11,10 +11,12 @@ import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
-import ru.sogaz.site.paymentService.service.v2.operation.inline.step
+import ru.sogaz.site.paymentService.service.v2.operation.inline.bankOperationCommand
+import ru.sogaz.site.paymentService.service.v2.operation.inline.onFinalState
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
+import ru.sogaz.site.paymentService.service.v2.status.OperationStatusUpdater
 
 @Service
 class PayOperationServiceImpl(
@@ -22,6 +24,7 @@ class PayOperationServiceImpl(
     private val gpbCardIntegration: GpbCardIntegration,
     private val gpbSbpIntegration: GpbSbpPayIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
+    private val operationStatusUpdater: OperationStatusUpdater,
 ) : PayOperationService {
     override fun cardPayOperation(payOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         payOperationRequest
@@ -29,8 +32,7 @@ class PayOperationServiceImpl(
             .runCommand()
 
     private fun CardPayOperationRequest.cardPayOperationCommand() =
-        OperationCommand(
-            request = this,
+        bankOperationCommand(
             requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
             strategy = cardPayStrategy(),
         )
@@ -50,8 +52,7 @@ class PayOperationServiceImpl(
             .runCommand()
 
     private fun SbpPayOperationRequest.sbpPayOperationCommand() =
-        OperationCommand(
-            request = this,
+        bankOperationCommand(
             requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
             strategy = sbpPayStrategy(),
         )
@@ -72,14 +73,17 @@ class PayOperationServiceImpl(
             request = this,
             requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
             strategy = cardRecurrentPayStrategy(),
+        ).onFinalState(
+            operationStatusUpdater::updateByOperationDetails,
         )
 
     private fun CardRecurrentOperationRequest.cardRecurrentPayStrategy() =
         stepWithSave(
             action = gpbCardIntegration::authorize,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByAuthorizedTrx,
-        ).step(
+        ).stepWithSave(
             action = gpbCardIntegration::recurrentPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
         )
 
     private fun <REQUEST : OperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =

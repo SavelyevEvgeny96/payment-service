@@ -13,8 +13,8 @@ data class CardRecurrentOperationRequest(
     override val description: String,
     @field:Schema(description = "Сумма операции", example = "10.00")
     override val amount: BigDecimal,
-    @field:Schema(description = "Флаг необходимости анонимизированной оплаты", defaultValue = "false")
-    override val depersonalization: Boolean,
+    @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "false")
+    override val depersonalization: Boolean = false,
     @field:Schema(description = "Платежные позиции")
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
     @field:Schema(description = "Id карты сохраненной в банке")

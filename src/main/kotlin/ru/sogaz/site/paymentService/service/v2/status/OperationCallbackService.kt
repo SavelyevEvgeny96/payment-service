@@ -6,7 +6,7 @@ import java.util.UUID
 interface OperationCallbackService {
     fun updateByGpbCardCallback(gpbCardCallback: GpbCardCallback)
 
-    fun updateByGpbSbpCallback(
+    fun updateByOrderIdAndPaymentBankId(
         orderId: UUID,
         paymentBankId: String,
     )
