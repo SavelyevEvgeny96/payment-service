@@ -13,7 +13,7 @@ app:
   rabbit:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
-    exchange-completed-payment: ${PAYMENT_EXCHANGE:payment.completed.exchange}
+    exchange-completed-payment: ${PAYMENT_COMPLETED_EXCHANGE:payment.completed.exchange}
     exchange-check-status-payment: ${PAYMENT_STATUS_CHECK_EXCHANGE:payment.status.check.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
     payment-status-check-queue: ${PAYMENT_STATUS_CHECK_QUEUE:payment.status.check.queue}
@@ -22,7 +22,7 @@ app:
     order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
     order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}
     routing-key-payment-created: ${ROUTING_KEY_PAYMENT_CREATED_QUEUE:payment.created}
-    routing-key-check-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_QUEUE:payment.status.check}
+    routing-key-check-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_CHECK_QUEUE:payment.status.check}
     routing-key-details-payment-prefix: ${PAYMENT_DETAILS_ROUTING_KEY_PREFIX:payment.details}
     routing-key-status-payment: ${ROUTING_KEY_PAYMENT_STATUS_QUEUE:payment.status.created}
     routing-key-payment-status-refund: ${ROUTING_KEY_PAYMENT_STATUS_REFUND_QUEUE:payment.status.refund.created}
