@@ -48,7 +48,6 @@ class WaitingPaymentsStatusesScheduler(
     private fun runTask() =
         findChunkSizeConfig()
             .run(::getEarliestPaymentsChunkFromQueue)
-            .also(::logWaitingPayments)
             .onEach(::updatePaymentStatus)
 
     private fun getEarliestPaymentsChunkFromQueue(chunkSize: Int) = waitingPaymentDao.findTopNEarliestUpdated(chunkSize)
@@ -62,10 +61,6 @@ class WaitingPaymentsStatusesScheduler(
             logger.error(LOG_CHUNK_SIZE_CONFIG_ERROR, ex)
             DEFAULT_CHUNK_SIZE
         }
-
-    private fun logWaitingPayments(payments: List<WaitingPayment>) {
-        logger.debug("Для обновления статусов выгружено ${payments.size} платежей ожидающих оплаты")
-    }
 
     private fun logResult(result: Result<Any>) {
         if (result.isFailure) {

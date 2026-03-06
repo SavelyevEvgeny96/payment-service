@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.enums.PaymentExtendedCodeMessage
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.BankIntegrationService
 import ru.sogaz.site.paymentService.service.QueueStatusResultNameNormalizeService
 import ru.sogaz.site.paymentService.service.ReceiptService

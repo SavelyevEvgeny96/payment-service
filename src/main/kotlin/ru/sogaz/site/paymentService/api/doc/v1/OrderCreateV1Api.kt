@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -54,6 +55,7 @@ interface OrderCreateV1Api {
     @UnauthorizedApiResponse
     @ForbiddenApiResponse
     @ValidationErrorApiResponse
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("payment/create", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createOrder(
         @io.swagger.v3.oas.annotations.parameters.RequestBody(

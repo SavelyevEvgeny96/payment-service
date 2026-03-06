@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.rabbit.impl
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dto.data.ParsedResult
 import ru.sogaz.site.paymentService.dto.data.PayloadInfo
@@ -10,7 +11,7 @@ import ru.sogaz.site.paymentService.dto.data.PayloadInfoExtractor
 import ru.sogaz.site.paymentService.dto.rabbit.OrderPayloadDto
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.order.PaidOrderMessageMapper
-import ru.sogaz.site.paymentService.properties.RabbitProperties
+import ru.sogaz.site.paymentService.properties.rabbit.RabbitProperties
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBankIntegrationServiceImpl
 import ru.sogaz.site.paymentService.service.rabbit.BuildConsumerService
 import ru.sogaz.site.paymentService.service.rabbit.RecurringPaymentConsumer
@@ -28,6 +29,7 @@ import ru.sogaz.site.paymentService.service.rabbit.SendMessageProducer
  * В случае ошибки выполняется REJECT без повторной постановки в очередь.
  */
 @Service
+@ConditionalOnProperty(name = ["api.version"], havingValue = "v1")
 class RecurringPaymentConsumerImpl(
     private val buildConsumerService: BuildConsumerService,
     private val paidOrderMessageMapper: PaidOrderMessageMapper,

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mapstruct.factory.Mappers
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForObject
+import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentAuthClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dao.OrderDao
@@ -103,6 +104,9 @@ class BankIntegrationServiceTest {
 
     @MockK
     private lateinit var gpbCardPaymentClient: GpbCardPaymentClient
+
+    @MockK
+    private lateinit var gpbCardPaymentAuthClient: GpbCardPaymentAuthClient
 
     @MockK
     private lateinit var gpbSbpPaymentClient: GpbSbpPaymentClient
@@ -244,7 +248,7 @@ class BankIntegrationServiceTest {
     ).apply { this.subOrders.addAll(subOrders) }
 
     private fun mockGPBRestTemplate() {
-        every { gpbCardPaymentClient.getToken(any(String::class)) } returns GPBTokenResponse
+        every { gpbCardPaymentAuthClient.getToken(any(String::class)) } returns GPBTokenResponse
         every { gpbCardPaymentClient.startPayment(any(), any(), any()) } returns GPBCardPaymentResponse
         every { gpbSbpPaymentClient.startPayment(any(), any()) } returns GPBSBPPaymentResponse
         every { gpbSbpPaymentClient.getQrImage(any()) } returns gpbqrImageResponse

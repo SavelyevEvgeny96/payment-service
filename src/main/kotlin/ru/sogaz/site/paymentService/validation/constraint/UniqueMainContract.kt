@@ -9,14 +9,14 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
-@Constraint(validatedBy = [UniqueMainContractValidator::class])
+@Constraint(validatedBy = [UniqueMainContractSubOrderRequestValidator::class])
 annotation class UniqueMainContract(
     val message: String = "Not unique main contract",
     val groups: Array<KClass<*>> = [],
     val payload: Array<KClass<out Payload>> = [],
 )
 
-class UniqueMainContractValidator : ConstraintValidator<UniqueMainContract, List<SubOrderRequest>> {
+class UniqueMainContractSubOrderRequestValidator : ConstraintValidator<UniqueMainContract, List<SubOrderRequest>> {
     override fun isValid(
         orders: List<SubOrderRequest>,
         context: ConstraintValidatorContext?,

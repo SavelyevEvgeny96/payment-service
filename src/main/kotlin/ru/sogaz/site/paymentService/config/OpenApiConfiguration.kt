@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.config
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
-import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
@@ -17,7 +17,12 @@ import org.springframework.context.annotation.Profile
     scheme = "bearer",
 )
 @OpenAPIDefinition(
-    security = [SecurityRequirement(name = "bearerAuth")],
+    info =
+        Info(
+            title = "Payment Service",
+            version = "v1",
+            description = "Сервис платежей",
+        ),
 )
 class OpenApiConfiguration {
     @Bean
@@ -27,6 +32,25 @@ class OpenApiConfiguration {
             .group("main")
             .pathsToMatch("/payment/**")
             .displayName("API v1")
+            .build()
+
+    @Bean
+    fun apiV2(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("new")
+            .pathsToMatch("/v2/payment/**")
+            .displayName("API v2")
+            .build()
+
+    @Bean
+    @Profile("test", "local")
+    fun adminV2Api(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("testV2")
+            .pathsToMatch("/admin/v2/payment/**")
+            .displayName("API v2 для администрирования")
             .build()
 
     @Bean
