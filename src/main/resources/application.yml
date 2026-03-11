@@ -61,8 +61,8 @@ spring:
             readTimeout: 2000
             retryer: feign.Retryer
           gpb-card-auth-client:
-            connectTimeout: 1000
-            readTimeout: 2000
+            connectTimeout: ${GPB_AUTH_CONNECTION_TIMEOUT:1000}
+            readTimeout: ${GPB_AUTH_READ_TIMEOUT:2000}
             retryer: feign.Retryer
   rabbitmq:
     host: ${RABBIT_HOST}
