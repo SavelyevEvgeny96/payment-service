@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
-import ru.sogaz.site.paymentService.config.OkHttpClientConfig
 import ru.sogaz.site.paymentService.dto.request.GPBPaymentRequest
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
@@ -28,7 +27,6 @@ import ru.sogaz.site.paymentService.dto.response.bank.SessionIdDtoResponse
 @FeignClient(
     name = "gpb-card-payment-client",
     url = "\${api.gpb.card.basePath}",
-    configuration = [OkHttpClientConfig::class],
 )
 interface GpbCardPaymentClient {
     /**

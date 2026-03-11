@@ -44,8 +44,7 @@ class CheckOperationStatusProducer(
         setMessageDeathCount(deathCount),
     )
 
-    private fun makeRoutingKey(deathCount: Int) =
-        "${baseRoutingKey}.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
+    private fun makeRoutingKey(deathCount: Int) = "$baseRoutingKey.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
 
     private fun setMessageDeathCount(deathCount: Int): (Message) -> Message =
         { message ->

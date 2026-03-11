@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.sogaz.site.paymentService.loggerFor
 
-@Configuration
 class FeignTimingConfig {
     private val log = loggerFor(FeignTimingConfig::class.java)
 

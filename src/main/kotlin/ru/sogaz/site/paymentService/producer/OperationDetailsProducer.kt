@@ -27,9 +27,7 @@ class OperationDetailsProducer(
     private fun BankOperationDetails.mapToCompletedOperationEvent(operation: IdempotentOrderOperation): CompletedOperationEvent =
         completedOperationMapper.completedOperationEvent(operation, this)
 
-    private fun CompletedOperationEvent.convertAndSend(): Unit =
-        convertAndSend(makeRoutingKey(), this, orderId)
+    private fun CompletedOperationEvent.convertAndSend(): Unit = convertAndSend(makeRoutingKey(), this, orderId)
 
-    private fun CompletedOperationEvent.makeRoutingKey(): String =
-        "$baseRoutingKey.${operationType.name.lowercase()}.${status.lowercase()}"
+    private fun CompletedOperationEvent.makeRoutingKey(): String = "$baseRoutingKey.${operationType.name.lowercase()}.${status.lowercase()}"
 }

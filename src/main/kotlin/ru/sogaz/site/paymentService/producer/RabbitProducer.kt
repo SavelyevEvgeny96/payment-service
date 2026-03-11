@@ -19,7 +19,7 @@ abstract class RabbitProducer<T>(
             routingKey,
             message!!,
             correlationId,
-            null
+            null,
         )
 
     protected fun convertAndSend(
