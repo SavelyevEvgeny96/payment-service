@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.GpbCallbackV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
-import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCallbackResponse
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCallbackResponse
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.exception.InvalidSignatureException
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
 import ru.sogaz.site.paymentService.service.SignatureVerifier

@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.service.v2.pay.impl
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
@@ -13,6 +14,7 @@ import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
 import ru.sogaz.site.paymentService.service.v2.operation.inline.bankOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFinalState
+import ru.sogaz.site.paymentService.service.v2.operation.inline.step
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
@@ -69,8 +71,7 @@ class PayOperationServiceImpl(
             .runCommand()
 
     private fun CardRecurrentOperationRequest.cardRecurrentPayOperationCommand() =
-        OperationCommand(
-            request = this,
+        bankOperationCommand(
             requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
             strategy = cardRecurrentPayStrategy(),
         ).onFinalState(
@@ -84,6 +85,25 @@ class PayOperationServiceImpl(
         ).stepWithSave(
             action = gpbCardIntegration::recurrentPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
+        )
+
+    override fun qrImageSbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentQrContent =
+        payOperationRequest
+            .qrImageSbpPayOperationCommand()
+            .runCommand()
+
+    private fun SbpPayOperationRequest.qrImageSbpPayOperationCommand() =
+        bankOperationCommand(
+            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
+            strategy = qrImageSbpPayStrategy(),
+        )
+
+    private fun SbpPayOperationRequest.qrImageSbpPayStrategy() =
+        stepWithSave(
+            action = gpbSbpIntegration::sbpPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
+        ).step(
+            action = gpbSbpIntegration::getQrContent,
         )
 
     private fun <REQUEST : OperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =
