@@ -1,9 +1,9 @@
 package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common
 
 import org.mapstruct.Mapper
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbCardPayStatus
 import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbSbpPayStatus
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 
 @Mapper

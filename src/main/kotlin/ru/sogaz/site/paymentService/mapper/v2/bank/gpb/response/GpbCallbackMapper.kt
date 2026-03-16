@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common.GpbPayStatusMapper
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 

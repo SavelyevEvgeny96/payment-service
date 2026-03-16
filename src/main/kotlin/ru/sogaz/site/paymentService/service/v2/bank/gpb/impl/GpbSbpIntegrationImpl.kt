@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbSbpResponseMapper
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbSbpPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpPayResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
@@ -71,4 +72,13 @@ class GpbSbpIntegrationImpl(
         val operationDetails = responseMapper.toBankOperationDetails(sbpStatusResponse.first())
         return operationDetails.state
     }
+
+    override fun getQrContent(
+        sbpPayOperationRequest: SbpPayOperationRequest,
+        bankPaymentPageData: BankPaymentPageData,
+    ): BankPaymentQrContent =
+        bankPaymentPageData
+            .run(requestMapper::toQrImageRequest)
+            .run(gpbSbpClient::getQrImage)
+            .run { responseMapper.toBankPaymentQrData(bankPaymentPageData, this) }
 }
