@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.mapper.v2.event.CompletedOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
+import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.event.CompletedOperationEvent
 
 @Component
@@ -20,12 +21,28 @@ class OperationDetailsProducer(
     fun sendOperationDetails(
         operation: IdempotentOrderOperation,
         bankOperationDetails: BankOperationDetails,
-    ) = bankOperationDetails
-        .mapToCompletedOperationEvent(operation)
+    ) = operation
+        .mapToCompletedOperationEvent(bankOperationDetails)
         .convertAndSend()
 
-    private fun BankOperationDetails.mapToCompletedOperationEvent(operation: IdempotentOrderOperation): CompletedOperationEvent =
-        completedOperationMapper.completedOperationEvent(operation, this)
+    fun sendFailureOperationDetails(
+        operation: IdempotentOrderOperation,
+        errorText: String = "Внутренняя ошибка сервиса"
+    ) = sendOperationDetails(
+        operation,
+        BankOperationDetails(operation.paymentBankId ?: "", OperationState.FAIL, errorText = errorText)
+    )
+
+    fun sendOperationDetails(operation: IdempotentOrderOperation) =
+        operation
+            .mapToCompletedOperationEvent()
+            .convertAndSend()
+
+    private fun IdempotentOrderOperation.mapToCompletedOperationEvent(details: BankOperationDetails): CompletedOperationEvent =
+        completedOperationMapper.completedOperationEvent(this, details)
+
+    private fun IdempotentOrderOperation.mapToCompletedOperationEvent(): CompletedOperationEvent =
+        completedOperationMapper.completedOperationEvent(this)
 
     private fun CompletedOperationEvent.convertAndSend(): Unit = convertAndSend(makeRoutingKey(), this, orderId)
 

@@ -28,6 +28,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationReq
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardAccountManagerImpl
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbCardIntegrationImpl
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
@@ -84,7 +85,7 @@ class GpbCardIntegrationTest {
                 requestMapper,
                 responseMapper,
                 jacksonObjectMapper(),
-                cardAccountProperties,
+                GpbCardAccountManagerImpl(cardAccountProperties),
             )
 
         initMockAccountProperties()

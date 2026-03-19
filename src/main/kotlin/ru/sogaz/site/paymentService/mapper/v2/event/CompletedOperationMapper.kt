@@ -18,4 +18,11 @@ interface CompletedOperationMapper {
         operation: IdempotentOrderOperation,
         operationDetails: BankOperationDetails,
     ): CompletedOperationEvent
+
+    @Mapping(target = "paymentId", source = "operation.id")
+    @Mapping(target = "orderId", source = "operation.idempotentOrder.id")
+    @Mapping(target = "payDate", expression = "java(Instant.now())")
+    @Mapping(target = "totalAmount", source = "operation.premiumAmount")
+    @Mapping(target = "status", source = "operation.state")
+    fun completedOperationEvent(operation: IdempotentOrderOperation): CompletedOperationEvent
 }

@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.scheduler
 
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.MDC
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import ru.sogaz.site.filterStarter.services.RequestInfo.SERVICE_NAME
@@ -15,6 +16,7 @@ import ru.sogaz.site.paymentService.service.PaymentStatusService
 import java.util.UUID
 
 @Component
+@ConditionalOnProperty(name = ["api.version"], havingValue = "v1")
 class WaitingPaymentsStatusesScheduler(
     private val configDataDao: ConfigDataDao,
     private val waitingPaymentDao: WaitingPaymentDao,

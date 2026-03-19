@@ -23,6 +23,6 @@ class OperationStatusUpdaterImpl(
         operationDetailsProducer.sendOperationDetails(operation, operationDetails)
         operation.state = operationDetails.state
         operation.operationFinished = Instant.now()
-        return idempotentOrderOperationDao.saveAndFlush(operation)
+        return idempotentOrderOperationDao.save(operation)
     }
 }

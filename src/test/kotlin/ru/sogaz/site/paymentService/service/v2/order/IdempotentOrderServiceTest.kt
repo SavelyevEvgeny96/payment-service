@@ -18,6 +18,7 @@ import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapperImpl
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
+import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.service.v2.order.impl.IdempotentOrderServiceImpl
 import java.math.BigDecimal
@@ -52,7 +53,7 @@ class IdempotentOrderServiceTest {
             )
 
         every { idempotentOrderDao.save(any()) } returnsArgument 0
-        every { idempotentOrderOperationDao.saveAndFlush(any()) } returnsArgument 0
+        every { idempotentOrderOperationDao.save(any()) } returnsArgument 0
 
         every { payOperationRequest.orderId } returns UUID.randomUUID()
         every { payOperationRequest.amount } returns BigDecimal.TEN
@@ -62,27 +63,27 @@ class IdempotentOrderServiceTest {
     fun `saveOperation should create new Order and new operation if not found current order`() {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns null
 
-        idempotentOrderService.saveOperation(payOperationRequest)
+        idempotentOrderService.saveOperation(payOperationRequest, OperationBank.GPB)
 
         verify { idempotentOrderDao.save(any()) }
-        verify { idempotentOrderOperationDao.saveAndFlush(any()) }
+        verify { idempotentOrderOperationDao.save(any()) }
     }
 
     @Test
     fun `saveOperation should return current Order and new operation`() {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns mockk()
 
-        idempotentOrderService.saveOperation(payOperationRequest)
+        idempotentOrderService.saveOperation(payOperationRequest, OperationBank.GPB)
 
         verify(exactly = 0) { idempotentOrderDao.save(any()) }
-        verify { idempotentOrderOperationDao.saveAndFlush(any()) }
+        verify { idempotentOrderOperationDao.save(any()) }
     }
 
     @Test
     fun `saveOperation should return operation with types from request`() {
         every { idempotentOrderDao.findIdempotentOrderByOrderId(any()) } returns mockk()
 
-        val savedOperation = idempotentOrderService.saveOperation(payOperationRequest)
+        val savedOperation = idempotentOrderService.saveOperation(payOperationRequest, OperationBank.GPB)
 
         assertThat(savedOperation)
             .returns(payOperationRequest.operationType, IdempotentOrderOperation::operationType)
@@ -95,10 +96,7 @@ class IdempotentOrderServiceTest {
         every { payOperationRequest.depersonalization } returns true
 
         val savedOperation =
-            idempotentOrderService.saveOperation(
-                payOperationRequest,
-                idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
-            )
+            idempotentOrderService.saveOperation(payOperationRequest, OperationBank.GPB)
 
         assertThat(savedOperation)
             .returns(true, IdempotentOrderOperation::depersonalization)

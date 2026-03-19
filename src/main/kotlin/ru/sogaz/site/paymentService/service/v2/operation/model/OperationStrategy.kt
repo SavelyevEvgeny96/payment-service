@@ -1,9 +1,8 @@
 package ru.sogaz.site.paymentService.service.v2.operation.model
 
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
-import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
 
-sealed class AbstractOperationStrategy<REQUEST : OperationRequest, RESULT>(
+sealed class AbstractOperationStrategy<REQUEST, RESULT>(
     val request: REQUEST,
     private val needSaveResult: Boolean,
 ) {
@@ -19,7 +18,7 @@ sealed class AbstractOperationStrategy<REQUEST : OperationRequest, RESULT>(
         }
 }
 
-class OperationStrategy<REQUEST : OperationRequest, RESULT>(
+class OperationStrategy<REQUEST, RESULT>(
     request: REQUEST,
     needSaveResult: Boolean,
     private val action: REQUEST.() -> RESULT,
@@ -36,7 +35,7 @@ class OperationStrategy<REQUEST : OperationRequest, RESULT>(
     }
 }
 
-class FollowingOperationStrategy<REQUEST : OperationRequest, PREV_RESULT, RESULT>(
+class FollowingOperationStrategy<REQUEST, PREV_RESULT, RESULT>(
     request: REQUEST,
     needSaveResult: Boolean,
     private val prevOperation: AbstractOperationStrategy<REQUEST, PREV_RESULT>,
