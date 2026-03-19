@@ -41,9 +41,13 @@ api:
         main:
           portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
           merchantId: B80540E3096C8730BCE3
+          identifier:
+          password:
         depersonalized:
           portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
           merchantId: B80540E3096C8730BCE3
+          identifier:
+          password:
     sbp:
       basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
       redirectUrl: https://www.sogaz.ru/

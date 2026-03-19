@@ -138,9 +138,13 @@ api:
         main:
           portalId: ${GPB_PORTAL_ID}
           merchantId: ${GPB_MERCHANT_ID}
+          identifier: ${GPB_BANK_LOGIN}
+          password: ${GPB_BANK_PASS}
         depersonalized:
           portalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
+          identifier: ${GPB_BANK_LOGIN}
+          password: ${GPB_BANK_PASS}
     sbp:
       basePath: ${GPB_SBP_URL}
       redirectUrl: ${GPB_SBP_REDIRECT_URL:https://www.sogaz.ru/}

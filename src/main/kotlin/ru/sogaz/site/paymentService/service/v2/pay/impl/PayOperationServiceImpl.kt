@@ -4,21 +4,22 @@ import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
-import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
+import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
-import ru.sogaz.site.paymentService.service.v2.operation.inline.bankOperationCommand
+import ru.sogaz.site.paymentService.service.v2.operation.inline.gpbOperationCommand
+import ru.sogaz.site.paymentService.service.v2.operation.inline.onFailure
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFinalState
 import ru.sogaz.site.paymentService.service.v2.operation.inline.step
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
-import ru.sogaz.site.paymentService.service.v2.status.OperationStatusUpdater
 
 @Service
 class PayOperationServiceImpl(
@@ -26,16 +27,18 @@ class PayOperationServiceImpl(
     private val gpbCardIntegration: GpbCardIntegration,
     private val gpbSbpIntegration: GpbSbpPayIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
-    private val operationStatusUpdater: OperationStatusUpdater,
+    private val operationDetailsProducer: OperationDetailsProducer,
 ) : PayOperationService {
+    companion object {
+        private const val RECURRENT_INTERNAL_ERROR = "Платежная система недоступна"
+    }
     override fun cardPayOperation(payOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         payOperationRequest
             .cardPayOperationCommand()
             .runCommand()
 
     private fun CardPayOperationRequest.cardPayOperationCommand() =
-        bankOperationCommand(
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
+        gpbOperationCommand(
             strategy = cardPayStrategy(),
         )
 
@@ -54,8 +57,7 @@ class PayOperationServiceImpl(
             .runCommand()
 
     private fun SbpPayOperationRequest.sbpPayOperationCommand() =
-        bankOperationCommand(
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
+        gpbOperationCommand(
             strategy = sbpPayStrategy(),
         )
 
@@ -71,12 +73,13 @@ class PayOperationServiceImpl(
             .runCommand()
 
     private fun CardRecurrentOperationRequest.cardRecurrentPayOperationCommand() =
-        bankOperationCommand(
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
+        gpbOperationCommand(
             strategy = cardRecurrentPayStrategy(),
-        ).onFinalState(
-            operationStatusUpdater::updateByOperationDetails,
-        )
+        ) onFailure {
+            operationDetailsProducer.sendFailureOperationDetails(this, RECURRENT_INTERNAL_ERROR)
+        } onFinalState {
+            operationDetailsProducer.sendOperationDetails(this, it)
+        }
 
     private fun CardRecurrentOperationRequest.cardRecurrentPayStrategy() =
         stepWithSave(
@@ -93,8 +96,7 @@ class PayOperationServiceImpl(
             .runCommand()
 
     private fun SbpPayOperationRequest.qrImageSbpPayOperationCommand() =
-        bankOperationCommand(
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
+        gpbOperationCommand(
             strategy = qrImageSbpPayStrategy(),
         )
 
@@ -106,6 +108,6 @@ class PayOperationServiceImpl(
             action = gpbSbpIntegration::getQrContent,
         )
 
-    private fun <REQUEST : OperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =
-        operationService.runIdempotentOperation(this).getOrThrow()
+    private fun <REQUEST : PayOperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =
+        operationService.runOperation(this).getOrThrow()
 }

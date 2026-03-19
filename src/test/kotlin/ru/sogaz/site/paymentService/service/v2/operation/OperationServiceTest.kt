@@ -17,6 +17,7 @@ import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapp
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.producer.CheckOperationStatusProducer
 import ru.sogaz.site.paymentService.service.v2.operation.impl.OperationServiceImpl
+import ru.sogaz.site.paymentService.service.v2.operation.inline.gpbOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.step
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
@@ -66,7 +67,7 @@ class OperationServiceTest {
             )
 
         every { idempotentOrderDao.save(any()) } returnsArgument 0
-        every { idempotentOrderOperationDao.saveAndFlush(any()) } returnsArgument 0
+        every { idempotentOrderOperationDao.save(any()) } returnsArgument 0
 
         every { cardPayOperationRequest.orderId } returns UUID.randomUUID()
     }
@@ -77,9 +78,9 @@ class OperationServiceTest {
         every { cardPayOperationRequest.depersonalization } returns true
         val testCommand = testCardPayOperationCommand2StepsWithSave()
 
-        val result = operationService.runIdempotentOperation(testCommand).getOrThrow()
+        val result = operationService.runOperation(testCommand).getOrThrow()
 
-        verify(exactly = 3) { idempotentOrderOperationDao.saveAndFlush(any()) }
+        verify(exactly = 3) { idempotentOrderOperationDao.save(any()) }
 
         assertThat(result)
             .isEqualTo(TEST_PAYMENT_PAGE)
@@ -92,44 +93,34 @@ class OperationServiceTest {
 
         val testCommand = testCardPayOperationCommand1StepWithSaveAnd1StepWithout()
 
-        val result: String = operationService.runIdempotentOperation(testCommand).getOrThrow()
+        val result: String = operationService.runOperation(testCommand).getOrThrow()
 
-        verify(exactly = 2) { idempotentOrderOperationDao.saveAndFlush(any()) }
+        verify(exactly = 2) { idempotentOrderOperationDao.save(any()) }
 
         assertThat(result)
             .isEqualTo(TEST_PAYMENT_PAGE)
     }
 
     private fun testCardPayOperationCommand2StepsWithSave() =
-        OperationCommand(
-            request = cardPayOperationRequest,
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
-            strategy = cardPayStrategyWith2StepsWithSave(),
+        cardPayOperationRequest.gpbOperationCommand(
+            cardPayOperationRequest
+                .stepWithSave(
+                    action = { TEST_BANK_ID },
+                    resultToOrderOperationMapper = { resultBankId -> apply { paymentBankId = resultBankId } },
+                ).stepWithSave(
+                    action = { _ -> TEST_PAYMENT_PAGE },
+                    resultToOrderOperationMapper = { resultPaymentPage -> apply { paymentBankUrl = resultPaymentPage } },
+                ),
         )
-
-    private fun cardPayStrategyWith2StepsWithSave() =
-        cardPayOperationRequest
-            .stepWithSave(
-                action = { TEST_BANK_ID },
-                resultToOrderOperationMapper = { resultBankId -> apply { paymentBankId = resultBankId } },
-            ).stepWithSave(
-                action = { _ -> TEST_PAYMENT_PAGE },
-                resultToOrderOperationMapper = { resultPaymentPage -> apply { paymentBankUrl = resultPaymentPage } },
-            )
 
     private fun testCardPayOperationCommand1StepWithSaveAnd1StepWithout(): OperationCommand<CardPayOperationRequest, String> =
-        OperationCommand(
-            request = cardPayOperationRequest,
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
-            strategy = cardPayStrategyWith1StepWithSaveAnd1Without(),
+        cardPayOperationRequest.gpbOperationCommand(
+            cardPayOperationRequest
+                .stepWithSave(
+                    action = { TEST_BANK_ID },
+                    resultToOrderOperationMapper = { resultBankId -> apply { paymentBankId = resultBankId } },
+                ).step(
+                    action = { _ -> TEST_PAYMENT_PAGE },
+                ),
         )
-
-    private fun cardPayStrategyWith1StepWithSaveAnd1Without() =
-        cardPayOperationRequest
-            .stepWithSave(
-                action = { TEST_BANK_ID },
-                resultToOrderOperationMapper = { resultBankId -> apply { paymentBankId = resultBankId } },
-            ).step(
-                action = { _ -> TEST_PAYMENT_PAGE },
-            )
 }

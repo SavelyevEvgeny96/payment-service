@@ -3,6 +3,8 @@ package ru.sogaz.site.paymentService.dao.v2.impl
 import org.springframework.stereotype.Repository
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
+import ru.sogaz.site.paymentService.model.v2.enums.OperationState
+import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.repository.v2.IdempotentOrderOperationRepository
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
@@ -17,8 +19,20 @@ class IdempotentOrderOperationDaoImpl(
     override fun findByOrderIdAndPaymentBankId(
         orderId: UUID,
         paymentBankId: String,
-    ): IdempotentOrderOperation? = idempotentOrderOperationRepository.findByIdempotentOrderIdAndPaymentBankId(orderId, paymentBankId)
+    ): IdempotentOrderOperation? =
+        idempotentOrderOperationRepository.findByIdempotentOrderIdAndPaymentBankIdAndOperationTypeIn(
+            orderId,
+            paymentBankId,
+            listOf(OperationType.PAY, OperationType.RECURRENT, OperationType.CARD_REGISTRATION),
+        )
 
-    override fun saveAndFlush(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation =
-        idempotentOrderOperationRepository.saveAndFlush(idempotentOrderOperation)
+    override fun findSucceededByOrderId(orderId: UUID): IdempotentOrderOperation? =
+        idempotentOrderOperationRepository.findFirstByIdempotentOrderIdAndStateAndOperationTypeInOrderByCreateDateDesc(
+            orderId,
+            OperationState.SUCCESS,
+            listOf(OperationType.PAY, OperationType.RECURRENT, OperationType.CARD_REGISTRATION),
+        )
+
+    override fun save(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation =
+        idempotentOrderOperationRepository.save(idempotentOrderOperation)
 }

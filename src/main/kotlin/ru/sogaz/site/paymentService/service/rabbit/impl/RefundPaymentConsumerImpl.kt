@@ -4,6 +4,7 @@ import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dto.data.ParsedResult
@@ -40,6 +41,7 @@ import java.time.LocalDate
  * чтобы не терять данные и иметь возможность дальнейшего разбора.
  */
 @Service
+@ConditionalOnProperty(name = ["api.version"], havingValue = "v1")
 class RefundPaymentConsumerImpl(
     private val sendMessageProducer: SendMessageProducer,
     private val props: RabbitProperties,

@@ -21,7 +21,7 @@ class CheckOperationStatusProducer(
         convertAndSend(
             baseRoutingKey,
             CheckStatusEvent(operation.id!!),
-            operation.idempotentOrder?.id,
+            operation.idempotentOrder.id,
             setMessageDeathCount(0),
         )
 
@@ -40,7 +40,7 @@ class CheckOperationStatusProducer(
     ) = convertAndSend(
         makeRoutingKey(deathCount),
         CheckStatusEvent(operation.id!!),
-        operation.idempotentOrder?.id,
+        operation.idempotentOrder.id,
         setMessageDeathCount(deathCount),
     )
 

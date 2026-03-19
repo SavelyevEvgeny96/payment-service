@@ -54,7 +54,7 @@ class CheckOperationStatusConsumer(
         operationDetailsProducer.sendOperationDetails(operation, operationDetails)
         operation.state = operationDetails.state
         operation.operationFinished = Instant.now()
-        idempotentOrderOperationDao.saveAndFlush(operation)
+        idempotentOrderOperationDao.save(operation)
     }
 
     private fun increaseDeathCount(deathCount: Int?): Int = (deathCount ?: -1) + 1
