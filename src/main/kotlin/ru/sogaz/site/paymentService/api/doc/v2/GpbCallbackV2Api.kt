@@ -10,7 +10,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCallbackResponse
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 
 interface GpbCallbackV2Api {
-    @GetMapping("v2/payment/gpb/state", produces = [MediaType.APPLICATION_ATOM_XML_VALUE])
+    @GetMapping("v2/payment/gpb/state", produces = [MediaType.APPLICATION_XML_VALUE])
     fun stateGpbCallback(
         gpbCallback: GpbCardCallback,
         httpServletRequest: HttpServletRequest,
