@@ -13,8 +13,8 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequ
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbSbpAutoPayIntegrationImpl
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
+import ru.sogaz.site.paymentService.service.v2.operation.inline.gpbOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
-import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
 
 @RestController
 @Profile(value = ["test", "local", "stage"])
@@ -36,18 +36,15 @@ class AdminV2Controller(
         val adminRequest = gpbSbpAdminAutoPayRequestMapper.toAdminRequest(sbpPayOperationRequest, headers)
         return adminRequest
             .operationCommand()
-            .run(operationService::runIdempotentOperation)
+            .run(operationService::runOperation)
             .getOrThrow()
     }
 
     private fun GpbSbpAdminAutoPayOperationRequest.operationCommand() =
-        OperationCommand(
-            request = this,
-            requestToOrderOperationMapper = idempotentOrderOperationMapper::toGpbIdempotentOrderOperation,
-            strategy =
-                stepWithSave(
-                    action = gpbSbpIntegration::sbpAdminAutoPay,
-                    resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
-                ),
+        gpbOperationCommand(
+            stepWithSave(
+                action = gpbSbpIntegration::sbpAdminAutoPay,
+                resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
+            ),
         )
 }

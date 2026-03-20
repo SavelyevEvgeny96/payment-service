@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCallbackMapper
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
 import ru.sogaz.site.paymentService.producer.CheckOperationStatusProducer
 import ru.sogaz.site.paymentService.service.v2.status.OperationCallbackService

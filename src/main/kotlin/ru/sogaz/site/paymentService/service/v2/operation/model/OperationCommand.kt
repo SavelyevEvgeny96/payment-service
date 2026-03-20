@@ -1,12 +1,13 @@
 package ru.sogaz.site.paymentService.service.v2.operation.model
 
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
-import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
+import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 
-data class OperationCommand<REQUEST : OperationRequest, RESULT>(
+data class OperationCommand<REQUEST, RESULT>(
     val request: REQUEST,
-    val requestToOrderOperationMapper: (REQUEST.() -> IdempotentOrderOperation)? = null,
+    val bank: OperationBank,
     val strategy: AbstractOperationStrategy<REQUEST, RESULT>,
 ) {
-    var finalStateAction: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation = { _ -> this }
+    var finalStateAction: IdempotentOrderOperation.(RESULT) -> Unit = { }
+    var onFailureAction: IdempotentOrderOperation.(Throwable) -> Unit = { }
 }

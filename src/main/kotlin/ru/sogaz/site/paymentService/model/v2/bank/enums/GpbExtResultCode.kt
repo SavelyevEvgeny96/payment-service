@@ -1,5 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.bank.enums
 
+import com.fasterxml.jackson.annotation.JsonCreator
+
 enum class GpbExtResultCode(
     val message: String?,
 ) {
@@ -56,6 +58,7 @@ enum class GpbExtResultCode(
     CARD_RESTRICTED("Карта ограничена"),
     CARD_TEMPORARY_BLOCKED("Карта временно заблокирована"),
     CPA_SSL_FAILED("Ошибка при взаимодействии с магазином"),
+    REFUND_BY_MERCHANT("Выполнен успешный возврат денежных средств по запросу магазина"),
     RECURRENT_ACQUIRER_ERROR("Ошибка при проведении рекуррентного платежа у эквайера"),
     PAYMENT_DATA_NOT_FOUND("Не найден данные о банковской транзакции"),
     PAYMENT_NOT_FOUND_IS_NOT_GPB("Платеж недоступен для отмены. Указанный банк недоступен для отмены"),
@@ -67,9 +70,8 @@ enum class GpbExtResultCode(
     ;
 
     companion object {
-        fun fromCode(code: String?): String? {
-            if (code == null) return null
-            return entries.firstOrNull { it.name == code }?.message ?: code
-        }
+        @JvmStatic
+        @JsonCreator
+        fun from(value: String?): GpbExtResultCode? = GpbExtResultCode.entries.find { it.name == value }
     }
 }

@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.model.v2.web.request.pay
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
+import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import java.math.BigDecimal
 import java.util.UUID
 
