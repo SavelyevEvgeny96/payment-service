@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.model.v2.bank.request.gpb
+package ru.sogaz.site.paymentService.model.v2.bank.callback
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude

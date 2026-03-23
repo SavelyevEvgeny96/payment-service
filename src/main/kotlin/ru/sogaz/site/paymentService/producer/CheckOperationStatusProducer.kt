@@ -21,7 +21,7 @@ class CheckOperationStatusProducer(
         convertAndSend(
             baseRoutingKey,
             CheckStatusEvent(operation.id!!),
-            operation.idempotentOrder?.id,
+            operation.idempotentOrder.id,
             setMessageDeathCount(0),
         )
 
@@ -40,12 +40,11 @@ class CheckOperationStatusProducer(
     ) = convertAndSend(
         makeRoutingKey(deathCount),
         CheckStatusEvent(operation.id!!),
-        operation.idempotentOrder?.id,
+        operation.idempotentOrder.id,
         setMessageDeathCount(deathCount),
     )
 
-    private fun makeRoutingKey(deathCount: Int) =
-        "${baseRoutingKey}.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
+    private fun makeRoutingKey(deathCount: Int) = "$baseRoutingKey.${deathCount.butIf(deathCount > maxDeathCount) { maxDeathCount }}"
 
     private fun setMessageDeathCount(deathCount: Int): (Message) -> Message =
         { message ->

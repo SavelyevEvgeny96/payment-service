@@ -4,13 +4,11 @@ import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import ru.sogaz.site.paymentService.config.OkHttpClientConfig
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
 
 @FeignClient(
     name = "gpb-card-payment-auth-client",
     url = "\${api.gpb.card.basePath}",
-    configuration = [OkHttpClientConfig::class],
 )
 interface GpbCardPaymentAuthClient {
     /**

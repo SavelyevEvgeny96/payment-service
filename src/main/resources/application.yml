@@ -59,11 +59,9 @@ spring:
           gpb-card-payment-auth-client:
             connectTimeout: 1000
             readTimeout: 2000
-            retryer: feign.Retryer
           gpb-card-auth-client:
             connectTimeout: ${GPB_AUTH_CONNECTION_TIMEOUT:1000}
             readTimeout: ${GPB_AUTH_READ_TIMEOUT:2000}
-            retryer: feign.Retryer
   rabbitmq:
     host: ${RABBIT_HOST}
     port: ${RABBIT_PORT}
@@ -131,18 +129,22 @@ api:
   gpb:
     card:
       basePath: ${GPB_URL}
-      auth:
-        retryer:
+      retry:
+        auth:
           maxRetries: ${GPB_CARD_AUTH_CLIENT_MAX_RETRIES:3}
-          minTimeoutMs: ${GPB_CARD_AUTH_CLIENT_MIN_TIMEOUT_MS:250}
+          minTimeoutMs: ${GPB_CARD_AUTH_CLIENT_TIMEOUT_MS:250}
           maxTimeoutMs: ${GPB_CARD_AUTH_CLIENT_MAX_TIMEOUT_MS:3000}
       account:
         main:
           portalId: ${GPB_PORTAL_ID}
           merchantId: ${GPB_MERCHANT_ID}
+          identifier: ${GPB_BANK_LOGIN}
+          password: ${GPB_BANK_PASS}
         depersonalized:
           portalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
+          identifier: ${GPB_BANK_LOGIN}
+          password: ${GPB_BANK_PASS}
     sbp:
       basePath: ${GPB_SBP_URL}
       redirectUrl: ${GPB_SBP_REDIRECT_URL:https://www.sogaz.ru/}

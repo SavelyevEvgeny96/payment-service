@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.PayV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
@@ -37,4 +38,9 @@ class PayV2Controller(
         cardRecurrentOperationRequest
             .run(payOperationService::recurrentOperation)
             .wrapToSuccessResponse(0)
+
+    override fun payQrImageSbp(sbpPayOperationRequest: SbpPayOperationRequest): Response<BankPaymentQrContent> =
+        sbpPayOperationRequest
+            .run(payOperationService::qrImageSbpPayOperation)
+            .wrapToSuccessResponse(SBP_PAY_SUCCESS_CODE)
 }

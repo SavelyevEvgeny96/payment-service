@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.model.v2.web.request.pay
+package ru.sogaz.site.paymentService.model.v2.web.request.common
 
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.validation.constraint.SogazDomain

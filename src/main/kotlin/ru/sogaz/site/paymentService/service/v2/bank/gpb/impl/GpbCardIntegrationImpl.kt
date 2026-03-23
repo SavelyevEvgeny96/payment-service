@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.v2.bank.gpb.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import feign.FeignException
-import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardAuthClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardClient
@@ -12,20 +11,18 @@ import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapper
 import ru.sogaz.site.paymentService.model.v2.bank.exception.GpbCardPayErrorMessage
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.AuthorizedCardTrxData
-import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbCardAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.emptyCardDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
-import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
-import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardAccountManager
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 
 @Component
@@ -35,7 +32,7 @@ class GpbCardIntegrationImpl(
     private val requestMapper: GpbRequestMapper,
     private val responseMapper: GpbCardResponseMapper,
     private val objectMapper: ObjectMapper,
-    private val cardAccountProperties: GpbCardAccountProperties,
+    private val cardAccountManager: GpbCardAccountManager,
 ) : GpbCardIntegration {
     companion object {
         private const val OPERATION_DETAILS_ERROR = "Во время получения данных по операции оплаты картой произошла ошибка: {}"
@@ -48,7 +45,7 @@ class GpbCardIntegrationImpl(
     private val logger = loggerFor(javaClass)
 
     override fun authorize(payOperationRequest: PayOperationRequest): AuthorizedCardTrxData {
-        val accountData = chooseAccountDataForOperation(payOperationRequest)
+        val accountData = cardAccountManager.getByOperation(payOperationRequest)
         val token = gpbCardAuthClient.getToken(accountData.portalId).token
         return AuthorizedCardTrxData(token, accountData)
     }
@@ -132,7 +129,7 @@ class GpbCardIntegrationImpl(
 
     override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails =
         try {
-            val accountData = chooseAccountDataForOperation(cardPayOperation)
+            val accountData = cardAccountManager.getByOperation(cardPayOperation)
             val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
             responseMapper.toBankPaymentDetails(cardPayDetails)
         } catch (ex: FeignException.NotFound) {
@@ -141,13 +138,4 @@ class GpbCardIntegrationImpl(
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
             BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
         }
-
-    private fun chooseAccountDataForOperation(payOperationRequest: PayOperationRequest): GpbCardAccountData =
-        chooseAccountData(payOperationRequest.depersonalization)
-
-    private fun chooseAccountDataForOperation(payOperation: PayOperation): GpbCardAccountData =
-        chooseAccountData(payOperation.depersonalization)
-
-    private fun chooseAccountData(depersonalization: Boolean): GpbCardAccountData =
-        cardAccountProperties.main.butIf(depersonalization) { cardAccountProperties.depersonalized }
 }

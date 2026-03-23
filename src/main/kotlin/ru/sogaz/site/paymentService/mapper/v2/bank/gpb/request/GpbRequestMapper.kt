@@ -5,16 +5,20 @@ import org.mapstruct.Mapping
 import org.mapstruct.Named
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbSbpAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbQrImageRequest
+import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbRefundParams
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbSbpPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbSpbStatusRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.Src
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.State
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
+import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.pay.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import java.math.BigDecimal
 
 @Mapper
@@ -88,4 +92,14 @@ abstract class GpbRequestMapper {
     ): GpbSbpPayRequest
 
     fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.paymentBankId)
+
+    @Mapping(target = "qrcId", source = "paymentBankId")
+    @Mapping(target = "width", constant = "300")
+    @Mapping(target = "height", constant = "300")
+    abstract fun toQrImageRequest(bankPaymentPageData: BankPaymentPageData): GpbQrImageRequest
+
+    @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "currency", constant = "RUB")
+    @Mapping(target = "comment", source = "description")
+    abstract fun toRefundParams(refundOperationRequest: RefundOperationRequest): GpbRefundParams
 }

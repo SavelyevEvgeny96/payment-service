@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import ru.sogaz.site.paymentService.enums.BankEnum
+import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
@@ -26,10 +26,10 @@ class IdempotentOrderOperation(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID?,
     @ManyToOne
-    var idempotentOrder: IdempotentOrder?,
+    var idempotentOrder: IdempotentOrder,
     var premiumAmount: BigDecimal,
     @Enumerated(EnumType.STRING)
-    var bank: BankEnum?,
+    var bank: OperationBank?,
     var paymentBankId: String?,
     @Enumerated(EnumType.STRING)
     var operationType: OperationType,

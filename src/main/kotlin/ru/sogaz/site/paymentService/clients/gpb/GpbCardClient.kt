@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import ru.sogaz.site.paymentService.config.OkHttpClientConfig
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
@@ -14,7 +13,6 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardRespons
 @FeignClient(
     name = "gpb-card-client",
     url = "\${api.gpb.card.basePath}",
-    configuration = [OkHttpClientConfig::class],
 )
 interface GpbCardClient {
     @PostMapping(value = ["/{portalId}/payment/{token}/start"], consumes = [MediaType.APPLICATION_JSON_VALUE])

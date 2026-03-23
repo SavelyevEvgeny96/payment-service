@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.model.v2.bank.response.gpb
+package ru.sogaz.site.paymentService.model.v2.bank.callback
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement

@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbCardCallback
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import java.nio.charset.StandardCharsets

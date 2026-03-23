@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import ru.sogaz.site.paymentService.api.doc.response.ValidationErrorApiResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
+import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
@@ -45,4 +46,15 @@ interface PayV2Api {
     fun recurrentCardPay(
         @RequestBody cardRecurrentOperationRequest: CardRecurrentOperationRequest,
     ): Response<BankOperationDetails>
+
+    @Operation(
+        summary = "Получение qr кода для оплаты по СБП",
+        description = "Регистрирует платеж в банке указанном для заказа и возвращает qr код для оплаты по СБП",
+    )
+    @ValidationErrorApiResponse
+    @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по сбп")
+    @PostMapping("/v2/payment/qr")
+    fun payQrImageSbp(
+        @RequestBody sbpPayOperationRequest: SbpPayOperationRequest,
+    ): Response<BankPaymentQrContent>
 }

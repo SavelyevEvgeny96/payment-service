@@ -21,8 +21,8 @@ services:
     image: nexus.sogaz.ru/wiremock/wiremock:3.13.2
     container_name: gpb-mock
     ports:
-      - "8082:8082"
-    command: [ "--verbose","--port","8082","--root-dir","/home/wiremock", "--global-response-templating" ]
+      - "8099:8099"
+    command: [ "--verbose","--port","8099","--root-dir","/home/wiremock", "--global-response-templating" ]
     volumes:
       - ./mocks/gpb:/home/wiremock
     restart: unless-stopped
