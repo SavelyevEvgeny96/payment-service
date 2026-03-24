@@ -25,6 +25,13 @@ import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardAccountManager
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 
+/**
+ * Класс интеграции с Газпромбанком.
+ * Реализует взаимодействие по оплате картой и рекуррентной оплате картой, а также получении статусов оплат картой.
+ * - Для оплаты регистрирует токен с использованием аккаунта полученного от GpbCardAccountManager.
+ * - Запросы в банк собираются с использованием GpbRequestMapper
+ * - Ответы от банка преобразовываются с использованием GpbCardResponseMapper
+ */
 @Component
 class GpbCardIntegrationImpl(
     private val gpbCardClient: GpbCardClient,

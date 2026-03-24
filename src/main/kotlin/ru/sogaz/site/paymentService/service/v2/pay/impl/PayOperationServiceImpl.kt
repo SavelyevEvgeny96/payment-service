@@ -32,16 +32,29 @@ class PayOperationServiceImpl(
     companion object {
         private const val RECURRENT_INTERNAL_ERROR = "Платежная система недоступна"
     }
+
+    /**
+     * Формирует команду и стратегию по регистрации и получению платежной страницы в банке ГПБ.
+     *
+     * @param payOperationRequest запрос на выполнение операции оплаты
+     * @return данные страницы для банковского платежа
+     */
     override fun cardPayOperation(payOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         payOperationRequest
             .cardPayOperationCommand()
             .runCommand()
-
+    /**
+     * Формирует объект команды для запроса.
+     * Вызывает функцию формирования стратегии в контексте того же запроса
+     */
     private fun CardPayOperationRequest.cardPayOperationCommand() =
         gpbOperationCommand(
             strategy = cardPayStrategy(),
         )
-
+    /**
+     * Вызывается относительно определенного запроса на оплату картой.
+     * Формирует стратегию банковской операции по оплате картой относительно этого запроса.
+     */
     private fun CardPayOperationRequest.cardPayStrategy() =
         stepWithSave(
             action = gpbCardIntegration::authorize,
@@ -51,27 +64,51 @@ class PayOperationServiceImpl(
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
         )
 
+    /**
+     * Формирует команду и стратегию по регистрации и получению платежной страницы в банке ГПБ.
+     *
+     * @param payOperationRequest запрос на выполнение операции оплаты
+     * @return данные страницы для банковского платежа
+     */
     override fun sbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentPageData =
         payOperationRequest
             .sbpPayOperationCommand()
             .runCommand()
 
+    /**
+     * Формирует объект команды для запроса.
+     * Вызывает функцию формирования стратегии в контексте того же запроса
+     */
     private fun SbpPayOperationRequest.sbpPayOperationCommand() =
         gpbOperationCommand(
             strategy = sbpPayStrategy(),
         )
-
+    /**
+     * Вызывается относительно определенного запроса на оплату по сбп.
+     * Формирует стратегию банковской операции по оплате по сбп относительно этого запроса.
+     */
     private fun SbpPayOperationRequest.sbpPayStrategy() =
         stepWithSave(
             action = gpbSbpIntegration::sbpPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
         )
 
+    /**
+     * Формирует команду и стратегию для выполнения рекуррентного платежа картой в банке.
+     *
+     * @param recurrentOperationRequest запрос на выполнение операции оплаты
+     * @return детали выполненного рекуррентного платежа
+     */
     override fun recurrentOperation(recurrentOperationRequest: CardRecurrentOperationRequest): BankOperationDetails =
         recurrentOperationRequest
             .cardRecurrentPayOperationCommand()
             .runCommand()
 
+    /**
+     * Формирует объект команды для запроса.
+     * Вызывает функцию формирования стратегии в контексте того же запроса.
+     * Добавляет план действий при возбуждении ошибки и при финальном статусе операции.
+     */
     private fun CardRecurrentOperationRequest.cardRecurrentPayOperationCommand() =
         gpbOperationCommand(
             strategy = cardRecurrentPayStrategy(),
@@ -81,6 +118,10 @@ class PayOperationServiceImpl(
             operationDetailsProducer.sendOperationDetails(this, it)
         }
 
+    /**
+     * Вызывается относительно определенного запроса на рекуррентную оплату картой.
+     * Формирует стратегию банковской операции по рекуррентной оплате картой относительно этого запроса.
+     */
     private fun CardRecurrentOperationRequest.cardRecurrentPayStrategy() =
         stepWithSave(
             action = gpbCardIntegration::authorize,
@@ -90,16 +131,31 @@ class PayOperationServiceImpl(
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
         )
 
+    /**
+     * Формирует команду и стратегию для регистрации платежной страницы в банке ГПБ
+     * и последующем получении qr кода с этой страницы.
+     *
+     * @param payOperationRequest запрос на выполнение операции оплаты
+     * @return данные qr кода для банковского платежа
+     */
     override fun qrImageSbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentQrContent =
         payOperationRequest
             .qrImageSbpPayOperationCommand()
             .runCommand()
 
+    /**
+     * Формирует объект команды для запроса.
+     * Вызывает функцию формирования стратегии в контексте того же запроса
+     */
     private fun SbpPayOperationRequest.qrImageSbpPayOperationCommand() =
         gpbOperationCommand(
             strategy = qrImageSbpPayStrategy(),
         )
 
+    /**
+     * Вызывается относительно определенного запроса на получение qr кода для оплаты по сбп.
+     * Формирует стратегию банковской операции по получению qr кода для оплаты по сбп относительно этого запроса.
+     */
     private fun SbpPayOperationRequest.qrImageSbpPayStrategy() =
         stepWithSave(
             action = gpbSbpIntegration::sbpPay,
@@ -108,6 +164,9 @@ class PayOperationServiceImpl(
             action = gpbSbpIntegration::getQrContent,
         )
 
+    /**
+     * Общая функция для запуска выполнения команды в сервисе операций
+     */
     private fun <REQUEST : PayOperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.runCommand(): RESULT =
-        operationService.runOperation(this).getOrThrow()
+        operationService.runOperation(this)
 }

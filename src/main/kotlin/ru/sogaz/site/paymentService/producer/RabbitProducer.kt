@@ -6,6 +6,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import ru.sogaz.site.loggingStarter.rabbitLogging.RabbitLogConst
 import java.util.UUID
 
+/**
+ * Базовый класс для отправки сообщений в RabbitMQ.
+ *
+ * @param <T> тип сообщения, которое будет отправляться
+ */
 abstract class RabbitProducer<T>(
     private val rabbitTemplate: RabbitTemplate,
     private val exchange: String,
@@ -34,6 +39,17 @@ abstract class RabbitProducer<T>(
             messagePostProcessor,
         )
 
+    /**
+     * Отправляет сообщение с указанным ключом маршрутизации, correlationId и
+     * базовой реализацией постпроцессора,
+     * которая добавляет в хедеры каждого сообщения Exchange и RoutingKey и удаляет __TypeId__, а также
+     * запускает постпроцессор из параметров.
+     *
+     * @param routingKey ключ маршрутизации
+     * @param message сообщение для отправки
+     * @param correlationId корреляционный идентификатор (опционально)
+     * @param messagePostProcessor процессор сообщений (опционально)
+     */
     protected fun convertAndSend(
         routingKey: String,
         message: T,

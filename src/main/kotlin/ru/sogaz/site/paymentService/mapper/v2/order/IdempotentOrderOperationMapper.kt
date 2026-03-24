@@ -13,6 +13,9 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 
+/**
+ * Интерфейс маппера для создания и обновления записей о банковских операциях в базе
+ */
 @Mapper
 interface IdempotentOrderOperationMapper {
     @Mapping(target = "id", source = "orderId")

@@ -28,18 +28,32 @@ class RefundPayOperationServiceImpl(
         private const val REFUND_TYPE_ERROR = "Не поддерживаемый для возвратов тип платежа"
         private const val REFUND_INTERNAL_ERROR = "Платежная система недоступна"
     }
-
+    /**
+     * Формирует команду и стратегию для выполнения возврата платежа в банке.
+     *
+     * @param refundOperationRequest запрос на выполнение операции оплаты
+     * @return детали выполненного рекуррентного платежа
+     */
     override fun refundPayOperation(refundOperationRequest: RefundOperationRequest): BankOperationDetails =
         when (refundOperationRequest.paymentType) {
             PaymentType.CARD -> refundCardPayOperation(refundOperationRequest)
             else -> throw InnerException(getTraceId(), REFUND_TYPE_ERROR)
         }
-
+    /**
+     * Формирует команду и стратегию для выполнения возврата платежа картой в банке.
+     *
+     * @param refundOperationRequest запрос на выполнение операции оплаты
+     * @return детали выполненного рекуррентного платежа
+     */
     override fun refundCardPayOperation(refundOperationRequest: RefundOperationRequest): BankOperationDetails =
         refundOperationRequest
             .refundCardPayOperationCommand()
             .runRefundCommand()
 
+    /**
+     * Формирует объект команды и стратегию банковской операции по возврату оплаты картой относительно этого запроса.
+     * Добавляет план действий при возбуждении ошибки и при финальном статусе операции.
+     */
     private fun RefundOperationRequest.refundCardPayOperationCommand() =
         gpbOperationCommand(
             stepWithSave(
@@ -52,6 +66,9 @@ class RefundPayOperationServiceImpl(
             operationDetailsProducer.sendOperationDetails(this, it)
         }
 
+    /**
+     * Общая функция для запуска выполнения команды в сервисе операций
+     */
     private fun <RESULT> OperationCommand<RefundOperationRequest, RESULT>.runRefundCommand(): RESULT =
-        operationService.runOperation(this).getOrThrow()
+        operationService.runOperation(this)
 }
