@@ -29,7 +29,7 @@ class OperationServiceImpl(
             .result
 
     private fun <REQUEST : OperationRequest, RESULT> OperationCommand<REQUEST, RESULT>.createNewIdempotentOrderOperation() =
-        idempotentOrderService.saveOperation(request, bank)
+        idempotentOrderService.saveOperation(request, bank, requestMapper)
 
     private fun <REQUEST : OperationRequest, RESULT> IdempotentOrderOperation.executeCatching(
         operationCommand: OperationCommand<REQUEST, RESULT>,

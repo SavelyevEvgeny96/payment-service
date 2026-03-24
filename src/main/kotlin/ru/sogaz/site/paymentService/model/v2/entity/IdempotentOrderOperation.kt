@@ -26,7 +26,7 @@ class IdempotentOrderOperation(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID?,
     @ManyToOne
-    var idempotentOrder: IdempotentOrder,
+    var idempotentOrder: IdempotentOrder?,
     var premiumAmount: BigDecimal,
     @Enumerated(EnumType.STRING)
     var bank: OperationBank?,

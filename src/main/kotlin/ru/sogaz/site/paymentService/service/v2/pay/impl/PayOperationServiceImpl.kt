@@ -50,6 +50,7 @@ class PayOperationServiceImpl(
      */
     private fun CardPayOperationRequest.cardPayOperationCommand() =
         gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             strategy = cardPayStrategy(),
         )
 
@@ -83,6 +84,7 @@ class PayOperationServiceImpl(
      */
     private fun SbpPayOperationRequest.sbpPayOperationCommand() =
         gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             strategy = sbpPayStrategy(),
         )
 
@@ -114,6 +116,7 @@ class PayOperationServiceImpl(
      */
     private fun CardRecurrentOperationRequest.cardRecurrentPayOperationCommand() =
         gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             strategy = cardRecurrentPayStrategy(),
         ) onFailure {
             operationDetailsProducer.sendFailureOperationDetails(this, RECURRENT_INTERNAL_ERROR)
@@ -152,6 +155,7 @@ class PayOperationServiceImpl(
      */
     private fun SbpPayOperationRequest.qrImageSbpPayOperationCommand() =
         gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             strategy = qrImageSbpPayStrategy(),
         )
 

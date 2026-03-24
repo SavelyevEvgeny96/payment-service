@@ -58,6 +58,7 @@ class RefundPayOperationServiceImpl(
      */
     private fun RefundOperationRequest.refundCardPayOperationCommand() =
         gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             stepWithSave(
                 action = gpbCardRefundIntegration::refundPayCard,
                 resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
