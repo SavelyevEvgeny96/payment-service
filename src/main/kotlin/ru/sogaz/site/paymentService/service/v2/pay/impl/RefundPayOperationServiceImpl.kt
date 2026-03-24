@@ -28,6 +28,7 @@ class RefundPayOperationServiceImpl(
         private const val REFUND_TYPE_ERROR = "Не поддерживаемый для возвратов тип платежа"
         private const val REFUND_INTERNAL_ERROR = "Платежная система недоступна"
     }
+
     /**
      * Формирует команду и стратегию для выполнения возврата платежа в банке.
      *
@@ -39,6 +40,7 @@ class RefundPayOperationServiceImpl(
             PaymentType.CARD -> refundCardPayOperation(refundOperationRequest)
             else -> throw InnerException(getTraceId(), REFUND_TYPE_ERROR)
         }
+
     /**
      * Формирует команду и стратегию для выполнения возврата платежа картой в банке.
      *
@@ -69,6 +71,5 @@ class RefundPayOperationServiceImpl(
     /**
      * Общая функция для запуска выполнения команды в сервисе операций
      */
-    private fun <RESULT> OperationCommand<RefundOperationRequest, RESULT>.runRefundCommand(): RESULT =
-        operationService.runOperation(this)
+    private fun <RESULT> OperationCommand<RefundOperationRequest, RESULT>.runRefundCommand(): RESULT = operationService.runOperation(this)
 }

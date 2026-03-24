@@ -21,7 +21,6 @@ class CheckOperationStatusProducer(
     @param:Value("\${app.rabbit.routing-key-check-status-payment}")
     private val baseRoutingKey: String,
 ) : RabbitProducer<CheckStatusEvent>(rabbitTemplate, exchange) {
-
     /**
      * Отправляет событие проверки статуса на основе операции.
      *

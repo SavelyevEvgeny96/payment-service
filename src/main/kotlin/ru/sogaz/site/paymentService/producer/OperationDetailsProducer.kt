@@ -21,7 +21,6 @@ class OperationDetailsProducer(
     private val baseRoutingKey: String,
     private val completedOperationMapper: CompletedOperationMapper,
 ) : RabbitProducer<CompletedOperationEvent>(rabbitTemplate, exchange) {
-
     /**
      * Отправляет детали успешной операции с динамическим ключом маршрутизации.
      *

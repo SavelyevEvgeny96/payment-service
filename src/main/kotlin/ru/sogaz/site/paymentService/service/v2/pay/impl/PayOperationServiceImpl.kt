@@ -43,6 +43,7 @@ class PayOperationServiceImpl(
         payOperationRequest
             .cardPayOperationCommand()
             .runCommand()
+
     /**
      * Формирует объект команды для запроса.
      * Вызывает функцию формирования стратегии в контексте того же запроса
@@ -51,6 +52,7 @@ class PayOperationServiceImpl(
         gpbOperationCommand(
             strategy = cardPayStrategy(),
         )
+
     /**
      * Вызывается относительно определенного запроса на оплату картой.
      * Формирует стратегию банковской операции по оплате картой относительно этого запроса.
@@ -83,6 +85,7 @@ class PayOperationServiceImpl(
         gpbOperationCommand(
             strategy = sbpPayStrategy(),
         )
+
     /**
      * Вызывается относительно определенного запроса на оплату по сбп.
      * Формирует стратегию банковской операции по оплате по сбп относительно этого запроса.

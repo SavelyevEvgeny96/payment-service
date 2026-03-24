@@ -65,7 +65,8 @@ inline fun <reified REQUEST : OperationRequest, reified RESULT> AbstractOperatio
 inline fun <reified REQUEST : OperationRequest, reified RESULT> AbstractOperationStrategy<REQUEST, Unit>.step(
     noinline action: REQUEST.() -> RESULT,
     noinline resultToOrderOperationMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
-): AbstractOperationStrategy<REQUEST, RESULT> = UnitFollowingOperationStrategy(this.request, true, this, action, resultToOrderOperationMapper)
+): AbstractOperationStrategy<REQUEST, RESULT> =
+    UnitFollowingOperationStrategy(this.request, true, this, action, resultToOrderOperationMapper)
 
 /**
  * Inline функция по формированию объекта стратегии.
@@ -104,4 +105,5 @@ inline fun <reified REQUEST : OperationRequest, reified RESULT> AbstractOperatio
 inline fun <reified REQUEST : OperationRequest, reified RESULT> AbstractOperationStrategy<REQUEST, Unit>.stepWithSave(
     noinline action: REQUEST.() -> RESULT,
     noinline resultToOrderOperationMapper: IdempotentOrderOperation.(RESULT) -> IdempotentOrderOperation,
-): AbstractOperationStrategy<REQUEST, RESULT> = UnitFollowingOperationStrategy(this.request, true, this, action, resultToOrderOperationMapper)
+): AbstractOperationStrategy<REQUEST, RESULT> =
+    UnitFollowingOperationStrategy(this.request, true, this, action, resultToOrderOperationMapper)
