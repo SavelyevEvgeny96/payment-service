@@ -36,24 +36,24 @@ api:
     baseUrl: https://s00-0000-k835.sogaz.ru/test/qr-generator-service
   gpb:
     card:
-      basePath: ${api.gateway.dmz}/payment/gpb/card/
+      basePath: ${GPB_URL:${api.gateway.dmz}/payment/gpb/card}
       account:
         main:
-          portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
-          merchantId: B80540E3096C8730BCE3
-          identifier:
-          password:
+          portalId: ${GPB_PORTAL_ID}
+          merchantId: ${GPB_MERCHANT_ID}
+          identifier: ${GPB_BANK_LOGIN}
+          password: ${GPB_BANK_PASS}
         depersonalized:
-          portalId: 5BAE2814BB16ED0AA4A146AA4A4E168D
-          merchantId: B80540E3096C8730BCE3
-          identifier:
-          password:
+          portalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
+          merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
+          identifier: ${GPB_BANK_LOGIN}
+          password: ${GPB_BANK_PASS}
     sbp:
-      basePath: ${api.gateway.dmz}/payment/gpb/sbp/merchant
+      basePath: ${GPB_SBP_URL:${api.gateway.dmz}/payment/gpb/sbp/merchant}
       redirectUrl: https://www.sogaz.ru/
       account:
-        merchantIdSbpGpb: MA0000000685
-        paymentAccount: 40701810800000030052
+        merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
+        paymentAccount: ${PAYMENT_ACCOUNT}
         callbackUrlSbp:  https://example.com/callback
         qrcTtl: 2
 
@@ -128,7 +128,7 @@ management:
       probes:
         enabled: true
   server:
-    port: 8091
+    port: 8095
   health:
     livenessState:
       enable: true

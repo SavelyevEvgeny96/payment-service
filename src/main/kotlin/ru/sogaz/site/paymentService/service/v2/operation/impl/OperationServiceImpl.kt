@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.service.v2.order.IdempotentOrderService
  * для обеспечения гарантий контроля над открытыми операциями
  */
 @Service
-@Transactional
+@Transactional(noRollbackFor = [Exception::class])
 class OperationServiceImpl(
     private val idempotentOrderService: IdempotentOrderService,
     private val checkOperationStatusProducer: CheckOperationStatusProducer,
