@@ -39,6 +39,7 @@ class IdempotentOrderOperation(
     var state: OperationState,
     var paymentBankUrl: String?,
     var depersonalization: Boolean,
+    var payerIp: String?,
     var operationStarted: Instant?,
     var operationFinished: Instant?,
     @CreationTimestamp
