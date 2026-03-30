@@ -20,5 +20,6 @@ data class CompletedOperationEvent(
     val operationType: OperationType,
     val paymentType: String,
     val payDate: Instant,
+    val payerIp: String?,
     val errorText: String?,
 )

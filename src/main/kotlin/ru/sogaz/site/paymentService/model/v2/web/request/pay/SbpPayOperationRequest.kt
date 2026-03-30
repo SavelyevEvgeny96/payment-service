@@ -17,8 +17,10 @@ data class SbpPayOperationRequest(
     override val amount: BigDecimal,
     @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "false")
     override val depersonalization: Boolean = false,
-    @field:Schema(description = "Платежные позиции")
+    @field:Schema(description = "Платежные позиции", accessMode = Schema.AccessMode.READ_ONLY)
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
+    @field:Schema(description = "IP пользователя, который совершает оплату")
+    val payerIp: String?,
     @field:Schema(description = "Дополнительные параметры банковской операции", implementation = StraightRedirectSchema::class)
     val params: RedirectParams = RedirectParams(),
 ) : PayOperationRequest() {
