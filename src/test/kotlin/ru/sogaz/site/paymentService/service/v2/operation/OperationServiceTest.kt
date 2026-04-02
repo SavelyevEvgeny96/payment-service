@@ -78,7 +78,7 @@ class OperationServiceTest {
         every { cardPayOperationRequest.depersonalization } returns true
         val testCommand = testCardPayOperationCommand2StepsWithSave()
 
-        val result = operationService.runOperation(testCommand).getOrThrow()
+        val result = operationService.runOperation(testCommand)
 
         verify(exactly = 3) { idempotentOrderOperationDao.save(any()) }
 
@@ -93,7 +93,7 @@ class OperationServiceTest {
 
         val testCommand = testCardPayOperationCommand1StepWithSaveAnd1StepWithout()
 
-        val result: String = operationService.runOperation(testCommand).getOrThrow()
+        val result: String = operationService.runOperation(testCommand)
 
         verify(exactly = 2) { idempotentOrderOperationDao.save(any()) }
 

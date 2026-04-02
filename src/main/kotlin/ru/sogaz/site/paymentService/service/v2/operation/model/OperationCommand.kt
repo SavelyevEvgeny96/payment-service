@@ -7,6 +7,7 @@ data class OperationCommand<REQUEST, RESULT>(
     val request: REQUEST,
     val bank: OperationBank,
     val strategy: AbstractOperationStrategy<REQUEST, RESULT>,
+    val requestMapper: (REQUEST.() -> IdempotentOrderOperation)? = null,
 ) {
     var finalStateAction: IdempotentOrderOperation.(RESULT) -> Unit = { }
     var onFailureAction: IdempotentOrderOperation.(Throwable) -> Unit = { }
