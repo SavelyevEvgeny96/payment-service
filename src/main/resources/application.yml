@@ -10,6 +10,7 @@ app:
   gpb:
     certs: ${GPB_CERT}
     callback_url: ${GPB_CALLBACK_URL}
+    signature_verifier_off: ${GPB_SIGNATURE_VERIFIER_OFF:false}
   rabbit:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}

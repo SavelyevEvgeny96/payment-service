@@ -35,7 +35,7 @@ class GpbCallbackV2Controller(
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<GpbCallbackResponse> =
         try {
-            if (!signatureVerifier.verifySignature(gpbCallback, httpServletRequest)) {
+            if (signatureVerifier.verifySignature(gpbCallback, httpServletRequest).not()) {
                 throw InvalidSignatureException(gpbCallback.merchant_trx, gpbCallback.trx_id)
             }
             operationCallbackService.updateByGpbCardCallback(gpbCallback)
