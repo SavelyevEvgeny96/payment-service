@@ -68,7 +68,7 @@ class SignatureVerifierImpl(
 
             val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
 
-           return verifySignatureCert(decodedSignature, httpServletRequest)
+            return verifySignatureCert(decodedSignature, httpServletRequest)
         } catch (e: Exception) {
             logger.error(VEREFIELD_FAIL)
         }

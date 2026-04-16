@@ -16,6 +16,7 @@ import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
@@ -73,6 +74,21 @@ abstract class GpbRequestMapper {
     abstract fun toCardRequest(
         merchantId: String,
         request: CardPayOperationRequest,
+        redirectParams: RedirectParams,
+    ): GpbPayRequest
+
+    @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "params", source = "request.payItems")
+    @Mapping(target = "merchantTrx", source = "request.orderId")
+    @Mapping(target = "addCardAllowed", source = "request.saveCard")
+    @Mapping(target = "state", expression = "java(cardPaymentState)")
+    @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
+    @Mapping(target = "openApiMirPaySupported", constant = "true")
+    @Mapping(target = "currency", constant = "RUB")
+    @Mapping(target = "cardRegistration", constant = "true")
+    abstract fun toRegRequest(
+        merchantId: String,
+        request: PayRegOperationRequest,
         redirectParams: RedirectParams,
     ): GpbPayRequest
 
