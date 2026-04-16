@@ -5,14 +5,14 @@ import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 
-class MockSignatureVerifierImpl: SignatureVerifier {
+class MockSignatureVerifierImpl : SignatureVerifier {
     override fun verifySignature(
         gpbCallback: GpbCallback,
-        httpServletRequest: HttpServletRequest
+        httpServletRequest: HttpServletRequest,
     ): Boolean = true
 
     override fun verifySignature(
         gpbCallback: GpbCardCallback,
-        httpServletRequest: HttpServletRequest
+        httpServletRequest: HttpServletRequest,
     ): Boolean = true
 }
