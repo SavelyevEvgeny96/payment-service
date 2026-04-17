@@ -16,7 +16,6 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.emptyCardDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
-import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
 import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
