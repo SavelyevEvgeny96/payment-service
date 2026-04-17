@@ -71,7 +71,8 @@ interface IdempotentOrderOperationMapper {
     ): IdempotentOrderOperation
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
+    @Mapping(target = "operationFinished", defaultExpression = "java( Instant.now() )")
+    @Mapping(target = "externalErrorCode", source = "extendedCode")
     fun updateByBankOperationDetails(
         @MappingTarget idempotentOrderOperation: IdempotentOrderOperation,
         bankOperationDetails: BankOperationDetails,

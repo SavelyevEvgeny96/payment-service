@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-007-alter-idempotent-order-operations-table
+      author: Sokolov Danila
+      changes:
+        - tagDatabase:
+            tag: backend-007-alter-idempotent-order-operations-table
+  - include:
+      file: db.changelog/v3.0.2/2025-04-15/DATA/alter_idempotent_order_operations_table.sql
+
