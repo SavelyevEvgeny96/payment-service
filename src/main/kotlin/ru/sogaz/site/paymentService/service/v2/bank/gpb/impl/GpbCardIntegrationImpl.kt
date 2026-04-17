@@ -17,6 +17,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.emptyCardDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
+import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
@@ -155,15 +156,15 @@ class GpbCardIntegrationImpl(
 
     private fun GpbCardPayDetailsResponse.toBankPaymentPageData() = responseMapper.toBankPaymentDetails(this)
 
-    override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails =
+    override fun payStatus(payOperation: PayOperation): BankOperationDetails =
         try {
-            val accountData = cardAccountManager.getByOperation(cardPayOperation)
-            val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
+            val accountData = cardAccountManager.getByOperation(payOperation)
+            val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, payOperation.paymentBankId)
             responseMapper.toBankPaymentDetails(cardPayDetails)
         } catch (ex: FeignException.NotFound) {
-            ex.toFailOperationDetails(cardPayOperation.paymentBankId) { TRANSACTION_NOT_STARTED }
+            ex.toFailOperationDetails(payOperation.paymentBankId) { TRANSACTION_NOT_STARTED }
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
-            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
+            BankOperationDetails(payOperation.paymentBankId, OperationState.WAIT)
         }
 }

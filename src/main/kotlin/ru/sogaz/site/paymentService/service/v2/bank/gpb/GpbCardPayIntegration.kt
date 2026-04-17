@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.service.v2.bank.gpb
 
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.AuthorizedCardTrxData
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
-import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
+import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
@@ -21,5 +21,5 @@ interface GpbCardPayIntegration {
         authorizedCardTrxData: AuthorizedCardTrxData,
     ): BankPaymentPageData
 
-    fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails
+    fun payStatus(payOperation: PayOperation): BankOperationDetails
 }
