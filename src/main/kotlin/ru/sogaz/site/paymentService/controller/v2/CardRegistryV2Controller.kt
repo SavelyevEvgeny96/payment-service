@@ -1,26 +1,20 @@
 package ru.sogaz.site.paymentService.controller.v2
 
-import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.CardRegistryV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
-import ru.sogaz.site.paymentService.dto.data.DataPay
-import ru.sogaz.site.paymentService.dto.request.PayQueryParams
-import ru.sogaz.site.paymentService.service.AuthorizationService
-import ru.sogaz.site.paymentService.service.CardRegistryService
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
+import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
+import ru.sogaz.siter.models.resonses.Response
 
 @RestController
-@Tag(name = "Card Registration v2", description = "Регистрация карт")
 class CardRegistryV2Controller(
-    private val cardRegistryService: CardRegistryService,
-    private val authorizationService: AuthorizationService,
+    private val payOperationService: PayOperationService,
 ) : WrapResponseController(),
     CardRegistryV2Api {
-    override fun cardRegistry(
-        unifiedId: String,
-        payQueryParams: PayQueryParams,
-        token: String,
-    ): DataPay {
-        TODO("Not yet implemented")
-    }
+    override fun cardRegistry(request: PayRegOperationRequest): Response<BankPaymentPageData> =
+        request
+            .run(payOperationService::regPayOperation)
+            .wrapToSuccessResponse(200)
 }
