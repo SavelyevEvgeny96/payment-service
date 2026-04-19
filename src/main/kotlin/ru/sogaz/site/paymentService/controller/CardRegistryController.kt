@@ -2,7 +2,6 @@ package ru.sogaz.site.paymentService.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.Parameters
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -25,41 +24,44 @@ class CardRegistryController(
     private val cardRegistryService: CardRegistryService,
     private val authorizationService: AuthorizationService,
 ) : WrapResponseController() {
+
     @Operation(
         summary = "Редирект на страницу оплаты заказа по карте",
-        description = "Регистрация банковской карты",
+        description = "Инициирует регистрацию банковской карты и выполняет редирект на платежную страницу"
     )
-    @Parameters(
-        Parameter(name = "unifiedId", description = "Идентификатор единого профиля клиента", required = true),
-        Parameter(
-            name = "urlToReturn",
-            description = "Ссылка для редиректа после успешной оплаты",
-            example = "http://www.sogaz.ru",
-            required = true,
-        ),
-        Parameter(name = "urlToReturnS", description = "Ссылка для редиректа после успешной оплаты", required = true),
-        Parameter(name = "urlToReturnF", description = "Ссылка для редиректа после неуспешной оплаты", required = true),
-        Parameter(
-            name = "depersonalization",
-            description = "Флаг необходимости анонимизированной оплаты",
-            example = "true",
-        ),
+    @ApiResponse(
+        responseCode = "302",
+        description = "Редирект на страницу оплаты"
     )
-    @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по карте")
     @GetMapping("/payment/users/{unifiedId}/card")
     fun cardRegistry(
-        @PathVariable unifiedId: String,
-        @Parameter(hidden = true)
-        @Valid payQueryParams: PayQueryParamsWithRequiredFields,
-        @Parameter(hidden = true)
-        @RequestHeader(HttpHeaders.AUTHORIZATION, required = true) token: String,
+        @PathVariable
+        @Parameter(
+            description = "Идентификатор единого профиля клиента",
+            required = true,
+            example = "123456789"
+        )
+        unifiedId: String,
+
+        @Valid
+        payQueryParams: PayQueryParamsWithRequiredFields,
+
+        @RequestHeader(HttpHeaders.AUTHORIZATION)
+        @Parameter(
+            description = "Bearer токен авторизации",
+            required = true,
+            example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        )
+        token: String,
     ): RedirectView {
         val clientSystem: ClientSystem = authorizationService.checkPermissionByClientId(token)
+
         return cardRegistryService
             .registry(
                 unifiedId = unifiedId,
                 payQueryParams = payQueryParams,
                 clientId = clientSystem.externalSystemCode,
-            ).wrapToRedirectView()
+            )
+            .wrapToRedirectView()
     }
 }
