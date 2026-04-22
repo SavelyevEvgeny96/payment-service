@@ -154,6 +154,12 @@ api:
         paymentAccount: ${PAYMENT_ACCOUNT}
         callbackUrlSbp: ${CALLBACK_URL_SBP}
         qrcTtl: ${GPB_SBP_QRC_TTL_MINUTES:60}
+  abr:
+    card:
+      basePath: ${AKB_URL:}
+    sbp:
+      basePath: ${AKB_SBP_URL:}
+      redirectUrl: ${ABR_SBP_REDIRECT_URL:https://www.sogaz.ru/}
 
 crons:
   waitingPaymentsCheck: ${WAITING_PAYMENTS_CHECK_CRON:0 */5 * * * *}
