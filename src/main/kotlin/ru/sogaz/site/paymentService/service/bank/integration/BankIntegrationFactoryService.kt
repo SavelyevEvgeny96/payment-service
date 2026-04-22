@@ -12,8 +12,6 @@ import ru.sogaz.site.paymentService.service.BankIntegrationService
 class BankIntegrationFactoryService(
     @param:Qualifier("GPBankIntegrationServiceImpl")
     private val gpBankIntegrationService: BankIntegrationService,
-    @param:Qualifier("AKBankIntegrationServiceImpl")
-    private val akBankIntegrationService: BankIntegrationService,
 ) {
     @Throws(BusinessException::class)
     fun getInstanceByBank(bankId: String?): BankIntegrationService = BankEnum.from(bankId).run(::getInstanceByBank)
@@ -22,7 +20,6 @@ class BankIntegrationFactoryService(
     fun getInstanceByBank(bankType: BankEnum?): BankIntegrationService =
         when (bankType) {
             BankEnum.GPB -> gpBankIntegrationService
-            BankEnum.AKB_RUS -> akBankIntegrationService
             else -> throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_SYSTEM_NOT_AVAILABLE, getTraceId())
         }
 }

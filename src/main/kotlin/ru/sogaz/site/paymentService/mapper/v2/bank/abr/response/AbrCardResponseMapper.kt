@@ -17,7 +17,7 @@ import java.time.Instant
 interface AbrCardResponseMapper {
     @Mapping(target = "paymentBankId", expression = "java( String.valueOf(response.getOrder().getId()) )")
     @Mapping(target = "paymentPageUrl", source = "order.hppUrl")
-    @Mapping(target = "bank", constant = "AKB_RUS")
+    @Mapping(target = "bank", constant = "ABR")
     fun toBankPaymentPageData(response: AbrOrderResponse): BankPaymentPageData
 
     @Mapping(target = "bankId", source = "order.id")

@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.web.request.pay
 
 import io.swagger.v3.oas.annotations.media.Schema
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
@@ -22,6 +23,10 @@ data class CardPayOperationRequest(
     val payerIp: String?,
     @field:Schema(description = "Дополнительные параметры банковской операции")
     val params: RedirectParams = RedirectParams(),
+    @field:Schema(description = "Банк для оплаты (если null, банк будет определен системой)")
+    val bank: BankEnum? = null,
+    @field:Schema(description = "Вид страхования для определения банка оплаты")
+    val insuranceKind: String? = null,
     @field:Schema(description = "Флаг необходимости сохранения карты")
     val saveCard: Boolean,
 ) : PayOperationRequest() {

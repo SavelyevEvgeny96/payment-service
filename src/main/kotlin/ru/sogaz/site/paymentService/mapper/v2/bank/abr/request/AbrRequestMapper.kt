@@ -17,6 +17,7 @@ abstract class AbrRequestMapper {
     companion object {
         private const val IPS_RU_PARAM_NAME = "ipsRu"
         private const val REDIRECT_URL_PARAM_NAME = "afterPayRedirectUrl"
+        private const val RECURRING_PURPOSE = "Recurring"
 
         @JvmStatic
         @Named("mapRequestAmount")
@@ -24,6 +25,10 @@ abstract class AbrRequestMapper {
             amount
                 .movePointRight(2)
                 .intValueExact()
+
+        @JvmStatic
+        @Named("mapHppCofCapturePurposes")
+        fun mapHppCofCapturePurposes(saveCard: Boolean): List<String>? = listOf(RECURRING_PURPOSE).takeIf { saveCard }
     }
 
     @Mapping(target = "typeRid", expression = "java( TypeRidEnum.WITH_3DS )")
@@ -32,6 +37,7 @@ abstract class AbrRequestMapper {
     @Mapping(target = "hppRedirectUrl", source = "redirectUrl")
     @Mapping(target = "adviceIfaceAddress", source = "redirectUrl")
     @Mapping(target = "descriptionHtml", source = "request.description")
+    @Mapping(target = "hppCofCapturePurposes", source = "request.saveCard", qualifiedByName = ["mapHppCofCapturePurposes"])
     protected abstract fun toCardOrder(
         request: CardPayOperationRequest,
         redirectUrl: String,

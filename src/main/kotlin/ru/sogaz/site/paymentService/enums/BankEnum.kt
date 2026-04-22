@@ -7,10 +7,14 @@ enum class BankEnum(
     val description: String,
 ) {
     GPB("gpb", "ГПБ"),
-    AKB_RUS("akb_rus", "АБР"),
+    ABR("abr", "АБР"),
     ;
 
     companion object {
-        fun from(value: String?): BankEnum? = BankEnum.entries.find { it.code == value }
+        fun from(value: String?): BankEnum? =
+            when (value) {
+                "akb_rus" -> ABR
+                else -> BankEnum.entries.find { it.code == value }
+            }
     }
 }

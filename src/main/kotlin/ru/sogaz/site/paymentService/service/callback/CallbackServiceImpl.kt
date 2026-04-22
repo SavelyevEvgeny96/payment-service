@@ -36,7 +36,7 @@ class CallbackServiceImpl(
         const val CODE_SUCCESS = 1101511200
         const val STATUS_OK = "OK"
         const val ERROR_PAYMENT_UPDATE = "Произошла ошибка при обновлении платежа в БД"
-        const val AKB_RUS = "akb_rus"
+        const val ABR = "abr"
         const val SBP_GPB = "gpb"
         const val BANK_CARD = "bankCard"
         const val START_METHOD_PROCESS_CALL =

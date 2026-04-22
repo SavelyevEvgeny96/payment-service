@@ -10,7 +10,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.abr.AbrOrderResponse
 interface AbrSbpResponseMapper {
     @Mapping(target = "paymentBankId", expression = "java( String.valueOf(response.getOrder().getId()) )")
     @Mapping(target = "paymentPageUrl", source = "order.hppUrl")
-    @Mapping(target = "bank", constant = "AKB_RUS")
+    @Mapping(target = "bank", constant = "ABR")
     fun toBankPaymentPageData(response: AbrOrderResponse): BankPaymentPageData
 
     fun toSbpPaymentPageData(paymentData: BankPaymentPageData, response: AbrPreparePushTranResponse): BankPaymentPageData =

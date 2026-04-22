@@ -122,7 +122,7 @@ class InfoPageServiceImpl(
             ?.let { PaySbp(spbPayUrl, it) }
 
     private fun generatePaySbpFromBank(order: Order): PaySbp? {
-        if (order.bank == BankEnum.AKB_RUS) {
+        if (order.bank == BankEnum.ABR) {
             return null
         }
         return try {

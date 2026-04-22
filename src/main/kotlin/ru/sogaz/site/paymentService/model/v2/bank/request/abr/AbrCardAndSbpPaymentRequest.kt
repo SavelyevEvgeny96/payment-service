@@ -18,6 +18,7 @@ data class AbrOrderDto(
     val adviceIfaceAddress: String?,
     val descriptionHtml: String,
     val ridByMerchant: String,
+    val hppCofCapturePurposes: List<String>? = null,
     val srcSubjectKind: String? = null,
     val expTime: String? = null,
     val remittanceMessage: String? = null,
