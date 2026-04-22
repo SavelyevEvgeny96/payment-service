@@ -19,7 +19,7 @@ class OperationDetailsServiceImpl(
     override fun getOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
         when (idempotentOrderOperation.bank) {
             OperationBank.GPB -> gpbOperationStatusServiceImpl.getOperationDetails(idempotentOrderOperation)
-            OperationBank.AKB_RUS -> TODO()
+            OperationBank.ABR -> TODO()
             else -> throw InnerException(getTraceId(), EMPTY_BANK)
         }
 }

@@ -1,14 +1,14 @@
-package ru.sogaz.site.paymentService.dto.request
+package ru.sogaz.site.paymentService.model.v2.bank.request.abr
 
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.LanguageEnum
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
 
-data class AkbCardAndSbpPaymentRequest(
-    val order: OrderDto,
+data class AbrCardAndSbpPaymentRequest(
+    val order: AbrOrderDto,
 )
 
-data class OrderDto(
+data class AbrOrderDto(
     val typeRid: TypeRidEnum,
     val amount: Int,
     val currency: CurrencyEnum,
@@ -18,6 +18,7 @@ data class OrderDto(
     val adviceIfaceAddress: String?,
     val descriptionHtml: String,
     val ridByMerchant: String,
+    val hppCofCapturePurposes: List<String>? = null,
     val srcSubjectKind: String? = null,
     val expTime: String? = null,
     val remittanceMessage: String? = null,
