@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-create-bank-priority-rules-tables
+      author: Evgeny Savelyev
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-bank-priority-rules-tables
+  - include:
+      file: db.changelog\v2.2.5\2026-04-22\DATA\create_bank_priority_rules_tables.sql
