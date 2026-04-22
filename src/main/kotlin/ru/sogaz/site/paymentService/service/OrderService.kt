@@ -1,0 +1,31 @@
+package ru.sogaz.site.paymentService.service
+
+import ru.sogaz.site.paymentService.dto.data.DataGetOrderStatus
+import ru.sogaz.site.paymentService.dto.data.DataOrder
+import ru.sogaz.site.paymentService.dto.request.OrderRequest
+import ru.sogaz.site.paymentService.dto.request.PayQueryParams
+import ru.sogaz.site.paymentService.entity.Order
+
+interface OrderService {
+    /**
+     * Метод для создания платежа.
+     * Проверяет данные о платеже, валидирует их и создает запись о платеже.
+     * @param orderRequest Данные о заказе(содержит внутри лист PaymentRequest)
+     * @return Объект Response с информацией о платеже
+     */
+    fun createOrder(orderRequest: OrderRequest): DataOrder
+
+    fun makeOrderByRequest(orderRequest: OrderRequest): Order
+
+    fun getOrderStatus(orderId: String): DataGetOrderStatus
+
+    fun createRegestryOrder(
+        unifiedId: String,
+        payQueryParams: PayQueryParams,
+        clientId: String,
+    ): Order
+
+    fun cancelOrder(order: Order)
+
+    fun cancelOrderIfPaymentFail(order: Order)
+}
