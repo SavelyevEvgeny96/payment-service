@@ -30,6 +30,5 @@ class GpbOperationDetailsServiceImpl(
         when (val payOperation = operationMapper.makePayOperation(idempotentOrderOperation)) {
             is CardPayOperation -> gpbCardIntegration.payStatus(payOperation)
             is SbpPayOperation -> gpbSbpIntegration.payStatus(payOperation)
-            is PayOperation -> gpbCardIntegration.payStatus(payOperation)
         }
 }
