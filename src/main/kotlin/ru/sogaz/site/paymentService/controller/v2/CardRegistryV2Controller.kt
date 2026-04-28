@@ -6,15 +6,14 @@ import ru.sogaz.site.paymentService.controller.WrapResponseController
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
-import ru.sogaz.siter.models.resonses.Response
 
 @RestController
 class CardRegistryV2Controller(
     private val payOperationService: PayOperationService,
 ) : WrapResponseController(),
     CardRegistryV2Api {
-    override fun cardRegistry(request: PayRegOperationRequest): Response<BankPaymentPageData> =
+    override fun cardRegistry(request: PayRegOperationRequest): BankPaymentPageData =
         request
             .run(payOperationService::regPayOperation)
-            .wrapToSuccessResponse(200)
 }
+

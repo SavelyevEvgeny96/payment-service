@@ -31,5 +31,7 @@ interface CardRegistryV2Api {
     fun cardRegistry(
         @RequestBody
         request: PayRegOperationRequest,
-    ): Response<BankPaymentPageData>
+    ): BankPaymentPageData
+
 }
+
