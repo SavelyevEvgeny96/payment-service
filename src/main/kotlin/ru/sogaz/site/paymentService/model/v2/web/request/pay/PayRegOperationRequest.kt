@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.model.v2.web.request.pay
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
@@ -25,11 +26,13 @@ data class PayRegOperationRequest(
         accessMode = Schema.AccessMode.READ_ONLY,
         defaultValue = "REGISTRATION",
     )
+    @JsonIgnore
     override val operationType: OperationType = OperationType.REGISTRATION
 
     @field:Schema(
         accessMode = Schema.AccessMode.READ_ONLY,
         defaultValue = "CARD",
     )
+    @JsonIgnore
     override val paymentType: PaymentType = PaymentType.CARD
 }
