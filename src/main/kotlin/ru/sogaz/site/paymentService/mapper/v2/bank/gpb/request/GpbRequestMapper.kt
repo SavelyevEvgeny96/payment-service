@@ -80,7 +80,6 @@ abstract class GpbRequestMapper {
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
     @Mapping(target = "params", source = "request.payItems")
     @Mapping(target = "merchantTrx", source = "request.orderId")
-    @Mapping(target = "addCardAllowed", source = "request.saveCard")
     @Mapping(target = "state", expression = "java(cardPaymentState)")
     @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
     @Mapping(target = "openApiMirPaySupported", constant = "true")
