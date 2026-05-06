@@ -18,7 +18,7 @@ data class PayRegOperationRequest(
     override val amount: BigDecimal,
     @field:Schema(description = "Флаг необходимости анонимизированной оплаты", defaultValue = "false")
     override val depersonalization: Boolean,
-    @field:Parameter(description = "IP пользователя, который совершает оплату")
+    @field:Schema(description = "IP пользователя, который совершает оплату")
     val payerIP: String? = null,
     @field:Schema(description = "Дополнительные параметры банковской операции")
     val params: RedirectParams = RedirectParams(),
