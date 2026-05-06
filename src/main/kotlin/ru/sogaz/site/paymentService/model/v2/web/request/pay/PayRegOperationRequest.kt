@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.web.request.pay
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
@@ -17,6 +18,8 @@ data class PayRegOperationRequest(
     override val amount: BigDecimal,
     @field:Schema(description = "Флаг необходимости анонимизированной оплаты", defaultValue = "false")
     override val depersonalization: Boolean,
+    @field:Parameter(description = "IP пользователя, который совершает оплату")
+    val payerIP: String? = null,
     @field:Schema(description = "Дополнительные параметры банковской операции")
     val params: RedirectParams = RedirectParams(),
     @field:Schema(description = "Флаг необходимости сохранения карты")

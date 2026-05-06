@@ -51,7 +51,6 @@ interface IdempotentOrderOperationMapper {
     @Mapping(target = "premiumAmount", source = "amount")
     @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "operationStarted", expression = "java( Instant.now() )")
-    @Mapping(target = "payerIp", source = "params.payerIP")
     fun toIdempotentOrderOperation(operationRequest: PayRegOperationRequest): IdempotentOrderOperation
 
     @Mapping(target = "id", ignore = true)
