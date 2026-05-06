@@ -16,4 +16,3 @@ class CardRegistryV2Controller(
         request
             .run(payOperationService::regPayOperation)
 }
-

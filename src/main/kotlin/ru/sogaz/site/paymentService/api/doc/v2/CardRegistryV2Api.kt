@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
-import ru.sogaz.siter.models.resonses.Response
 
 interface CardRegistryV2Api {
     @Operation(
@@ -32,6 +31,4 @@ interface CardRegistryV2Api {
         @RequestBody
         request: PayRegOperationRequest,
     ): BankPaymentPageData
-
 }
-

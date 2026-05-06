@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.mapper.v2.operation.OperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
-import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType

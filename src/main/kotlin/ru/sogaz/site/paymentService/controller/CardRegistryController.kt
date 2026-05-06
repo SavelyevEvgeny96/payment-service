@@ -24,14 +24,13 @@ class CardRegistryController(
     private val cardRegistryService: CardRegistryService,
     private val authorizationService: AuthorizationService,
 ) : WrapResponseController() {
-
     @Operation(
         summary = "Редирект на страницу оплаты заказа по карте",
-        description = "Инициирует регистрацию банковской карты и выполняет редирект на платежную страницу"
+        description = "Инициирует регистрацию банковской карты и выполняет редирект на платежную страницу",
     )
     @ApiResponse(
         responseCode = "302",
-        description = "Редирект на страницу оплаты"
+        description = "Редирект на страницу оплаты",
     )
     @GetMapping("/payment/users/{unifiedId}/card")
     fun cardRegistry(
@@ -39,18 +38,16 @@ class CardRegistryController(
         @Parameter(
             description = "Идентификатор единого профиля клиента",
             required = true,
-            example = "123456789"
+            example = "123456789",
         )
         unifiedId: String,
-
         @Valid
         payQueryParams: PayQueryParamsWithRequiredFields,
-
         @RequestHeader(HttpHeaders.AUTHORIZATION)
         @Parameter(
             description = "Bearer токен авторизации",
             required = true,
-            example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
         )
         token: String,
     ): RedirectView {
@@ -61,7 +58,6 @@ class CardRegistryController(
                 unifiedId = unifiedId,
                 payQueryParams = payQueryParams,
                 clientId = clientSystem.externalSystemCode,
-            )
-            .wrapToRedirectView()
+            ).wrapToRedirectView()
     }
 }
