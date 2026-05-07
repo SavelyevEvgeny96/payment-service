@@ -4,5 +4,5 @@ enum class OperationType {
     PAY,
     RECURRENT,
     REGISTRATION,
-    REFUND,
+    REVERSAL,
 }

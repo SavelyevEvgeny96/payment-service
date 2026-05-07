@@ -10,13 +10,13 @@ import java.util.UUID
 @Repository
 interface IdempotentOrderOperationRepository : JpaRepository<IdempotentOrderOperation, UUID> {
     fun findByIdempotentOrderIdAndPaymentBankIdAndOperationTypeIn(
-        idempotentOrderId: UUID,
+        idempotentOrderId: UUID?,
         paymentBankId: String,
         operationType: List<OperationType>,
     ): IdempotentOrderOperation?
 
-    fun findFirstByIdempotentOrderIdAndStateAndOperationTypeInOrderByCreateDateDesc(
-        idempotentOrderId: UUID,
+    fun findFirstByPaymentBankIdAndStateAndOperationTypeInOrderByCreateDateDesc(
+        paymentBankId: String,
         state: OperationState,
         operationType: List<OperationType>,
     ): IdempotentOrderOperation?
