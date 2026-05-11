@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class RefundOperationRequest(
-    override val orderId: UUID,
+    override val orderId: UUID? = null,
     override val amount: BigDecimal,
     override val paymentType: PaymentType,
     val bank: OperationBank,
@@ -19,7 +19,7 @@ data class RefundOperationRequest(
 ) : OperationRequest() {
     @field:Schema(
         accessMode = Schema.AccessMode.READ_ONLY,
-        defaultValue = "REFUND",
+        defaultValue = "REVERSAL",
     )
-    override val operationType: OperationType = OperationType.REFUND
+    override val operationType: OperationType = OperationType.REVERSAL
 }

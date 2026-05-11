@@ -25,7 +25,7 @@ class RefundPayOperationServiceImpl(
     private val operationDetailsProducer: OperationDetailsProducer,
 ) : RefundPayOperationService {
     companion object {
-        private const val REFUND_TYPE_ERROR = "Не поддерживаемый для возвратов тип платежа"
+        private const val REFUND_TYPE_ERROR = "Не поддерживаемый для отмены тип платежа"
         private const val REFUND_INTERNAL_ERROR = "Платежная система недоступна"
     }
 

@@ -18,24 +18,24 @@ class RefundCardPayConsumer(
     private val refundPayOperationService: RefundPayOperationService,
 ) {
     companion object {
-        private const val REFUND_RESULT = "Результат проведенного по заказу [{}] возврата: {}"
-        private const val REFUND_EXCEPTION = "Во время проведения возврата произошла ошибка: {}"
+        private const val REFUND_RESULT = "Результат проведенного по заказу [{}] отмены: {}"
+        private const val REFUND_EXCEPTION = "Во время проведения отмены произошла ошибка: {}"
     }
 
     val logger = loggerFor(javaClass)
 
     @RabbitListener(
-        queues = ["\${app.rabbit.payment-refund-queue}"],
+        queues = ["\${app.rabbit.payment-reversal-queue}"],
         containerFactory = "concurrentContainerFactory",
     )
-    fun recurrentPay(
+    fun reversalPay(
         @Payload refundEvent: RefundEvent,
     ) {
         try {
-            val operation = idempotentOrderOperationDao.findSucceededByOrderId(refundEvent.orderId) ?: throw Exception()
+            val operation = idempotentOrderOperationDao.findSucceededByPaymentBankId(refundEvent.paymentBankId) ?: throw Exception()
             val refundOperationRequest = refundOperationRequestMapper.toRefundOperationRequest(operation, refundEvent)
             val recurrentOperationDetails = refundPayOperationService.refundPayOperation(refundOperationRequest)
-            logger.debug(REFUND_RESULT, refundEvent.orderId, recurrentOperationDetails.state)
+            logger.debug(REFUND_RESULT, refundEvent.paymentBankId, recurrentOperationDetails.state)
         } catch (ex: Exception) {
             logger.error(REFUND_EXCEPTION, ex.message, ex)
         }
