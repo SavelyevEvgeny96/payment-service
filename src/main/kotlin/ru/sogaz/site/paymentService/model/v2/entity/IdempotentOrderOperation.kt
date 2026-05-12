@@ -35,6 +35,7 @@ class IdempotentOrderOperation(
     @Enumerated(EnumType.STRING)
     var bank: OperationBank?,
     var paymentBankId: String?,
+    var qrId: String?,
     @Enumerated(EnumType.STRING)
     var operationType: OperationType,
     @Enumerated(EnumType.STRING)
