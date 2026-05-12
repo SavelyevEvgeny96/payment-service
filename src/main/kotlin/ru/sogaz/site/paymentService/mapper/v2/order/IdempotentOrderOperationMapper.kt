@@ -58,6 +58,7 @@ interface IdempotentOrderOperationMapper {
     @Mapping(target = "premiumAmount", source = "amount")
     @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "operationStarted", expression = "java( Instant.now() )")
+    @Mapping(target = "payItems", expression = "java(new java.util.LinkedHashMap<String, String>())")
     fun toIdempotentOrderOperation(operationRequest: RefundOperationRequest): IdempotentOrderOperation
 
     @Mapping(target = "id", ignore = true)

@@ -22,7 +22,7 @@ class GpbOperationDetailsServiceImpl(
             OperationType.PAY -> getPayOperationDetails(idempotentOrderOperation)
             OperationType.RECURRENT -> getPayOperationDetails(idempotentOrderOperation)
             OperationType.REGISTRATION -> getPayOperationDetails(idempotentOrderOperation)
-            OperationType.REFUND -> TODO()
+            OperationType.REVERSAL -> TODO()
         }
 
     private fun getPayOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
