@@ -16,8 +16,9 @@ import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
     imports = [OperationState::class],
 )
 interface GpbSbpResponseMapper {
-    @Mapping(target = "paymentBankId", source = "data.qrcId")
+    @Mapping(target = "paymentBankId", source = "transactionId")
     @Mapping(target = "paymentPageUrl", source = "data.payload")
+    @Mapping(target = "qrId", source = "data.qrcId")
     @Mapping(target = "bank", constant = "GPB")
     fun toBankPaymentPageData(response: GpbSbpPayResponse): BankPaymentPageData
 
