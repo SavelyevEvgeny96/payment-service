@@ -50,9 +50,9 @@ class GpbCallbackV2Controller(
         }.wrapToOkResponseEntity()
 
     override fun stateSbpGpbCallback(
-        qrcId: String,
+        transactionId: String,
         merchantId: String,
     ) {
-        operationCallbackService.updateByOrderIdAndPaymentBankId(UUID.fromString(qrcId), merchantId)
+        operationCallbackService.updateByOrderIdAndPaymentBankId(UUID.fromString(transactionId), merchantId)
     }
 }
