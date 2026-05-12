@@ -21,8 +21,8 @@ class GpbOperationDetailsServiceImpl(
         when (idempotentOrderOperation.operationType) {
             OperationType.PAY -> getPayOperationDetails(idempotentOrderOperation)
             OperationType.RECURRENT -> getPayOperationDetails(idempotentOrderOperation)
-            OperationType.CARD_REGISTRATION -> getPayOperationDetails(idempotentOrderOperation)
-            OperationType.REFUND -> TODO()
+            OperationType.REGISTRATION -> getPayOperationDetails(idempotentOrderOperation)
+            OperationType.REVERSAL -> TODO()
         }
 
     private fun getPayOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
