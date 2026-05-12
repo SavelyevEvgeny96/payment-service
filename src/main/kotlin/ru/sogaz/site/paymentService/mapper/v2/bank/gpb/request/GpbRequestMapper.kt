@@ -47,6 +47,10 @@ abstract class GpbRequestMapper {
                 .intValueExact()
 
         @JvmStatic
+        fun requireQrId(bankPaymentPageData: BankPaymentPageData): String =
+            requireNotNull(bankPaymentPageData.qrId) { "QR id is missing for SBP QR image request" }
+
+        @JvmStatic
         @Named("mapSrc")
         fun mapSrc(keyCard: String): Src = Src(SCR_TYPE_FOR_CARD, keyCard)
     }
@@ -108,7 +112,7 @@ abstract class GpbRequestMapper {
 
     fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.paymentBankId)
 
-    @Mapping(target = "qrcId", source = "paymentBankId")
+    @Mapping(target = "qrcId", expression = "java(requireQrId(bankPaymentPageData))")
     @Mapping(target = "width", constant = "300")
     @Mapping(target = "height", constant = "300")
     abstract fun toQrImageRequest(bankPaymentPageData: BankPaymentPageData): GpbQrImageRequest
