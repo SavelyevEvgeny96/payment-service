@@ -41,8 +41,8 @@ api:
         main:
           portalId: ${GPB_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}
           merchantId: ${GPB_MERCHANT_ID:B80540E3096C8730BCE3}
-          identifier: ${GPB_BANK_LOGIN}
-          password: ${GPB_BANK_PASS}
+          identifier: ${GPB_BANK_LOGIN:pay.sogaz.ru}
+          password: ${GPB_BANK_PASS:VupE6ZvH}
         depersonalized:
           portalId: ${GPB_DEPERSONALIZED_PORTAL_ID}
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
