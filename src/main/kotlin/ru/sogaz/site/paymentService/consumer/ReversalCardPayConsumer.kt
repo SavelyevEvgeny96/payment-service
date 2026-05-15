@@ -9,18 +9,17 @@ import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.operation.RefundOperationRequestMapper
 import ru.sogaz.site.paymentService.model.v2.event.RefundEvent
-import ru.sogaz.site.paymentService.service.v2.pay.RefundPayOperationService
+import ru.sogaz.site.paymentService.service.v2.pay.ReversalPayOperationService
 import java.nio.charset.StandardCharsets
 
 @Component
 @ConditionalOnProperty(name = ["api.version"], havingValue = "v2")
-class RefundCardPayConsumer(
+class ReversalCardPayConsumer(
     private val idempotentOrderOperationDao: IdempotentOrderOperationDao,
     private val refundOperationRequestMapper: RefundOperationRequestMapper,
-    private val refundPayOperationService: RefundPayOperationService,
+    private val reversalPayOperationService: ReversalPayOperationService,
     private val objectMapper: ObjectMapper,
 ) {
-
     companion object {
         private const val REFUND_RESULT =
             "Результат проведенного по заказу [{}] отмены: {}"
@@ -42,18 +41,17 @@ class RefundCardPayConsumer(
         containerFactory = "concurrentContainerFactory",
     )
     fun reversalPay(message: Message) {
-
         val payload = message.body.toString(StandardCharsets.UTF_8)
 
-        val refundEvent = try {
-            objectMapper.readValue(payload, RefundEvent::class.java)
-        } catch (ex: Exception) {
-            logger.error(REFUND_PARSE_EXCEPTION, payload, ex)
-            return
-        }
+        val refundEvent =
+            try {
+                objectMapper.readValue(payload, RefundEvent::class.java)
+            } catch (ex: Exception) {
+                logger.error(REFUND_PARSE_EXCEPTION, payload, ex)
+                return
+            }
 
         try {
-
             val operation =
                 idempotentOrderOperationDao.findSucceededByPaymentBankId(
                     refundEvent.paymentBankId,
@@ -68,7 +66,7 @@ class RefundCardPayConsumer(
                 )
 
             val recurrentOperationDetails =
-                refundPayOperationService.refundPayOperation(
+                reversalPayOperationService.reversalPayOperation(
                     refundOperationRequest,
                 )
 
@@ -77,7 +75,6 @@ class RefundCardPayConsumer(
                 refundEvent.paymentBankId,
                 recurrentOperationDetails.state,
             )
-
         } catch (ex: Exception) {
             logger.error(REFUND_EXCEPTION, ex.message, ex)
         }

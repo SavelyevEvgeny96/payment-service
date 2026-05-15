@@ -148,6 +148,10 @@ api:
           password: ${GPB_BANK_PASS}
     sbp:
       basePath: ${GPB_SBP_URL}
+      reversalBasePath: ${GPB_SBP_BANK_URL:${GPB_SBP_URL}}
+      reversal:
+        login: ${GPB_SBP_LOGIN:}
+        password: ${GPB_SBP_PASS:}
       redirectUrl: ${GPB_SBP_REDIRECT_URL:https://www.sogaz.ru/}
       account:
         merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
