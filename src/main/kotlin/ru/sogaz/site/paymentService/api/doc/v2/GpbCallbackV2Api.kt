@@ -18,6 +18,6 @@ interface GpbCallbackV2Api {
 
     @PostMapping("v2/payment/sbp/gpb/state")
     fun stateSbpGpbCallback(
-        @RequestParam("qrcId") qrcId: String,
+        @RequestParam("transactionId") qrcId: String,
     )
 }
