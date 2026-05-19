@@ -16,6 +16,13 @@ class IdempotentOrderOperationDaoImpl(
     override fun findById(operationId: UUID): IdempotentOrderOperation? =
         idempotentOrderOperationRepository.findById(operationId).getOrNull()
 
+    override fun findSucceededByPaymentBankId(paymentBankId: String): IdempotentOrderOperation? =
+        idempotentOrderOperationRepository.findFirstByPaymentBankIdAndStateAndOperationTypeInOrderByCreateDateDesc(
+            paymentBankId,
+            OperationState.SUCCESS,
+            listOf(OperationType.PAY, OperationType.RECURRENT, OperationType.REGISTRATION),
+        )
+
     override fun findByOrderIdAndPaymentBankId(
         orderId: UUID?,
         paymentBankId: String,
@@ -26,9 +33,12 @@ class IdempotentOrderOperationDaoImpl(
             listOf(OperationType.PAY, OperationType.RECURRENT, OperationType.REGISTRATION),
         )
 
-    override fun findSucceededByPaymentBankId(paymentBankId: String): IdempotentOrderOperation? =
-        idempotentOrderOperationRepository.findFirstByPaymentBankIdAndStateAndOperationTypeInOrderByCreateDateDesc(
-            paymentBankId,
+    override fun findByPaymentBankId(paymentBankId: String): IdempotentOrderOperation? =
+        idempotentOrderOperationRepository.findByPaymentBankId(paymentBankId)
+
+    override fun findSucceededByOrderId(orderId: UUID): IdempotentOrderOperation? =
+        idempotentOrderOperationRepository.findFirstByIdempotentOrderIdAndStateAndOperationTypeInOrderByCreateDateDesc(
+            orderId,
             OperationState.SUCCESS,
             listOf(OperationType.PAY, OperationType.RECURRENT, OperationType.REGISTRATION),
         )
