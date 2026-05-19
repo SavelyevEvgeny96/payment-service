@@ -37,7 +37,6 @@ class AdminV2Controller(
         return adminRequest
             .operationCommand()
             .run(operationService::runOperation)
-            .getOrThrow()
     }
 
     private fun GpbSbpAdminAutoPayOperationRequest.operationCommand() =

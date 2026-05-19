@@ -26,7 +26,7 @@ class IdempotentOrderOperation(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID?,
     @ManyToOne
-    var idempotentOrder: IdempotentOrder,
+    var idempotentOrder: IdempotentOrder?,
     var premiumAmount: BigDecimal,
     @Enumerated(EnumType.STRING)
     var bank: OperationBank?,
@@ -39,6 +39,7 @@ class IdempotentOrderOperation(
     var state: OperationState,
     var paymentBankUrl: String?,
     var depersonalization: Boolean,
+    var payerIp: String?,
     var operationStarted: Instant?,
     var operationFinished: Instant?,
     @CreationTimestamp

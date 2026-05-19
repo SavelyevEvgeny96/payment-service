@@ -18,6 +18,8 @@ data class CardPayOperationRequest(
     override val depersonalization: Boolean,
     @field:Schema(description = "Платежные позиции")
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
+    @field:Schema(description = "IP пользователя, который совершает оплату")
+    val payerIp: String?,
     @field:Schema(description = "Дополнительные параметры банковской операции")
     val params: RedirectParams = RedirectParams(),
     @field:Schema(description = "Флаг необходимости сохранения карты")

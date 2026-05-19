@@ -8,6 +8,9 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.properties.gpb.GpbCardAccountProperties
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardAccountManager
 
+/**
+ * Менеджер для выдачи аккаунтов для обращения в Gpb в соответствии с необходимостью деперсонализации
+ */
 @Component
 class GpbCardAccountManagerImpl(
     private val cardAccountProperties: GpbCardAccountProperties,

@@ -96,7 +96,11 @@ class IdempotentOrderServiceTest {
         every { payOperationRequest.depersonalization } returns true
 
         val savedOperation =
-            idempotentOrderService.saveOperation(payOperationRequest, OperationBank.GPB)
+            idempotentOrderService.saveOperation(
+                payOperationRequest,
+                OperationBank.GPB,
+                idempotentOrderOperationMapper::toIdempotentOrderOperation,
+            )
 
         assertThat(savedOperation)
             .returns(true, IdempotentOrderOperation::depersonalization)

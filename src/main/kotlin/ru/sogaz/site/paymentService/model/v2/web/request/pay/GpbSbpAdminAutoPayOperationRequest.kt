@@ -18,8 +18,6 @@ data class GpbSbpAdminAutoPayOperationRequest(
     override val depersonalization: Boolean = false,
     @field:Schema(description = "Платежные позиции")
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
-    @field:Schema(description = "Ссылка для редиректа после оплаты", example = "https://www.sogaz.ru/")
-    val returnUrl: String?,
     val headers: GpbSbpAutoPayHeaders,
 ) : PayOperationRequest() {
     @field:Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "PAY")

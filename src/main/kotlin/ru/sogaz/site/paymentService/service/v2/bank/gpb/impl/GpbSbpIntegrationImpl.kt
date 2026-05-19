@@ -17,6 +17,12 @@ import ru.sogaz.site.paymentService.properties.gpb.GpbSbpAccountProperties
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import java.time.Instant
 
+/**
+ * Класс интеграции с Газпромбанком.
+ * Реализует взаимодействие по регистрации и получении qr кода для оплаты по сбп, а также получении статуса оплаты по сбп.
+ * - Запросы в банк собираются с использованием GpbRequestMapper
+ * - Ответы от банка преобразовываются с использованием GpbSbpResponseMapper
+ */
 @Service
 class GpbSbpIntegrationImpl(
     private val gpbSbpClient: GpbSbpClient,
