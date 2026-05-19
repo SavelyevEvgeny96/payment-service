@@ -13,7 +13,6 @@ import ru.sogaz.site.paymentService.model.v2.exception.InvalidSignatureException
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.v2.status.OperationCallbackService
-import java.util.UUID
 
 @RestController
 @Tag(name = "Callback v2", description = "Прием callback-ов от банков")
@@ -49,10 +48,7 @@ class GpbCallbackV2Controller(
             }
         }.wrapToOkResponseEntity()
 
-    override fun stateSbpGpbCallback(
-        qrcId: String,
-        merchantId: String,
-    ) {
-        operationCallbackService.updateByOrderIdAndPaymentBankId(UUID.fromString(qrcId), merchantId)
+    override fun stateSbpGpbCallback(qrcId: String) {
+        operationCallbackService.updateByPaymentBankId(qrcId)
     }
 }
