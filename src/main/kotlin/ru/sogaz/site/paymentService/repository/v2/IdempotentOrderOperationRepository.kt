@@ -20,4 +20,9 @@ interface IdempotentOrderOperationRepository : JpaRepository<IdempotentOrderOper
         state: OperationState,
         operationType: List<OperationType>,
     ): IdempotentOrderOperation?
+
+    fun findFirstByPaymentBankIdAndOperationTypeOrderByCreateDateDesc(
+        paymentBankId: String,
+        operationType: OperationType,
+    ): IdempotentOrderOperation?
 }

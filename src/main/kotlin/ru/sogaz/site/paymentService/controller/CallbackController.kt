@@ -3,21 +3,27 @@ package ru.sogaz.site.paymentService.controller
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v1.CallbackV1Api
 import ru.sogaz.site.paymentService.dto.request.CallbackRequest
 import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
+import ru.sogaz.site.paymentService.model.v2.bank.callback.CallbackOkState
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbSbpReversalCallback
 import ru.sogaz.site.paymentService.service.CallbackService
 import ru.sogaz.site.paymentService.service.GpbCallbackService
+import ru.sogaz.site.paymentService.service.v2.status.OperationCallbackService
 import ru.sogaz.siter.models.resonses.Response
+import ru.sogaz.siter.models.resonses.getSuccessResponse
 
 @RestController
 @Tag(name = "Callback", description = "Прием callback-ов от банков")
 class CallbackController(
     private val gpbCallbackService: GpbCallbackService,
     private val callbackService: CallbackService,
+    private val operationCallbackService: OperationCallbackService,
 ) : CallbackV1Api {
     override fun stateGpbCallback(
         gpbCallback: GpbCallback,
@@ -43,6 +49,14 @@ class CallbackController(
         return callbackService.processCallback(requestParams)
     }
 
+    override fun stateSbpGpbReturnCallback(
+        @RequestBody callback: GpbSbpReversalCallback,
+        request: HttpServletRequest,
+    ): Response<CallbackOkState> {
+        operationCallbackService.processSbpReversalCallback(callback.transactionId)
+        return getSuccessResponse("", 1101533200, CallbackOkState())
+    }
+
     override fun stateSbpGpbCallback(
         @RequestParam("transactionId") transactionId: String,
         @RequestParam("qrcId") qrcId: String?,
@@ -65,10 +79,7 @@ class CallbackController(
         @RequestParam("status") status: String?,
         request: HttpServletRequest,
     ): Response<CallbackResponse> {
-        val requestParams =
-            CallbackRequest(
-                bankId = transactionId,
-            )
+        val requestParams = CallbackRequest(bankId = transactionId)
         return callbackService.processCallback(requestParams)
     }
 }

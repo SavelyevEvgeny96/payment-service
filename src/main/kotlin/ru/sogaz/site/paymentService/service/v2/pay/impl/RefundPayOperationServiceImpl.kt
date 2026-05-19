@@ -9,6 +9,7 @@ import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardRefundIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpReversalIntegration
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
 import ru.sogaz.site.paymentService.service.v2.operation.inline.gpbOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFailure
@@ -21,6 +22,7 @@ import ru.sogaz.site.paymentService.service.v2.pay.RefundPayOperationService
 class RefundPayOperationServiceImpl(
     private val operationService: OperationService,
     private val gpbCardRefundIntegration: GpbCardRefundIntegration,
+    private val gpbSbpReversalIntegration: GpbSbpReversalIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
     private val operationDetailsProducer: OperationDetailsProducer,
 ) : RefundPayOperationService {
@@ -38,6 +40,7 @@ class RefundPayOperationServiceImpl(
     override fun refundPayOperation(refundOperationRequest: RefundOperationRequest): BankOperationDetails =
         when (refundOperationRequest.paymentType) {
             PaymentType.CARD -> refundCardPayOperation(refundOperationRequest)
+            PaymentType.SBP -> refundSbpPayOperation(refundOperationRequest)
             else -> throw InnerException(getTraceId(), REFUND_TYPE_ERROR)
         }
 
@@ -52,6 +55,11 @@ class RefundPayOperationServiceImpl(
             .refundCardPayOperationCommand()
             .runRefundCommand()
 
+    private fun refundSbpPayOperation(refundOperationRequest: RefundOperationRequest): BankOperationDetails =
+        refundOperationRequest
+            .refundSbpPayOperationCommand()
+            .runRefundCommand()
+
     /**
      * Формирует объект команды и стратегию банковской операции по возврату оплаты картой относительно этого запроса.
      * Добавляет план действий при возбуждении ошибки и при финальном статусе операции.
@@ -61,6 +69,19 @@ class RefundPayOperationServiceImpl(
             requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             stepWithSave(
                 action = gpbCardRefundIntegration::refundPayCard,
+                resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
+            ),
+        ) onFailure {
+            operationDetailsProducer.sendFailureOperationDetails(this, REFUND_INTERNAL_ERROR)
+        } onFinalState {
+            operationDetailsProducer.sendOperationDetails(this, it)
+        }
+
+    private fun RefundOperationRequest.refundSbpPayOperationCommand() =
+        gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
+            stepWithSave(
+                action = gpbSbpReversalIntegration::reversalPaySbp,
                 resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
             ),
         ) onFailure {

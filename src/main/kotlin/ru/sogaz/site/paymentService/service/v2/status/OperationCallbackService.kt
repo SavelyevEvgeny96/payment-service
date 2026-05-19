@@ -10,4 +10,6 @@ interface OperationCallbackService {
         orderId: UUID,
         paymentBankId: String,
     )
+
+    fun processSbpReversalCallback(paymentBankId: String)
 }
