@@ -2,9 +2,11 @@ package ru.sogaz.site.paymentService.properties.gpb
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbSbpAccountData
+import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbSbpReversalProperties
 
 @ConfigurationProperties(prefix = "api.gpb.sbp")
 class GpbSbpAccountProperties {
     lateinit var redirectUrl: String
     lateinit var account: GpbSbpAccountData
+    lateinit var reversal: GpbSbpReversalProperties
 }
