@@ -18,6 +18,25 @@ interface GpbCallbackV2Api {
 
     @PostMapping("v2/payment/sbp/gpb/state")
     fun stateSbpGpbCallback(
-        @RequestParam("transactionId") qrcId: String,
-    )
+        @RequestParam("transactionId") transactionId: String,
+        @RequestParam("qrcId") qrcId: String,
+        @RequestParam("merchantId") merchantId: String?,
+        @RequestParam("amount") amount: String?,
+        @RequestParam("currency") currency: String?,
+        @RequestParam("dateTime") dateTime: String?,
+        @RequestParam("senderId") senderId: String?,
+        @RequestParam("senderTypeId") senderTypeId: String?,
+        @RequestParam("fpMessageId") fpMessageId: String?,
+        @RequestParam("recipientAccountId") recipientAccountId: String?,
+        @RequestParam("comment") comment: String?,
+        @RequestParam("recipientType") recipientType: String?,
+        @RequestParam("fpTransactionType") fpTransactionType: String?,
+        @RequestParam("fpTransactionId") fpTransactionId: String?,
+        @RequestParam("senderBic") senderBic: String?,
+        @RequestParam("recipientInn") recipientInn: String?,
+        @RequestParam("timestamp") timestamp: String?,
+        @RequestParam("operDate") operDate: String?,
+        @RequestParam("status") status: String?,
+        request: HttpServletRequest,
+    ):ResponseEntity<GpbCallbackResponse>
 }
