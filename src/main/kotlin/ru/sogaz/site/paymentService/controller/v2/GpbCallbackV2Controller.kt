@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.controller.v2
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.GpbCallbackV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
@@ -48,7 +49,37 @@ class GpbCallbackV2Controller(
             }
         }.wrapToOkResponseEntity()
 
-    override fun stateSbpGpbCallback(qrcId: String) {
-        operationCallbackService.updateByPaymentBankId(qrcId)
+    override fun stateSbpGpbCallback(
+        @RequestParam("transactionId") transactionId: String,
+        @RequestParam("qrcId") qrcId: String,
+        @RequestParam("merchantId") merchantId: String?,
+        @RequestParam("amount") amount: String?,
+        @RequestParam("currency") currency: String?,
+        @RequestParam("dateTime") dateTime: String?,
+        @RequestParam("senderId") senderId: String?,
+        @RequestParam("senderTypeId") senderTypeId: String?,
+        @RequestParam("fpMessageId") fpMessageId: String?,
+        @RequestParam("recipientAccountId") recipientAccountId: String?,
+        @RequestParam("comment") comment: String?,
+        @RequestParam("recipientType") recipientType: String?,
+        @RequestParam("fpTransactionType") fpTransactionType: String?,
+        @RequestParam("fpTransactionId") fpTransactionId: String?,
+        @RequestParam("senderBic") senderBic: String?,
+        @RequestParam("recipientInn") recipientInn: String?,
+        @RequestParam("timestamp") timestamp: String?,
+        @RequestParam("operDate") operDate: String?,
+        @RequestParam("status") status: String?,
+        request: HttpServletRequest,
+    ): ResponseEntity<GpbCallbackResponse> {
+       return try {
+            operationCallbackService.updateByPaymentBankId(qrcId)
+            GpbCallbackResponse()
+        } catch (ex: Exception) {
+            logger.error(ex.message, ex)
+            when (ex) {
+                is OperationNotFoundException -> GpbCallbackResponse(NOT_FOUND)
+                else -> GpbCallbackResponse(INTERNAL_SERVER_ERROR)
+            }
+        }.wrapToOkResponseEntity()
     }
 }
