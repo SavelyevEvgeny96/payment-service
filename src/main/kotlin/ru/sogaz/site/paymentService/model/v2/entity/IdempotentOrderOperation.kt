@@ -1,5 +1,5 @@
-
 package ru.sogaz.site.paymentService.model.v2.entity
+
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -51,6 +51,7 @@ class IdempotentOrderOperation(
     @Column(name = "payItems", columnDefinition = "jsonb")
     var payItems: LinkedHashMap<String, String>?,
     var externalErrorCode: String?,
+    var errorText: String?,
     var operationStarted: Instant?,
     var operationFinished: Instant?,
     @CreationTimestamp

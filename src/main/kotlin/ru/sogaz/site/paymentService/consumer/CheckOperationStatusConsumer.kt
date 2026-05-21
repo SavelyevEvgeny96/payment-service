@@ -6,6 +6,7 @@ import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
+import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
@@ -13,7 +14,6 @@ import ru.sogaz.site.paymentService.model.v2.event.CheckStatusEvent
 import ru.sogaz.site.paymentService.producer.CheckOperationStatusProducer
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.status.OperationDetailsService
-import java.time.Instant
 
 @Component
 class CheckOperationStatusConsumer(
@@ -21,6 +21,7 @@ class CheckOperationStatusConsumer(
     private val operationDetailsService: OperationDetailsService,
     private val checkOperationStatusProducer: CheckOperationStatusProducer,
     private val operationDetailsProducer: OperationDetailsProducer,
+    private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
 ) {
     @RabbitListener(
         queues = ["\${app.rabbit.payment-status-check-queue}"],
@@ -52,8 +53,7 @@ class CheckOperationStatusConsumer(
         operationDetails: BankOperationDetails,
     ) {
         operationDetailsProducer.sendOperationDetails(operation, operationDetails)
-        operation.state = operationDetails.state
-        operation.operationFinished = Instant.now()
+        idempotentOrderOperationMapper.updateByBankOperationDetails(operation, operationDetails)
         idempotentOrderOperationDao.save(operation)
     }
 
