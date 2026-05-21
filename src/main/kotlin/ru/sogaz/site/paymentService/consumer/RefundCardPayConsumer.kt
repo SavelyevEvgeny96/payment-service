@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.consumer
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -38,22 +37,21 @@ class RefundCardPayConsumer(
         queues = ["\${app.rabbit.payment-reversal-queue}"],
         containerFactory = "concurrentContainerFactory",
     )
-    fun reversalPay(
-        message: Message
-    ) {
+    fun reversalPay(message: Message) {
         val rawMessage = String(message.body, StandardCharsets.UTF_8)
 
-        val refundEvent = try {
-            objectMapper.readValue(rawMessage, RefundEvent::class.java)
-        } catch (ex: Exception) {
-            logger.error(
-                REFUND_MESSAGE_PARSE_EXCEPTION,
-                ex.message,
-                rawMessage,
-                ex,
-            )
-            return
-        }
+        val refundEvent =
+            try {
+                objectMapper.readValue(rawMessage, RefundEvent::class.java)
+            } catch (ex: Exception) {
+                logger.error(
+                    REFUND_MESSAGE_PARSE_EXCEPTION,
+                    ex.message,
+                    rawMessage,
+                    ex,
+                )
+                return
+            }
 
         try {
             val operation =
