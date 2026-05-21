@@ -11,7 +11,7 @@ import java.util.UUID
 @Repository
 interface IdempotentOrderRepository : JpaRepository<IdempotentOrder, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    override fun findById(id: UUID): Optional<IdempotentOrder>
+    fun findById(id: UUID?): Optional<IdempotentOrder>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun save(idempotentOrder: IdempotentOrder): IdempotentOrder
