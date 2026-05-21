@@ -1,5 +1,6 @@
 
 package ru.sogaz.site.paymentService.model.v2.entity
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -11,6 +12,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.annotations.Type
 import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.type.SqlTypes
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
@@ -44,6 +46,7 @@ class IdempotentOrderOperation(
     var depersonalization: Boolean,
     var payerIp: String?,
     var description: String?,
+    @Type(JsonBinaryType::class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payItems", columnDefinition = "jsonb")
     var payItems: LinkedHashMap<String, String>?,
