@@ -1,24 +1,23 @@
 package ru.sogaz.site.paymentService.consumer
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.rabbitmq.client.Channel
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.loggerFor
-import ru.sogaz.site.paymentService.mapper.v2.operation.RefundOperationRequestMapper
+import ru.sogaz.site.paymentService.mapper.v2.operation.ReversalOperationRequestMapper
 import ru.sogaz.site.paymentService.model.v2.event.RefundEvent
-import ru.sogaz.site.paymentService.service.v2.pay.RefundPayOperationService
+import ru.sogaz.site.paymentService.service.v2.pay.ReversalPayOperationService
 import java.nio.charset.StandardCharsets
 
 @Component
 @ConditionalOnProperty(name = ["api.version"], havingValue = "v2")
-class RefundCardPayConsumer(
+class ReversalCardPayConsumer(
     private val idempotentOrderOperationDao: IdempotentOrderOperationDao,
-    private val refundOperationRequestMapper: RefundOperationRequestMapper,
-    private val refundPayOperationService: RefundPayOperationService,
+    private val reversalOperationRequestMapper: ReversalOperationRequestMapper,
+    private val reversalPayOperationService: ReversalPayOperationService,
     private val objectMapper: ObjectMapper,
 ) {
     companion object {
@@ -38,33 +37,32 @@ class RefundCardPayConsumer(
         queues = ["\${app.rabbit.payment-reversal-queue}"],
         containerFactory = "concurrentContainerFactory",
     )
-    fun reversalPay(
-        message: Message
-    ) {
+    fun reversalPay(message: Message) {
         val rawMessage = String(message.body, StandardCharsets.UTF_8)
 
-        val refundEvent = try {
-            objectMapper.readValue(rawMessage, RefundEvent::class.java)
-        } catch (ex: Exception) {
-            logger.error(
-                REFUND_MESSAGE_PARSE_EXCEPTION,
-                ex.message,
-                rawMessage,
-                ex,
-            )
-            return
-        }
+        val refundEvent =
+            try {
+                objectMapper.readValue(rawMessage, RefundEvent::class.java)
+            } catch (ex: Exception) {
+                logger.error(
+                    REFUND_MESSAGE_PARSE_EXCEPTION,
+                    ex.message,
+                    rawMessage,
+                    ex,
+                )
+                return
+            }
 
         try {
             val operation =
                 idempotentOrderOperationDao.findSucceededByPaymentBankId(refundEvent.paymentBankId)
                     ?: throw Exception()
 
-            val refundOperationRequest =
-                refundOperationRequestMapper.toRefundOperationRequest(operation, refundEvent)
+            val reversalOperationRequest =
+                reversalOperationRequestMapper.toRefundOperationRequest(operation, refundEvent)
 
             val recurrentOperationDetails =
-                refundPayOperationService.refundPayOperation(refundOperationRequest)
+                reversalPayOperationService.reversalPayOperation(reversalOperationRequest)
 
             logger.debug(
                 REFUND_RESULT,

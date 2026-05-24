@@ -12,7 +12,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationReq
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 
 /**
@@ -59,7 +59,7 @@ interface IdempotentOrderOperationMapper {
     @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "operationStarted", expression = "java( Instant.now() )")
     @Mapping(target = "payItems", expression = "java(new java.util.LinkedHashMap<String, String>())")
-    fun toIdempotentOrderOperation(operationRequest: RefundOperationRequest): IdempotentOrderOperation
+    fun toIdempotentOrderOperation(operationRequest: ReversalOperationRequest): IdempotentOrderOperation
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "paymentBankId", source = "token")
