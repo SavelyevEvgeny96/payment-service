@@ -3,9 +3,11 @@ package ru.sogaz.site.paymentService.controller.v2
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.GpbCallbackV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
+import ru.sogaz.site.paymentService.dto.data.SbpGpbStateCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCallbackResponse
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
@@ -13,7 +15,6 @@ import ru.sogaz.site.paymentService.model.v2.exception.InvalidSignatureException
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.v2.status.OperationCallbackService
-import java.util.UUID
 
 @RestController
 @Tag(name = "Callback v2", description = "Прием callback-ов от банков")
@@ -35,7 +36,7 @@ class GpbCallbackV2Controller(
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<GpbCallbackResponse> =
         try {
-            if (signatureVerifier.verifySignature(gpbCallback, httpServletRequest).not()) {
+            if (!signatureVerifier.verifySignature(gpbCallback, httpServletRequest)) {
                 throw InvalidSignatureException(gpbCallback.merchant_trx, gpbCallback.trx_id)
             }
             operationCallbackService.updateByGpbCardCallback(gpbCallback)
@@ -49,10 +50,7 @@ class GpbCallbackV2Controller(
             }
         }.wrapToOkResponseEntity()
 
-    override fun stateSbpGpbCallback(
-        transactionId: String,
-        merchantId: String,
-    ) {
-        operationCallbackService.updateByOrderIdAndPaymentBankId(UUID.fromString(transactionId), merchantId)
+    override fun stateSbpGpbCallback(request: SbpGpbStateCallbackRequest,) {
+        operationCallbackService.updateByPaymentBankId(request.qrcId)
     }
 }

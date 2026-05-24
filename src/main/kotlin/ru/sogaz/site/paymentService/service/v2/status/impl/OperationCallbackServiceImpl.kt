@@ -1,14 +1,18 @@
 package ru.sogaz.site.paymentService.service.v2.status.impl
 
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCallbackMapper
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCallbackResponse
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
 import ru.sogaz.site.paymentService.producer.CheckOperationStatusProducer
 import ru.sogaz.site.paymentService.service.v2.status.OperationCallbackService
 import ru.sogaz.site.paymentService.service.v2.status.OperationStatusUpdater
+import ru.sogaz.siter.models.resonses.Response
+import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.util.UUID
 
 @Service
@@ -34,13 +38,14 @@ class OperationCallbackServiceImpl(
         orderId: UUID,
         paymentBankId: String,
     ) = idempotentOrderOperationDao.findByOrderIdAndPaymentBankId(orderId, paymentBankId)
-        ?: throw OperationNotFoundException(orderId, paymentBankId)
+        ?: throw OperationNotFoundException(paymentBankId)
 
-    override fun updateByOrderIdAndPaymentBankId(
-        orderId: UUID,
-        paymentBankId: String,
-    ) {
-        val orderOperation = findOrderOperationOrThrow(orderId, paymentBankId)
+    fun findOrderOperationSbpOrThrow(paymentBankId: String) =
+        idempotentOrderOperationDao.findByPaymentBankId(paymentBankId)
+            ?: throw OperationNotFoundException(paymentBankId)
+
+    override fun updateByPaymentBankId(paymentBankId: String)  {
+        val orderOperation = findOrderOperationSbpOrThrow(paymentBankId)
         checkOperationStatusProducer.sendCheckStatusEvent(orderOperation)
     }
 }
