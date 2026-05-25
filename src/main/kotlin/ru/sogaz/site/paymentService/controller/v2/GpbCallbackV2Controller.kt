@@ -51,6 +51,6 @@ class GpbCallbackV2Controller(
         }.wrapToOkResponseEntity()
 
     override fun stateSbpGpbCallback(request: SbpGpbStateCallbackRequest,) {
-        operationCallbackService.updateByPaymentBankId(request.transactionId)
+        operationCallbackService.updateByPaymentBankId(request.qrcId)
     }
 }

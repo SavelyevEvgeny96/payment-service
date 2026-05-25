@@ -33,8 +33,8 @@ class IdempotentOrderOperationDaoImpl(
             listOf(OperationType.PAY, OperationType.RECURRENT, OperationType.REGISTRATION),
         )
 
-    override fun findByPaymentBankId(paymentBankId: String): IdempotentOrderOperation? =
-        idempotentOrderOperationRepository.findByPaymentBankId(paymentBankId)
+    override fun findByQrId(qrId: String): IdempotentOrderOperation? =
+        idempotentOrderOperationRepository.findByQrId(qrId)
 
     override fun findSucceededByOrderId(orderId: UUID): IdempotentOrderOperation? =
         idempotentOrderOperationRepository.findFirstByIdempotentOrderIdAndStateAndOperationTypeInOrderByCreateDateDesc(
