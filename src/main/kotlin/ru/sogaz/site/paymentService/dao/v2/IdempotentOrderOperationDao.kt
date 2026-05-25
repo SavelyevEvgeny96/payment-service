@@ -11,7 +11,7 @@ interface IdempotentOrderOperationDao {
         paymentBankId: String,
     ): IdempotentOrderOperation?
 
-    fun findByPaymentBankId(paymentBankId: String): IdempotentOrderOperation?
+    fun findByQrId(qrId: String): IdempotentOrderOperation?
 
     fun findSucceededByPaymentBankId(paymentBankId: String): IdempotentOrderOperation?
 
