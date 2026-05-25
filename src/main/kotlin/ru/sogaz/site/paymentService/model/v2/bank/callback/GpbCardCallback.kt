@@ -22,7 +22,7 @@ data class GpbCardCallback(
     val p: PaymentParams?,
     val card: CardParams?,
     val ts: String,
-    val signature: String,
+    val signature: String?,
 )
 
 data class PaymentParams(

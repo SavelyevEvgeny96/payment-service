@@ -1,10 +1,12 @@
 package ru.sogaz.site.paymentService.config
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import ru.sogaz.site.paymentService.properties.GpbConfigProperties
 import ru.sogaz.site.paymentService.service.SignatureVerifier
+import ru.sogaz.site.paymentService.service.callback.MockSignatureVerifierImpl
 import ru.sogaz.site.paymentService.service.callback.SignatureVerifierImpl
 import java.io.ByteArrayInputStream
 import java.security.PublicKey
@@ -14,8 +16,8 @@ import java.util.Base64
 import java.util.regex.Pattern
 
 @Configuration
-@Profile(value = ["stage", "prod"])
-class SignatureVerifierConfig {
+@Profile(value = ["local", "test"])
+class TestSignatureVerifierConfig {
     companion object {
         const val CONST_INSTANCE = "SHA1withRSA"
         const val CONST_X_509 = "X.509"
@@ -29,10 +31,15 @@ class SignatureVerifierConfig {
         }
 
     @Bean
+    @ConditionalOnProperty(name = ["app.gpb.signature_verifier_off"], havingValue = "false")
     fun signatureVerifier(gpbConfigProperties: GpbConfigProperties): SignatureVerifier {
         val pattern = Pattern.compile("%[0-9a-fA-F]{2}")
         return SignatureVerifierImpl(preconfiguredSignature(gpbConfigProperties), pattern, gpbConfigProperties)
     }
+
+    @Bean
+    @ConditionalOnProperty(name = ["app.gpb.signature_verifier_off"], havingValue = "true")
+    fun mockSignatureVerifier(): SignatureVerifier = MockSignatureVerifierImpl()
 
     private fun loadPublicKey(gpbConfigProperties: GpbConfigProperties): PublicKey =
         try {

@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
@@ -45,6 +46,17 @@ class PayOperationServiceImpl(
             .runCommand()
 
     /**
+     * Формирует команду и стратегию по регистрации и получению платежной страницы в банке ГПБ для регистрации карты.
+     *
+     * @param payOperationRequest запрос на выполнение операции регистрации карты
+     * @return данные страницы для банковского платежа
+     */
+    override fun regPayOperation(payOperationRequest: PayRegOperationRequest): BankPaymentPageData =
+        payOperationRequest
+            .regPayOperationCommand()
+            .runCommand()
+
+    /**
      * Формирует объект команды для запроса.
      * Вызывает функцию формирования стратегии в контексте того же запроса
      */
@@ -52,6 +64,16 @@ class PayOperationServiceImpl(
         gpbOperationCommand(
             requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             strategy = cardPayStrategy(),
+        )
+
+    /**
+     * Формирует объект команды для запроса.
+     * Вызывает функцию формирования стратегии в контексте того же запроса
+     */
+    private fun PayRegOperationRequest.regPayOperationCommand() =
+        gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
+            strategy = regPayStrategy(),
         )
 
     /**
@@ -64,6 +86,19 @@ class PayOperationServiceImpl(
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByAuthorizedTrx,
         ).stepWithSave(
             action = gpbCardIntegration::cardPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
+        )
+
+    /**
+     * Вызывается относительно определенного запроса на регистрацию картой.
+     * Формирует стратегию банковской операции по регистрации карты относительно этого запроса.
+     */
+    private fun PayRegOperationRequest.regPayStrategy() =
+        stepWithSave(
+            action = gpbCardIntegration::authorize,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByAuthorizedTrx,
+        ).stepWithSave(
+            action = gpbCardIntegration::regPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
         )
 
