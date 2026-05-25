@@ -7,7 +7,7 @@ import java.time.Instant
 
 data class BankOperationDetails(
     @field:JsonProperty("id")
-    val bankId: String,
+    val bankId: String?,
     @field:JsonProperty("status")
     val state: OperationState,
     val operationFinished: Instant? = null,
