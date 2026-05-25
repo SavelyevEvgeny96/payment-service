@@ -1,6 +1,9 @@
 package ru.sogaz.site.paymentService.service.v2.pay.impl
 
 import org.springframework.stereotype.Service
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
@@ -9,6 +12,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperat
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
@@ -21,6 +25,7 @@ import ru.sogaz.site.paymentService.service.v2.operation.inline.step
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
+import ru.sogaz.site.paymentService.service.v2.rules.RulePaymentTypeService
 
 @Service
 class PayOperationServiceImpl(
@@ -29,9 +34,12 @@ class PayOperationServiceImpl(
     private val gpbSbpIntegration: GpbSbpPayIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
     private val operationDetailsProducer: OperationDetailsProducer,
+    private val rulePaymentTypeService: RulePaymentTypeService,
 ) : PayOperationService {
+    private val logger = loggerFor(javaClass)
     companion object {
         private const val RECURRENT_INTERNAL_ERROR = "Платежная система недоступна"
+        private const val OPERATION_NOT_AVAILABLE_ERROR = "Операция недоступна для выбранного способа оплаты"
     }
 
     /**
@@ -42,6 +50,7 @@ class PayOperationServiceImpl(
      */
     override fun cardPayOperation(payOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         payOperationRequest
+            .checkAvailability()
             .cardPayOperationCommand()
             .runCommand()
 
@@ -53,6 +62,7 @@ class PayOperationServiceImpl(
      */
     override fun regPayOperation(payOperationRequest: PayRegOperationRequest): BankPaymentPageData =
         payOperationRequest
+            .checkAvailability()
             .regPayOperationCommand()
             .runCommand()
 
@@ -110,6 +120,7 @@ class PayOperationServiceImpl(
      */
     override fun sbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentPageData =
         payOperationRequest
+            .checkAvailability()
             .sbpPayOperationCommand()
             .runCommand()
 
@@ -141,6 +152,7 @@ class PayOperationServiceImpl(
      */
     override fun recurrentOperation(recurrentOperationRequest: CardRecurrentOperationRequest): BankOperationDetails =
         recurrentOperationRequest
+            .checkAvailability(OperationBank.GPB)
             .cardRecurrentPayOperationCommand()
             .runCommand()
 
@@ -181,6 +193,7 @@ class PayOperationServiceImpl(
      */
     override fun qrImageSbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentQrContent =
         payOperationRequest
+            .checkAvailability()
             .qrImageSbpPayOperationCommand()
             .runCommand()
 
@@ -205,6 +218,23 @@ class PayOperationServiceImpl(
         ).step(
             action = gpbSbpIntegration::getQrContent,
         )
+
+    /**
+     * Проверяет доступность операции по правилу.
+     */
+    private fun PayOperationRequest.checkAvailability(bank: OperationBank? = null): PayOperationRequest {
+        val available = rulePaymentTypeService.isOperationAvailable(operationType, paymentType, bank)
+        if (available) return this
+
+        logger.warn(
+            "Операция недоступна по правилу. operationType [{}], paymentType [{}], bank [{}], orderId [{}]",
+            operationType,
+            paymentType,
+            bank,
+            orderId,
+        )
+        throw InnerException(getTraceId(), OPERATION_NOT_AVAILABLE_ERROR)
+    }
 
     /**
      * Общая функция для запуска выполнения команды в сервисе операций
