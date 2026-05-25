@@ -3,10 +3,10 @@ package ru.sogaz.site.paymentService.service.v2.pay.impl
 import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
-import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardRefundIntegration
@@ -28,6 +28,7 @@ class RefundPayOperationServiceImpl(
     private val rulePaymentTypeService: RulePaymentTypeService,
 ) : RefundPayOperationService {
     private val logger = loggerFor(javaClass)
+
     companion object {
         private const val REFUND_TYPE_ERROR = "Не поддерживаемый для отмены тип платежа"
         private const val REFUND_INTERNAL_ERROR = "Платежная система недоступна"
