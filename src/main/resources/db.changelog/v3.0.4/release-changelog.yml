@@ -1,0 +1,4 @@
+# append new changeset at the end
+databaseChangeLog:
+  - include:
+      file: db.changelog\v3.0.4\2026-05-25\cumulative-changelog.yml
