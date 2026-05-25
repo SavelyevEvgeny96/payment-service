@@ -8,5 +8,5 @@ import ru.sogaz.siter.models.resonses.Response
 interface OperationCallbackService {
     fun updateByGpbCardCallback(gpbCardCallback: GpbCardCallback)
 
-    fun updateByPaymentBankId(qrId: String)
+    fun updateByQrId(qrId: String)
 }

@@ -44,7 +44,7 @@ class OperationCallbackServiceImpl(
         idempotentOrderOperationDao.findByQrId(qrId)
             ?: throw OperationNotFoundException(qrId)
 
-    override fun updateByPaymentBankId(qrId: String)  {
+    override fun updateByQrId(qrId: String)  {
         val orderOperation = findOrderOperationSbpOrThrow(qrId)
         checkOperationStatusProducer.sendCheckStatusEvent(orderOperation)
     }
