@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentService.service.v2.order
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 
 interface IdempotentOrderService {
     fun <R : OperationRequest> saveOperation(
@@ -17,7 +17,7 @@ interface IdempotentOrderService {
         operationMapper: (R.() -> IdempotentOrderOperation)?,
     ): IdempotentOrderOperation
 
-    fun findOperation(refundRequest: ReversalOperationRequest): IdempotentOrderOperation?
+    fun findOperation(refundRequest: RefundOperationRequest): IdempotentOrderOperation?
 
     fun saveOperation(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation
 }

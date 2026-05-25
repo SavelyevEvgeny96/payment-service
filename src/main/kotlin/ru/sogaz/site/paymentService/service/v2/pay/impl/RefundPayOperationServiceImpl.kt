@@ -1,83 +1,66 @@
 package ru.sogaz.site.paymentService.service.v2.pay.impl
 
 import org.springframework.stereotype.Service
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
-import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardReversalIntegration
-import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpReversalIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardRefundIntegration
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
 import ru.sogaz.site.paymentService.service.v2.operation.inline.gpbOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFailure
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFinalState
 import ru.sogaz.site.paymentService.service.v2.operation.inline.stepWithSave
 import ru.sogaz.site.paymentService.service.v2.operation.model.OperationCommand
-import ru.sogaz.site.paymentService.service.v2.pay.ReversalPayOperationService
+import ru.sogaz.site.paymentService.service.v2.pay.RefundPayOperationService
 
 @Service
-class ReversalPayOperationServiceImpl(
+class RefundPayOperationServiceImpl(
     private val operationService: OperationService,
-    private val gpbCardReversalIntegration: GpbCardReversalIntegration,
-    private val gpbSbpReversalIntegration: GpbSbpReversalIntegration,
+    private val gpbCardRefundIntegration: GpbCardRefundIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
     private val operationDetailsProducer: OperationDetailsProducer,
-) : ReversalPayOperationService {
+) : RefundPayOperationService {
     companion object {
+        private const val REFUND_TYPE_ERROR = "Не поддерживаемый для отмены тип платежа"
         private const val REFUND_INTERNAL_ERROR = "Платежная система недоступна"
     }
 
     /**
      * Формирует команду и стратегию для выполнения возврата платежа в банке.
      *
-     * @param reversalOperationRequest запрос на выполнение операции оплаты
+     * @param refundOperationRequest запрос на выполнение операции оплаты
      * @return детали выполненного рекуррентного платежа
      */
-    override fun reversalPayOperation(reversalOperationRequest: ReversalOperationRequest): BankOperationDetails =
-        when (reversalOperationRequest.paymentType) {
-            PaymentType.CARD -> reversalCardPayOperation(reversalOperationRequest)
-            PaymentType.SBP -> reversalSbpPayOperation(reversalOperationRequest)
+    override fun refundPayOperation(refundOperationRequest: RefundOperationRequest): BankOperationDetails =
+        when (refundOperationRequest.paymentType) {
+            PaymentType.CARD -> refundCardPayOperation(refundOperationRequest)
+            else -> throw InnerException(getTraceId(), REFUND_TYPE_ERROR)
         }
 
     /**
      * Формирует команду и стратегию для выполнения возврата платежа картой в банке.
      *
-     * @param reversalOperationRequest запрос на выполнение операции оплаты
+     * @param refundOperationRequest запрос на выполнение операции оплаты
      * @return детали выполненного рекуррентного платежа
      */
-    private fun reversalCardPayOperation(reversalOperationRequest: ReversalOperationRequest): BankOperationDetails =
-        reversalOperationRequest
-            .refundCardPayOperationCommand()
-            .runRefundCommand()
-
-    private fun reversalSbpPayOperation(refundOperationRequest: ReversalOperationRequest): BankOperationDetails =
+    override fun refundCardPayOperation(refundOperationRequest: RefundOperationRequest): BankOperationDetails =
         refundOperationRequest
-            .reversalSbpPayOperationCommand()
+            .refundCardPayOperationCommand()
             .runRefundCommand()
 
     /**
      * Формирует объект команды и стратегию банковской операции по возврату оплаты картой относительно этого запроса.
      * Добавляет план действий при возбуждении ошибки и при финальном статусе операции.
      */
-    private fun ReversalOperationRequest.refundCardPayOperationCommand() =
+    private fun RefundOperationRequest.refundCardPayOperationCommand() =
         gpbOperationCommand(
             requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
             stepWithSave(
-                action = gpbCardReversalIntegration::reversalPayCard,
-                resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
-            ),
-        ) onFailure {
-            operationDetailsProducer.sendFailureOperationDetails(this, REFUND_INTERNAL_ERROR)
-        } onFinalState {
-            operationDetailsProducer.sendOperationDetails(this, it)
-        }
-
-    private fun ReversalOperationRequest.reversalSbpPayOperationCommand() =
-        gpbOperationCommand(
-            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
-            stepWithSave(
-                action = gpbSbpReversalIntegration::reversalPaySbp,
+                action = gpbCardRefundIntegration::refundPayCard,
                 resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankOperationDetails,
             ),
         ) onFailure {
@@ -89,5 +72,5 @@ class ReversalPayOperationServiceImpl(
     /**
      * Общая функция для запуска выполнения команды в сервисе операций
      */
-    private fun <RESULT> OperationCommand<ReversalOperationRequest, RESULT>.runRefundCommand(): RESULT = operationService.runOperation(this)
+    private fun <RESULT> OperationCommand<RefundOperationRequest, RESULT>.runRefundCommand(): RESULT = operationService.runOperation(this)
 }

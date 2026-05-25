@@ -6,17 +6,17 @@ import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapper
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbCardAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardAccountManager
-import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardReversalIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardRefundIntegration
 
 @Component
-class GpbCardReversalIntegrationImpl(
+class GpbCardRefundIntegrationImpl(
     private val cardRefundClient: GpbCardRefundClient,
     private val accountManager: GpbCardAccountManager,
     private val requestMapper: GpbRequestMapper,
     private val responseMapper: GpbCardResponseMapper,
-) : GpbCardReversalIntegration {
+) : GpbCardRefundIntegration {
     /**
      * Регистрирует возврат средств по платежу через GpbCardRefundClient.
      *
@@ -32,7 +32,7 @@ class GpbCardReversalIntegrationImpl(
      *
      * @throws RuntimeException может пробрасывать исключения клиента GPB
      */
-    override fun reversalPayCard(request: ReversalOperationRequest): BankOperationDetails {
+    override fun refundPayCard(request: RefundOperationRequest): BankOperationDetails {
         val account = accountManager.getByDepersonalization(request.depersonalization)
         val refundParams = requestMapper.toRefundParams(request)
 

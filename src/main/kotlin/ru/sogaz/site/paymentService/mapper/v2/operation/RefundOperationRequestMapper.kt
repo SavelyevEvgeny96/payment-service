@@ -4,10 +4,10 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.event.RefundEvent
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 
 @Mapper
-interface ReversalOperationRequestMapper {
+interface RefundOperationRequestMapper {
     @Mapping(target = "description", source = "refundEvent.description")
     @Mapping(target = "bank", source = "refundEvent.bank")
     @Mapping(target = "paymentBankId", source = "refundEvent.paymentBankId")
@@ -16,5 +16,5 @@ interface ReversalOperationRequestMapper {
     fun toRefundOperationRequest(
         idempotentOrderOperation: IdempotentOrderOperation,
         refundEvent: RefundEvent,
-    ): ReversalOperationRequest
+    ): RefundOperationRequest
 }

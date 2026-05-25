@@ -8,7 +8,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbRefundCardPayResponse
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 
 @Mapper(
@@ -34,7 +34,7 @@ interface GpbCardResponseMapper {
     @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
     @Mapping(target = "errorText", source = "response.status")
     fun refundToOperationDetails(
-        request: ReversalOperationRequest,
+        request: RefundOperationRequest,
         response: GpbRefundCardPayResponse,
     ): BankOperationDetails
 }

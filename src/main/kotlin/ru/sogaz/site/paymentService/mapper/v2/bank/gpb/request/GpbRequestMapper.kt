@@ -18,7 +18,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationReq
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import java.math.BigDecimal
 
@@ -120,5 +120,5 @@ abstract class GpbRequestMapper {
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
     @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "comment", source = "description")
-    abstract fun toRefundParams(reversalOperationRequest: ReversalOperationRequest): GpbRefundParams
+    abstract fun toRefundParams(refundOperationRequest: RefundOperationRequest): GpbRefundParams
 }

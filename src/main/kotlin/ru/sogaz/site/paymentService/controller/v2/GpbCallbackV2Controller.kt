@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.controller.v2
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.paymentService.api.doc.v2.GpbCallbackV2Api
 import ru.sogaz.site.paymentService.controller.WrapResponseController
@@ -49,7 +50,7 @@ class GpbCallbackV2Controller(
             }
         }.wrapToOkResponseEntity()
 
-    override fun stateSbpGpbCallback(request: SbpGpbStateCallbackRequest) {
+    override fun stateSbpGpbCallback(request: SbpGpbStateCallbackRequest,) {
         operationCallbackService.updateByPaymentBankId(request.qrcId)
     }
 }
