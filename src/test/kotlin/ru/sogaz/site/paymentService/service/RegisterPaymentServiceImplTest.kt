@@ -52,7 +52,6 @@ class RegisterPaymentServiceImplTest {
         // given
         val payment = createTestPayment()
         val headers = GpbSbpHeadersParams("h1", "h2", "h3")
-        val recurrent = true
         val expectedPayment = createTestPayment()
 
         // mock factory to return bankIntegrationService

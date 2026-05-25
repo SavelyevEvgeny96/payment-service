@@ -10,6 +10,7 @@ import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
@@ -50,6 +51,14 @@ interface IdempotentOrderOperationMapper {
     @Mapping(target = "premiumAmount", source = "amount")
     @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "operationStarted", expression = "java( Instant.now() )")
+    @Mapping(target = "payerIp", source = "payerIP")
+    fun toIdempotentOrderOperation(operationRequest: PayRegOperationRequest): IdempotentOrderOperation
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "premiumAmount", source = "amount")
+    @Mapping(target = "state", constant = "NEW")
+    @Mapping(target = "operationStarted", expression = "java( Instant.now() )")
+    @Mapping(target = "payItems", expression = "java(new java.util.LinkedHashMap<String, String>())")
     fun toIdempotentOrderOperation(operationRequest: RefundOperationRequest): IdempotentOrderOperation
 
     @Mapping(target = "id", ignore = true)
@@ -71,7 +80,8 @@ interface IdempotentOrderOperationMapper {
     ): IdempotentOrderOperation
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
+    @Mapping(target = "operationFinished", defaultExpression = "java( Instant.now() )")
+    @Mapping(target = "externalErrorCode", source = "extendedCode")
     fun updateByBankOperationDetails(
         @MappingTarget idempotentOrderOperation: IdempotentOrderOperation,
         bankOperationDetails: BankOperationDetails,

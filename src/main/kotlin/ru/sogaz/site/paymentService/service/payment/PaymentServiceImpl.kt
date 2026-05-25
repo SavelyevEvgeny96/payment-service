@@ -165,7 +165,7 @@ class PaymentServiceImpl(
             .also(::logRegisteredPaymentInfo)
 
     private fun renewOrder(payment: Payment) =
-        payment.order!!
+        payment.order
             .apply { updateDate = LocalDateTime.now() }
             .run(orderDao::save)
 
@@ -200,7 +200,7 @@ class PaymentServiceImpl(
 
     private fun logRegisteredPaymentInfo(payment: Payment) =
         LOG_PAYMENT_INFO_AFTER_REGISTRATION
-            .format(payment.order?.id, payment.bank)
+            .format(payment.order.id, payment.bank)
             .run(logger::debug)
 
     @Throws(BusinessException::class)

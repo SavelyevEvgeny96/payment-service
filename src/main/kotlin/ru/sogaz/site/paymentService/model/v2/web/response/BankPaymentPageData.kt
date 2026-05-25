@@ -10,4 +10,5 @@ data class BankPaymentPageData(
     val paymentBankId: String,
     @field:Schema(example = "https://lt.pga.gazprombank.ru/pages#A100KB47RXYKIKSTYC7H")
     val paymentPageUrl: String,
+    val qrId: String? = null,
 )

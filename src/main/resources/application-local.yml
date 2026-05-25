@@ -2,11 +2,11 @@ spring:
   rabbitmq:
     host: ${RABBIT_HOST:localhost}
     port: 5672
-    username: dev
-    password: dev
+    username: guest
+    password: guest
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/payment
+    url: jdbc:postgresql://localhost:5432/
     username: postgres
     password: 123456
 
@@ -39,8 +39,8 @@ api:
       basePath: ${GPB_URL:${api.gateway.dmz}/payment/gpb/card}
       account:
         main:
-          portalId: ${GPB_PORTAL_ID}
-          merchantId: ${GPB_MERCHANT_ID}
+          portalId: ${GPB_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}
+          merchantId: ${GPB_MERCHANT_ID:B80540E3096C8730BCE3}
           identifier: ${GPB_BANK_LOGIN}
           password: ${GPB_BANK_PASS}
         depersonalized:

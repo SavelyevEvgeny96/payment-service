@@ -10,6 +10,7 @@ app:
   gpb:
     certs: ${GPB_CERT}
     callback_url: ${GPB_CALLBACK_URL}
+    signature_verifier_off: ${GPB_SIGNATURE_VERIFIER_OFF:false}
   rabbit:
     exchange-order: ${ORDER_EXCHANGE:order.exchange}
     exchange-payment: ${PAYMENT_EXCHANGE:payment.exchange}
@@ -17,7 +18,7 @@ app:
     exchange-check-status-payment: ${PAYMENT_STATUS_CHECK_EXCHANGE:payment.status.check.exchange}
     payment-status-queue: ${PAYMENT_STATUS_QUEUE:payment.status.queue}
     payment-status-check-queue: ${PAYMENT_STATUS_CHECK_QUEUE:payment.status.check.queue}
-    payment-refund-queue: ${PAYMENT_REFUND_QUEUE:payment.refund.queue}
+    payment-reversal-queue: ${PAYMENT_REVERSAL_QUEUE:payment.reversal.queue}
     payment-created-queue: ${PAYMENT_CREATED_QUEUE:payment.created.queue}
     order-paid-status-queue: ${ORDER_PAID_STATUS_QUEUE:order.paid.queue}
     order-unpaid-status-queue: ${ORDER_UNPAID_STATUS_QUEUE:order.unpaid.queue}

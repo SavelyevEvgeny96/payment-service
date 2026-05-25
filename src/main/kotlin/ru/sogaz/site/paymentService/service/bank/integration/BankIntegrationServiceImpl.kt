@@ -126,5 +126,5 @@ abstract class BankIntegrationServiceImpl : BankIntegrationService {
         )
 
     protected fun Payment.v4Description(operationDate: LocalDate = LocalDate.now(DEFAULT_ZONE)): String =
-        generateDescriptionV4(provider(), this.order?.subOrders, operationDate)
+        generateDescriptionV4(provider(), this.order.subOrders, operationDate)
 }

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-008-alter-idempotent-order-operations-table
+      author: Savelyev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-008-alter-idempotent-order-operations-table
+  - include:
+      file: db.changelog\v3.0.3\2025-05-13\DATA\alter_idempotent_order_operations_table.sql
+

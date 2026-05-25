@@ -16,11 +16,12 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.emptyCardDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetailsResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
-import ru.sogaz.site.paymentService.model.v2.core.pay.CardPayOperation
+import ru.sogaz.site.paymentService.model.v2.core.pay.PayOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardAccountManager
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
@@ -42,7 +43,8 @@ class GpbCardIntegrationImpl(
     private val cardAccountManager: GpbCardAccountManager,
 ) : GpbCardIntegration {
     companion object {
-        private const val OPERATION_DETAILS_ERROR = "Во время получения данных по операции оплаты картой произошла ошибка: {}"
+        private const val OPERATION_DETAILS_ERROR =
+            "Во время получения данных по операции оплаты картой произошла ошибка: {}"
         private const val CARD_NOT_FOUND = "Карта не найдена"
         private const val TRANSACTION_NOT_STARTED = "Транзакция по этой операции не была открыта"
         private const val BAD_REQUEST = "Bad request"
@@ -65,6 +67,22 @@ class GpbCardIntegrationImpl(
             .buildCardPayRequest(authorizedCardTrxData)
             .cardPay(authorizedCardTrxData)
             .toBankPaymentPageData()
+
+    override fun regPay(
+        payRegOperationRequest: PayRegOperationRequest,
+        authorizedCardTrxData: AuthorizedCardTrxData,
+    ): BankPaymentPageData =
+        payRegOperationRequest
+            .buildRegPayRequest(authorizedCardTrxData)
+            .cardPay(authorizedCardTrxData)
+            .toBankPaymentPageData()
+
+    private fun PayRegOperationRequest.buildRegPayRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
+        requestMapper.toRegRequest(
+            authorizedCardTrxData.account.merchantId,
+            this,
+            params,
+        )
 
     private fun CardPayOperationRequest.buildCardPayRequest(authorizedCardTrxData: AuthorizedCardTrxData): GpbPayRequest =
         requestMapper.toCardRequest(
@@ -92,7 +110,10 @@ class GpbCardIntegrationImpl(
                 .cardRecurrentPay(authorizedCardTrxData)
                 .toBankPaymentPageData()
         } catch (ex: FeignException.NotFound) {
-            ex.toFailOperationDetails(authorizedCardTrxData.token, cardRecurrentOperationRequest.keyCard) { CARD_NOT_FOUND }
+            ex.toFailOperationDetails(
+                authorizedCardTrxData.token,
+                cardRecurrentOperationRequest.keyCard,
+            ) { CARD_NOT_FOUND }
         } catch (ex: FeignException.BadRequest) {
             ex.toFailOperationDetails(authorizedCardTrxData.token) { BAD_REQUEST }
         }
@@ -134,15 +155,15 @@ class GpbCardIntegrationImpl(
 
     private fun GpbCardPayDetailsResponse.toBankPaymentPageData() = responseMapper.toBankPaymentDetails(this)
 
-    override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails =
+    override fun payStatus(payOperation: PayOperation): BankOperationDetails =
         try {
-            val accountData = cardAccountManager.getByOperation(cardPayOperation)
-            val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, cardPayOperation.paymentBankId)
+            val accountData = cardAccountManager.getByOperation(payOperation)
+            val cardPayDetails = gpbCardClient.getPaymentStatus(accountData.portalId, payOperation.paymentBankId)
             responseMapper.toBankPaymentDetails(cardPayDetails)
         } catch (ex: FeignException.NotFound) {
-            ex.toFailOperationDetails(cardPayOperation.paymentBankId) { TRANSACTION_NOT_STARTED }
+            ex.toFailOperationDetails(payOperation.paymentBankId) { TRANSACTION_NOT_STARTED }
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
-            BankOperationDetails(cardPayOperation.paymentBankId, OperationState.WAIT)
+            BankOperationDetails(payOperation.paymentBankId, OperationState.WAIT)
         }
 }

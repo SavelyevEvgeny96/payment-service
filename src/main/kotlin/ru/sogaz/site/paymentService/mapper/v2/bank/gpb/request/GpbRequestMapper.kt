@@ -16,6 +16,7 @@ import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
@@ -44,6 +45,10 @@ abstract class GpbRequestMapper {
             amount
                 .movePointRight(2)
                 .intValueExact()
+
+        @JvmStatic
+        fun requireQrId(bankPaymentPageData: BankPaymentPageData): String =
+            requireNotNull(bankPaymentPageData.qrId) { "QR id is missing for SBP QR image request" }
 
         @JvmStatic
         @Named("mapSrc")
@@ -77,6 +82,20 @@ abstract class GpbRequestMapper {
     ): GpbPayRequest
 
     @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "params", source = "request.payItems")
+    @Mapping(target = "merchantTrx", source = "request.orderId")
+    @Mapping(target = "state", expression = "java(cardPaymentState)")
+    @Mapping(target = "threeDSTwo", expression = "java(cardPayment3ds2)")
+    @Mapping(target = "openApiMirPaySupported", constant = "true")
+    @Mapping(target = "currency", constant = "RUB")
+    @Mapping(target = "cardRegistration", constant = "true")
+    abstract fun toRegRequest(
+        merchantId: String,
+        request: PayRegOperationRequest,
+        redirectParams: RedirectParams,
+    ): GpbPayRequest
+
+    @Mapping(target = "amount", qualifiedByName = ["mapRequestAmount"])
     @Mapping(target = "account", source = "gpbSbpAccountData.paymentAccount")
     @Mapping(target = "merchantId", source = "gpbSbpAccountData.merchantIdSbpGpb")
     @Mapping(target = "callbackMerchantNotifications", source = "gpbSbpAccountData.callbackUrlSbp")
@@ -93,7 +112,7 @@ abstract class GpbRequestMapper {
 
     fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.paymentBankId)
 
-    @Mapping(target = "qrcId", source = "paymentBankId")
+    @Mapping(target = "qrcId", expression = "java(requireQrId(bankPaymentPageData))")
     @Mapping(target = "width", constant = "300")
     @Mapping(target = "height", constant = "300")
     abstract fun toQrImageRequest(bankPaymentPageData: BankPaymentPageData): GpbQrImageRequest
