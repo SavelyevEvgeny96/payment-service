@@ -223,7 +223,7 @@ class PayOperationServiceImpl(
     /**
      * Проверяет доступность операции по правилу.
      */
-    private fun PayOperationRequest.checkAvailability(bank: OperationBank? = null): PayOperationRequest {
+    private fun <REQUEST : PayOperationRequest> REQUEST.checkAvailability(bank: OperationBank? = null): REQUEST {
         val available = rulePaymentTypeService.isOperationAvailable(operationType, paymentType, bank)
         if (available) return this
 
