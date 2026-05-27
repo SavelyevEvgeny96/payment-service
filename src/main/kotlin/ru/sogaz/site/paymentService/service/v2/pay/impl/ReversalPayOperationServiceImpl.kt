@@ -63,7 +63,7 @@ class ReversalPayOperationServiceImpl(
     private fun reversalSbpPayOperation(reversalOperationRequest: ReversalOperationRequest): BankOperationDetails =
         reversalOperationRequest
             .checkAvailability()
-            .reversalCardPayOperationCommand()
+            .reversalSbpPayOperationCommand()
             .runReversalCommand()
 
     /**
