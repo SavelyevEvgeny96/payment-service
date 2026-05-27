@@ -32,6 +32,6 @@ interface GpbCardClient {
     @GetMapping(value = ["/{portalId}/payment/{paymentBankId}"])
     fun getPaymentStatus(
         @PathVariable portalId: String,
-        @PathVariable paymentBankId: String,
+        @PathVariable paymentBankId: String?,
     ): GpbCardPayDetailsResponse
 }

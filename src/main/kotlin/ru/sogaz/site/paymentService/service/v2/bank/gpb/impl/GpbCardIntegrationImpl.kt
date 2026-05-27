@@ -119,7 +119,7 @@ class GpbCardIntegrationImpl(
         }
 
     private fun FeignException.toFailOperationDetails(
-        bankId: String,
+        bankId: String?,
         defaultError: () -> String = { INTERNAL_ERROR },
     ): BankOperationDetails = BankOperationDetails(bankId, OperationState.FAIL, errorText = getErrorCode() ?: defaultError())
 
