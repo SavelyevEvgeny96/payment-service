@@ -6,7 +6,7 @@ import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbRequestMapper
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCardResponseMapper
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbCardAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardAccountManager
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardReversalIntegration
 

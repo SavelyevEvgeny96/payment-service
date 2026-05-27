@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrder
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.service.v2.order.IdempotentOrderService
 
 /**

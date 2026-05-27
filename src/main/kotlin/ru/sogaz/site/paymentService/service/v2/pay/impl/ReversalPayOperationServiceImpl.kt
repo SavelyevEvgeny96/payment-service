@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardReversalIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpReversalIntegration

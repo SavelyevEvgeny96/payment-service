@@ -7,7 +7,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.sbp.GpbSbpReversalConfirmRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.sbp.GpbSbpReversalPrepareRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.properties.gpb.GpbSbpAccountProperties
 import java.math.BigDecimal
 

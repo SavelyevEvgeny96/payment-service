@@ -12,8 +12,8 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationReq
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 
 /**
  * Интерфейс маппера для создания и обновления записей о банковских операциях в базе

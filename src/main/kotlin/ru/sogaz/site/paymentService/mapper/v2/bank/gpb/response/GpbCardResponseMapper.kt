@@ -8,8 +8,8 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbCardPayDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbPayCardResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbRefundCardPayResponse
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 
 @Mapper(
     uses = [GpbCardDetailMapper::class, GpbPayStatusMapper::class],

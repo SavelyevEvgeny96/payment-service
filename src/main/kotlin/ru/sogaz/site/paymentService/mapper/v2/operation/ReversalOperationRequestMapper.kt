@@ -4,7 +4,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.event.RefundEvent
-import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
 
 @Mapper
 interface ReversalOperationRequestMapper {
