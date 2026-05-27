@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrder
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
-import ru.sogaz.site.paymentService.model.v2.web.request.refund.RefundOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.reversal.ReversalOperationRequest
 import ru.sogaz.site.paymentService.service.v2.order.IdempotentOrderService
 
 /**
@@ -56,7 +56,7 @@ class IdempotentOrderServiceImpl(
         mapToIdempotentOrderOperation?.invoke(this)
             ?: idempotentOrderOperationMapper.toIdempotentOrderOperation(this)
 
-    override fun findOperation(refundRequest: RefundOperationRequest): IdempotentOrderOperation? =
+    override fun findOperation(refundRequest: ReversalOperationRequest): IdempotentOrderOperation? =
         idempotentOrderOperationDao.findByOrderIdAndPaymentBankId(refundRequest.orderId, refundRequest.paymentBankId)
 
     override fun saveOperation(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation =

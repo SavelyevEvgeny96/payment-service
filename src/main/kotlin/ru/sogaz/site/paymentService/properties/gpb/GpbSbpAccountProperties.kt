@@ -7,4 +7,5 @@ import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbSbpAccountDa
 class GpbSbpAccountProperties {
     lateinit var redirectUrl: String
     lateinit var account: GpbSbpAccountData
+    lateinit var reversal: GpbSbpReversalProperties
 }

@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentService.model.v2.web.request.refund
+package ru.sogaz.site.paymentService.model.v2.web.request.reversal
 
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
@@ -8,7 +8,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.OperationRequest
 import java.math.BigDecimal
 import java.util.UUID
 
-data class RefundOperationRequest(
+data class ReversalOperationRequest(
     override val orderId: UUID? = null,
     override val amount: BigDecimal,
     override val paymentType: PaymentType,

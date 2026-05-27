@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentService.service.v2.status.impl
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
-import ru.sogaz.site.paymentService.dto.data.SbpGpbStateCallbackRequest
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCallbackMapper
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
@@ -21,8 +20,7 @@ class OperationCallbackServiceImpl(
     private val operationStatusUpdater: OperationStatusUpdater,
 ) : OperationCallbackService {
     override fun updateByGpbCardCallback(gpbCardCallback: GpbCardCallback) {
-        val orderOperation =
-            findOrderOperationOrThrow(UUID.fromString(gpbCardCallback.merchant_trx), gpbCardCallback.trx_id)
+        val orderOperation = findOrderOperationOrThrow(UUID.fromString(gpbCardCallback.merchant_trx), gpbCardCallback.trx_id)
         if (orderOperation.state.isFinaleState()) {
             return
         }
@@ -38,14 +36,12 @@ class OperationCallbackServiceImpl(
     ) = idempotentOrderOperationDao.findByOrderIdAndPaymentBankId(orderId, paymentBankId)
         ?: throw OperationNotFoundException(paymentBankId)
 
-    fun findOrderOperationSbpOrThrow(qrId: String) =
-        idempotentOrderOperationDao.findByQrId(qrId)
-            ?: throw OperationNotFoundException(qrId)
+    fun findOrderOperationSbpOrThrow(paymentBankId: String) =
+        idempotentOrderOperationDao.findByPaymentBankId(paymentBankId)
+            ?: throw OperationNotFoundException(paymentBankId)
 
-    override fun updateByQrId(request: SbpGpbStateCallbackRequest) {
-        val orderOperation = findOrderOperationSbpOrThrow(request.qrcId)
-        orderOperation.paymentBankId = request.transactionId
-        idempotentOrderOperationDao.save(orderOperation)
+    override fun updateByPaymentBankId(paymentBankId: String) {
+        val orderOperation = findOrderOperationSbpOrThrow(paymentBankId)
         checkOperationStatusProducer.sendCheckStatusEvent(orderOperation)
     }
 }
