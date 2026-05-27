@@ -420,11 +420,11 @@
                     <failOnViolation>true</failOnViolation>
                     <printFailingErrors>true</printFailingErrors>
 
-<!--                    &lt;!&ndash; EXCLUDE GENERATED CODE &ndash;&gt;-->
-<!--                    <excludes>-->
-<!--                        <exclude>/generated/</exclude>-->
-<!--                        <exclude>**/*MapperImpl.java</exclude>-->
-<!--                    </excludes>-->
+                    <!--                    &lt;!&ndash; EXCLUDE GENERATED CODE &ndash;&gt;-->
+                    <!--                    <excludes>-->
+                    <!--                        <exclude>/generated/</exclude>-->
+                    <!--                        <exclude>**/*MapperImpl.java</exclude>-->
+                    <!--                    </excludes>-->
                 </configuration>
                 <executions>
                     <execution>

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-012-rules-payment-type
+      author: Codex
+      changes:
+        - tagDatabase:
+            tag: backend-012-rules-payment-type
+  - include:
+      file: db.changelog\v3.0.4\2026-05-25\DATA\create_rules_payment_type_table.sql
+  - include:
+      file: db.changelog\v3.0.4\2026-05-25\DATA\insert_rules_payment_type_data.sql
