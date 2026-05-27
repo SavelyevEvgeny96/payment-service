@@ -9,7 +9,7 @@ data class SbpPayOperation(
     override val id: UUID,
     override val depersonalization: Boolean,
     override val bank: BankEnum,
-    override val qrId: String,
+    override val paymentBankId: String,
     val operationStarted: Instant,
 ) : PayOperation() {
     override val paymentType: PaymentType = PaymentType.SBP

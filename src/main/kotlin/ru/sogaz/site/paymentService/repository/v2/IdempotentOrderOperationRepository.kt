@@ -15,7 +15,7 @@ interface IdempotentOrderOperationRepository : JpaRepository<IdempotentOrderOper
         operationType: List<OperationType>,
     ): IdempotentOrderOperation?
 
-    fun findByQrId(qrId: String): IdempotentOrderOperation?
+    fun findByPaymentBankId(paymentBankId: String): IdempotentOrderOperation?
 
     fun findFirstByPaymentBankIdAndStateAndOperationTypeInOrderByCreateDateDesc(
         paymentBankId: String,
