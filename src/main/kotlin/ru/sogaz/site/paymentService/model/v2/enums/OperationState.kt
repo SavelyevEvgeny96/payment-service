@@ -7,6 +7,7 @@ enum class OperationState {
     SUCCESS,
     FAIL,
     REFUND,
+    REVERSAL,
     DECLINED,
     CALLBACK,
     ;

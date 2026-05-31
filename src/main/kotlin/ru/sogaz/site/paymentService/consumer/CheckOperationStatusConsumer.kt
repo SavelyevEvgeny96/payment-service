@@ -41,6 +41,7 @@ class CheckOperationStatusConsumer(
             OperationState.SUCCESS,
             OperationState.FAIL,
             OperationState.REFUND,
+            OperationState.REVERSAL,
             OperationState.DECLINED,
             -> handleCompletedOperation(operation, operationDetails)
             else

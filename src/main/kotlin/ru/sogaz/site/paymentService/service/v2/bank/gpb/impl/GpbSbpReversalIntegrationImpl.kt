@@ -29,7 +29,7 @@ class GpbSbpReversalIntegrationImpl(
         return if (confirmResponse.isSuccess()) confirmResponse.toSuccess() else confirmResponse.toFail()
     }
 
-    private fun GpbSbpReversalResponse.toSuccess() = BankOperationDetails(bankId = transactionId, state = OperationState.SUCCESS)
+    private fun GpbSbpReversalResponse.toSuccess() = BankOperationDetails(bankId = transactionId, state = OperationState.NEW)
 
     private fun GpbSbpReversalResponse.toFail() =
         BankOperationDetails(bankId = transactionId, state = OperationState.FAIL, errorText = message)
