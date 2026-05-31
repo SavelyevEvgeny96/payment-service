@@ -48,7 +48,7 @@ class OperationCallbackServiceImpl(
         val orderOperation = findOrderOperationSbpOrThrow(request.qrcId)
         orderOperation.paymentBankId = request.transactionId
         idempotentOrderOperationDao.save(orderOperation)
-        checkOperationStatusProducer.sendCheckStatusEvent(orderOperation)
+        checkOperationStatusProducer.sendCheckStatusEvent(orderOperation, it)
     }
 
     override fun processSbpReversalCallback(paymentBankId: String) {
@@ -62,6 +62,6 @@ class OperationCallbackServiceImpl(
 
         reversalOperation.state = OperationState.CALLBACK
         idempotentOrderOperationDao.save(reversalOperation)
-        checkOperationStatusProducer.sendCheckStatusEvent(reversalOperation)
+        checkOperationStatusProducer.sendCheckStatusEvent(reversalOperation, it)
     }
 }

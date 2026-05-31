@@ -8,6 +8,7 @@ import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapp
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.reversal.ReversalOperationRequest
+import ru.sogaz.site.paymentService.producer.CheckOperationStatusProducer
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardReversalIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpReversalIntegration
@@ -22,6 +23,7 @@ import ru.sogaz.site.paymentService.service.v2.rules.RulePaymentTypeService
 
 @Service
 class ReversalPayOperationServiceImpl(
+    private val checkOperationStatusProducer: CheckOperationStatusProducer,
     private val operationService: OperationService,
     private val gpbCardReversalIntegration: GpbCardReversalIntegration,
     private val gpbSbpReversalIntegration: GpbSbpReversalIntegration,
@@ -80,7 +82,7 @@ class ReversalPayOperationServiceImpl(
         ) onFailure {
             operationDetailsProducer.sendFailureOperationDetails(this, REFUND_INTERNAL_ERROR)
         } onFinalState {
-            operationDetailsProducer.sendOperationDetails(this, it)
+            checkOperationStatusProducer.sendCheckStatusEvent(this)
         }
 
     private fun ReversalOperationRequest.reversalSbpPayOperationCommand() =
