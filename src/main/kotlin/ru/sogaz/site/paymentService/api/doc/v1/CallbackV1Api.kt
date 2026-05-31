@@ -4,9 +4,12 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import ru.sogaz.site.paymentService.dto.request.GpbCallback
 import ru.sogaz.site.paymentService.dto.response.CallbackResponse
+import ru.sogaz.site.paymentService.model.v2.bank.callback.CallbackOkState
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbSbpReversalCallback
 import ru.sogaz.siter.models.resonses.Response
 
 interface CallbackV1Api {
@@ -26,6 +29,12 @@ interface CallbackV1Api {
         @RequestParam(value = "ridByPmo", required = false) ridByPmo: String?,
         request: HttpServletRequest,
     ): Response<CallbackResponse>
+
+    @PostMapping("payment/sbp/gpb/return/state")
+    fun stateSbpGpbReturnCallback(
+        @RequestBody callback: GpbSbpReversalCallback,
+        request: HttpServletRequest,
+    ): Response<CallbackOkState>
 
     @PostMapping("payment/sbp/gpb/state")
     fun stateSbpGpbCallback(

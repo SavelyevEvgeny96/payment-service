@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.dao.v2
 
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
+import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import java.util.UUID
 
 interface IdempotentOrderOperationDao {
@@ -16,6 +17,11 @@ interface IdempotentOrderOperationDao {
     fun findSucceededByPaymentBankId(paymentBankId: String): IdempotentOrderOperation?
 
     fun findSucceededByOrderId(orderId: UUID): IdempotentOrderOperation?
+
+    fun findFirstByPaymentBankIdAndOperationType(
+        paymentBankId: String,
+        operationType: OperationType,
+    ): IdempotentOrderOperation?
 
     fun save(idempotentOrderOperation: IdempotentOrderOperation): IdempotentOrderOperation
 }
