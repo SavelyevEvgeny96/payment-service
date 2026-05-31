@@ -82,7 +82,7 @@ class ReversalPayOperationServiceImpl(
         ) onFailure {
             operationDetailsProducer.sendFailureOperationDetails(this, REFUND_INTERNAL_ERROR)
         } onFinalState {
-            checkOperationStatusProducer.sendCheckStatusEvent(this)
+            operationDetailsProducer.sendOperationDetails(this, it)
         }
 
     private fun ReversalOperationRequest.reversalSbpPayOperationCommand() =
@@ -95,7 +95,7 @@ class ReversalPayOperationServiceImpl(
         ) onFailure {
             operationDetailsProducer.sendFailureOperationDetails(this, REFUND_INTERNAL_ERROR)
         } onFinalState {
-            operationDetailsProducer.sendOperationDetails(this, it)
+            checkOperationStatusProducer.sendCheckStatusEvent(this)
         }
 
     /**
