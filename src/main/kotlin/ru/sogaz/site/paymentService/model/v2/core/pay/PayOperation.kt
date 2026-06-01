@@ -11,6 +11,6 @@ sealed class PayOperation : Operation() {
     abstract val paymentType: PaymentType
     abstract val depersonalization: Boolean
     abstract val bank: OperationBank
-    open val paymentBankId: String? = null
+    abstract val paymentBankId: String
     open val qrId: String? = null
 }

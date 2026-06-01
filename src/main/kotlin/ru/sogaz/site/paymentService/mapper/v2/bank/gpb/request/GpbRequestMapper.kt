@@ -110,7 +110,7 @@ abstract class GpbRequestMapper {
         redirectUrl: String,
     ): GpbSbpPayRequest
 
-    fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.qrId)
+    fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.paymentBankId)
 
     @Mapping(target = "qrcId", expression = "java(requireQrId(bankPaymentPageData))")
     @Mapping(target = "width", constant = "300")

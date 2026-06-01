@@ -12,7 +12,7 @@ abstract class OperationMapper {
     fun makePayOperation(idempotentOrderOperation: IdempotentOrderOperation): PayOperation =
         when (idempotentOrderOperation.paymentType) {
             PaymentType.CARD -> makeCardPayOperation(idempotentOrderOperation)
-            PaymentType.SBP -> makeSbpPayOperation(idempotentOrderOperation)
+            PaymentType.SBP -> makeCardPayOperation(idempotentOrderOperation)
         }
 
     abstract fun makeCardPayOperation(idempotentOrderOperation: IdempotentOrderOperation): CardPayOperation
