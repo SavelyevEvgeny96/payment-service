@@ -3,6 +3,7 @@ package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Named
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbSbpReversalCallback
 import ru.sogaz.site.paymentService.model.v2.bank.properties.gpb.GpbSbpAccountData
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbPayRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbQrImageRequest
@@ -13,6 +14,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.Src
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.State
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.ThreeDSTwo
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
+import ru.sogaz.site.paymentService.model.v2.core.pay.SbpReversalPayOperation
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
@@ -111,6 +113,9 @@ abstract class GpbRequestMapper {
     ): GpbSbpPayRequest
 
     fun toSbpStatusRequest(sbpPayOperation: SbpPayOperation): GpbSpbStatusRequest = GpbSpbStatusRequest(sbpPayOperation.qrId)
+
+    fun toSbpReversalStatusRequest(sbpReversalPayOperation: SbpReversalPayOperation): GpbSbpReversalCallback =
+        GpbSbpReversalCallback(sbpReversalPayOperation.paymentBankId)
 
     @Mapping(target = "qrcId", expression = "java(requireQrId(bankPaymentPageData))")
     @Mapping(target = "width", constant = "300")

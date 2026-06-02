@@ -5,7 +5,7 @@ import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import java.time.Instant
 import java.util.UUID
 
-class SbpReversalPayOperation (
+class SbpReversalPayOperation(
     override val id: UUID,
     override val depersonalization: Boolean,
     override val bank: OperationBank,

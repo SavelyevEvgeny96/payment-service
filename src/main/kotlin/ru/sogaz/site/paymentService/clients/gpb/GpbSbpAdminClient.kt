@@ -16,7 +16,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpPayResp
 )
 @Profile(value = ["local", "test", "stage"])
 interface GpbSbpAdminClient {
-    @PostMapping(value = ["/qrc-data"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(value = ["merchant/qrc-data"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun autoPay(
         @RequestHeader headers: HttpHeaders,
         @RequestBody request: GpbSbpPayRequest,

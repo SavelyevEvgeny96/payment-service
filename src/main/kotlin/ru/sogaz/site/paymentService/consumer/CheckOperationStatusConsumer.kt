@@ -43,6 +43,9 @@ class CheckOperationStatusConsumer(
             OperationState.REFUND,
             OperationState.REVERSAL,
             OperationState.DECLINED,
+            OperationState.ACCEPTED,
+            OperationState.REJECTED,
+            OperationState.PERFORMED,
             -> handleCompletedOperation(operation, operationDetails)
             else
             -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
