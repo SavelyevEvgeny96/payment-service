@@ -1,6 +1,6 @@
 CREATE TYPE bank_enum as ENUM (
     'GPB',
-    'AKB_RUS'
+    'ABR'
 );
 
 CREATE CAST (varchar AS bank_enum) WITH INOUT AS IMPLICIT;

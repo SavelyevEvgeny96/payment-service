@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank
 import ru.sogaz.site.paymentService.api.doc.v2.requestSchema.StraightRedirectSchema
 import ru.sogaz.site.paymentService.dto.data.PayItemsSwaggerSchema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
+import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import java.math.BigDecimal
@@ -32,6 +33,14 @@ data class SbpPayOperationRequest(
         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
     )
     val payerIp: String? = null,
+    @field:Schema(description = "Вид страхования", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    override val insuranceKind: String? = null,
+    @field:Schema(
+        description = "Приоритетный банк для оплаты",
+        allowableValues = ["GPB", "ABR"],
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+    )
+    override val bank: PaymentRequestBank? = null,
     @field:Schema(
         description = "Список показов",
         implementation = PayItemsSwaggerSchema::class,

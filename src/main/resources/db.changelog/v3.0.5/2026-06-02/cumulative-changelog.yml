@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-3.0.5-bank-selection-rules
+      author: codex
+      changes:
+        - tagDatabase:
+            tag: backend-3.0.5-bank-selection-rules
+  - include:
+      file: db.changelog/v3.0.5/2026-06-02/DATA/create_bank_selection_rules_tables.sql
+  - include:
+      file: db.changelog/v3.0.5/2026-06-02/DATA/alter_idempotent_order_operations_payment_pass.sql
+  - include:
+      file: db.changelog/v3.0.5/2026-06-02/DATA/rename_abr_bank_data.sql
+  - include:
+      file: db.changelog/v3.0.5/2026-06-02/DATA/insert_bank_selection_default_rules.sql
