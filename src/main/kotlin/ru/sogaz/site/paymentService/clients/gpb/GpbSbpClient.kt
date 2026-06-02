@@ -28,7 +28,7 @@ interface GpbSbpClient {
         @RequestBody request: GpbSpbStatusRequest,
     ): GpbSbpPayDetailsResponse
 
-    @PostMapping(value = ["merchant/operation/info"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(value = ["operation/info"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun getStatusReversal(
         @RequestBody request: GpbSbpReversalCallback,
     ): GpbSbpReversalResponse
