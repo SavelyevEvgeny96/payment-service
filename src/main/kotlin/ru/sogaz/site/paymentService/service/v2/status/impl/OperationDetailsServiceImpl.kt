@@ -11,6 +11,7 @@ import ru.sogaz.site.paymentService.service.v2.status.OperationDetailsService
 @Service("operationDetailsService")
 class OperationDetailsServiceImpl(
     private val gpbOperationStatusServiceImpl: GpbOperationDetailsServiceImpl,
+    private val abrOperationDetailsServiceImpl: AbrOperationDetailsServiceImpl,
 ) : OperationDetailsService {
     companion object {
         private const val EMPTY_BANK = "Для операции не указан банк"
@@ -19,7 +20,7 @@ class OperationDetailsServiceImpl(
     override fun getOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
         when (idempotentOrderOperation.bank) {
             OperationBank.GPB -> gpbOperationStatusServiceImpl.getOperationDetails(idempotentOrderOperation)
-            OperationBank.AKB_RUS -> TODO()
+            OperationBank.ABR -> abrOperationDetailsServiceImpl.getOperationDetails(idempotentOrderOperation)
             else -> throw InnerException(getTraceId(), EMPTY_BANK)
         }
 }

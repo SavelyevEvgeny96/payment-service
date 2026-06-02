@@ -14,23 +14,17 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mapstruct.factory.Mappers
-import org.springframework.web.client.RestTemplate
-import org.springframework.web.client.postForObject
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentAuthClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbCardPaymentClient
 import ru.sogaz.site.paymentService.clients.gpb.GpbSbpPaymentClient
 import ru.sogaz.site.paymentService.dao.OrderDao
 import ru.sogaz.site.paymentService.dao.PaymentDao
 import ru.sogaz.site.paymentService.dao.WaitingPaymentDao
-import ru.sogaz.site.paymentService.dto.response.AkbOrderInfo
-import ru.sogaz.site.paymentService.dto.response.AkbOrderResponse
 import ru.sogaz.site.paymentService.dto.response.GPBQRImageResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromCardPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromSBPPaymentResponse
 import ru.sogaz.site.paymentService.dto.response.GazpromTokenResponse
-import ru.sogaz.site.paymentService.dto.response.IpsRuData
 import ru.sogaz.site.paymentService.dto.response.Options
-import ru.sogaz.site.paymentService.dto.response.PreparePushTranResponse
 import ru.sogaz.site.paymentService.dto.response.QRCoreData
 import ru.sogaz.site.paymentService.dto.response.QRImageData
 import ru.sogaz.site.paymentService.dto.response.SBPData
@@ -46,7 +40,6 @@ import ru.sogaz.site.paymentService.mapper.payment.GPBPaymentRequestMapperImpl
 import ru.sogaz.site.paymentService.mapper.payment.RegisterCardMapper
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.TokenService
-import ru.sogaz.site.paymentService.service.bank.integration.akb.AKBankIntegrationServiceImpl
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBBankIntegrationGenerateDescriptionServiceImpl
 import ru.sogaz.site.paymentService.service.bank.integration.gpb.GPBankIntegrationServiceImpl
 import java.util.UUID
@@ -60,11 +53,6 @@ class BankIntegrationServiceTest {
         private const val TEST_GPB_SBP_QR_ID = "qr-id"
         private const val TEST_GPB_SBP_PAYLOAD = "gazprom-payload"
         private const val TEST_GPB_SBP_TRANSACTIONAL_ID = "transactional-id"
-        private const val TEST_AKB_ORDER_ID = "123"
-        private const val TEST_AKB_PASSWORD = "akb-password"
-        private const val TEST_AKB_HPP_URL = "payment-url?password=$TEST_AKB_PASSWORD"
-        private const val AKB_REDIRECT_URL = "afterPayRedirectUrl"
-        private const val AKB_QRC_PAYLOAD = "akb-qrc-payload"
         private const val GPB_QR_CONTENT = "gpb-qr-content"
         private const val GPB_QR_MEDIA_TYPE = "image/png"
 
@@ -73,11 +61,6 @@ class BankIntegrationServiceTest {
             GazpromCardPaymentResponse(TEST_GPB_TOKEN, Options(TEST_GPB_PAYMENT_PAGE_URL))
         private val GPBSBPPaymentResponse =
             GazpromSBPPaymentResponse(SBPData(TEST_GPB_SBP_QR_ID, TEST_GPB_SBP_PAYLOAD), TEST_GPB_SBP_TRANSACTIONAL_ID)
-        private val akbOrderInfo =
-            AkbOrderInfo(id = TEST_AKB_ORDER_ID.toInt(), hppUrl = TEST_AKB_HPP_URL, password = TEST_AKB_PASSWORD)
-        private val akbOrderResponse = AkbOrderResponse(akbOrderInfo)
-        private val preparePushTranResponse =
-            PreparePushTranResponse(mutableMapOf("ipsRu" to IpsRuData(AKB_QRC_PAYLOAD, AKB_REDIRECT_URL)))
         private val gpbqrImageResponse =
             GPBQRImageResponse(QRCoreData(QRImageData(GPB_QR_CONTENT, GPB_QR_MEDIA_TYPE)))
     }
@@ -89,9 +72,6 @@ class BankIntegrationServiceTest {
 
     @RelaxedMockK
     private lateinit var apiConfigProperties: ApiConfigProperties
-
-    @MockK
-    private lateinit var restTemplate: RestTemplate
 
     @MockK
     private lateinit var orderDao: OrderDao
@@ -124,8 +104,6 @@ class BankIntegrationServiceTest {
     private lateinit var tokenService: TokenService
 
     private lateinit var gpBankIntegrationService: GPBankIntegrationServiceImpl
-    private lateinit var akBankIntegrationService: AKBankIntegrationServiceImpl
-
     private lateinit var gPBPaymentRequestMapper: GPBPaymentRequestMapper
 
     @BeforeEach
@@ -133,7 +111,6 @@ class BankIntegrationServiceTest {
         MockKAnnotations.init(this, relaxUnitFun = true)
 
         mockGPBRestTemplate()
-        mockAKBRestTemplate()
 
         // создаём маппер для GPB карточных запросов
         gPBPaymentRequestMapper =
@@ -163,14 +140,6 @@ class BankIntegrationServiceTest {
                 paymentDao,
                 waitingPaymentDao,
             )
-
-        // сервис АКБ
-        akBankIntegrationService =
-            AKBankIntegrationServiceImpl(
-                apiConfigProperties,
-                restTemplate,
-                bankPaymentDetailsMapper,
-            )
     }
 
     @Test
@@ -195,29 +164,6 @@ class BankIntegrationServiceTest {
             .returns(TEST_GPB_SBP_QR_ID, Payment::qrcId)
     }
 
-    @Test
-    fun `successfully register CARD payment in AKB test`() {
-        generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.CARD)
-            .run { akBankIntegrationService.registerPayment(this, null) }
-            .run(::assertThat)
-            .returns(PaymentStatusEnum.REG, Payment::state)
-            .returns(TEST_AKB_HPP_URL, Payment::paymentPageUrl)
-            .returns(TEST_AKB_ORDER_ID, Payment::paymentBankId)
-            .returns(TEST_AKB_PASSWORD, Payment::paymentPass)
-            .returns(null, Payment::qrcId)
-    }
-
-    @Test
-    fun `successfully register SBP payment in AKB test`() {
-        generateValidPayment(BankEnum.AKB_RUS, PaymentTypeEnum.SBP)
-            .run { akBankIntegrationService.registerPayment(this, null) }
-            .run(::assertThat)
-            .returns(PaymentStatusEnum.REG, Payment::state)
-            .returns(AKB_QRC_PAYLOAD, Payment::paymentPageUrl)
-            .returns(TEST_AKB_ORDER_ID, Payment::paymentBankId)
-            .returns(TEST_AKB_PASSWORD, Payment::paymentPass)
-            .returns(null, Payment::qrcId)
-    }
 
     @Test
     fun `successfully request for qr code image data`() {
@@ -254,11 +200,4 @@ class BankIntegrationServiceTest {
         every { gpbSbpPaymentClient.getQrImage(any()) } returns gpbqrImageResponse
     }
 
-    private fun mockAKBRestTemplate() {
-        every { restTemplate.postForObject<AkbOrderResponse>(any(String::class), any()) }.returns(akbOrderResponse)
-        every { restTemplate.postForObject<PreparePushTranResponse>(any(String::class), any()) }.returns(
-            preparePushTranResponse,
-        )
-        every { restTemplate.postForObject<Map<String, Any>>(any(String::class), any()) }.answers { mutableMapOf() }
-    }
 }

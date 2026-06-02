@@ -4,7 +4,7 @@ import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.LanguageEnum
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
 
-data class AkbCardAndSbpPaymentRequest(
+data class AbrCardAndSbpPaymentRequest(
     val order: OrderDto,
 )
 
