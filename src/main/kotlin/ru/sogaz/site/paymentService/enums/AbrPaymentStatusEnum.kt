@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 
-enum class AkbPaymentStatusEnum(
+enum class AbrPaymentStatusEnum(
     @JsonValue val value: String,
 ) {
     PREPARING("Preparing"),

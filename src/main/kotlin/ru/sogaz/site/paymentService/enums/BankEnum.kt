@@ -7,10 +7,14 @@ enum class BankEnum(
     val description: String,
 ) {
     GPB("gpb", "ГПБ"),
-    AKB_RUS("akb_rus", "АБР"),
+    ABR("abr", "АБР"),
     ;
 
     companion object {
-        fun from(value: String?): BankEnum? = BankEnum.entries.find { it.code == value }
+        private const val LEGACY_ABR_CODE = "abr_rus"
+
+        fun from(value: String?): BankEnum? =
+            BankEnum.entries.find { it.code == value || it.name == value }
+                ?: ABR.takeIf { value == LEGACY_ABR_CODE }
     }
 }

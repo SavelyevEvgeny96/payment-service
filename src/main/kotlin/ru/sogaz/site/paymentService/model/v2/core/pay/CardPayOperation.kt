@@ -9,6 +9,7 @@ data class CardPayOperation(
     override val depersonalization: Boolean,
     override val bank: OperationBank,
     override val paymentBankId: String,
+    override val paymentPass: String? = null,
 ) : PayOperation() {
     override val paymentType: PaymentType = PaymentType.CARD
 }

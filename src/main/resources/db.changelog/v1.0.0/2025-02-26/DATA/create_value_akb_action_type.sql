@@ -1,1 +1,0 @@
-INSERT INTO action_type(action_name)VALUES('Получение CALLBACK от АКБ Россия');

@@ -15,10 +15,10 @@ enum class ActionType(
     ACCESS_TOKEN_RECEIVED("Получен токен доступа"),
     SEND_PAYMENT_START_REQUEST("Отправка запроса для старта платежа"),
     PAYMENT_START_REQUEST_ERROR("Ошибка при отправке запроса на старт платежа"),
-    PAYMENT_START_REQUEST_ERROR_AKB_BANK("Ошибка при отправке запроса на регистрацию заказа в АКБ Россия"),
+    PAYMENT_START_REQUEST_ERROR_ABR_BANK("Ошибка при отправке запроса на регистрацию заказа в АБР Россия"),
     TRANSACTION_STATUS_RECEIVED("Получен статус транзакции"),
     GET_PAYMENT_LINK("Получение ссылки на оплату"),
     PAYMENT_LINK_REQUEST_ERROR("Ошибка при отправке запроса для получения платежной ссылки"),
     CALLBACK_RECEIVED("Получение CALLBACK от банка"),
-    REGISTER_ORDER_AKB("Отправка запроса для регистрации заказа в АКБ Россия"),
+    REGISTER_ORDER_ABR("Отправка запроса для регистрации заказа в АБР Россия"),
 }
