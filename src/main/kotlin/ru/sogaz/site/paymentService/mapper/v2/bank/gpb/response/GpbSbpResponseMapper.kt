@@ -8,6 +8,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbQrImageResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpPayResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpResult
+import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpReversalResponse
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 
@@ -25,6 +26,10 @@ interface GpbSbpResponseMapper {
     @Mapping(target = "state", source = "status", defaultValue = "WAIT")
     @Mapping(target = "bankId", source = "id")
     fun toBankOperationDetails(response: GpbSbpResult): BankOperationDetails
+
+    @Mapping(target = "state", source = "status", defaultValue = "WAIT")
+    @Mapping(target = "bankId", source = "transactionId")
+    fun toBankOperationDetailsReversal(response: GpbSbpReversalResponse): BankOperationDetails
 
     @Mapping(target = "qrImageData", source = "gpbQrImageResponse.data.image")
     fun toBankPaymentQrData(

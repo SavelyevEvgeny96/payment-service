@@ -6,10 +6,13 @@ enum class OperationState {
     WAIT,
     SUCCESS,
     FAIL,
+    ACCEPTED,
     REFUND,
     REVERSAL,
     DECLINED,
     CALLBACK,
+    REJECTED,
+    PERFORMED,
     ;
 
     fun isFinaleState() = this in arrayOf(SUCCESS, FAIL, REFUND, DECLINED)

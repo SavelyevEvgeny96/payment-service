@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.model.v2.event
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import ru.sogaz.site.paymentService.model.v2.bank.response.ClientCardDetails
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
@@ -19,6 +20,8 @@ data class CompletedOperationEvent(
     val bank: String,
     val operationType: OperationType,
     val paymentType: String,
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING)
+    @param:JsonFormat(shape = JsonFormat.Shape.STRING)
     val payDate: Instant,
     val payerIp: String?,
     val externalErrorCode: String?,

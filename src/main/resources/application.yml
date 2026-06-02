@@ -157,6 +157,7 @@ api:
         merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP}
         paymentAccount: ${PAYMENT_ACCOUNT}
         callbackUrlSbp: ${CALLBACK_URL_SBP}
+        callbackUrlSbpReversal: ${CALLBACK_URL_SBP_REVERSAL}
         qrcTtl: ${GPB_SBP_QRC_TTL_MINUTES:60}
 
 crons:
@@ -210,3 +211,5 @@ logging:
     log-body: ${LOGGING_RABBIT_LOG_BODY:true}
     confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:false}
     returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:false}
+
+kind: Application

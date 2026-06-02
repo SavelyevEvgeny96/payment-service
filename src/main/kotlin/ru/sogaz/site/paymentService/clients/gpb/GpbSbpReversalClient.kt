@@ -17,13 +17,13 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpReversa
     configuration = [OkHttpClientConfig::class],
 )
 interface GpbSbpReversalClient {
-    @PostMapping(value = ["transfer/return/prepare"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(value = ["merchant/transfer/return/prepare"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun prepare(
         @RequestHeader headers: HttpHeaders,
         @RequestBody request: GpbSbpReversalPrepareRequest,
     ): GpbSbpReversalResponse
 
-    @PostMapping(value = ["transfer/return/confirm"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(value = ["merchant/transfer/return/confirm"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun confirm(
         @RequestHeader headers: HttpHeaders,
         @RequestBody request: GpbSbpReversalConfirmRequest,

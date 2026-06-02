@@ -10,6 +10,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpPayResponse
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
+import ru.sogaz.site.paymentService.model.v2.core.pay.SbpReversalPayOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
@@ -56,13 +57,23 @@ class GpbSbpIntegrationImpl(
     override fun payStatus(sbpPayOperation: SbpPayOperation): BankOperationDetails {
         try {
             if (sbpPayOperation.isExpired()) {
-                return BankOperationDetails(sbpPayOperation.paymentBankId, OperationState.FAIL)
+                return BankOperationDetails(sbpPayOperation.qrId, OperationState.FAIL)
             }
             val currentSbpBankState = getCurrentSbpBankState(sbpPayOperation)
-            return BankOperationDetails(sbpPayOperation.paymentBankId, currentSbpBankState)
+            return BankOperationDetails(sbpPayOperation.qrId, currentSbpBankState)
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
-            return BankOperationDetails(sbpPayOperation.paymentBankId, OperationState.WAIT)
+            return BankOperationDetails(sbpPayOperation.qrId, OperationState.WAIT)
+        }
+    }
+
+    override fun payReversalStatus(sbpReversalPayOperation: SbpReversalPayOperation): BankOperationDetails {
+        try {
+            val currentSbpBankState = getCurrentSbpReversalBankState(sbpReversalPayOperation)
+            return BankOperationDetails(sbpReversalPayOperation.paymentBankId, currentSbpBankState)
+        } catch (ex: Exception) {
+            logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)
+            return BankOperationDetails(sbpReversalPayOperation.paymentBankId, OperationState.WAIT)
         }
     }
 
@@ -76,6 +87,13 @@ class GpbSbpIntegrationImpl(
         val sbpStatusRequest = requestMapper.toSbpStatusRequest(sbpPayOperation)
         val sbpStatusResponse = gpbSbpClient.getStatus(sbpStatusRequest)
         val operationDetails = responseMapper.toBankOperationDetails(sbpStatusResponse.first())
+        return operationDetails.state
+    }
+
+    private fun getCurrentSbpReversalBankState(sbpReversalPayOperation: SbpReversalPayOperation): OperationState {
+        val sbpReversalStatusRequest = requestMapper.toSbpReversalStatusRequest(sbpReversalPayOperation)
+        val sbpReversalStatusResponse = gpbSbpClient.getStatusReversal(sbpReversalStatusRequest)
+        val operationDetails = responseMapper.toBankOperationDetailsReversal(sbpReversalStatusResponse)
         return operationDetails.state
     }
 

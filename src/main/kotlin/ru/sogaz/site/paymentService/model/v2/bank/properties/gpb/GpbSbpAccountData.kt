@@ -4,5 +4,6 @@ data class GpbSbpAccountData(
     val merchantIdSbpGpb: String,
     val paymentAccount: String,
     val callbackUrlSbp: String,
+    val callbackUrlSbpReversal: String,
     val qrcTtl: Int,
 )

@@ -42,5 +42,6 @@ class ApiConfigProperties {
         logger.info("akbSbpUrl = $akbSbpUrl")
         logger.info("akbUrl = $akbUrl")
         logger.info("returnUrl = $returnUrl")
+        logger.info("callbackUrlSbp = $callbackUrlSbp")
     }
 }
