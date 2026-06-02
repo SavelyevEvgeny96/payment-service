@@ -17,7 +17,7 @@ abstract class GpbSbpReversalRequestMapper {
     @Mapping(target = "amount", source = "request.amount", qualifiedByName = ["mapAmount"])
     @Mapping(target = "currency", constant = "RUB")
     @Mapping(target = "comment", source = "request.description")
-    @Mapping(target = "callbackMerchantNotifications", source = "accountProperties.account.callbackUrlSbp")
+    @Mapping(target = "callbackMerchantNotifications", source = "accountProperties.account.callbackUrlSbpReversal")
     abstract fun toPrepareRequest(
         request: ReversalOperationRequest,
         accountProperties: GpbSbpAccountProperties,
