@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentService.mapper.payment
 
 import org.mapstruct.Mapper
 import ru.sogaz.site.paymentService.dto.request.GpbCallback
-import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
+import ru.sogaz.site.paymentService.enums.AbrPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.StatusEnum
 
@@ -37,19 +37,19 @@ abstract class PaymentStatusMapper {
             else -> PaymentStatusEnum.WAIT
         }
 
-    fun convert(akbStatus: AkbPaymentStatusEnum): PaymentStatusEnum =
-        when (akbStatus) {
-            AkbPaymentStatusEnum.PARTPAID,
-            AkbPaymentStatusEnum.REFUNDED,
-            AkbPaymentStatusEnum.VOIDED,
+    fun convert(abrStatus: AbrPaymentStatusEnum): PaymentStatusEnum =
+        when (abrStatus) {
+            AbrPaymentStatusEnum.PARTPAID,
+            AbrPaymentStatusEnum.REFUNDED,
+            AbrPaymentStatusEnum.VOIDED,
             -> PaymentStatusEnum.REFUND
 
-            AkbPaymentStatusEnum.DECLINED,
-            AkbPaymentStatusEnum.EXPIRED,
+            AbrPaymentStatusEnum.DECLINED,
+            AbrPaymentStatusEnum.EXPIRED,
             -> PaymentStatusEnum.FAIL
 
-            AkbPaymentStatusEnum.REFUSED -> PaymentStatusEnum.DECLINED
-            AkbPaymentStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS
+            AbrPaymentStatusEnum.REFUSED -> PaymentStatusEnum.DECLINED
+            AbrPaymentStatusEnum.FULLYPAID -> PaymentStatusEnum.SUCCESS
             else -> PaymentStatusEnum.WAIT
         }
 }
