@@ -21,12 +21,29 @@ class GpbSbpReversalIntegrationImpl(
         val prepareRequest = requestMapper.toPrepareRequest(request, accountProperties)
         val prepareResponse = reversalClient.prepare(headers, prepareRequest)
 
-        if (!prepareResponse.isSuccess()) return prepareResponse.toFail()
+        if (!prepareResponse.isSuccess()) {
+            return BankOperationDetails(
+                bankId = prepareResponse.transactionId,
+                state = OperationState.FAIL,
+                errorText = prepareResponse.message ?: "GPB SBP prepare failed with code=${prepareResponse.code}",
+            )
+        }
 
-        val confirmRequest = requestMapper.toConfirmRequest(prepareResponse.transactionId)
+        val confirmRequest = requestMapper.toConfirmRequest(prepareResponse.transactionId!!)
         val confirmResponse = reversalClient.confirm(headers, confirmRequest)
 
-        return if (confirmResponse.isSuccess()) confirmResponse.toSuccess() else confirmResponse.toFail()
+        return if (confirmResponse.isSuccess()) {
+            BankOperationDetails(
+                bankId = confirmResponse.transactionId,
+                state = OperationState.NEW,
+            )
+        } else {
+            BankOperationDetails(
+                bankId = prepareResponse.transactionId,
+                state = OperationState.FAIL,
+                errorText = confirmResponse.message ?: "GPB SBP confirm failed with code=${confirmResponse.code}",
+            )
+        }
     }
 
     private fun GpbSbpReversalResponse.toSuccess() = BankOperationDetails(bankId = transactionId, state = OperationState.NEW)

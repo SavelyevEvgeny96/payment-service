@@ -24,7 +24,7 @@ abstract class GpbSbpReversalRequestMapper {
     ): GpbSbpReversalPrepareRequest
 
     @Mapping(target = "transactionId", source = "prepareTransactionId")
-    abstract fun toConfirmRequest(prepareTransactionId: String): GpbSbpReversalConfirmRequest
+    abstract fun toConfirmRequest(prepareTransactionId: String?): GpbSbpReversalConfirmRequest
 
     fun toHeaders(accountProperties: GpbSbpAccountProperties): HttpHeaders =
         HttpHeaders().apply {
