@@ -7,6 +7,7 @@ import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mapstruct.factory.Mappers
 import ru.sogaz.site.paymentService.clients.abr.AbrCardClient
 import ru.sogaz.site.paymentService.clients.abr.AbrSbpClient
 import ru.sogaz.site.paymentService.dto.response.AbrOrderInfo
@@ -37,7 +38,7 @@ class AbrIntegrationImplTest {
     fun `cardPay should map ABR order response to bank payment page data`() {
         every { abrCardClient.cardPayment(any()) } returns abrOrderResponse
 
-        val result = AbrCardIntegrationImpl(abrCardClient, requestMapper(), AbrResponseMapper())
+        val result = AbrCardIntegrationImpl(abrCardClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
             .cardPay(cardRequest())
 
         assertThat(result.bank).isEqualTo(BankEnum.ABR)
@@ -52,7 +53,7 @@ class AbrIntegrationImplTest {
         every { abrSbpClient.setSrcToken(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) } returns emptyMap()
         every { abrSbpClient.preparePushTran(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) } returns preparePushTranResponse
 
-        val result = AbrSbpIntegrationImpl(abrSbpClient, requestMapper(), AbrResponseMapper())
+        val result = AbrSbpIntegrationImpl(abrSbpClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
             .sbpPay(sbpRequest())
 
         assertThat(result.bank).isEqualTo(BankEnum.ABR)
@@ -64,9 +65,9 @@ class AbrIntegrationImplTest {
         verify(exactly = 1) { abrSbpClient.preparePushTran(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) }
     }
 
-    private fun requestMapper() = AbrRequestMapper(
-        ApiConfigProperties().apply { backUrlS = TEST_BACK_URL }
-    )
+    private fun requestMapper(): AbrRequestMapper =
+        Mappers.getMapper(AbrRequestMapper::class.java)
+            .apply { apiConfigProperties = ApiConfigProperties().apply { backUrlS = TEST_BACK_URL } }
 
     private fun cardRequest() = CardPayOperationRequest(
         orderId = UUID.randomUUID(),
