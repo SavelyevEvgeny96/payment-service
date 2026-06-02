@@ -1,0 +1,1 @@
+TRUNCATE payment_operation_history;

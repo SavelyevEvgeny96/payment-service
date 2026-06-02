@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-006-insert-client-system-table
+      author: Kodymskii Nikita
+      changes:
+        - tagDatabase:
+            tag: backend-006-insert-client-system-table
+  - include:
+      file: db.changelog/v2.2.0/2025-11-27/DATA/insert_client_system.sql
+

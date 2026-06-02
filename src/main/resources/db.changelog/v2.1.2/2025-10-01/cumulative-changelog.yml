@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-create-table
+      author: Savelyev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-table
+  - include:
+      file: db.changelog\v2.1.2\2025-10-01\DATA\refactor_sub_order_table.sql
+  - include:
+      file: db.changelog\v2.1.2\2025-10-01\DATA\add_client_system.sql

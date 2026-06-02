@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-004-alter-orders-table
+      author: Kodymskii Nikita
+      changes:
+        - tagDatabase:
+            tag: backend-004-alter-orders-table
+  - include:
+      file: db.changelog/v2.2.0/2025-11-24/DATA/add_column_to_orders_table.sql
+

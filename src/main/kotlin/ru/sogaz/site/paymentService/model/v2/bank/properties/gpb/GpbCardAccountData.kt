@@ -1,0 +1,8 @@
+package ru.sogaz.site.paymentService.model.v2.bank.properties.gpb
+
+data class GpbCardAccountData(
+    val portalId: String,
+    val merchantId: String,
+    val identifier: String,
+    val password: String,
+)

@@ -1,0 +1,4 @@
+ALTER TABLE payment_operation_history DROP CONSTRAINT payment_operation_history_action_author_id_fkey;
+
+ALTER TABLE payment_operation_history ALTER COLUMN action_author_id TYPE external_system_code_enum
+USING action_author_id::text::external_system_code_enum;

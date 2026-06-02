@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-create-table
+      author: Sokolov Danila
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-table
+  - include:
+      file: db.changelog\v2.1.3\2025-10-15\DATA\create_table_waiting_payments.sql

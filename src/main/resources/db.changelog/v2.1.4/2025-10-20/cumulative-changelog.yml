@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-002-create-table
+      author: Savelyev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-table
+  - include:
+      file: db.changelog\v2.1.4\2025-10-20\DATA\add_column_orders.sql

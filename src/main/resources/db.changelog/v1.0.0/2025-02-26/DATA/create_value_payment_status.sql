@@ -1,0 +1,1 @@
+INSERT INTO payment_status(state_id,state_name)VALUES('CALLBACK','Получение CALLBACK от ГПБ');

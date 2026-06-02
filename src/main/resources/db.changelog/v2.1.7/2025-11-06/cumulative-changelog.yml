@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-003-alter-payment-table
+      author: Sokolov Danila
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-table
+  - include:
+      file: db.changelog\v2.1.7\2025-11-06\DATA\add_column_to_payment_table.sql

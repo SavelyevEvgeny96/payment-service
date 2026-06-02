@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-create-table
+      author: Savelyev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-001-create-table
+  - include:
+      file: db.changelog\v2.1.2\2025-10-13\DATA\add_canceled_order_status_enum.sql
+  - include:
+      file: db.changelog\v2.1.2\2025-10-13\DATA\add_canceled_order_status_description.sql

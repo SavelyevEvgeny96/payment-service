@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-001-alter-table
+      author: Dmitry Arshinkin
+      changes:
+        - tagDatabase:
+            tag: backend-001-alter-table
+  - include:
+      file: db.changelog\v2.2.1\2025-12-09\DATA\add_column_orders.sql

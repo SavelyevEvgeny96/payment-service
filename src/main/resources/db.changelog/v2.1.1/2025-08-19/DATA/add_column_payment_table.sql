@@ -1,0 +1,3 @@
+ALTER TABLE payments
+ADD COLUMN payment_pass VARCHAR(255),
+ADD COLUMN qrc_id VARCHAR(255);

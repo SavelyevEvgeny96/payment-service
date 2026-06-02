@@ -1,0 +1,20 @@
+package ru.sogaz.site.paymentService.clients.gpb
+
+import org.springframework.cloud.openfeign.FeignClient
+import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import ru.sogaz.site.paymentService.config.feign.GpbAuthRetryerConfig
+import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.GpbTokenResponse
+
+@FeignClient(
+    name = "gpb-card-auth-client",
+    url = "\${api.gpb.card.basePath}",
+    configuration = [GpbAuthRetryerConfig::class],
+)
+interface GpbCardAuthClient {
+    @PostMapping(value = ["/{portalId}/token"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun getToken(
+        @PathVariable portalId: String,
+    ): GpbTokenResponse
+}

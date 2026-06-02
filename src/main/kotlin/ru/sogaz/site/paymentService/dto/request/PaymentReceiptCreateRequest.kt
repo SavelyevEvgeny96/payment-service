@@ -1,0 +1,33 @@
+package ru.sogaz.site.paymentService.dto.request
+
+data class PaymentReceiptCreateRequest(
+    val client: ClientInfo,
+    val items: List<PaymentItemRequest>,
+    val payments: List<PaymentPaymentRequest?>,
+    val total: Double,
+    val system: String,
+    val version: String,
+) {
+    data class ClientInfo(
+        val email: String?,
+    )
+
+    data class PaymentItemRequest(
+        val name: String,
+        val price: Double,
+        val quantity: Double,
+        val sum: Double,
+        val paymentMethod: String,
+        val paymentObject: String,
+        val vat: VatRequest,
+    )
+
+    data class VatRequest(
+        val type: String,
+    )
+
+    data class PaymentPaymentRequest(
+        val type: String,
+        val sum: Double,
+    )
+}
