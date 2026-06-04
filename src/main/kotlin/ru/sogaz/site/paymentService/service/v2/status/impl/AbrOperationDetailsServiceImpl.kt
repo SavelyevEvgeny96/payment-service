@@ -23,6 +23,7 @@ class AbrOperationDetailsServiceImpl(
     companion object {
         private const val ABR_SBP_REVERSAL_NOT_AVAILABLE = "Операция возврата СБП через АБР недоступна"
     }
+
     override fun getOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
         when (idempotentOrderOperation.operationType) {
             OperationType.PAY -> getPayOperationDetails(idempotentOrderOperation)

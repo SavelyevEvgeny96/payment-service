@@ -68,7 +68,7 @@ class CallbackServiceImpl(
             getSuccessResponse(traceId, CODE_SUCCESS, response)
         } catch (e: Exception) {
             logger.error(ERROR_BANK_ID + request.bankId)
-            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_ABR, traceId)
+            throw BusinessException(CustomPaymentErrors.CODE_ERROR_PAYMENT_AKB, traceId)
         }
     }
 

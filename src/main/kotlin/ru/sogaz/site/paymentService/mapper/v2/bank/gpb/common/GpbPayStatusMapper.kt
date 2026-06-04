@@ -31,22 +31,22 @@ abstract class GpbPayStatusMapper {
     fun convertToOperationState(gpbStatus: GpbCardPayStatus): OperationState =
         when (gpbStatus) {
             GpbCardPayStatus.NEW,
-                -> OperationState.NEW
+            -> OperationState.NEW
 
             GpbCardPayStatus.BLOCKED,
             GpbCardPayStatus.REJECTED,
             GpbCardPayStatus.FAILED,
-                -> OperationState.FAIL
+            -> OperationState.FAIL
 
             GpbCardPayStatus.DECLINED,
-                -> OperationState.DECLINED
+            -> OperationState.DECLINED
 
             GpbCardPayStatus.SUCCESS,
             GpbCardPayStatus.ACCEPTED,
-                -> OperationState.SUCCESS
+            -> OperationState.SUCCESS
 
             GpbCardPayStatus.REFUND,
-                -> OperationState.REFUND
+            -> OperationState.REFUND
 
             else -> OperationState.WAIT
         }
@@ -55,15 +55,16 @@ abstract class GpbPayStatusMapper {
         when (gpbRefundStatus) {
             GpbRefundStatus.PROCESSING,
             GpbRefundStatus.SUCCESS,
-                -> OperationState.SUCCESS
+            -> OperationState.SUCCESS
 
             else -> OperationState.FAIL
         }
 
     @Named("convertReversalStatusToOperationState")
     fun convertReversalStatusToOperationState(status: String?): OperationState {
-        val normalizedStatus = status?.trim()?.uppercase()
-            ?: return OperationState.WAIT
+        val normalizedStatus =
+            status?.trim()?.uppercase()
+                ?: return OperationState.WAIT
 
         return when (normalizedStatus) {
             OperationState.PERFORMED.name,
@@ -71,7 +72,7 @@ abstract class GpbPayStatusMapper {
             OperationState.REVERSAL.name,
             OperationState.ACCEPTED.name,
             OperationState.REJECTED.name,
-                -> OperationState.SUCCESS
+            -> OperationState.SUCCESS
 
             else -> OperationState.valueOf(normalizedStatus)
         }
@@ -81,7 +82,7 @@ abstract class GpbPayStatusMapper {
         when (gpbRefundStatus) {
             GpbRefundStatus.FAILED,
             GpbRefundStatus.UNKNOWN,
-                -> BANK_ERROR
+            -> BANK_ERROR
 
             else -> null
         }

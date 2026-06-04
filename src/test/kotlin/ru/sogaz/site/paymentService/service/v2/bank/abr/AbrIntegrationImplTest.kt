@@ -38,8 +38,9 @@ class AbrIntegrationImplTest {
     fun `cardPay should map ABR order response to bank payment page data`() {
         every { abrCardClient.cardPayment(any()) } returns abrOrderResponse
 
-        val result = AbrCardIntegrationImpl(abrCardClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
-            .cardPay(cardRequest())
+        val result =
+            AbrCardIntegrationImpl(abrCardClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
+                .cardPay(cardRequest())
 
         assertThat(result.bank).isEqualTo(BankEnum.ABR)
         assertThat(result.paymentBankId).isEqualTo(TEST_ABR_ORDER_ID)
@@ -53,8 +54,9 @@ class AbrIntegrationImplTest {
         every { abrSbpClient.setSrcToken(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) } returns emptyMap()
         every { abrSbpClient.preparePushTran(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) } returns preparePushTranResponse
 
-        val result = AbrSbpIntegrationImpl(abrSbpClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
-            .sbpPay(sbpRequest())
+        val result =
+            AbrSbpIntegrationImpl(abrSbpClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
+                .sbpPay(sbpRequest())
 
         assertThat(result.bank).isEqualTo(BankEnum.ABR)
         assertThat(result.paymentBankId).isEqualTo(TEST_ABR_ORDER_ID)
@@ -66,27 +68,30 @@ class AbrIntegrationImplTest {
     }
 
     private fun requestMapper(): AbrRequestMapper =
-        Mappers.getMapper(AbrRequestMapper::class.java)
+        Mappers
+            .getMapper(AbrRequestMapper::class.java)
             .apply { apiConfigProperties = ApiConfigProperties().apply { backUrlS = TEST_BACK_URL } }
 
-    private fun cardRequest() = CardPayOperationRequest(
-        orderId = UUID.randomUUID(),
-        description = TEST_DESCRIPTION,
-        amount = BigDecimal.TEN,
-        depersonalization = false,
-        payerIp = null,
-        params = RedirectParams(urlToReturnS = TEST_BACK_URL),
-        saveCard = false,
-    )
+    private fun cardRequest() =
+        CardPayOperationRequest(
+            orderId = UUID.randomUUID(),
+            description = TEST_DESCRIPTION,
+            amount = BigDecimal.TEN,
+            depersonalization = false,
+            payerIp = null,
+            params = RedirectParams(urlToReturnS = TEST_BACK_URL),
+            saveCard = false,
+        )
 
-    private fun sbpRequest() = SbpPayOperationRequest(
-        orderId = UUID.randomUUID(),
-        description = TEST_DESCRIPTION,
-        amount = BigDecimal.TEN,
-        payerIp = null,
-        payItems = linkedMapOf(),
-        params = RedirectParams(urlToReturnS = TEST_BACK_URL),
-    )
+    private fun sbpRequest() =
+        SbpPayOperationRequest(
+            orderId = UUID.randomUUID(),
+            description = TEST_DESCRIPTION,
+            amount = BigDecimal.TEN,
+            payerIp = null,
+            payItems = linkedMapOf(),
+            params = RedirectParams(urlToReturnS = TEST_BACK_URL),
+        )
 
     private companion object {
         const val TEST_ABR_ORDER_ID = "123"
@@ -96,15 +101,17 @@ class AbrIntegrationImplTest {
         const val TEST_DESCRIPTION = "description"
         const val TEST_BACK_URL = "https://www.sogaz.ru/"
 
-        val abrOrderResponse = AbrOrderResponse(
-            AbrOrderInfo(
-                id = TEST_ABR_ORDER_ID.toInt(),
-                hppUrl = TEST_ABR_HPP_URL,
-                password = TEST_ABR_PASSWORD,
+        val abrOrderResponse =
+            AbrOrderResponse(
+                AbrOrderInfo(
+                    id = TEST_ABR_ORDER_ID.toInt(),
+                    hppUrl = TEST_ABR_HPP_URL,
+                    password = TEST_ABR_PASSWORD,
+                ),
             )
-        )
-        val preparePushTranResponse = PreparePushTranResponse(
-            specificByPm = mapOf("ipsRu" to IpsRuData(TEST_ABR_QRC_PAYLOAD, TEST_BACK_URL))
-        )
+        val preparePushTranResponse =
+            PreparePushTranResponse(
+                specificByPm = mapOf("ipsRu" to IpsRuData(TEST_ABR_QRC_PAYLOAD, TEST_BACK_URL)),
+            )
     }
 }

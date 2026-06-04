@@ -25,28 +25,31 @@ class AbrSbpIntegrationImpl(
     private val logger = loggerFor(javaClass)
 
     override fun sbpPay(sbpPayOperationRequest: SbpPayOperationRequest): BankPaymentPageData {
-        val orderResponse = sbpPayOperationRequest
-            .run(requestMapper::toSbpRequest)
-            .run(abrSbpClient::sbpPayment)
+        val orderResponse =
+            sbpPayOperationRequest
+                .run(requestMapper::toSbpRequest)
+                .run(abrSbpClient::sbpPayment)
         val paymentBankId = orderResponse.order.id.toString()
         val paymentPass = orderResponse.order.password
 
         abrSbpClient.setSrcToken(paymentBankId, paymentPass, requestMapper.toSetSrcTokenRequest())
-        val pushTranResponse = abrSbpClient.preparePushTran(
-            paymentBankId,
-            paymentPass,
-            requestMapper.toPreparePushTranRequest(sbpPayOperationRequest.params),
-        )
+        val pushTranResponse =
+            abrSbpClient.preparePushTran(
+                paymentBankId,
+                paymentPass,
+                requestMapper.toPreparePushTranRequest(sbpPayOperationRequest.params),
+            )
 
         return responseMapper.toSbpPaymentPageData(orderResponse, pushTranResponse)
     }
 
     override fun payStatus(sbpPayOperation: SbpPayOperation): BankOperationDetails =
         try {
-            val statusResponse = abrSbpClient.getPaymentStatus(
-                sbpPayOperation.paymentBankId,
-                sbpPayOperation.paymentPass,
-            )
+            val statusResponse =
+                abrSbpClient.getPaymentStatus(
+                    sbpPayOperation.paymentBankId,
+                    sbpPayOperation.paymentPass,
+                )
             responseMapper.toBankOperationDetails(statusResponse)
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)

@@ -5,6 +5,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.Named
 import org.springframework.beans.factory.annotation.Autowired
 import ru.sogaz.site.paymentService.dto.request.AbrCardAndSbpPaymentRequest
+import ru.sogaz.site.paymentService.dto.request.OrderDto
 import ru.sogaz.site.paymentService.dto.request.PreparePushTranRequest
 import ru.sogaz.site.paymentService.dto.request.SetSrcTokenRequest
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
@@ -33,7 +34,11 @@ abstract class AbrRequestMapper {
         @JvmStatic
         @Named("mapExpTime")
         fun mapExpTime(typeRid: TypeRidEnum): String? =
-            LocalDateTime.now().plusMinutes(15).format(formatter).takeIf { typeRid == TypeRidEnum.QRC_PAY }
+            LocalDateTime
+                .now()
+                .plusMinutes(15)
+                .format(formatter)
+                .takeIf { typeRid == TypeRidEnum.QRC_PAY }
     }
 
     fun toCardRequest(cardPayOperationRequest: CardPayOperationRequest): AbrCardAndSbpPaymentRequest =
@@ -46,38 +51,55 @@ abstract class AbrRequestMapper {
 
     fun toPreparePushTranRequest(redirectParams: RedirectParams): PreparePushTranRequest =
         PreparePushTranRequest(
-            specificByPm = mapOf(
-                IPS_RU_PARAM_NAME to mapOf(REDIRECT_URL_PARAM_NAME to redirectParams.successUrl()),
-            ),
+            specificByPm =
+                mapOf(
+                    IPS_RU_PARAM_NAME to
+                        mapOf(
+                            REDIRECT_URL_PARAM_NAME to redirectParams.urlToReturn.orEmpty(),
+                        ),
+                ),
         )
 
-    @Mapping(target = "order.typeRid", source = "typeRid")
-    @Mapping(target = "order.ridByMerchant", source = "request.orderId")
-    @Mapping(target = "order.amount", source = "request.amount", qualifiedByName = ["mapRequestAmount"])
-    @Mapping(target = "order.currency", constant = "RUB")
-    @Mapping(target = "order.hppRedirectUrl", expression = "java(successUrl(request.getParams()))")
-    @Mapping(target = "order.adviceIfaceAddress", expression = "java(successUrl(request.getParams()))")
-    @Mapping(target = "order.description", source = "request.description")
-    @Mapping(target = "order.descriptionHtml", source = "request.description")
-    @Mapping(target = "order.expTime", source = "typeRid", qualifiedByName = ["mapExpTime"])
+    @Mapping(target = "order", expression = "java(toOrderDto(request, typeRid))")
     protected abstract fun toAbrRequest(
         request: CardPayOperationRequest,
         typeRid: TypeRidEnum,
     ): AbrCardAndSbpPaymentRequest
 
-    @Mapping(target = "order.typeRid", source = "typeRid")
-    @Mapping(target = "order.ridByMerchant", source = "request.orderId")
-    @Mapping(target = "order.amount", source = "request.amount", qualifiedByName = ["mapRequestAmount"])
-    @Mapping(target = "order.currency", constant = "RUB")
-    @Mapping(target = "order.hppRedirectUrl", expression = "java(successUrl(request.getParams()))")
-    @Mapping(target = "order.adviceIfaceAddress", expression = "java(successUrl(request.getParams()))")
-    @Mapping(target = "order.description", source = "request.description")
-    @Mapping(target = "order.descriptionHtml", source = "request.description")
-    @Mapping(target = "order.expTime", source = "typeRid", qualifiedByName = ["mapExpTime"])
+    @Mapping(target = "order", expression = "java(toOrderDto(request, typeRid))")
     protected abstract fun toAbrRequest(
         request: SbpPayOperationRequest,
         typeRid: TypeRidEnum,
     ): AbrCardAndSbpPaymentRequest
+
+    @Mapping(target = "typeRid", source = "typeRid")
+    @Mapping(target = "ridByMerchant", expression = "java(request.getOrderId().toString())")
+    @Mapping(target = "amount", source = "request.amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "currency", constant = "RUB")
+    @Mapping(target = "hppRedirectUrl", expression = "java(successUrl(request.getParams()))")
+    @Mapping(target = "adviceIfaceAddress", expression = "java(successUrl(request.getParams()))")
+    @Mapping(target = "description", source = "request.description")
+    @Mapping(target = "descriptionHtml", source = "request.description")
+    @Mapping(target = "expTime", source = "typeRid", qualifiedByName = ["mapExpTime"])
+    @Mapping(target = "language", constant = "RU")
+    protected abstract fun toOrderDto(
+        request: CardPayOperationRequest,
+        typeRid: TypeRidEnum,
+    ): OrderDto
+
+    @Mapping(target = "typeRid", source = "typeRid")
+    @Mapping(target = "ridByMerchant", source = "request.orderId")
+    @Mapping(target = "amount", source = "request.amount", qualifiedByName = ["mapRequestAmount"])
+    @Mapping(target = "currency", constant = "RUB")
+    @Mapping(target = "hppRedirectUrl", expression = "java(successUrl(request.getParams()))")
+    @Mapping(target = "adviceIfaceAddress", expression = "java(successUrl(request.getParams()))")
+    @Mapping(target = "description", source = "request.description")
+    @Mapping(target = "descriptionHtml", source = "request.description")
+    @Mapping(target = "expTime", source = "typeRid", qualifiedByName = ["mapExpTime"])
+    protected abstract fun toOrderDto(
+        request: SbpPayOperationRequest,
+        typeRid: TypeRidEnum,
+    ): OrderDto
 
     protected fun successUrl(redirectParams: RedirectParams): String =
         redirectParams.urlToReturnS ?: redirectParams.urlToReturn ?: apiConfigProperties.backUrlS

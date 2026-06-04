@@ -11,11 +11,11 @@ import ru.sogaz.site.paymentService.model.v2.entity.rules.RulesBanksProducts
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
+import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.repository.v2.rules.PrioritizationRulesBanksRepository
 import ru.sogaz.site.paymentService.repository.v2.rules.RulesBanksProductsRepository
 import ru.sogaz.site.paymentService.service.v2.bank.selection.impl.OperationBankSelectionServiceImpl
-import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -60,10 +60,11 @@ class OperationBankSelectionServiceImplTest {
 
     @Test
     fun `selectBank should fallback to available reserve bank`() {
-        every { prioritizationRulesBanksRepository.findFirstByOrderByUpdateDateDesc() } returns defaultRules(
-            availableGpbCheck = false,
-            availableAbrCheck = true,
-        )
+        every { prioritizationRulesBanksRepository.findFirstByOrderByUpdateDateDesc() } returns
+            defaultRules(
+                availableGpbCheck = false,
+                availableAbrCheck = true,
+            )
 
         val result = service.selectBank(cardPayRequest(bank = PaymentRequestBank.GPB))
 
@@ -89,28 +90,30 @@ class OperationBankSelectionServiceImplTest {
         updateDate = null,
     )
 
-    private fun productRule(bank: OperationBank) = RulesBanksProducts(
-        id = UUID.randomUUID(),
-        insuranceKind = TEST_INSURANCE_KIND,
-        program = null,
-        bank = bank,
-        paymentType = PaymentType.CARD,
-        active = true,
-        createDate = null,
-        updateDate = null,
-    )
+    private fun productRule(bank: OperationBank) =
+        RulesBanksProducts(
+            id = UUID.randomUUID(),
+            insuranceKind = TEST_INSURANCE_KIND,
+            program = null,
+            bank = bank,
+            paymentType = PaymentType.CARD,
+            active = true,
+            createDate = null,
+            updateDate = null,
+        )
 
-    private fun cardPayRequest(bank: PaymentRequestBank? = null) = CardPayOperationRequest(
-        orderId = UUID.randomUUID(),
-        description = "description",
-        amount = BigDecimal.TEN,
-        depersonalization = false,
-        payerIp = "127.0.0.1",
-        insuranceKind = TEST_INSURANCE_KIND,
-        bank = bank,
-        params = RedirectParams(),
-        saveCard = false,
-    )
+    private fun cardPayRequest(bank: PaymentRequestBank? = null) =
+        CardPayOperationRequest(
+            orderId = UUID.randomUUID(),
+            description = "description",
+            amount = BigDecimal.TEN,
+            depersonalization = false,
+            payerIp = "127.0.0.1",
+            insuranceKind = TEST_INSURANCE_KIND,
+            bank = bank,
+            params = RedirectParams(),
+            saveCard = false,
+        )
 
     private companion object {
         const val TEST_INSURANCE_KIND = "test-insurance-kind"

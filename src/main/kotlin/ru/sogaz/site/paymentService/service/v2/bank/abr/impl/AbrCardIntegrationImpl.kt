@@ -32,10 +32,11 @@ class AbrCardIntegrationImpl(
 
     override fun payStatus(cardPayOperation: CardPayOperation): BankOperationDetails =
         try {
-            val statusResponse = abrCardClient.getPaymentStatus(
-                cardPayOperation.paymentBankId,
-                cardPayOperation.paymentPass,
-            )
+            val statusResponse =
+                abrCardClient.getPaymentStatus(
+                    cardPayOperation.paymentBankId,
+                    cardPayOperation.paymentPass,
+                )
             responseMapper.toBankOperationDetails(statusResponse)
         } catch (ex: Exception) {
             logger.error(OPERATION_DETAILS_ERROR, ex.message, ex)

@@ -33,8 +33,9 @@ class OperationBankSelectionServiceImpl(
     }
 
     override fun selectBank(payOperationRequest: PayOperationRequest): OperationBank {
-        val rules = prioritizationRulesBanksRepository.findFirstByOrderByUpdateDateDesc()
-            ?: throw InnerException(getTraceId(), PRIORITIZATION_RULE_NOT_FOUND_ERROR)
+        val rules =
+            prioritizationRulesBanksRepository.findFirstByOrderByUpdateDateDesc()
+                ?: throw InnerException(getTraceId(), PRIORITIZATION_RULE_NOT_FOUND_ERROR)
         rules.validatePartBankPriority()
 
         val selectedBank = payOperationRequest.selectByRules(rules)
@@ -56,10 +57,15 @@ class OperationBankSelectionServiceImpl(
 
         bank?.let { return it.toOperationBank() }
 
-        val productRuleBank = insuranceKind
-            ?.takeIf(String::isNotBlank)
-            ?.let { rulesBanksProductsRepository.findFirstByInsuranceKindAndPaymentTypeAndActiveTrueOrderByUpdateDateDesc(it, paymentType) }
-            ?.bank
+        val productRuleBank =
+            insuranceKind
+                ?.takeIf(String::isNotBlank)
+                ?.let {
+                    rulesBanksProductsRepository.findFirstByInsuranceKindAndPaymentTypeAndActiveTrueOrderByUpdateDateDesc(
+                        it,
+                        paymentType,
+                    )
+                }?.bank
 
         if (productRuleBank != null) {
             logger.debug(

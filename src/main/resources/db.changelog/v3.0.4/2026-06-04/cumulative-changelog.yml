@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-012-rules-payment-type
+      author: Savelev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-012-rules-payment-type
+  - include:
+      file: db.changelog\v3.0.4\2026-06-04\DATA\insert_rules_payment_type_data.sql

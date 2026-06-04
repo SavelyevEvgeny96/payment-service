@@ -164,7 +164,6 @@ class BankIntegrationServiceTest {
             .returns(TEST_GPB_SBP_QR_ID, Payment::qrcId)
     }
 
-
     @Test
     fun `successfully request for qr code image data`() {
         generateValidPayment(BankEnum.GPB, PaymentTypeEnum.SBP)
@@ -199,5 +198,4 @@ class BankIntegrationServiceTest {
         every { gpbSbpPaymentClient.startPayment(any(), any()) } returns GPBSBPPaymentResponse
         every { gpbSbpPaymentClient.getQrImage(any()) } returns gpbqrImageResponse
     }
-
 }
