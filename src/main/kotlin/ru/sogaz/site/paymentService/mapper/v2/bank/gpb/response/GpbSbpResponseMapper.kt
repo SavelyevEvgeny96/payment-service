@@ -27,7 +27,12 @@ interface GpbSbpResponseMapper {
     @Mapping(target = "bankId", source = "id")
     fun toBankOperationDetails(response: GpbSbpResult): BankOperationDetails
 
-    @Mapping(target = "state", source = "status", defaultValue = "WAIT")
+    @Mapping(
+        target = "state",
+        source = "status",
+        qualifiedByName = ["convertReversalStatusToOperationState"],
+        defaultValue = "WAIT",
+    )
     @Mapping(target = "bankId", source = "transactionId")
     fun toBankOperationDetailsReversal(response: GpbSbpReversalResponse): BankOperationDetails
 

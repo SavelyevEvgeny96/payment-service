@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common
 
 import org.mapstruct.Mapper
+import org.mapstruct.Named
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
 import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbCardPayStatus
 import ru.sogaz.site.paymentService.model.v2.bank.enums.GpbRefundStatus
@@ -30,22 +31,22 @@ abstract class GpbPayStatusMapper {
     fun convertToOperationState(gpbStatus: GpbCardPayStatus): OperationState =
         when (gpbStatus) {
             GpbCardPayStatus.NEW,
-            -> OperationState.NEW
+                -> OperationState.NEW
 
             GpbCardPayStatus.BLOCKED,
             GpbCardPayStatus.REJECTED,
             GpbCardPayStatus.FAILED,
-            -> OperationState.FAIL
+                -> OperationState.FAIL
 
             GpbCardPayStatus.DECLINED,
-            -> OperationState.DECLINED
+                -> OperationState.DECLINED
 
             GpbCardPayStatus.SUCCESS,
             GpbCardPayStatus.ACCEPTED,
-            -> OperationState.SUCCESS
+                -> OperationState.SUCCESS
 
             GpbCardPayStatus.REFUND,
-            -> OperationState.REFUND
+                -> OperationState.REFUND
 
             else -> OperationState.WAIT
         }
@@ -54,15 +55,34 @@ abstract class GpbPayStatusMapper {
         when (gpbRefundStatus) {
             GpbRefundStatus.PROCESSING,
             GpbRefundStatus.SUCCESS,
-            -> OperationState.SUCCESS
+                -> OperationState.SUCCESS
+
             else -> OperationState.FAIL
         }
+
+    @Named("convertReversalStatusToOperationState")
+    fun convertReversalStatusToOperationState(status: String?): OperationState {
+        val normalizedStatus = status?.trim()?.uppercase()
+            ?: return OperationState.WAIT
+
+        return when (normalizedStatus) {
+            OperationState.PERFORMED.name,
+            OperationState.REFUND.name,
+            OperationState.REVERSAL.name,
+            OperationState.ACCEPTED.name,
+            OperationState.REJECTED.name,
+                -> OperationState.SUCCESS
+
+            else -> OperationState.valueOf(normalizedStatus)
+        }
+    }
 
     fun convertToErrorText(gpbRefundStatus: GpbRefundStatus): String? =
         when (gpbRefundStatus) {
             GpbRefundStatus.FAILED,
             GpbRefundStatus.UNKNOWN,
-            -> BANK_ERROR
+                -> BANK_ERROR
+
             else -> null
         }
 }
