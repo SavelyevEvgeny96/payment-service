@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response
 
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
+import org.mapstruct.Named
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.common.GpbPayStatusMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
@@ -23,13 +24,29 @@ interface GpbSbpResponseMapper {
     @Mapping(target = "bank", constant = "GPB")
     fun toBankPaymentPageData(response: GpbSbpPayResponse): BankPaymentPageData
 
-    @Mapping(target = "state", source = "status", defaultValue = "WAIT")
+    @Mapping(
+        target = "state",
+        source = "status",
+        qualifiedByName = ["mapStatus"],
+    )
     @Mapping(target = "bankId", source = "id")
     fun toBankOperationDetails(response: GpbSbpResult): BankOperationDetails
 
-    @Mapping(target = "state", source = "status", defaultValue = "WAIT")
+    @Mapping(
+        target = "state",
+        source = "status",
+        qualifiedByName = ["mapStatus"],
+    )
     @Mapping(target = "bankId", source = "transactionId")
     fun toBankOperationDetailsReversal(response: GpbSbpReversalResponse): BankOperationDetails
+
+    @Named("mapStatus")
+    fun mapReversalStatus(status: String?): OperationState =
+        when (status) {
+            null -> OperationState.WAIT
+            OperationState.PERFORMED.name -> OperationState.SUCCESS
+            else -> OperationState.valueOf(status)
+        }
 
     @Mapping(target = "qrImageData", source = "gpbQrImageResponse.data.image")
     fun toBankPaymentQrData(
