@@ -30,7 +30,7 @@ interface CallbackV1Api {
         request: HttpServletRequest,
     ): Response<CallbackResponse>
 
-    @PostMapping("payment/sbp/gpb/return/state")
+    @PostMapping("payment/sbp/gpb/state/return")
     fun stateSbpGpbReturnCallback(
         @RequestBody callback: GpbSbpReversalCallback,
         request: HttpServletRequest,
