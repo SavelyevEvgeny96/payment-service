@@ -45,6 +45,10 @@ interface GpbSbpResponseMapper {
         when (status) {
             null -> OperationState.WAIT
             OperationState.PERFORMED.name -> OperationState.SUCCESS
+            OperationState.REFUND.name -> OperationState.SUCCESS
+            OperationState.REVERSAL.name -> OperationState.SUCCESS
+            OperationState.ACCEPTED.name -> OperationState.SUCCESS
+            OperationState.REJECTED.name -> OperationState.SUCCESS
             else -> OperationState.valueOf(status)
         }
 
