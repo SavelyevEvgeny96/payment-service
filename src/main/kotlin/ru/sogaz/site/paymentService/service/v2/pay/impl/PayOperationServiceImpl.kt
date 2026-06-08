@@ -3,10 +3,12 @@ package ru.sogaz.site.paymentService.service.v2.pay.impl
 import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
+import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
@@ -15,9 +17,13 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequ
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
+import ru.sogaz.site.paymentService.service.v2.bank.abr.AbrCardPayIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.abr.AbrSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.selection.OperationBankSelectionService
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
+import ru.sogaz.site.paymentService.service.v2.operation.inline.bankOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.gpbOperationCommand
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFailure
 import ru.sogaz.site.paymentService.service.v2.operation.inline.onFinalState
@@ -29,18 +35,24 @@ import ru.sogaz.site.paymentService.service.v2.rules.RulePaymentTypeService
 
 @Service
 class PayOperationServiceImpl(
+    private val idempotentOrderOperationDao: IdempotentOrderOperationDao,
     private val operationService: OperationService,
     private val gpbCardIntegration: GpbCardIntegration,
     private val gpbSbpIntegration: GpbSbpPayIntegration,
+    private val abrCardIntegration: AbrCardPayIntegration,
+    private val abrSbpIntegration: AbrSbpPayIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
     private val operationDetailsProducer: OperationDetailsProducer,
     private val rulePaymentTypeService: RulePaymentTypeService,
+    private val operationBankSelectionService: OperationBankSelectionService,
 ) : PayOperationService {
     private val logger = loggerFor(javaClass)
 
     companion object {
         private const val RECURRENT_INTERNAL_ERROR = "Платежная система недоступна"
         private const val OPERATION_NOT_AVAILABLE_ERROR = "Операция недоступна для выбранного способа оплаты"
+        private const val PAYMENT_SYSTEM_UNAVAILABLE_ERROR =
+            "Ошибка совершения платежа. Платежная система недоступна"
     }
 
     /**
@@ -52,8 +64,9 @@ class PayOperationServiceImpl(
     override fun cardPayOperation(payOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         payOperationRequest
             .checkAvailability()
-            .cardPayOperationCommand()
-            .runCommand()
+            .withSelectedAvailableBank { bank ->
+                cardPayOperationCommand(bank).runCommand()
+            }
 
     /**
      * Формирует команду и стратегию по регистрации и получению платежной страницы в банке ГПБ для регистрации карты.
@@ -71,10 +84,25 @@ class PayOperationServiceImpl(
      * Формирует объект команды для запроса.
      * Вызывает функцию формирования стратегии в контексте того же запроса
      */
-    private fun CardPayOperationRequest.cardPayOperationCommand() =
-        gpbOperationCommand(
-            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
-            strategy = cardPayStrategy(),
+    private fun CardPayOperationRequest.cardPayOperationCommand(bank: OperationBank) =
+        bankOperationCommand(
+            bank = bank,
+            requestToOperationMapper =
+                { request: CardPayOperationRequest ->
+                    val operation =
+                        idempotentOrderOperationMapper
+                            .toIdempotentOrderOperation(request)
+                            .apply { this.bank = bank }
+
+                    if (bank == OperationBank.ABR) {
+                        val saved = idempotentOrderOperationDao.save(operation)
+                        request.orderId = saved.id
+                        saved
+                    } else {
+                        operation
+                    }
+                } as CardPayOperationRequest.() -> IdempotentOrderOperation,
+            strategy = cardPayStrategy(bank),
         )
 
     /**
@@ -91,12 +119,25 @@ class PayOperationServiceImpl(
      * Вызывается относительно определенного запроса на оплату картой.
      * Формирует стратегию банковской операции по оплате картой относительно этого запроса.
      */
-    private fun CardPayOperationRequest.cardPayStrategy() =
+    private fun CardPayOperationRequest.cardPayStrategy(bank: OperationBank) =
+        when (bank) {
+            OperationBank.GPB -> gpbCardPayStrategy()
+            OperationBank.ABR -> abrCardPayStrategy()
+            OperationBank.ALL -> throw InnerException(getTraceId(), PAYMENT_SYSTEM_UNAVAILABLE_ERROR)
+        }
+
+    private fun CardPayOperationRequest.gpbCardPayStrategy() =
         stepWithSave(
             action = gpbCardIntegration::authorize,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByAuthorizedTrx,
         ).stepWithSave(
             action = gpbCardIntegration::cardPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
+        )
+
+    private fun CardPayOperationRequest.abrCardPayStrategy() =
+        stepWithSave(
+            action = abrCardIntegration::cardPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
         )
 
@@ -122,26 +163,41 @@ class PayOperationServiceImpl(
     override fun sbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentPageData =
         payOperationRequest
             .checkAvailability()
-            .sbpPayOperationCommand()
-            .runCommand()
+            .withSelectedAvailableBank { bank ->
+                sbpPayOperationCommand(bank).runCommand()
+            }
 
     /**
      * Формирует объект команды для запроса.
      * Вызывает функцию формирования стратегии в контексте того же запроса
      */
-    private fun SbpPayOperationRequest.sbpPayOperationCommand() =
-        gpbOperationCommand(
+    private fun SbpPayOperationRequest.sbpPayOperationCommand(bank: OperationBank) =
+        bankOperationCommand(
+            bank = bank,
             requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
-            strategy = sbpPayStrategy(),
+            strategy = sbpPayStrategy(bank),
         )
 
     /**
      * Вызывается относительно определенного запроса на оплату по сбп.
      * Формирует стратегию банковской операции по оплате по сбп относительно этого запроса.
      */
-    private fun SbpPayOperationRequest.sbpPayStrategy() =
+    private fun SbpPayOperationRequest.sbpPayStrategy(bank: OperationBank) =
+        when (bank) {
+            OperationBank.GPB -> gpbSbpPayStrategy()
+            OperationBank.ABR -> abrSbpPayStrategy()
+            OperationBank.ALL -> throw InnerException(getTraceId(), PAYMENT_SYSTEM_UNAVAILABLE_ERROR)
+        }
+
+    private fun SbpPayOperationRequest.gpbSbpPayStrategy() =
         stepWithSave(
             action = gpbSbpIntegration::sbpPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
+        )
+
+    private fun SbpPayOperationRequest.abrSbpPayStrategy() =
+        stepWithSave(
+            action = abrSbpIntegration::sbpPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
         )
 
@@ -195,24 +251,33 @@ class PayOperationServiceImpl(
     override fun qrImageSbpPayOperation(payOperationRequest: SbpPayOperationRequest): BankPaymentQrContent =
         payOperationRequest
             .checkAvailability()
-            .qrImageSbpPayOperationCommand()
-            .runCommand()
+            .withSelectedAvailableBank { bank ->
+                qrImageSbpPayOperationCommand(bank).runCommand()
+            }
 
     /**
      * Формирует объект команды для запроса.
      * Вызывает функцию формирования стратегии в контексте того же запроса
      */
-    private fun SbpPayOperationRequest.qrImageSbpPayOperationCommand() =
-        gpbOperationCommand(
+    private fun SbpPayOperationRequest.qrImageSbpPayOperationCommand(bank: OperationBank) =
+        bankOperationCommand(
+            bank = bank,
             requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
-            strategy = qrImageSbpPayStrategy(),
+            strategy = qrImageSbpPayStrategy(bank),
         )
 
     /**
      * Вызывается относительно определенного запроса на получение qr кода для оплаты по сбп.
      * Формирует стратегию банковской операции по получению qr кода для оплаты по сбп относительно этого запроса.
      */
-    private fun SbpPayOperationRequest.qrImageSbpPayStrategy() =
+    private fun SbpPayOperationRequest.qrImageSbpPayStrategy(bank: OperationBank) =
+        when (bank) {
+            OperationBank.GPB -> gpbQrImageSbpPayStrategy()
+            OperationBank.ABR -> throw InnerException(getTraceId(), PAYMENT_SYSTEM_UNAVAILABLE_ERROR)
+            OperationBank.ALL -> throw InnerException(getTraceId(), PAYMENT_SYSTEM_UNAVAILABLE_ERROR)
+        }
+
+    private fun SbpPayOperationRequest.gpbQrImageSbpPayStrategy() =
         stepWithSave(
             action = gpbSbpIntegration::sbpPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
@@ -235,6 +300,17 @@ class PayOperationServiceImpl(
             orderId,
         )
         throw InnerException(getTraceId(), OPERATION_NOT_AVAILABLE_ERROR)
+    }
+
+    /**
+     * Выбирает банк по правилам распределения и проверяет доступность операции для выбранного банка.
+     */
+    private inline fun <REQUEST : PayOperationRequest, RESULT> REQUEST.withSelectedAvailableBank(
+        block: REQUEST.(OperationBank) -> RESULT,
+    ): RESULT {
+        val bank = operationBankSelectionService.selectBank(this)
+        checkAvailability(bank)
+        return block(bank)
     }
 
     /**

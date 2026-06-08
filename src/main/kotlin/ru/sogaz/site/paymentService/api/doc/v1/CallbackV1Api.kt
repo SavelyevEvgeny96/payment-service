@@ -19,7 +19,7 @@ interface CallbackV1Api {
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<String>
 
-    @PostMapping("payment/akb/state")
+    @PostMapping("payment/abr/state")
     fun stateRussiaCallback(
         @RequestParam("ORDER_ID") orderId: String,
         @RequestParam("ORDER_RID") orderRid: String?,

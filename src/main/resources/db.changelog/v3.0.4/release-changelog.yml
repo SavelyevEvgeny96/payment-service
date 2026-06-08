@@ -2,3 +2,5 @@
 databaseChangeLog:
   - include:
       file: db.changelog\v3.0.4\2026-05-25\cumulative-changelog.yml
+  - include:
+      file: db.changelog\v3.0.4\2026-06-04\cumulative-changelog.yml

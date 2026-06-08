@@ -38,6 +38,7 @@ class CheckOperationStatusConsumer(
         }
         val operationDetails = operationDetailsService.getOperationDetails(operation)
         when (operationDetails.state) {
+            OperationState.FULLYPAID,
             OperationState.SUCCESS,
             OperationState.FAIL,
             OperationState.REFUND,
@@ -47,6 +48,7 @@ class CheckOperationStatusConsumer(
             OperationState.REJECTED,
             OperationState.PERFORMED,
             -> handleCompletedOperation(operation, operationDetails)
+
             else
             -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
         }

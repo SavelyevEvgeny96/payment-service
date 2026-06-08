@@ -9,6 +9,8 @@ data class SbpPayOperation(
     override val id: UUID,
     override val depersonalization: Boolean,
     override val bank: OperationBank,
+    override val paymentBankId: String? = null,
+    override val paymentPass: String? = null,
     override val qrId: String,
     val operationStarted: Instant,
 ) : PayOperation() {

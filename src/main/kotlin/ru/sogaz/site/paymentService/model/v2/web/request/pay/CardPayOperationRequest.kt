@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentService.model.v2.web.request.pay
 
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
+import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import java.math.BigDecimal
@@ -9,7 +10,7 @@ import java.util.UUID
 
 data class CardPayOperationRequest(
     @field:Schema(description = "Id заказа на оплату")
-    override val orderId: UUID,
+    override var orderId: UUID? = null,
     @field:Schema(description = "Описание операции для банка", example = "Описание операции для банка")
     override val description: String,
     @field:Schema(description = "Сумма операции", example = "10.00")
@@ -20,6 +21,10 @@ data class CardPayOperationRequest(
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
     @field:Schema(description = "IP пользователя, который совершает оплату")
     val payerIp: String?,
+    @field:Schema(description = "Вид страхования")
+    override val insuranceKind: String? = null,
+    @field:Schema(description = "Приоритетный банк для оплаты", allowableValues = ["GPB", "ABR"])
+    override val bank: PaymentRequestBank? = null,
     @field:Schema(description = "Дополнительные параметры банковской операции")
     val params: RedirectParams = RedirectParams(),
     @field:Schema(description = "Флаг необходимости сохранения карты")

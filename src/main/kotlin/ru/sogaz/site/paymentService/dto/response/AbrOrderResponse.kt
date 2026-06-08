@@ -1,10 +1,10 @@
 package ru.sogaz.site.paymentService.dto.response
 
-data class AkbOrderResponse(
-    val order: AkbOrderInfo,
+data class AbrOrderResponse(
+    val order: AbrOrderInfo,
 )
 
-data class AkbOrderInfo(
+data class AbrOrderInfo(
     val id: Int,
     val hppUrl: String,
     val password: String,

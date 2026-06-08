@@ -108,9 +108,9 @@ api:
     paymentUrl: ${PAYMENT_URL:}
     sbpPaymentUrl: ${SBP_PAYMENT_URL:}
     returnUrl: ${RETURN_URL:https://www.sogaz.ru/}
-    akbUrl: ${AKB_URL:}
-    akbSbpUrl: ${AKB_SBP_URL:}
-    akbUrlStatus: ${AKB_PAYMENT_URL:}
+    abrUrl: ${ABR_URL:}
+    abrSbpUrl: ${ABR_SBP_URL:}
+    abrUrlStatus: ${ABR_PAYMENT_URL:}
     callbackUrlSbp: ${CALLBACK_URL_SBP:}
     merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:}
     paymentAccount: ${PAYMENT_ACCOUNT:}
