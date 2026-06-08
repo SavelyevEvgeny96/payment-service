@@ -10,7 +10,7 @@ import java.util.UUID
 
 data class CardPayOperationRequest(
     @field:Schema(description = "Id заказа на оплату")
-    override val orderId: UUID,
+    override var orderId: UUID? = null,
     @field:Schema(description = "Описание операции для банка", example = "Описание операции для банка")
     override val description: String,
     @field:Schema(description = "Сумма операции", example = "10.00")

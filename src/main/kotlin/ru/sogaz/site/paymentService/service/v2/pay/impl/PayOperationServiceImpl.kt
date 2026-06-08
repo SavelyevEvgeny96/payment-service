@@ -3,10 +3,12 @@ package ru.sogaz.site.paymentService.service.v2.pay.impl
 import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
+import ru.sogaz.site.paymentService.dao.v2.IdempotentOrderOperationDao
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.order.IdempotentOrderOperationMapper
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
+import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
@@ -33,6 +35,7 @@ import ru.sogaz.site.paymentService.service.v2.rules.RulePaymentTypeService
 
 @Service
 class PayOperationServiceImpl(
+    private val idempotentOrderOperationDao: IdempotentOrderOperationDao,
     private val operationService: OperationService,
     private val gpbCardIntegration: GpbCardIntegration,
     private val gpbSbpIntegration: GpbSbpPayIntegration,
@@ -84,7 +87,21 @@ class PayOperationServiceImpl(
     private fun CardPayOperationRequest.cardPayOperationCommand(bank: OperationBank) =
         bankOperationCommand(
             bank = bank,
-            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
+            requestToOperationMapper =
+                { request: CardPayOperationRequest ->
+                    val operation =
+                        idempotentOrderOperationMapper
+                            .toIdempotentOrderOperation(request)
+                            .apply { this.bank = bank }
+
+                    if (bank == OperationBank.ABR) {
+                        val saved = idempotentOrderOperationDao.save(operation)
+                        request.orderId = saved.id
+                        saved
+                    } else {
+                        operation
+                    }
+                } as CardPayOperationRequest.() -> IdempotentOrderOperation,
             strategy = cardPayStrategy(bank),
         )
 
