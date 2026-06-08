@@ -88,7 +88,7 @@ class AbrIntegrationImplTest {
             orderId = UUID.randomUUID(),
             description = TEST_DESCRIPTION,
             amount = BigDecimal.TEN,
-            payerIp = null,
+            payerIp = "123",
             payItems = linkedMapOf(),
             params = RedirectParams(urlToReturnS = TEST_BACK_URL),
         )

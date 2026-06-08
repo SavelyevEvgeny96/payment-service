@@ -47,10 +47,10 @@ class CheckOperationStatusConsumer(
             OperationState.ACCEPTED,
             OperationState.REJECTED,
             OperationState.PERFORMED,
-                -> handleCompletedOperation(operation, operationDetails)
+            -> handleCompletedOperation(operation, operationDetails)
 
             else
-                -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
+            -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
         }
     }
 

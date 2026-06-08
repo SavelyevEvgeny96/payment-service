@@ -96,6 +96,7 @@ abstract class AbrRequestMapper {
     @Mapping(target = "description", source = "request.description")
     @Mapping(target = "descriptionHtml", source = "request.description")
     @Mapping(target = "expTime", source = "typeRid", qualifiedByName = ["mapExpTime"])
+    @Mapping(target = "language", constant = "RU")
     protected abstract fun toOrderDto(
         request: SbpPayOperationRequest,
         typeRid: TypeRidEnum,
