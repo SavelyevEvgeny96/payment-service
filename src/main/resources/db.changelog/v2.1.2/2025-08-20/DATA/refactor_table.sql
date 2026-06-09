@@ -7,4 +7,4 @@ ADD COLUMN  create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 INSERT INTO action_type(action_name)
-VALUES ('Отправка запроса для регистрации заказа в АБР Россия');
+VALUES ('Отправка запроса для регистрации заказа в АКБ Россия');

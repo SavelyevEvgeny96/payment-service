@@ -1,2 +1,2 @@
 INSERT INTO banks(bank_id, bank_name)
-VALUES ('ABR', 'АБР Россия');
+VALUES ('akb_rus', 'АКБ Россия');
