@@ -1,1 +1,0 @@
-INSERT INTO client_systems(external_system_code,external_system_name)VALUES('www-sogaz-client','Сайт'); -- Запись для валидации clientId из токена
