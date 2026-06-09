@@ -103,12 +103,15 @@ spring:
       enabled: ALWAYS
 
 api:
+  host: http://localhost:${server.port}
+  gateway:
+    dmz: https://test-gateway-site-dmz.sogaz.ru
   version: ${API_VERSION:v2}
   payment:
     paymentUrl: ${PAYMENT_URL:}
     sbpPaymentUrl: ${SBP_PAYMENT_URL:}
     returnUrl: ${RETURN_URL:https://www.sogaz.ru/}
-    abrUrl: ${ABR_URL:}
+    abrUrl: ${api.gateway.dmz}/payment/abr/order
     abrSbpUrl: ${ABR_SBP_URL:}
     abrUrlStatus: ${ABR_PAYMENT_URL:}
     callbackUrlSbp: ${CALLBACK_URL_SBP:}
