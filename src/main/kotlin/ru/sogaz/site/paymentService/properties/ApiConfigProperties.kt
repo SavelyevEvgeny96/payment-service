@@ -21,8 +21,9 @@ class ApiConfigProperties {
     lateinit var backUrlF: String
     lateinit var backUrlS: String
     lateinit var returnUrl: String
-    lateinit var akbUrl: String
-    lateinit var akbSbpUrl: String
+    lateinit var abrUrl: String
+    lateinit var abrSbpUrl: String
+    lateinit var abrStateRedirectUrl: String
     lateinit var sogazUrlPattern: String
     lateinit var identifier: String
     lateinit var password: String
@@ -39,8 +40,9 @@ class ApiConfigProperties {
         logger.info("depersonalizedMerchantId = $depersonalizedMerchantId")
         logger.info("backUrlF = $backUrlF")
         logger.info("backUrlS = $backUrlS")
-        logger.info("akbSbpUrl = $akbSbpUrl")
-        logger.info("akbUrl = $akbUrl")
+        logger.info("abrSbpUrl = $abrSbpUrl")
+        logger.info("abrStateRedirectUrl = $abrStateRedirectUrl")
+        logger.info("abrUrl = $abrUrl")
         logger.info("returnUrl = $returnUrl")
         logger.info("callbackUrlSbp = $callbackUrlSbp")
     }

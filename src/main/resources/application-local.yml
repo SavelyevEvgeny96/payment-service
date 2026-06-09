@@ -17,9 +17,10 @@ api:
   payment:
     paymentUrl: ${api.host}/payment/pay/
     sbpPaymentUrl: ${api.host}/payment/paySbp/
-    akbUrl: ${api.gateway.dmz}/payment/akb/order
-    akbSbpUrl: ${api.gateway.dmz}/payment/akb/order
-    akbUrlStatus: ${api.gateway.dmz}/payment/akb/order
+    abrUrl: ${api.gateway.dmz}/payment/abr/order
+    abrSbpUrl: ${api.gateway.dmz}/payment/abr/order
+    abrStateRedirectUrl: ${api.gateway.dmz}/payment/abr/state
+    abrUrlStatus: ${api.gateway.dmz}/payment/abr/order
     callbackUrlSbp: https://example.com/callback
     merchantIdSbpGpb:
     paymentAccount: 40701810800000030052

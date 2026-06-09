@@ -1,10 +1,11 @@
 package ru.sogaz.site.paymentService.dto.request
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import ru.sogaz.site.paymentService.enums.CurrencyEnum
 import ru.sogaz.site.paymentService.enums.LanguageEnum
 import ru.sogaz.site.paymentService.enums.TypeRidEnum
 
-data class AkbCardAndSbpPaymentRequest(
+data class AbrCardAndSbpPaymentRequest(
     val order: OrderDto,
 )
 
@@ -18,6 +19,8 @@ data class OrderDto(
     val adviceIfaceAddress: String?,
     val descriptionHtml: String,
     val ridByMerchant: String,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val hppCofCapturePurposes: String? = null,
     val srcSubjectKind: String? = null,
     val expTime: String? = null,
     val remittanceMessage: String? = null,

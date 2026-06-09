@@ -4,10 +4,10 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import ru.sogaz.site.paymentService.dto.data.BankPaymentDetails
 import ru.sogaz.site.paymentService.dto.request.GpbCallback
-import ru.sogaz.site.paymentService.dto.response.AkbOrderStatusResponse
+import ru.sogaz.site.paymentService.dto.response.AbrOrderStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbCardPaymentStatusResponse
 import ru.sogaz.site.paymentService.dto.response.bank.GpbQrResult
-import ru.sogaz.site.paymentService.enums.AkbPaymentStatusEnum
+import ru.sogaz.site.paymentService.enums.AbrPaymentStatusEnum
 import ru.sogaz.site.paymentService.enums.PaymentStatusEnum
 import ru.sogaz.site.paymentService.mapper.common.ExtendedCodeMapper
 
@@ -38,7 +38,7 @@ interface BankPaymentDetailsMapper {
     fun convert(result: GpbQrResult?): BankPaymentDetails
 
     fun convert(
-        response: AkbOrderStatusResponse,
-        status: AkbPaymentStatusEnum,
+        response: AbrOrderStatusResponse,
+        status: AbrPaymentStatusEnum,
     ): BankPaymentDetails
 }

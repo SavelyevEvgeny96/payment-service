@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.model.v2.web.response
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import ru.sogaz.site.paymentService.enums.BankEnum
 
@@ -11,4 +12,6 @@ data class BankPaymentPageData(
     @field:Schema(example = "https://lt.pga.gazprombank.ru/pages#A100KB47RXYKIKSTYC7H")
     val paymentPageUrl: String,
     val qrId: String? = null,
+    @get:JsonIgnore
+    val paymentPass: String? = null,
 )
