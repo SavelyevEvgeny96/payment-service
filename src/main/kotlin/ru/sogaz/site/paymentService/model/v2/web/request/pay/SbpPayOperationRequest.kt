@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import ru.sogaz.site.paymentService.api.doc.v2.requestSchema.StraightRedirectSchema
-import ru.sogaz.site.paymentService.dto.data.PayItemsSwaggerSchema
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType

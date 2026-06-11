@@ -11,12 +11,14 @@ import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.bank.abr.AbrCardPayIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.abr.redirect.AbrRedirectAddressService
 
 @Service
 class AbrCardIntegrationImpl(
     private val abrCardClient: AbrCardClient,
     private val requestMapper: AbrRequestMapper,
     private val responseMapper: AbrResponseMapper,
+    private val abrRedirectAddressService: AbrRedirectAddressService,
 ) : AbrCardPayIntegration {
     companion object {
         private const val OPERATION_DETAILS_ERROR = "Во время получения данных по операции оплаты картой АБР произошла ошибка: {}"
@@ -26,7 +28,7 @@ class AbrCardIntegrationImpl(
 
     override fun cardPay(cardPayOperationRequest: CardPayOperationRequest): BankPaymentPageData =
         cardPayOperationRequest
-            .run(requestMapper::toCardRequest)
+            .let { requestMapper.toCardRequest(it, abrRedirectAddressService.createStateRedirectUrl(it.params)) }
             .run(abrCardClient::cardPayment)
             .run(responseMapper::toCardPaymentPageData)
 
