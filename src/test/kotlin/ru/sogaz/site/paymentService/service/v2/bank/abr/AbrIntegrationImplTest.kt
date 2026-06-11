@@ -8,6 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mapstruct.factory.Mappers
+import org.mockito.kotlin.any
 import ru.sogaz.site.paymentService.clients.abr.AbrCardClient
 import ru.sogaz.site.paymentService.clients.abr.AbrSbpClient
 import ru.sogaz.site.paymentService.dto.response.AbrOrderInfo
@@ -23,6 +24,7 @@ import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequ
 import ru.sogaz.site.paymentService.properties.ApiConfigProperties
 import ru.sogaz.site.paymentService.service.v2.bank.abr.impl.AbrCardIntegrationImpl
 import ru.sogaz.site.paymentService.service.v2.bank.abr.impl.AbrSbpIntegrationImpl
+import ru.sogaz.site.paymentService.service.v2.bank.abr.redirect.AbrRedirectAddressService
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -32,15 +34,25 @@ class AbrIntegrationImplTest {
     private lateinit var abrCardClient: AbrCardClient
 
     @MockK
+    private lateinit var abrRedirectAddressService: AbrRedirectAddressService
+
+    @MockK
     private lateinit var abrSbpClient: AbrSbpClient
 
     @Test
     fun `cardPay should map ABR order response to bank payment page data`() {
         every { abrCardClient.cardPayment(any()) } returns abrOrderResponse
+        every {
+            abrRedirectAddressService.createStateRedirectUrl(any())
+        } returns "http://test-url"
 
         val result =
-            AbrCardIntegrationImpl(abrCardClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
-                .cardPay(cardRequest())
+            AbrCardIntegrationImpl(
+                abrCardClient,
+                requestMapper(),
+                Mappers.getMapper(AbrResponseMapper::class.java),
+                abrRedirectAddressService = abrRedirectAddressService,
+            ).cardPay(cardRequest())
 
         assertThat(result.bank).isEqualTo(BankEnum.ABR)
         assertThat(result.paymentBankId).isEqualTo(TEST_ABR_ORDER_ID)
@@ -52,7 +64,13 @@ class AbrIntegrationImplTest {
     fun `sbpPay should register order set src token and prepare push transaction`() {
         every { abrSbpClient.sbpPayment(any()) } returns abrOrderResponse
         every { abrSbpClient.setSrcToken(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) } returns emptyMap()
-        every { abrSbpClient.preparePushTran(TEST_ABR_ORDER_ID, TEST_ABR_PASSWORD, any()) } returns preparePushTranResponse
+        every {
+            abrSbpClient.preparePushTran(
+                TEST_ABR_ORDER_ID,
+                TEST_ABR_PASSWORD,
+                any(),
+            )
+        } returns preparePushTranResponse
 
         val result =
             AbrSbpIntegrationImpl(abrSbpClient, requestMapper(), Mappers.getMapper(AbrResponseMapper::class.java))
