@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.view.RedirectView
 
 interface AbrRedirectV2Api {
-    @GetMapping("/v2/payment/abr/state/{id}")
+    @GetMapping("/payment/abr/state/{id}")
     fun redirectByAbrState(
         @PathVariable id: String,
         @RequestParam("STATUS", required = false) status: String?,
