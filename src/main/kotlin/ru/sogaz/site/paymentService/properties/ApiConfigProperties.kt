@@ -23,6 +23,7 @@ class ApiConfigProperties {
     lateinit var returnUrl: String
     lateinit var abrUrl: String
     lateinit var abrSbpUrl: String
+    lateinit var abrStateRedirectUrl: String
     lateinit var sogazUrlPattern: String
     lateinit var identifier: String
     lateinit var password: String
@@ -40,6 +41,7 @@ class ApiConfigProperties {
         logger.info("backUrlF = $backUrlF")
         logger.info("backUrlS = $backUrlS")
         logger.info("abrSbpUrl = $abrSbpUrl")
+        logger.info("abrStateRedirectUrl = $abrStateRedirectUrl")
         logger.info("abrUrl = $abrUrl")
         logger.info("returnUrl = $returnUrl")
         logger.info("callbackUrlSbp = $callbackUrlSbp")

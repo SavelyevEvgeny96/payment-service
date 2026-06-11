@@ -114,6 +114,7 @@ api:
     abrUrl: ${api.gateway.dmz}/payment/abr/order
     abrSbpUrl: ${ABR_SBP_URL:}
     abrUrlStatus: ${ABR_PAYMENT_URL:}
+    abrStateRedirectUrl: ${api.gateway.dmz}/payment/abr/order
     callbackUrlSbp: ${CALLBACK_URL_SBP:}
     merchantIdSbpGpb: ${GPB_MERCHANT_ID_SBP:}
     paymentAccount: ${PAYMENT_ACCOUNT:}

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-3.0.5
+      author: Evgeny Savelyev
+      changes:
+        - tagDatabase:
+            tag: backend-3.0.5
+  - include:
+      file: db.changelog\v3.0.5\2026-06-11\DATA\redirect_addresses.sql
+
