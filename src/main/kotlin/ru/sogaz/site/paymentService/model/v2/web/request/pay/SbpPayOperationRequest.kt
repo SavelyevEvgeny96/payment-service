@@ -46,7 +46,6 @@ data class SbpPayOperationRequest(
         implementation = PayItemsSwaggerSchema::class,
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
-    @field:NotBlank
     override val payItems: LinkedHashMap<String, String>,
     @field:Schema(
         description = "Дополнительные параметры банковской операции",
