@@ -39,13 +39,15 @@ abstract class AbrRequestMapper {
                 .plusMinutes(15)
                 .format(formatter)
                 .takeIf { typeRid == TypeRidEnum.QRC_PAY }
+
+//        @JvmStatic
+//        @Named("mapHppCofCapturePurposes")
+//        fun mapHppCofCapturePurposes(saveCard: Boolean?): String? = if (saveCard == true) "CARD_ON_FILE" else null
     }
 
-    fun toCardRequest(cardPayOperationRequest: CardPayOperationRequest): AbrCardAndSbpPaymentRequest =
-        toAbrRequest(cardPayOperationRequest, TypeRidEnum.WITH_3DS)
+    fun toCardRequest(request: CardPayOperationRequest): AbrCardAndSbpPaymentRequest = toAbrRequest(request, TypeRidEnum.WITH_3DS)
 
-    fun toSbpRequest(sbpPayOperationRequest: SbpPayOperationRequest): AbrCardAndSbpPaymentRequest =
-        toAbrRequest(sbpPayOperationRequest, TypeRidEnum.QRC_PAY)
+    fun toSbpRequest(request: SbpPayOperationRequest): AbrCardAndSbpPaymentRequest = toAbrRequest(request, TypeRidEnum.QRC_PAY)
 
     fun toSetSrcTokenRequest(): SetSrcTokenRequest = SetSrcTokenRequest(token = mapOf(IPS_RU_PARAM_NAME to true))
 
@@ -70,7 +72,7 @@ abstract class AbrRequestMapper {
     protected abstract fun toAbrRequest(
         request: SbpPayOperationRequest,
         typeRid: TypeRidEnum,
-    ): AbrCardAndSbpPaymentRequest
+    ): AbrCardAndSbpPaymentRequest // -------- CARD --------
 
     @Mapping(target = "typeRid", source = "typeRid")
     @Mapping(target = "ridByMerchant", expression = "java(request.getOrderId().toString())")
@@ -82,11 +84,17 @@ abstract class AbrRequestMapper {
     @Mapping(target = "descriptionHtml", source = "request.description")
     @Mapping(target = "expTime", source = "typeRid", qualifiedByName = ["mapExpTime"])
     @Mapping(target = "language", constant = "RU")
+//    @Mapping(
+//        target = "hppCofCapturePurposes",
+//        source = "request.saveCard",
+//        qualifiedByName = ["mapHppCofCapturePurposes"],
+//    )
     protected abstract fun toOrderDto(
         request: CardPayOperationRequest,
         typeRid: TypeRidEnum,
     ): OrderDto
 
+    // -------- SBP --------
     @Mapping(target = "typeRid", source = "typeRid")
     @Mapping(target = "ridByMerchant", source = "request.orderId")
     @Mapping(target = "amount", source = "request.amount", qualifiedByName = ["mapRequestAmount"])
@@ -103,5 +111,7 @@ abstract class AbrRequestMapper {
     ): OrderDto
 
     protected fun successUrl(redirectParams: RedirectParams): String =
-        redirectParams.urlToReturnS ?: redirectParams.urlToReturn ?: apiConfigProperties.backUrlS
+        redirectParams.urlToReturnS
+            ?: redirectParams.urlToReturn
+            ?: apiConfigProperties.backUrlS
 }
