@@ -41,12 +41,8 @@ data class SbpPayOperationRequest(
         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
     )
     override val bank: PaymentRequestBank? = null,
-    @field:Schema(
-        description = "Список показов",
-        implementation = PayItemsSwaggerSchema::class,
-        requiredMode = Schema.RequiredMode.REQUIRED,
-    )
-    override val payItems: LinkedHashMap<String, String>,
+    @field:Schema(description = "Платежные позиции", accessMode = Schema.AccessMode.READ_ONLY)
+    override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
     @field:Schema(
         description = "Дополнительные параметры банковской операции",
         implementation = StraightRedirectSchema::class,
