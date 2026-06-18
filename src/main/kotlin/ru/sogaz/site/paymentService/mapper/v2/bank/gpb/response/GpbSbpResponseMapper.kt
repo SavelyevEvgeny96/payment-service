@@ -23,7 +23,12 @@ interface GpbSbpResponseMapper {
     @Mapping(target = "bank", constant = "GPB")
     fun toBankPaymentPageData(response: GpbSbpPayResponse): BankPaymentPageData
 
-    @Mapping(target = "state", source = "status", defaultValue = "WAIT")
+    @Mapping(
+        target = "state",
+        source = "status",
+        qualifiedByName = ["convertReversalStatusToOperationState"],
+        defaultValue = "WAIT",
+    )
     @Mapping(target = "bankId", source = "id")
     fun toBankOperationDetails(response: GpbSbpResult): BankOperationDetails
 

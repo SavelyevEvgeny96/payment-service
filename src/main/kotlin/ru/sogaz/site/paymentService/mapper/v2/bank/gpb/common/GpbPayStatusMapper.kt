@@ -71,7 +71,6 @@ abstract class GpbPayStatusMapper {
             OperationState.REFUND.name,
             OperationState.REVERSAL.name,
             OperationState.ACCEPTED.name,
-            OperationState.REJECTED.name,
             -> OperationState.SUCCESS
 
             else -> OperationState.valueOf(normalizedStatus)

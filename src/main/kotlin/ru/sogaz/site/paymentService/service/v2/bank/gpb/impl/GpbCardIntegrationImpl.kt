@@ -115,28 +115,42 @@ class GpbCardIntegrationImpl(
                 cardRecurrentOperationRequest.keyCard,
             ) { CARD_NOT_FOUND }
         } catch (ex: FeignException.BadRequest) {
-            ex.toFailOperationDetails(authorizedCardTrxData.token) { BAD_REQUEST }
+            ex.toFailOperationDetails(
+                authorizedCardTrxData.token,
+                cardRecurrentOperationRequest.keyCard,
+            ) { BAD_REQUEST }
         }
 
     private fun FeignException.toFailOperationDetails(
         bankId: String?,
         defaultError: () -> String = { INTERNAL_ERROR },
-    ): BankOperationDetails = BankOperationDetails(bankId, OperationState.FAIL, errorText = getErrorCode() ?: defaultError())
+    ): BankOperationDetails {
+        val errorMessage = getErrorMessage()
+        return BankOperationDetails(
+            bankId,
+            OperationState.FAIL,
+            extendedCode = errorMessage?.error,
+            errorText = errorMessage?.error?.message ?: errorMessage?.error?.name ?: defaultError(),
+        )
+    }
 
     private fun FeignException.toFailOperationDetails(
         bankId: String,
         keyCard: String,
         defaultError: () -> String = { INTERNAL_ERROR },
-    ): BankOperationDetails =
-        BankOperationDetails(
+    ): BankOperationDetails {
+        val errorMessage = getErrorMessage()
+        return BankOperationDetails(
             bankId,
             OperationState.FAIL,
+            extendedCode = errorMessage?.error,
             cardDetails = emptyCardDetails(keyCard),
-            errorText = getErrorCode() ?: defaultError(),
+            errorText = errorMessage?.error?.message ?: errorMessage?.error?.name ?: defaultError(),
         )
+    }
 
-    private fun FeignException.getErrorCode(): String? =
-        runCatching { objectMapper.readValue<GpbCardPayErrorMessage>(contentUTF8()).error?.message }
+    private fun FeignException.getErrorMessage(): GpbCardPayErrorMessage? =
+        runCatching { objectMapper.readValue<GpbCardPayErrorMessage>(contentUTF8()) }
             .onFailure { ex -> logger.error(ex.message, ex) }
             .getOrNull()
 
