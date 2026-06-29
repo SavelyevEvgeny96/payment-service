@@ -14,6 +14,7 @@ enum class OperationState {
     REJECTED,
     PERFORMED,
     FULLYPAID,
+    NOT_STARTED
     ;
 
     fun isFinaleState() = this in arrayOf(SUCCESS, FAIL, REFUND, DECLINED)
