@@ -4,6 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import ru.sogaz.site.paymentService.config.feign.GpbSbpClientConfig
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbSbpReversalCallback
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbQrImageRequest
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.GpbSbpPayRequest
@@ -16,8 +17,10 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpReversa
 @FeignClient(
     name = "gpb-sbp-client",
     url = "\${api.gpb.sbp.basePath}",
+    configuration = [GpbSbpClientConfig::class],
 )
 interface GpbSbpClient {
+
     @PostMapping(value = ["merchant/qrc-data"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun pay(
         @RequestBody request: GpbSbpPayRequest,
