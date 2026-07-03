@@ -12,7 +12,7 @@ class GpbSbpClientConfig {
         private const val QRC_DATA_PATH = "merchant/qrc-data"
 
         private const val PAYMENT_SERVICE_ID_HEADER = "paymentServiceId"
-        private const val PAYMENT_SERVICE_ID_VALUE = "PS0000000002"
+        private const val PAYMENT_SERVICE_ID_VALUE = "PS0000000001"
     }
 
     @Bean
