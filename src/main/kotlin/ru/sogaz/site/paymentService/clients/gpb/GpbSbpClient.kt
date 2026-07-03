@@ -20,7 +20,6 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.sbp.GpbSbpReversa
     configuration = [GpbSbpClientConfig::class],
 )
 interface GpbSbpClient {
-
     @PostMapping(value = ["merchant/qrc-data"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun pay(
         @RequestBody request: GpbSbpPayRequest,

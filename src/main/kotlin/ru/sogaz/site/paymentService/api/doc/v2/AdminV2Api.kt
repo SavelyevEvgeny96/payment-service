@@ -29,12 +29,12 @@ interface AdminV2Api {
         Parameter(
             name = "urlToReturnS",
             description = "Ссылка для редиректа после успешной оплаты",
-            schema = Schema(type = "string")
+            schema = Schema(type = "string"),
         ),
         Parameter(
             name = "urlToReturnF",
             description = "Ссылка для редиректа после неуспешной оплаты",
-            schema = Schema(type = "string")
+            schema = Schema(type = "string"),
         ),
         Parameter(
             name = "depersonalization",
@@ -45,7 +45,7 @@ interface AdminV2Api {
         Parameter(
             name = "processPayments",
             description = "Флаг необходимости автоматического проведения оплаты",
-            example = "true"
+            example = "true",
         ),
         Parameter(name = "paymentDelay", description = "Время задержки для автооплаты", example = "1"),
         Parameter(
@@ -57,7 +57,7 @@ interface AdminV2Api {
         Parameter(
             name = "paymentServiceId",
             description = "ID  для переключения на цифровой рубль",
-            example = "PS0000000002"
+            example = "PS0000000002",
         ),
     )
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по СБП", useReturnTypeSchema = false)

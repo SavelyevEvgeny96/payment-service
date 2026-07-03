@@ -4,4 +4,5 @@ data class GpbSbpAutoPayHeaders(
     val paymentDelay: String?,
     val processPayments: String?,
     val paymentStatus: String?,
+    val paymentServiceId: String?,
 )

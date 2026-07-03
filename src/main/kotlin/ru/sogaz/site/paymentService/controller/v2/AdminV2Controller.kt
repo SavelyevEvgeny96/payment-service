@@ -30,9 +30,10 @@ class AdminV2Controller(
         paymentDelay: String?,
         processPayments: String?,
         paymentStatus: String?,
+        paymentServiceId: String?,
         sbpPayOperationRequest: SbpPayOperationRequest,
     ): BankPaymentPageData {
-        val headers = GpbSbpAutoPayHeaders(paymentDelay, processPayments, paymentStatus)
+        val headers = GpbSbpAutoPayHeaders(paymentDelay, processPayments, paymentStatus, paymentServiceId)
         val adminRequest = gpbSbpAdminAutoPayRequestMapper.toAdminRequest(sbpPayOperationRequest, headers)
         return adminRequest
             .operationCommand()
