@@ -26,21 +26,38 @@ interface AdminV2Api {
             example = "http://www.sogaz.ru",
             schema = Schema(type = "string"),
         ),
-        Parameter(name = "urlToReturnS", description = "Ссылка для редиректа после успешной оплаты", schema = Schema(type = "string")),
-        Parameter(name = "urlToReturnF", description = "Ссылка для редиректа после неуспешной оплаты", schema = Schema(type = "string")),
+        Parameter(
+            name = "urlToReturnS",
+            description = "Ссылка для редиректа после успешной оплаты",
+            schema = Schema(type = "string")
+        ),
+        Parameter(
+            name = "urlToReturnF",
+            description = "Ссылка для редиректа после неуспешной оплаты",
+            schema = Schema(type = "string")
+        ),
         Parameter(
             name = "depersonalization",
             description = "Флаг необходимости анонимизированной оплаты",
             example = "true",
             schema = Schema(type = "boolean"),
         ),
-        Parameter(name = "processPayments", description = "Флаг необходимости автоматического проведения оплаты", example = "true"),
+        Parameter(
+            name = "processPayments",
+            description = "Флаг необходимости автоматического проведения оплаты",
+            example = "true"
+        ),
         Parameter(name = "paymentDelay", description = "Время задержки для автооплаты", example = "1"),
         Parameter(
             name = "paymentStatus",
             description = "Статус после автооплаты",
             example = "PERFORMED",
             examples = [ExampleObject(value = "PERFORMED"), ExampleObject(value = "ERROR"), ExampleObject(value = "DRAFT")],
+        ),
+        Parameter(
+            name = "paymentServiceId",
+            description = "ID  для переключения на цифровой рубль",
+            example = "PS0000000002"
         ),
     )
     @ApiResponse(responseCode = "200", description = "Редирект на страницу оплаты по СБП", useReturnTypeSchema = false)
@@ -49,6 +66,7 @@ interface AdminV2Api {
         @RequestHeader("paymentDelay") paymentDelay: String?,
         @RequestHeader("processPayments") processPayments: String?,
         @RequestHeader("paymentStatus") paymentStatus: String?,
+        @RequestHeader("paymentServiceId") paymentServiceId: String?,
         @RequestBody sbpPayOperationRequest: SbpPayOperationRequest,
     ): BankPaymentPageData
 }
