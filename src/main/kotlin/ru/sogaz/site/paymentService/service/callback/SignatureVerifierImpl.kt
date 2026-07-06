@@ -29,29 +29,28 @@ class SignatureVerifierImpl(
         const val VEREFIELD_FAIL = "Ошибка верификации подписи"
         const val SIGNATURE_PARAMETER = "&signature"
         private val percentEncodedRegex = Regex("%[0-9a-fA-F]{2}")
-
     }
 
     override fun verifySignature(
         gpbCallback: GpbCallback,
         httpServletRequest: HttpServletRequest,
-    ): Boolean =
+    ): Boolean {
         try {
             val signature = gpbCallback.signature
-            val decodedQueryString =
-                if (isEncoded(signature)) {
-                    java.net.URLDecoder.decode(signature, StandardCharsets.UTF_8)
-                } else {
-                    signature
-                }
 
-            val decodedSignature = Base64.getDecoder().decode(decodedQueryString)
+            if (signature.isEmpty()) {
+                return false
+            }
 
-            verifySignatureCert(decodedSignature, httpServletRequest)
+            val decodedSignature = decodeSignature(signature)
+
+            return verifySignatureCert(decodedSignature, httpServletRequest)
         } catch (e: Exception) {
-            logger.error(VEREFIELD_FAIL)
-            false
+            logger.error(VEREFIELD_FAIL, e)
+            return false
         }
+        }
+
     override fun verifySignature(
         gpbCallback: GpbCardCallback,
         httpServletRequest: HttpServletRequest,
@@ -72,22 +71,22 @@ class SignatureVerifierImpl(
         }
     }
 
-
     private fun decodeSignature(rawSignature: String): ByteArray {
-        val base64Signature = rawSignature
-            .trim()
-            .let { signature ->
-                if (percentEncodedRegex.containsMatchIn(signature)) {
-                    URLDecoder.decode(signature, StandardCharsets.UTF_8)
-                } else {
-                    signature
+        val base64Signature =
+            rawSignature
+                .trim()
+                .let { signature ->
+                    if (percentEncodedRegex.containsMatchIn(signature)) {
+                        URLDecoder.decode(signature, StandardCharsets.UTF_8)
+                    } else {
+                        signature
+                    }
                 }
-            }
-            // временная защита, если где-то + уже превратился в пробел
-            .replace(" ", "+")
-            .replace("\r", "")
-            .replace("\n", "")
-            .replace("\t", "")
+                // временная защита, если где-то + уже превратился в пробел
+                .replace(" ", "+")
+                .replace("\r", "")
+                .replace("\n", "")
+                .replace("\t", "")
 
         return Base64.getDecoder().decode(base64Signature)
     }
