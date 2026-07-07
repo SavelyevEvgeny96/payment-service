@@ -6,8 +6,7 @@ enum class GpbExtResultCode(
     val message: String?,
 ) {
     OK(null),
-    INSUFFICIENT_FUNDS("Недостаточно средств на платежной карте"),
-    ISSUER_INOPERATIVE("Эмитент недоступен"),
+
     UNKNOWN("Результат платежа неизвестен (не определён)"),
     SYSTEM_ERROR("Системная ошибка. Платеж завершился неуспешно из-за внутренней ошибки Сервиса"),
     COMMUNICATION_ERROR("Ошибка при взаимодействии с внешней системой"),
@@ -67,6 +66,8 @@ enum class GpbExtResultCode(
     PAYMENT_EXPIRED("Платеж недоступен для отмены. Прошло более суток с момента совершения оплаты"),
     PAYMENT_SYSTEM_IS_NOT_AVAILABLE("Платежная система недоступна"),
     OPERATION_ERROR_ON_THE_BANK("Ошибка при совершении операции на стороне банка"),
+    INSUFFICIENT_FUNDS("Недостаточно средств на платежной карте"),
+    ISSUER_INOPERATIVE("Эмитент недоступен"),
     ;
 
     companion object {
