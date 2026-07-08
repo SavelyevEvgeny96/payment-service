@@ -49,7 +49,7 @@ class SignatureVerifierImpl(
             logger.error(VEREFIELD_FAIL, e)
             return false
         }
-        }
+    }
 
     override fun verifySignature(
         gpbCallback: GpbCardCallback,

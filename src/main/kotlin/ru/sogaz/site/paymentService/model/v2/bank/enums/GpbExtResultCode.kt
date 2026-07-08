@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentService.model.v2.bank.enums
 
 import com.fasterxml.jackson.annotation.JsonCreator
+
 enum class GpbExtResultCode(
     val message: String?,
 ) {
