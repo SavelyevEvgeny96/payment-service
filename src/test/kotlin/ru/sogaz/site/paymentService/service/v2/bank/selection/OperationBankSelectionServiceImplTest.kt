@@ -6,10 +6,10 @@ import io.mockk.junit5.MockKExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.model.v2.entity.rules.PrioritizationRulesBanks
 import ru.sogaz.site.paymentService.model.v2.entity.rules.RulesBanksProducts
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
-import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
@@ -38,7 +38,7 @@ class OperationBankSelectionServiceImplTest {
     fun `selectBank should use request bank when priority check disabled`() {
         every { prioritizationRulesBanksRepository.findFirstByOrderByUpdateDateDesc() } returns defaultRules()
 
-        val result = service.selectBank(cardPayRequest(bank = PaymentRequestBank.ABR))
+        val result = service.selectBank(cardPayRequest(bank = BankEnum.ABR))
 
         assertThat(result).isEqualTo(OperationBank.ABR)
     }
@@ -66,7 +66,7 @@ class OperationBankSelectionServiceImplTest {
                 availableAbrCheck = true,
             )
 
-        val result = service.selectBank(cardPayRequest(bank = PaymentRequestBank.GPB))
+        val result = service.selectBank(cardPayRequest(bank = BankEnum.GPB))
 
         assertThat(result).isEqualTo(OperationBank.ABR)
     }
@@ -102,7 +102,7 @@ class OperationBankSelectionServiceImplTest {
             updateDate = null,
         )
 
-    private fun cardPayRequest(bank: PaymentRequestBank? = null) =
+    private fun cardPayRequest(bank: BankEnum? = null) =
         CardPayOperationRequest(
             orderId = UUID.randomUUID(),
             description = "description",

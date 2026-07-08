@@ -24,6 +24,7 @@ class OperationCallbackServiceImpl(
     private val operationStatusUpdater: OperationStatusUpdater,
 ) : OperationCallbackService {
     private val log = loggerFor(javaClass)
+
     override fun updateByGpbCardCallback(gpbCardCallback: GpbCardCallback) {
         val totalStart = System.nanoTime()
 
@@ -110,8 +111,8 @@ class OperationCallbackServiceImpl(
         )
     }
 
-    private fun elapsedMs(start: Long): Long =
-        (System.nanoTime() - start) / 1_000_000
+    private fun elapsedMs(start: Long): Long = (System.nanoTime() - start) / 1_000_000
+
     fun findOrderOperationOrThrow(
         orderId: UUID,
         paymentBankId: String,

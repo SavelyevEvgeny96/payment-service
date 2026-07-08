@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import ru.sogaz.site.paymentService.api.doc.v2.requestSchema.StraightRedirectSchema
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
-import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import java.math.BigDecimal
@@ -39,7 +39,7 @@ data class SbpPayOperationRequest(
         allowableValues = ["GPB", "ABR"],
         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
     )
-    override val bank: PaymentRequestBank? = null,
+    override val bank: BankEnum? = null,
     @field:Schema(description = "Платежные позиции", accessMode = Schema.AccessMode.READ_ONLY)
     override val payItems: LinkedHashMap<String, String> = LinkedHashMap(),
     @field:Schema(

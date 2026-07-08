@@ -1,8 +1,8 @@
 package ru.sogaz.site.paymentService.model.v2.web.request.pay
 
 import io.swagger.v3.oas.annotations.media.Schema
+import ru.sogaz.site.paymentService.enums.BankEnum
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
-import ru.sogaz.site.paymentService.model.v2.enums.PaymentRequestBank
 import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.model.v2.web.request.common.RedirectParams
 import java.math.BigDecimal
@@ -24,7 +24,7 @@ data class CardPayOperationRequest(
     @field:Schema(description = "Вид страхования")
     override val insuranceKind: String? = null,
     @field:Schema(description = "Приоритетный банк для оплаты", allowableValues = ["GPB", "ABR"])
-    override val bank: PaymentRequestBank? = null,
+    override val bank: BankEnum? = null,
     @field:Schema(description = "Дополнительные параметры банковской операции")
     val params: RedirectParams = RedirectParams(),
     @field:Schema(description = "Флаг необходимости сохранения карты")
