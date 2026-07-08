@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentService.model.v2.bank.enums
 
 import com.fasterxml.jackson.annotation.JsonCreator
-
 enum class GpbExtResultCode(
     val message: String?,
 ) {
@@ -71,8 +70,15 @@ enum class GpbExtResultCode(
     ;
 
     companion object {
+        private val BY_NAME: Map<String, GpbExtResultCode> =
+            entries.associateBy { it.name }
+
         @JvmStatic
-        @JsonCreator
-        fun from(value: String?): GpbExtResultCode? = GpbExtResultCode.entries.find { it.name == value }
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+        fun from(value: String?): GpbExtResultCode? {
+            if (value.isNullOrBlank()) return null
+
+            return BY_NAME[value.trim().uppercase()]
+        }
     }
 }
