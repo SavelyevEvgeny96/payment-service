@@ -8,6 +8,7 @@ import ru.sogaz.site.paymentService.model.v2.bank.response.BankOperationDetails
 import ru.sogaz.site.paymentService.model.v2.bank.response.BankPaymentQrContent
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.GidPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.service.v2.pay.PayOperationService
@@ -22,6 +23,7 @@ class PayV2Controller(
     companion object {
         private const val CARD_PAY_SUCCESS_CODE = 1101510200
         private const val SBP_PAY_SUCCESS_CODE = 1101530200
+        private const val GID_PAY_SUCCESS_CODE = 1101512200
     }
 
     override fun pay(cardPayOperationRequest: CardPayOperationRequest): Response<BankPaymentPageData> =
@@ -33,6 +35,11 @@ class PayV2Controller(
         sbpPayOperationRequest
             .run(payOperationService::sbpPayOperation)
             .wrapToSuccessResponse(SBP_PAY_SUCCESS_CODE)
+
+    override fun payGid(gidPayOperationRequest: GidPayOperationRequest): Response<BankPaymentPageData> =
+        gidPayOperationRequest
+            .run(payOperationService::gidPayOperation)
+            .wrapToSuccessResponse(GID_PAY_SUCCESS_CODE)
 
     override fun recurrentCardPay(cardRecurrentOperationRequest: CardRecurrentOperationRequest): Response<BankOperationDetails> =
         cardRecurrentOperationRequest

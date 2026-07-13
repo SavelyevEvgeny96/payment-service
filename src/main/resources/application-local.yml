@@ -48,6 +48,16 @@ api:
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
           identifier: ${GPB_BANK_LOGIN}
           password: ${GPB_BANK_PASS}
+    gid:
+      basePath: ${GPB_GID_URL:${api.gateway.dmz}/payment/gpb/gid}
+      portalId: ${GPB_BANK_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}
+      depersonalizedPortalId: ${GPB_BANK_DEP_PORTAL_ID:5BAE2814BB16ED0AA4A146AA4A4E168D}
+      merchantId: ${GPB_MERCHANT_ID:B80540E3096C8730BCE3}
+      depersonalizedMerchantId: ${GPB_DEP_MERCHANT_ID:B80540E3096C8730BCE3}
+      accountId: ${GPB_ACCOUNT_ID:3E73E2E44A4C11108C9}
+      depersonalizedAccountId: ${GPB_DEP_ACCOUNT_ID:3E73E2E44A4C11108C9}
+      backUrlSuccess: ${BACK_URL_S:https://www.sogaz.ru}
+      backUrlFail: ${BACK_URL_F:https://www.sogaz.ru}
     sbp:
       basePath: ${GPB_SBP_URL:${api.gateway.dmz}/payment/gpb/sbp/merchant}
       redirectUrl: https://www.sogaz.ru/
