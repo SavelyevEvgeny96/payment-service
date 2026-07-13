@@ -150,6 +150,16 @@ api:
           merchantId: ${GPB_DEPERSONALIZED_MERCHANT_ID}
           identifier: ${GPB_BANK_LOGIN}
           password: ${GPB_BANK_PASS}
+    gid:
+      basePath: ${GPB_GID_URL}
+      portalId: ${GPB_BANK_PORTAL_ID}
+      depersonalizedPortalId: ${GPB_BANK_DEP_PORTAL_ID}
+      merchantId: ${GPB_MERCHANT_ID}
+      depersonalizedMerchantId: ${GPB_DEP_MERCHANT_ID}
+      accountId: ${GPB_ACCOUNT_ID}
+      depersonalizedAccountId: ${GPB_DEP_ACCOUNT_ID}
+      backUrlSuccess: ${BACK_URL_S}
+      backUrlFail: ${BACK_URL_F}
     sbp:
       basePath: ${GPB_SBP_URL}
       reversalBasePath: ${GPB_SBP_BANK_URL:${GPB_SBP_URL}}

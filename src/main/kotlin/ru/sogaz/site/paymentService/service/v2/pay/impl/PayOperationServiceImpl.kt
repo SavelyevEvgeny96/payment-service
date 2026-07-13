@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationBank
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.CardRecurrentOperationRequest
+import ru.sogaz.site.paymentService.model.v2.web.request.pay.GidPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.PayRegOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.SbpPayOperationRequest
@@ -20,6 +21,7 @@ import ru.sogaz.site.paymentService.producer.OperationDetailsProducer
 import ru.sogaz.site.paymentService.service.v2.bank.abr.AbrCardPayIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.abr.AbrSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbGidPayIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.selection.OperationBankSelectionService
 import ru.sogaz.site.paymentService.service.v2.operation.OperationService
@@ -39,6 +41,7 @@ class PayOperationServiceImpl(
     private val operationService: OperationService,
     private val gpbCardIntegration: GpbCardIntegration,
     private val gpbSbpIntegration: GpbSbpPayIntegration,
+    private val gpbGidPayIntegration: GpbGidPayIntegration,
     private val abrCardIntegration: AbrCardPayIntegration,
     private val abrSbpIntegration: AbrSbpPayIntegration,
     private val idempotentOrderOperationMapper: IdempotentOrderOperationMapper,
@@ -198,6 +201,38 @@ class PayOperationServiceImpl(
     private fun SbpPayOperationRequest.abrSbpPayStrategy() =
         stepWithSave(
             action = abrSbpIntegration::sbpPay,
+            resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
+        )
+
+
+    /**
+     * Формирует команду и стратегию по регистрации платежной ссылки для оплаты картой в ГИД.
+     * Процесс доступен только через Газпромбанк.
+     *
+     * @param payOperationRequest запрос на выполнение операции оплаты картой в ГИД
+     * @return данные страницы для банковского платежа
+     */
+    override fun gidPayOperation(payOperationRequest: GidPayOperationRequest): BankPaymentPageData =
+        payOperationRequest
+            .checkAvailability(OperationBank.GPB)
+            .gidPayOperationCommand()
+            .runCommand()
+
+    /**
+     * Формирует объект команды оплаты картой в ГИД через Газпромбанк.
+     */
+    private fun GidPayOperationRequest.gidPayOperationCommand() =
+        gpbOperationCommand(
+            requestToOperationMapper = idempotentOrderOperationMapper::toIdempotentOrderOperation,
+            strategy = gidPayStrategy(),
+        )
+
+    /**
+     * Формирует стратегию регистрации платежной ссылки оплаты картой в ГИД.
+     */
+    private fun GidPayOperationRequest.gidPayStrategy() =
+        stepWithSave(
+            action = gpbGidPayIntegration::gidPay,
             resultToOrderOperationMapper = idempotentOrderOperationMapper::updateByBankPaymentPage,
         )
 
