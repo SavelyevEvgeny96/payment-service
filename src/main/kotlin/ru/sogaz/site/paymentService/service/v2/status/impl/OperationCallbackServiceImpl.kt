@@ -7,6 +7,7 @@ import ru.sogaz.site.paymentService.dto.data.SbpGpbStateCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbCallbackMapper
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbGidCallbackRequest
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
@@ -24,6 +25,16 @@ class OperationCallbackServiceImpl(
     private val operationStatusUpdater: OperationStatusUpdater,
 ) : OperationCallbackService {
     private val log = loggerFor(javaClass)
+
+    override fun updateByGpbGidCallback(request: GpbGidCallbackRequest) {
+        val merchantTrx = request.result.merchantTrx?.let(UUID::fromString)
+        val orderOperation =
+            idempotentOrderOperationDao.findByOrderIdAndPaymentBankId(merchantTrx, request.pgaTrxId)
+                ?: throw OperationNotFoundException(request.pgaTrxId)
+
+        checkOperationStatusProducer.sendCheckStatusEvent(orderOperation)
+    }
+
     override fun updateByGpbCardCallback(gpbCardCallback: GpbCardCallback) {
         val totalStart = System.nanoTime()
 
