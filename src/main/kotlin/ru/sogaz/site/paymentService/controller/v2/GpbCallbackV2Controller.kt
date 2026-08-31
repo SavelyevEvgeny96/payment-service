@@ -10,10 +10,12 @@ import ru.sogaz.site.paymentService.dto.data.SbpGpbStateCallbackRequest
 import ru.sogaz.site.paymentService.loggerFor
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCallbackResponse
 import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbCardCallback
+import ru.sogaz.site.paymentService.model.v2.bank.callback.GpbGidCallbackRequest
 import ru.sogaz.site.paymentService.model.v2.exception.InvalidSignatureException
 import ru.sogaz.site.paymentService.model.v2.exception.OperationNotFoundException
 import ru.sogaz.site.paymentService.service.SignatureVerifier
 import ru.sogaz.site.paymentService.service.v2.status.OperationCallbackService
+import java.util.UUID
 
 @RestController
 @Tag(name = "Callback v2", description = "Прием callback-ов от банков")
@@ -51,5 +53,13 @@ class GpbCallbackV2Controller(
 
     override fun stateSbpGpbCallback(request: SbpGpbStateCallbackRequest) {
         operationCallbackService.updateByQrId(request)
+    }
+
+    override fun stateGpbGidCallback(
+        correlationId: UUID,
+        request: GpbGidCallbackRequest,
+    ): ResponseEntity<Void> {
+        operationCallbackService.updateByGpbGidCallback(request)
+        return ResponseEntity.ok().header("X-Correlation-Id", correlationId.toString()).build()
     }
 }
