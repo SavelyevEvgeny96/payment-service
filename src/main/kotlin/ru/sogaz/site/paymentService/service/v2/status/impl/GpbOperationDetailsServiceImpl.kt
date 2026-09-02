@@ -8,7 +8,9 @@ import ru.sogaz.site.paymentService.model.v2.core.pay.SbpPayOperation
 import ru.sogaz.site.paymentService.model.v2.core.pay.SbpReversalPayOperation
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationType
+import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbCardIntegration
+import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbGidPayIntegration
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbSbpPayIntegration
 import ru.sogaz.site.paymentService.service.v2.status.OperationDetailsService
 
@@ -16,6 +18,7 @@ import ru.sogaz.site.paymentService.service.v2.status.OperationDetailsService
 class GpbOperationDetailsServiceImpl(
     private val operationMapper: OperationMapper,
     private val gpbCardIntegration: GpbCardIntegration,
+    private val gpbGidPayIntegration: GpbGidPayIntegration,
     private val gpbSbpIntegration: GpbSbpPayIntegration,
 ) : OperationDetailsService {
     override fun getOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
@@ -26,10 +29,14 @@ class GpbOperationDetailsServiceImpl(
             OperationType.REVERSAL -> getPayOperationDetails(idempotentOrderOperation)
         }
 
-    private fun getPayOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails =
-        when (val payOperation = operationMapper.makePayOperation(idempotentOrderOperation)) {
+    private fun getPayOperationDetails(idempotentOrderOperation: IdempotentOrderOperation): BankOperationDetails {
+        if (idempotentOrderOperation.paymentType == PaymentType.CARD_GID) {
+            return gpbGidPayIntegration.payStatus(idempotentOrderOperation)
+        }
+        return when (val payOperation = operationMapper.makePayOperation(idempotentOrderOperation)) {
             is CardPayOperation -> gpbCardIntegration.payStatus(payOperation)
             is SbpPayOperation -> gpbSbpIntegration.payStatus(payOperation)
             is SbpReversalPayOperation -> gpbSbpIntegration.payReversalStatus(payOperation)
         }
+    }
 }
