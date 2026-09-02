@@ -8,17 +8,17 @@ import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.mapstruct.factory.Mappers
 import ru.sogaz.site.paymentService.clients.gpb.GpbGidClient
 import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbGidMapper
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.request.GpbGidStatusRequestMapper
+import ru.sogaz.site.paymentService.mapper.v2.bank.gpb.response.GpbGidStatusResponseMapper
 import ru.sogaz.site.paymentService.model.v2.bank.request.gpb.gid.GpbGidStatusRequest
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.gid.GpbGidStatusResponse
 import ru.sogaz.site.paymentService.model.v2.bank.response.gpb.gid.GpbGidStatusResult
 import ru.sogaz.site.paymentService.model.v2.entity.IdempotentOrderOperation
 import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.properties.gpb.GpbGidProperties
-import ru.sogaz.site.paymentService.properties.gpb.GpbGidStatusRetryProperties
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.impl.GpbGidIntegrationImpl
 import java.time.Instant
 
@@ -32,6 +32,8 @@ class GpbGidIntegrationTest {
 
     private val client = mockk<GpbGidClient>()
     private val mapper = mockk<GpbGidMapper>()
+    private val statusRequestMapper = Mappers.getMapper(GpbGidStatusRequestMapper::class.java)
+    private val statusResponseMapper = Mappers.getMapper(GpbGidStatusResponseMapper::class.java)
     private val operation = mockk<IdempotentOrderOperation>()
     private lateinit var integration: GpbGidIntegrationImpl
     private lateinit var request: CapturingSlot<GpbGidStatusRequest>
@@ -44,7 +46,7 @@ class GpbGidIntegrationTest {
                 depersonalizedPortalId = DEPERSONALIZED_PORTAL_ID
                 cookie = "session=value"
             }
-        integration = GpbGidIntegrationImpl(client, properties, mapper, GpbGidStatusRetryProperties(0, 0))
+        integration = GpbGidIntegrationImpl(client, properties, mapper, statusRequestMapper, statusResponseMapper)
         request = slot()
         every { operation.id } returns null
         every { operation.paymentBankId } returns PAYMENT_BANK_ID
@@ -128,21 +130,14 @@ class GpbGidIntegrationTest {
         assertThat(result.operationFinished).isNull()
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = [400, 500, 504])
-    fun `configured bank errors are retried`(status: Int) {
-        val properties =
-            GpbGidProperties().apply {
-                portalId = PORTAL_ID
-                depersonalizedPortalId = DEPERSONALIZED_PORTAL_ID
-            }
-        integration = GpbGidIntegrationImpl(client, properties, mapper, GpbGidStatusRetryProperties(1, 0))
-        every { client.getPaymentStatus(any(), any()) } throws feignException(status) andThen response("SUCCESS")
+    @Test
+    fun `bank error is returned as wait without local retry`() {
+        every { client.getPaymentStatus(any(), any()) } throws IllegalStateException("bank error")
 
         val result = integration.payStatus(operation)
 
-        assertThat(result.state).isEqualTo(OperationState.SUCCESS)
-        verify(exactly = 2) { client.getPaymentStatus(any(), any()) }
+        assertThat(result.state).isEqualTo(OperationState.WAIT)
+        verify(exactly = 1) { client.getPaymentStatus(any(), any()) }
     }
 
     private fun response(
@@ -155,24 +150,4 @@ class GpbGidIntegrationTest {
         result = GpbGidStatusResult(status = status, extendedCode = extendedCode),
     )
 
-    private fun feignException(status: Int): FeignException =
-        FeignException.errorStatus(
-            "getPaymentStatus",
-            Response.builder()
-                .status(status)
-                .reason("bank error")
-                .request(
-                    Request.create(
-                        Request.HttpMethod.POST,
-                        "http://localhost/ecopay/api/v1/merchant/payment/state",
-                        emptyMap(),
-                        null,
-                        Charsets.UTF_8,
-                    ),
-                )
-                .build(),
-        )
 }
-import feign.FeignException
-import feign.Request
-import feign.Response

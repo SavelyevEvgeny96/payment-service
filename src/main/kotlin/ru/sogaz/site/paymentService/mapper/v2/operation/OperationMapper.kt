@@ -13,7 +13,9 @@ import ru.sogaz.site.paymentService.model.v2.enums.PaymentType
 abstract class OperationMapper {
     fun makePayOperation(idempotentOrderOperation: IdempotentOrderOperation): PayOperation =
         when (idempotentOrderOperation.paymentType) {
-            PaymentType.CARD -> makeCardPayOperation(idempotentOrderOperation)
+            PaymentType.CARD,
+            PaymentType.CARD_GID,
+            -> makeCardPayOperation(idempotentOrderOperation)
 
             PaymentType.CARD_GID -> error("CARD_GID status is handled by GpbGidPayIntegration")
 
