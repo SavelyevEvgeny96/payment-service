@@ -50,8 +50,17 @@ class CheckOperationStatusConsumer(
             -> handleCompletedOperation(operation, operationDetails)
 
             else
-            -> checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
+            -> handlePendingOperation(operation, deathCount)
         }
+    }
+
+    private fun handlePendingOperation(
+        operation: IdempotentOrderOperation,
+        deathCount: Int?,
+    ) {
+        operation.state = OperationState.WAIT
+        idempotentOrderOperationDao.save(operation)
+        checkOperationStatusProducer.sendDelayedCheckStatusEvent(operation, increaseDeathCount(deathCount))
     }
 
     private fun handleCompletedOperation(

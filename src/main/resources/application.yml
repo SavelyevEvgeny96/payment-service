@@ -152,6 +152,7 @@ api:
           password: ${GPB_BANK_PASS}
     gid:
       basePath: ${GPB_GID_URL}
+      cookie: ${GPB_GID_COOKIE:}
       portalId: ${GPB_BANK_PORTAL_ID}
       depersonalizedPortalId: ${GPB_BANK_DEP_PORTAL_ID}
       merchantId: ${GPB_MERCHANT_ID}
@@ -160,6 +161,10 @@ api:
       depersonalizedAccountId: ${GPB_DEP_ACCOUNT_ID}
       backUrlSuccess: ${BACK_URL_S}
       backUrlFail: ${BACK_URL_F}
+      retry:
+        status:
+          maxRetries: ${GPB_CARD_CLIENT_MAX_RETRIES:3}
+          timeoutMs: ${GPB_CARD_CLIENT_TIMEOUT_MS:250}
     sbp:
       basePath: ${GPB_SBP_URL}
       reversalBasePath: ${GPB_SBP_BANK_URL:${GPB_SBP_URL}}

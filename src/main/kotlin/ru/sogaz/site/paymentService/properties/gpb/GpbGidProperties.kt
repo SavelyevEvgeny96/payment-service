@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  */
 @ConfigurationProperties(prefix = "api.gpb.gid")
 class GpbGidProperties {
+    var cookie: String = ""
     lateinit var portalId: String
     lateinit var depersonalizedPortalId: String
     lateinit var merchantId: String

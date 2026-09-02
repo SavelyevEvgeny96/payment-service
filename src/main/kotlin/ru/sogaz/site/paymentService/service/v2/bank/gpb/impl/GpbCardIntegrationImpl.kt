@@ -129,7 +129,7 @@ class GpbCardIntegrationImpl(
         return BankOperationDetails(
             bankId,
             OperationState.FAIL,
-            extendedCode = errorMessage?.error,
+            extendedCode = errorMessage?.error?.name,
             errorText = errorMessage?.error?.message ?: errorMessage?.error?.name ?: defaultError(),
         )
     }
@@ -143,7 +143,7 @@ class GpbCardIntegrationImpl(
         return BankOperationDetails(
             bankId,
             OperationState.FAIL,
-            extendedCode = errorMessage?.error,
+            extendedCode = errorMessage?.error?.name,
             cardDetails = emptyCardDetails(keyCard),
             errorText = errorMessage?.error?.message ?: errorMessage?.error?.name ?: defaultError(),
         )

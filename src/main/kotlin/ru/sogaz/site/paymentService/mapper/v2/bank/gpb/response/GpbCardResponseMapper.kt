@@ -22,7 +22,7 @@ interface GpbCardResponseMapper {
     fun toBankPaymentPageData(response: GpbPayCardResponse): BankPaymentPageData
 
     @Mapping(target = "state", source = "result.status", defaultValue = "WAIT")
-    @Mapping(target = "extendedCode", source = "result.extendedCode")
+    @Mapping(target = "extendedCode", expression = "java(response.getResult() == null || response.getResult().getExtendedCode() == null ? null : response.getResult().getExtendedCode().name())")
     @Mapping(target = "errorText", source = "result.extendedCode.message")
     @Mapping(target = "cardDetails", source = "gpbCardDetails")
     @Mapping(target = "bankId", source = "id")
