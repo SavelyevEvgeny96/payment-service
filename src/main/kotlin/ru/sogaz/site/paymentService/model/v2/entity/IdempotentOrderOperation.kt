@@ -47,8 +47,6 @@ class IdempotentOrderOperation(
     var depersonalization: Boolean,
     var payerIp: String?,
     var description: String?,
-    var portalId: String?,
-    var gidId: String?,
     @Type(JsonBinaryType::class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payItems", columnDefinition = "jsonb")

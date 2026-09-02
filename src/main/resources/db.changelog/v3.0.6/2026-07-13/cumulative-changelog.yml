@@ -6,6 +6,4 @@ databaseChangeLog:
         - tagDatabase:
             tag: backend-3.0.6-gid-payment
   - include:
-      file: db.changelog/v3.0.6/2026-07-13/DATA/add_gid_payment_operation_fields.sql
-  - include:
       file: db.changelog/v3.0.6/2026-07-13/DATA/insert_gid_payment_rule.sql

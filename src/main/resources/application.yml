@@ -152,6 +152,7 @@ api:
           password: ${GPB_BANK_PASS}
     gid:
       basePath: ${GPB_GID_URL}
+      cookie: ${GPB_GID_COOKIE:}
       portalId: ${GPB_BANK_PORTAL_ID}
       depersonalizedPortalId: ${GPB_BANK_DEP_PORTAL_ID}
       merchantId: ${GPB_MERCHANT_ID}

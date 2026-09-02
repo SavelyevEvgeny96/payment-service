@@ -14,6 +14,7 @@ import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 interface GpbCallbackMapper {
     @Mapping(target = "state", source = ".", defaultValue = "WAIT")
     @Mapping(target = "bankId", source = "trx_id")
+    @Mapping(target = "extendedCode", expression = "java(gpbCallback.getExtResultCode() == null ? null : gpbCallback.getExtResultCode().name())")
     @Mapping(target = "cardDetails", source = ".")
     @Mapping(target = "errorText", source = "extResultCode.message")
     @Mapping(target = "operationFinished", expression = "java( Instant.now() )")
