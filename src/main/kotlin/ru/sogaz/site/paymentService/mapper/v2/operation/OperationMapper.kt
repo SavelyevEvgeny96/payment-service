@@ -17,6 +17,8 @@ abstract class OperationMapper {
             PaymentType.CARD_GID,
             -> makeCardPayOperation(idempotentOrderOperation)
 
+            PaymentType.CARD_GID -> error("CARD_GID status is handled by GpbGidPayIntegration")
+
             PaymentType.SBP ->
                 when (idempotentOrderOperation.operationType) {
                     OperationType.PAY -> makeSbpPayOperation(idempotentOrderOperation)

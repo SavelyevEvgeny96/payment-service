@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentService.service.v2.bank.gpb.impl
 
+import feign.FeignException
 import org.springframework.stereotype.Service
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentService.clients.gpb.GpbGidClient
@@ -13,6 +14,7 @@ import ru.sogaz.site.paymentService.model.v2.enums.OperationState
 import ru.sogaz.site.paymentService.model.v2.web.request.pay.GidPayOperationRequest
 import ru.sogaz.site.paymentService.model.v2.web.response.BankPaymentPageData
 import ru.sogaz.site.paymentService.properties.gpb.GpbGidProperties
+import ru.sogaz.site.paymentService.properties.gpb.GpbGidStatusRetryProperties
 import ru.sogaz.site.paymentService.service.v2.bank.gpb.GpbGidPayIntegration
 import java.util.UUID
 
